@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import React from 'react';
+import { AgentModeSelector, ChatMode } from '../agent/AgentModeSelector';
 import { getProviderById } from '../../config/modelConfig';
 import { getModelDisplayName, getProviderModelsForChat } from '../../utils/modalUtils';
 import { StoredProviderConfig } from '../../utils/ProviderConfigManager';
@@ -29,6 +30,13 @@ interface AIInputSectionProps {
   onClearHistory: () => void;
   onConfigChange: (config: StoredProviderConfig, model: string) => void;
   onTestModeResponse: (content: string, type: 'assistant' | 'user', hasError?: boolean) => void;
+  // Agent mode props
+  chatMode: ChatMode;
+  onChatModeChange: (mode: ChatMode) => void;
+  aksAgentClusters: string[];
+  selectedAgentCluster: string;
+  onAgentClusterChange: (cluster: string) => void;
+  isCheckingClusters: boolean;
 }
 
 export const AIInputSection: React.FC<AIInputSectionProps> = ({
@@ -44,6 +52,12 @@ export const AIInputSection: React.FC<AIInputSectionProps> = ({
   onClearHistory,
   onConfigChange,
   onTestModeResponse,
+  chatMode,
+  onChatModeChange,
+  aksAgentClusters,
+  selectedAgentCluster,
+  onAgentClusterChange,
+  isCheckingClusters,
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -101,6 +115,16 @@ export const AIInputSection: React.FC<AIInputSectionProps> = ({
 
   return (
     <Box>
+      {/* Agent Mode Selector */}
+      <AgentModeSelector
+        mode={chatMode}
+        onModeChange={onChatModeChange}
+        aksAgentClusters={aksAgentClusters}
+        selectedAgentCluster={selectedAgentCluster}
+        onAgentClusterChange={onAgentClusterChange}
+        isCheckingClusters={isCheckingClusters}
+      />
+
       {/* Test Mode Input Component */}
       <TestModeInput onAddTestResponse={onTestModeResponse} isTestMode={isTestMode} />
 

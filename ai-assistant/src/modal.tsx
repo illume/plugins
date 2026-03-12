@@ -1,10 +1,11 @@
 import { Icon } from '@iconify/react';
 import { useClustersConf, useSelectedClusters } from '@kinvolk/headlamp-plugin/lib/k8s';
 import { getCluster, getClusterGroup } from '@kinvolk/headlamp-plugin/lib/Utils';
-import { Box, Button, Grid, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Grid, Typography } from '@mui/material';
 import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { type AgentThinkingStep, type ConversationEntry, destroyAgentSession, runAksAgent } from './agent/aksAgentManager';
 import AIManager, { Prompt } from './ai/manager';
 import {
   AIAssistantHeader,
@@ -13,6 +14,7 @@ import {
   ApiConfirmationDialog,
   PromptSuggestions,
 } from './components';
+import { ChatMode } from './components/agent/AgentModeSelector';
 import { getProviderById } from './config/modelConfig';
 import EditorDialog from './editordialog';
 import { isTestModeCheck } from './helper';
@@ -87,11 +89,20 @@ export default function AIPrompt(props: {
   // Test mode detection
   const isTestMode = isTestModeCheck();
 
+  // Agent mode state — aksAgentClusters and hasCheckedForAgents live in global state
+  // so the check that runs in index.tsx is shared here without re-running
+  const [chatMode, setChatMode] = React.useState<ChatMode>('chat');
+  const [selectedAgentCluster, setSelectedAgentCluster] = React.useState<string>('');
+  const [isCheckingClusters] = React.useState(false);
+
   const [showEditor, setShowEditor] = React.useState(false);
   const [editorContent, setEditorContent] = React.useState('');
   const [editorTitle, setEditorTitle] = React.useState('');
   const [resourceType, setResourceType] = React.useState('');
   const [isDelete, setIsDelete] = React.useState(false);
+
+  // Agent thinking-step progress (streamed in real time)
+  const [agentThinkingSteps, setAgentThinkingSteps] = React.useState<AgentThinkingStep[]>([]);
 
   const handleYamlAction = React.useCallback(
     (yaml: string, title: string, type: string, isDeleteOp: boolean) => {
@@ -316,6 +327,27 @@ export default function AIPrompt(props: {
     });
   }, [pluginSettings]);
 
+  // React to AKS agent clusters detected by index.tsx and stored in global state.
+  // Auto-select the first cluster and switch to agent mode when no provider is configured.
+  useEffect(() => {
+    const aksClusters = _pluginSetting.aksAgentClusters;
+    if (!_pluginSetting.hasCheckedForAgents || aksClusters.length === 0) return;
+
+    setSelectedAgentCluster(prev => {
+      if (!prev) return aksClusters[0];
+      if (!aksClusters.includes(prev)) return aksClusters[0];
+      return prev;
+    });
+
+    const currentSavedConfigs = getSavedConfigurations(pluginSettings);
+    const currentHasValidConfig =
+      currentSavedConfigs.providers && currentSavedConfigs.providers.length > 0;
+    if (!currentHasValidConfig) {
+      setChatMode('agent');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_pluginSetting.aksAgentClusters, _pluginSetting.hasCheckedForAgents]);
+
   const updateHistory = React.useCallback(() => {
     if (!aiManager?.history) {
       setPromptHistory([]);
@@ -454,7 +486,78 @@ export default function AIPrompt(props: {
     setOpenPopup(true);
   };
 
+  async function handleAksAgentPrompt(prompt: string) {
+    setOpenPopup(true);
+
+    const userPrompt: Prompt = { role: 'user', content: prompt };
+    setPromptHistory(prev => [...prev, userPrompt]);
+
+    if (!selectedAgentCluster) {
+      setPromptHistory(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'No cluster with AKS agent selected. Please select a cluster first.',
+          error: true,
+        },
+      ]);
+      return;
+    }
+
+    const agentPodInfo = _pluginSetting.aksAgentPodInfoMap?.[selectedAgentCluster] || null;
+    if (!agentPodInfo) {
+      setPromptHistory(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `No AKS agent pod found on cluster "${selectedAgentCluster}". Make sure the AKS agent is installed and running.`,
+          error: true,
+        },
+      ]);
+      return;
+    }
+
+    setLoading(true);
+    setAgentThinkingSteps([]);
+    try {
+      // Build conversation history from prior exchanges for context
+      const conversationHistory: ConversationEntry[] = promptHistory
+        .filter(p => (p.role === 'user' || p.role === 'assistant') && !p.error && p.content)
+        .map(p => ({ role: p.role as 'user' | 'assistant', content: p.content }));
+
+      const response = await runAksAgent(
+        prompt,
+        agentPodInfo,
+        selectedAgentCluster,
+        (steps) => setAgentThinkingSteps(steps),
+        conversationHistory
+      );
+
+      setPromptHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: response },
+      ]);
+    } catch (error) {
+      setPromptHistory(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Error communicating with AKS agent: ${error?.message || 'Unknown error'}`,
+          error: true,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+      setAgentThinkingSteps([]);
+    }
+  }
+
   async function AnalyzeResourceBasedOnPrompt(prompt: string) {
+    // Route to AKS agent flow when in agent mode
+    if (chatMode === 'agent') {
+      return handleAksAgentPrompt(prompt);
+    }
+
     setOpenPopup(true);
 
     // Always add user message to promptHistory immediately so it shows up right away
@@ -678,39 +781,67 @@ export default function AIPrompt(props: {
     return promptHistory;
   }, [shouldShowGreeting, getGreetingMessage, promptHistory]);
 
-  // If no valid configuration, show setup message
+  // If no valid configuration, check if AKS agents are available before showing setup message
   if (!hasValidConfig) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 3,
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
-          AI Assistant Setup Required
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          To use the AI Assistant, please configure your AI provider credentials in the settings
-          page.
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Icon icon="mdi:settings" />}
-          onClick={() => {
-            history.push(getSettingsURL());
-            setOpenPopup(false);
+    // Still checking — show a loading state instead of jumping straight to "setup required"
+    if (!_pluginSetting.hasCheckedForAgents) {
+      return (
+        <Box
+          sx={{
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 3,
+            textAlign: 'center',
           }}
         >
-          Go to Settings
-        </Button>
-      </Box>
-    );
+          <CircularProgress size={24} />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Checking for available AI agents...
+          </Typography>
+        </Box>
+      );
+    }
+
+    // No AKS agents found either — show setup required
+    if (_pluginSetting.aksAgentClusters.length === 0) {
+      return (
+        <Box
+          sx={{
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 3,
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            AI Assistant Setup Required
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            To use the AI Assistant, please configure your AI provider credentials in the settings
+            page.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Icon icon="mdi:settings" />}
+            onClick={() => {
+              history.push(getSettingsURL());
+              setOpenPopup(false);
+            }}
+          >
+            Go to Settings
+          </Button>
+        </Box>
+      );
+    }
+
+    // AKS agents found — fall through to render the full UI in agent mode
+    // (chatMode has been auto-set to 'agent' by the check effect)
   }
 
   return (
@@ -746,14 +877,46 @@ export default function AIPrompt(props: {
               overflowY: 'auto',
             }}
           >
-            <AIChatContent
-              history={memoizedHistory}
-              isLoading={loading}
-              apiError={apiError}
-              onOperationSuccess={handleOperationSuccess}
-              onOperationFailure={handleOperationFailure}
-              onYamlAction={handleYamlAction}
-            />
+            {chatMode === 'chat' && !hasValidConfig ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 3,
+                  textAlign: 'center',
+                  gap: 1.5,
+                }}
+              >
+                <Icon icon="mdi:cog-outline" width="40px" style={{ opacity: 0.4 }} />
+                <Typography variant="h6">No AI Provider Configured</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Chat mode requires an AI provider. Go to Settings to add one.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Icon icon="mdi:settings" />}
+                  onClick={() => {
+                    history.push(getSettingsURL());
+                    setOpenPopup(false);
+                  }}
+                >
+                  Go to Settings
+                </Button>
+              </Box>
+            ) : (
+              <AIChatContent
+                history={memoizedHistory}
+                isLoading={loading}
+                apiError={apiError}
+                onOperationSuccess={handleOperationSuccess}
+                onOperationFailure={handleOperationFailure}
+                onYamlAction={handleYamlAction}
+                agentThinkingSteps={agentThinkingSteps}
+              />
+            )}
           </Grid>
           <Grid
             item
@@ -788,7 +951,10 @@ export default function AIPrompt(props: {
               }}
               onStop={handleStopRequest}
               onClearHistory={() => {
-                if (isTestMode) {
+                if (chatMode === 'agent') {
+                  destroyAgentSession();
+                  setPromptHistory([]);
+                } else if (isTestMode) {
                   setPromptHistory([]);
                 } else {
                   aiManager?.reset();
@@ -801,6 +967,25 @@ export default function AIPrompt(props: {
                 handleChangeConfig(config, model);
               }}
               onTestModeResponse={handleTestModeResponse}
+              chatMode={chatMode}
+              onChatModeChange={mode => {
+                if (chatMode === 'agent') {
+                  destroyAgentSession();
+                }
+                setChatMode(mode);
+                setPromptHistory([]);
+                setApiError(null);
+              }}
+              aksAgentClusters={_pluginSetting.aksAgentClusters}
+              selectedAgentCluster={selectedAgentCluster}
+              onAgentClusterChange={(cluster) => {
+                if (cluster !== selectedAgentCluster) {
+                  destroyAgentSession();
+                  setPromptHistory([]);
+                }
+                setSelectedAgentCluster(cluster);
+              }}
+              isCheckingClusters={isCheckingClusters}
             />
           </Grid>
         </Grid>

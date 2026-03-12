@@ -29,7 +29,7 @@ export default function TermsDialog({ open, onClose, onAccept }: TermsDialogProp
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
-          <Icon icon="mdi:alert-circle" width="24px" height="24px" color="orange" />
+          <Icon icon="mdi:alert-circle" width="24px" height="24px" style={{ color: 'orange' }} />
           <Typography variant="h6">AI Assistant Terms & Important Information</Typography>
         </Box>
       </DialogTitle>
@@ -41,7 +41,7 @@ export default function TermsDialog({ open, onClose, onAccept }: TermsDialogProp
         <List>
           <ListItem>
             <ListItemIcon>
-              <Icon icon="mdi:currency-usd" width="20px" height="20px" color="orange" />
+              <Icon icon="mdi:currency-usd" width="20px" height="20px" style={{ color: 'orange' }} />
             </ListItemIcon>
             <ListItemText
               primary="Usage Costs"
@@ -51,7 +51,7 @@ export default function TermsDialog({ open, onClose, onAccept }: TermsDialogProp
 
           <ListItem>
             <ListItemIcon>
-              <Icon icon="mdi:key" width="20px" height="20px" color="orange" />
+              <Icon icon="mdi:key" width="20px" height="20px" style={{ color: 'orange' }} />
             </ListItemIcon>
             <ListItemText
               primary="API Keys"
@@ -61,7 +61,7 @@ export default function TermsDialog({ open, onClose, onAccept }: TermsDialogProp
 
           <ListItem>
             <ListItemIcon>
-              <Icon icon="mdi:shield-alert" width="20px" height="20px" color="orange" />
+              <Icon icon="mdi:shield-alert" width="20px" height="20px" style={{ color: 'orange' }} />
             </ListItemIcon>
             <ListItemText
               primary="Data Privacy"
@@ -71,7 +71,7 @@ export default function TermsDialog({ open, onClose, onAccept }: TermsDialogProp
 
           <ListItem>
             <ListItemIcon>
-              <Icon icon="mdi:account-supervisor" width="20px" height="20px" color="orange" />
+              <Icon icon="mdi:account-supervisor" width="20px" height="20px" style={{ color: 'orange' }} />
             </ListItemIcon>
             <ListItemText
               primary="Responsibility"

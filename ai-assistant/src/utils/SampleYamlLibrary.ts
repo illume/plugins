@@ -221,7 +221,7 @@ export function parseKubernetesYAML(yamlStr: string): {
       namespace,
     };
   } catch (error) {
-    console.warn('Failed to parse YAML:', error);
+    console.debug('Failed to parse YAML:', error);
     return { isValid: false };
   }
 }

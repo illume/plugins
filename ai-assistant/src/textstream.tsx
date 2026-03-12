@@ -3,7 +3,9 @@ import { Alert, Box, CircularProgress, Fab, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { AgentThinkingStep } from './agent/aksAgentManager';
 import { Prompt } from './ai/manager';
+import AgentThinkingSteps from './components/agent/AgentThinkingSteps';
 import ContentRenderer from './ContentRenderer';
 import EditorDialog from './editordialog';
 
@@ -27,6 +29,7 @@ const TextStreamContainer = React.memo(function TextStreamContainer({
   onOperationSuccess,
   onOperationFailure,
   onYamlAction,
+  agentThinkingSteps,
 }: {
   history: Prompt[];
   isLoading: boolean;
@@ -34,6 +37,7 @@ const TextStreamContainer = React.memo(function TextStreamContainer({
   onOperationSuccess?: (response: any) => void;
   onOperationFailure?: (error: any, operationType: string, resourceInfo?: any) => void;
   onYamlAction?: (yaml: string, title: string, resourceType: string, isDelete: boolean) => void;
+  agentThinkingSteps?: AgentThinkingStep[];
 }) {
   const [showEditor, setShowEditor] = useState(false);
   const [editorContent, setEditorContent] = useState('');
@@ -237,13 +241,7 @@ const TextStreamContainer = React.memo(function TextStreamContainer({
     (prompt: Prompt, index: number) => {
       if (
         prompt.role === 'system' ||
-        (prompt.role === 'tool' && typeof prompt.content !== 'string') ||
-        // Hide tool responses that have a toolCallId — these are intermediate API data
-        // that the LLM will analyze and present as a descriptive response instead.
-        // Exception: LOGS_BUTTON entries should still render so the user can view/expand logs.
-        (prompt.role === 'tool' &&
-          prompt.toolCallId &&
-          !(typeof prompt.content === 'string' && prompt.content.includes('LOGS_BUTTON:')))
+        (prompt.role === 'tool' && typeof prompt.content !== 'string')
       ) {
         return null;
       }
@@ -346,10 +344,14 @@ const TextStreamContainer = React.memo(function TextStreamContainer({
         {history.map((prompt, index) => renderMessage(prompt, index))}
 
         {isLoading && (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: 2 }}>
-            <CircularProgress size={24} sx={{ mr: 1 }} />
-            <Typography>Processing your request...</Typography>
-          </Box>
+          agentThinkingSteps && agentThinkingSteps.length > 0 ? (
+            <AgentThinkingSteps steps={agentThinkingSteps} isRunning={isLoading} />
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: 2 }}>
+              <CircularProgress size={24} sx={{ mr: 1 }} />
+              <Typography>Processing your request...</Typography>
+            </Box>
+          )
         )}
 
         {/* This is an invisible element that we'll scroll to */}

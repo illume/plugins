@@ -72,9 +72,8 @@ export const modelProviders: ModelProvider[] = [
         label: 'Endpoint',
         type: 'text',
         required: true,
-        placeholder: 'https://your-resource.openai.azure.com',
-        description:
-          'The base URL of your Azure OpenAI resource (e.g. https://your-resource.openai.azure.com). Do NOT include any path like /openai/v1/chat/completions.',
+        placeholder: 'https://your-resource.openai.azure.com/',
+        description: 'The full URL to your Azure OpenAI resource',
       },
       {
         name: 'deploymentName',

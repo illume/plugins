@@ -4,6 +4,7 @@ import {
   AIMessage,
   BaseMessage,
   ChatMessage,
+  FunctionMessage,
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
@@ -101,22 +102,6 @@ export default class LangChainManager extends AIManager {
     return this.promptTemplate.pipe(modelToUse).pipe(this.outputParser);
   }
 
-  /**
-   * Extract the base URL from an Azure OpenAI endpoint.
-   * Users may paste the full API URL (e.g., https://xxx.openai.azure.com/openai/v1/chat/completions)
-   * but the SDK expects only the base URL (e.g., https://xxx.openai.azure.com).
-   */
-  private extractAzureBaseUrl(endpoint: string): string {
-    try {
-      const url = new URL(endpoint);
-      // Return only the origin (protocol + host), stripping any path
-      return url.origin;
-    } catch {
-      // If URL parsing fails, fall back to stripping trailing slashes
-      return endpoint.replace(/\/+$/, '');
-    }
-  }
-
   private createModel(providerId: string, config: Record<string, any>): BaseChatModel {
     const sanitizeString = (value: unknown): string =>
       typeof value === 'string' ? value.trim() : '';
@@ -137,7 +122,7 @@ export default class LangChainManager extends AIManager {
           }
           return new ChatOpenAI({
             apiKey: sanitizedConfig.apiKey,
-            model: sanitizedConfig.model,
+            modelName: sanitizedConfig.model,
             verbose: true,
           });
         case 'azure':
@@ -149,13 +134,12 @@ export default class LangChainManager extends AIManager {
             throw new Error('Incomplete Azure OpenAI configuration');
           }
           return new AzureChatOpenAI({
-            // Extract only the base URL (protocol + host), stripping any path
-            // e.g. "https://xxx.openai.azure.com/openai/v1/chat/completions" → "https://xxx.openai.azure.com"
-            azureOpenAIEndpoint: this.extractAzureBaseUrl(sanitizedConfig.endpoint),
+            // Strip trailing slashes only
+            azureOpenAIEndpoint: sanitizedConfig.endpoint.replace(/\/+$/, ''),
             azureOpenAIApiKey: sanitizedConfig.apiKey,
             azureOpenAIApiDeploymentName: sanitizedConfig.deploymentName,
-            azureOpenAIApiVersion: '2025-04-01-preview',
-            model: sanitizedConfig.model,
+            azureOpenAIApiVersion: '2024-12-01-preview',
+            modelName: sanitizedConfig.model,
             verbose: true,
           });
         case 'anthropic':
@@ -164,7 +148,7 @@ export default class LangChainManager extends AIManager {
           }
           return new ChatAnthropic({
             apiKey: sanitizedConfig.apiKey,
-            model: sanitizedConfig.model,
+            modelName: sanitizedConfig.model,
             verbose: true,
           });
         case 'mistral':
@@ -173,7 +157,7 @@ export default class LangChainManager extends AIManager {
           }
           return new ChatMistralAI({
             apiKey: sanitizedConfig.apiKey,
-            model: sanitizedConfig.model,
+            modelName: sanitizedConfig.model,
             verbose: true,
           });
         case 'gemini': {
@@ -430,19 +414,14 @@ export default class LangChainManager extends AIManager {
       prompt => prompt.role === 'tool' && toolCalls.some(tc => tc.id === prompt.toolCallId)
     );
 
-    // If there are no tool responses in history (e.g., confirmation-based operations like
-    // PUT/PATCH/DELETE return shouldAddToHistory: false), skip follow-up processing.
-    // Note: [].every() returns true, which would incorrectly trigger processToolResponses.
-    const shouldProcessFollowUp =
-      toolResponses.length > 0 &&
-      toolResponses.every(response => {
-        try {
-          const parsed = JSON.parse(response.content);
-          return parsed.shouldProcessFollowUp !== false;
-        } catch {
-          return true; // Default to processing follow-up if can't parse
-        }
-      });
+    const shouldProcessFollowUp = toolResponses.every(response => {
+      try {
+        const parsed = JSON.parse(response.content);
+        return parsed.shouldProcessFollowUp !== false;
+      } catch {
+        return true; // Default to processing follow-up if can't parse
+      }
+    });
 
     if (shouldProcessFollowUp) {
       return await this.processToolResponses();
@@ -494,22 +473,6 @@ export default class LangChainManager extends AIManager {
             content: toolResponse.content,
             toolCallId: toolCall.id,
             name: toolCall.function.name,
-          });
-        } else if (toolResponse.metadata?.requiresConfirmation) {
-          // For confirmation-based operations (PUT/PATCH/DELETE), add a minimal placeholder
-          // so that validateToolCallAlignment doesn't inject fake error messages.
-          this.history.push({
-            role: 'tool',
-            content: JSON.stringify({
-              status: 'pending_confirmation',
-              shouldProcessFollowUp: false,
-              message: toolResponse.metadata?.method
-                ? `${toolResponse.metadata.method} request requires user confirmation.`
-                : 'Operation requires user confirmation.',
-            }),
-            toolCallId: toolCall.id,
-            name: toolCall.function.name,
-            isDisplayOnly: true, // Don't send to LLM or display in UI
           });
         }
       } catch (error) {
@@ -755,9 +718,7 @@ Format your response to make the errors prominent and actionable.`,
 
   // Helper method to check if there are tool responses
   private hasToolResponses(): boolean {
-    return this.history.some(
-      prompt => prompt.role === 'tool' && prompt.toolCallId && !prompt.isDisplayOnly
-    );
+    return this.history.some(prompt => prompt.role === 'tool' && prompt.toolCallId);
   }
 
   // Helper method to get the last assistant message
@@ -776,8 +737,6 @@ Format your response to make the errors prominent and actionable.`,
 
   // Create a specialized chain for tool response processing
   private createToolResponseChain() {
-    // Use the bound model (with tools) so the LLM can make follow-up tool calls
-    // (e.g., fetching logs after retrieving pod details).
     const modelToUse = this.boundModel || this.model;
 
     // Create a runnable sequence for tool response processing
@@ -841,45 +800,57 @@ Format your response to make the errors prominent and actionable.`,
   }
 
   // Prepare messages for tool response processing
-  // Sends conversation history + tool response data to the LLM for descriptive analysis
   private prepareMessagesForToolResponse(): BaseMessage[] {
     const systemMessage = new SystemMessage(this.createSystemPrompt());
     const messages: BaseMessage[] = [systemMessage];
 
-    // Add conversation history, excluding tool responses and assistant tool-call messages.
-    // Tool responses are collected separately and added as context for the LLM to analyze.
-    for (const prompt of this.history) {
-      if (prompt.role === 'system' || prompt.isDisplayOnly) continue;
-      if (prompt.role === 'tool') continue; // Tool responses handled below
-      if (prompt.role === 'assistant' && prompt.toolCalls?.length) continue; // Skip tool-calling assistant messages
+    // Find the last assistant message that contains tool calls
+    const lastAssistantWithToolsIndex = this.findLastAssistantWithTools();
 
-      messages.push(...this.convertPromptsToMessages([prompt]));
-    }
+    // Process messages up to the last assistant message with tool calls
+    const messagesToProcess =
+      lastAssistantWithToolsIndex >= 0
+        ? this.history.slice(0, lastAssistantWithToolsIndex + 1)
+        : this.history;
 
-    // Collect tool response data and present it to the LLM as context to analyze
-    const toolResponses = this.history.filter(
-      p => p.role === 'tool' && p.toolCallId && !p.isDisplayOnly
-    );
-    if (toolResponses.length > 0) {
-      let totalResponseSize = 0;
-      const MAX_RESPONSE_SIZE = 500000; // ~500KB limit
+    // Track response sizes to prevent memory issues
+    let totalResponseSize = 0;
+    const MAX_RESPONSE_SIZE = 500000; // ~500KB limit
 
-      const toolDataParts: string[] = [];
-      for (const p of toolResponses) {
-        const processed = this.processToolContent(p, totalResponseSize, MAX_RESPONSE_SIZE);
-        if (processed) {
-          totalResponseSize += processed.length;
-          toolDataParts.push(processed);
-        }
-      }
-
-      const toolData = toolDataParts.join('\n\n');
-      if (toolData) {
-        messages.push(
-          new HumanMessage(
-            `Here is the data retrieved from the Kubernetes API:\n\n${toolData}\n\nPlease analyze this data and provide a helpful, descriptive answer to my original question. Focus on any issues, anomalies, or relevant information. Follow all response formatting guidelines from the system prompt including resource links and suggestions.`
-          )
+    for (const prompt of messagesToProcess) {
+      if (prompt.role === 'tool' && prompt.toolCallId) {
+        const processedContent = this.processToolContent(
+          prompt,
+          totalResponseSize,
+          MAX_RESPONSE_SIZE
         );
+
+        if (processedContent) {
+          totalResponseSize += processedContent.length;
+
+          // Claude (Anthropic) and Azure don't support FunctionMessage
+          if (this.providerId === 'azure' || this.providerId === 'anthropic') {
+            messages.push(
+              new AIMessage(`Tool Response (${prompt.toolCallId}): ${processedContent}`)
+            );
+          } else {
+            messages.push(
+              new FunctionMessage({
+                name: prompt.name || 'kubernetes_api_request',
+                content: processedContent,
+              })
+            );
+          }
+        }
+      } else if (
+        prompt.role !== 'assistant' ||
+        !prompt.toolCalls ||
+        prompt.toolCalls.length === 0
+      ) {
+        // Skip system messages and display-only messages to avoid ordering issues - system message is already added at the beginning
+        if (prompt.role !== 'system' && !prompt.isDisplayOnly) {
+          messages.push(...this.convertPromptsToMessages([prompt]));
+        }
       }
     }
 
@@ -924,10 +895,6 @@ Format your response to make the errors prominent and actionable.`,
     return lastAssistantWithToolsIndex;
   }
 
-  // Track recursion depth to prevent infinite tool call loops
-  private toolResponseDepth = 0;
-  private static readonly MAX_TOOL_RESPONSE_DEPTH = 5;
-
   // Handle the result of tool response processing
   private async handleToolResponseResult(response: any): Promise<Prompt> {
     // Track usage after tool processing
@@ -936,33 +903,18 @@ Format your response to make the errors prominent and actionable.`,
     // Analyze and potentially correct kubectl suggestions
     const correctedResponse = await this.analyzeAndCorrectResponse(response);
 
-    // If the LLM returned new tool calls (e.g., fetch logs after getting pod details),
-    // execute them — unless we've hit the recursion depth limit.
-    if (
-      correctedResponse.tool_calls?.length > 0 &&
-      this.toolResponseDepth < LangChainManager.MAX_TOOL_RESPONSE_DEPTH
-    ) {
-      console.log(
-        `🔧 Follow-up tool calls detected in analysis response (depth ${this.toolResponseDepth}):`,
-        correctedResponse.tool_calls.map(tc => ({ name: tc.name, args: tc.args }))
-      );
-      this.toolResponseDepth++;
-      try {
-        // Clean up intermediate tool entries before processing new tool calls
-        const lastAssistantWithToolsIndex = this.findLastAssistantWithTools();
-        if (lastAssistantWithToolsIndex >= 0) {
-          this.history = this.history.slice(0, lastAssistantWithToolsIndex + 1);
-        }
-        return await this.handleToolCalls(correctedResponse);
-      } finally {
-        this.toolResponseDepth--;
-      }
-    }
-
     const assistantPrompt: Prompt = {
       role: 'assistant',
       content: this.extractTextContent(correctedResponse.content),
-      toolCalls: [],
+      toolCalls:
+        correctedResponse.tool_calls?.map(tc => ({
+          id: tc.id,
+          type: 'function',
+          function: {
+            name: tc.name || 'kubernetes_api_request',
+            arguments: JSON.stringify(tc.args || {}),
+          },
+        })) || [],
     };
 
     console.log('Assistant prompt created from response');
@@ -974,7 +926,6 @@ Format your response to make the errors prominent and actionable.`,
     }
 
     this.history.push(assistantPrompt);
-    this.toolResponseDepth = 0; // Reset depth on final text response
     return assistantPrompt;
   }
 

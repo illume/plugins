@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
+import { type AksAgentPodInfo, checkAksAgentInstalled, getClustersFromHeadlampConfig } from './agent/aksAgentManager';
 import { ModelSelector } from './components';
 import { getDefaultConfig } from './config/modelConfig';
 import { isTestModeCheck } from './helper';
@@ -143,6 +144,36 @@ function HeadlampAIPrompt() {
 
   const hasAnyValidConfig = savedConfigData.providers && savedConfigData.providers.length > 0;
 
+  // Run AKS cluster check once on mount so results are ready before the panel opens
+  React.useEffect(() => {
+    if (pluginState.hasCheckedForAgents) return;
+    getClustersFromHeadlampConfig().then(async clusters => {
+      pluginState.setAksClusterServerMap(
+        Object.fromEntries(clusters.map(c => [c.name, c.server]))
+      );
+
+      // For each AKS cluster, check if the agent is installed and record its pod info
+      const podInfoMap: Record<string, AksAgentPodInfo> = {};
+      const clustersWithAgent: string[] = [];
+
+      await Promise.all(
+        clusters.map(async c => {
+          const agentPodInfo = await checkAksAgentInstalled(c.name);
+          if (agentPodInfo) {
+            podInfoMap[c.name] = agentPodInfo;
+            clustersWithAgent.push(c.name);
+          }
+        })
+      );
+
+      pluginState.setAksAgentClusters(clustersWithAgent.length > 0 ? clustersWithAgent : clusters.map(c => c.name));
+      pluginState.setAksAgentPodInfoMap(podInfoMap);
+      pluginState.setHasCheckedForAgents(true);
+    });
+  }, []);
+
+  const hasAksAgents = pluginState.aksAgentClusters.length > 0;
+
   // Reset popover shown state when configurations change from none to some
   React.useEffect(() => {
     if (hasAnyValidConfig && hasShownPopover) {
@@ -156,9 +187,9 @@ function HeadlampAIPrompt() {
     }
   }, [hasAnyValidConfig, hasShownPopover]);
 
-  // Show popover automatically if no configurations and hasn't been shown before
+  // Show popover only if no valid config AND no AKS agents available
   React.useEffect(() => {
-    if (!hasAnyValidConfig && !hasShownPopover && !pluginState.isUIPanelOpen) {
+    if (!hasAnyValidConfig && !hasAksAgents && !hasShownPopover && !pluginState.isUIPanelOpen) {
       // Show popover after a short delay to ensure component is mounted
       const timer = setTimeout(() => {
         if (!!popoverAnchor) {
@@ -170,7 +201,7 @@ function HeadlampAIPrompt() {
       // Close popover if conditions are not met
       setShowPopover(false);
     }
-  }, [hasAnyValidConfig, popoverAnchor, hasShownPopover, pluginState.isUIPanelOpen]);
+  }, [hasAnyValidConfig, hasAksAgents, popoverAnchor, hasShownPopover, pluginState.isUIPanelOpen]);
 
   const handleClosePopover = () => {
     setShowPopover(false);
@@ -204,7 +235,7 @@ function HeadlampAIPrompt() {
           size="small"
           value="ai-assistant"
         >
-          <Icon icon="ai-assistant:logo" width="24px" />
+          <Icon icon="ai-assistant:logo" width="24px" color='white'/>
         </ToggleButton>
       </Tooltip>
 

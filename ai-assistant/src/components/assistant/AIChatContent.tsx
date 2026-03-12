@@ -1,6 +1,7 @@
 import { Link } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
 import { Alert, Box, Button } from '@mui/material';
 import React from 'react';
+import type { AgentThinkingStep } from '../../agent/aksAgentManager';
 import { Prompt } from '../../ai/manager';
 import TextStreamContainer from '../../textstream';
 
@@ -11,6 +12,8 @@ interface AIChatContentProps {
   onOperationSuccess: (response: any) => void;
   onOperationFailure: (error: any, operationType: string, resourceInfo?: any) => void;
   onYamlAction: (yaml: string, title: string, type: string, isDeleteOp: boolean) => void;
+  /** Live thinking steps streamed from the AKS agent during processing. */
+  agentThinkingSteps?: AgentThinkingStep[];
 }
 
 export default function AIChatContent({
@@ -20,6 +23,7 @@ export default function AIChatContent({
   onOperationSuccess,
   onOperationFailure,
   onYamlAction,
+  agentThinkingSteps,
 }: AIChatContentProps) {
   return (
     <Box
@@ -56,6 +60,7 @@ export default function AIChatContent({
         onOperationSuccess={onOperationSuccess}
         onOperationFailure={onOperationFailure}
         onYamlAction={onYamlAction}
+        agentThinkingSteps={agentThinkingSteps}
       />
     </Box>
   );

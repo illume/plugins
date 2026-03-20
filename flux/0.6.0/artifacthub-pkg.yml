@@ -30,7 +30,7 @@ changes:
   - kind: changed
     description: "Count Waiting as processing"
   - kind: fixed
-    description: "fix namespaced crds fetching for users with limited perissions"
+    description: "fix namespaced crds fetching for users with limited permissions"
   - kind: fixed
     description: "kustomization: Fix parse ID for cluster scoped resources"
   - kind: fixed

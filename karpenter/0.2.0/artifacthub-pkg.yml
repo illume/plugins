@@ -18,7 +18,7 @@ changes:
   - kind: changed
     description: "Published [Karpenter container images](https://github.com/headlamp-k8s/plugins/pkgs/container/headlamp-plugin-karpenter) (for 0.1.0 and 0.2.0). Thanks to @illume"
   - kind: added
-    description: "This release introduces comprehensive improvements to how the Headlamp Karpenter plugin detects and handles different Karpenter deployment types (EKS Auto Mode, self-installed), enhancing both the user experience and maintainability. The changes include..."
+    description: "This release introduces comprehensive improvements to how the Headlamp Karpenter plugin detects and handles different Karpenter deployment types (EKS Auto Mode, self-installed), enhancing both the user experience and maintainability by improving detection logic, runtime behavior, and configuration clarity."
   - kind: fixed
     description: "addresses a runtime error causing the Karpenter menu to only display the NodeClass section. It resolves the `undefined` error on `getMainAPIGroup` to ensure NodePool, Pending Pods, and Scaling views render correctly."
   - kind: fixed

@@ -20,7 +20,7 @@ changes:
   - kind: changed
     description: "Pull request: [Visualization of Karpenter NodePool Metrics (Prometheus)](https://github.com/headlamp-k8s/plugins/pull/353)"
   - kind: changed
-    description: "Provides visualization for Resource Usage, Allowed disruptions and  Pending Pods"
+    description: "Provides visualization for Resource Usage, Allowed disruptions and Pending Pods"
   - kind: changed
     description: "[Demo: Visualization of NodeClaim (Scaling view) resource metrics](https://github.com/user-attachments/assets/972764eb-0445-4bbe-8097-64dc4c3898d8)"
   - kind: changed
@@ -36,7 +36,7 @@ changes:
   - kind: changed
     description: "Provides a map view of Karpenter resources and their links to other Kubernetes resources"
   - kind: added
-    description: "Karpenter supports a number of provider backends. Up until now the Karpenter plugin for Headlamp only supported AWS EKS specific resources. Now there is support for dynamically detecting the provider, and also for viewing Azure AKS Karpenter (NAP [Node ..."
+    description: "Karpenter supports a number of provider backends. Up until now the Karpenter plugin for Headlamp only supported AWS EKS specific resources. Now there is support for dynamically detecting the provider, and also for viewing Azure AKS Karpenter (NAP [Node Auto Provisioning]) resources as well."
   - kind: changed
     description: "[Demo of Azure AKS resources](https://github.com/user-attachments/assets/791a7fb3-6ae1-4963-9d18-69b1793e6de6)"
   - kind: added

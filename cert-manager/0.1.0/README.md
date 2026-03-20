@@ -14,7 +14,6 @@ cert-manager plugin for Headlamp adds a new item (cert-manager) to the sidebar t
 - challenges.acme.cert-manager.io
 - clusterissuers.cert-manager.io
 - issuers.cert-manager.io
-- clusterissuers.cert-manager.io
 
 ## Lifecycle:
 

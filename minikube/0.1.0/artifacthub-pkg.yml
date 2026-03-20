@@ -6,10 +6,10 @@ logoURL: "https://raw.githubusercontent.com/kubernetes/minikube/42aa2eab55893d85
 description: A UI for managing local minikube clusters. This is an early release (alpha 0.1.0). Feedback welcome.
 changes:
   - kind: added
-    description: "The [Minikube Headlamp Plugin](https://github.com/headlamp-k8s/plugins/minikube) extends Headlamp so that it has support for the Minikube Kubernetes distribution."
+    description: "The [Minikube Headlamp Plugin](https://github.com/headlamp-k8s/plugins/tree/main/minikube) extends Headlamp so that it has support for the Minikube Kubernetes distribution."
   - kind: changed
-    description: "[Minikube](https://minikube.sigs.k8s.io/) is a lightweight tool that simplifies the process of setting up a Kubernetes environment on your local PC. It provides a localStorage, single-node Kubernetes cluster that you can use for learning, development, a..."
-  - kind: removed
+    description: "[Minikube](https://minikube.sigs.k8s.io/) is a lightweight tool that simplifies the process of setting up a Kubernetes environment on your local PC. It provides a single-node Kubernetes cluster that you can use for learning, development, and testing purposes."
+  - kind: changed
     description: "Use minikube to run kubernetes locally on your laptop! Start, stop, and delete clusters."
   - kind: added
     description: "This is an early release (alpha 0.1.0). Please leave any feedback as a [github issue](https://github.com/headlamp-k8s/plugins/issues/new), or drop by the `#headlamp` channel on the Kubernetes slack."

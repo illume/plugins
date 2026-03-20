@@ -5,7 +5,7 @@ It will add a new column to tables listing Kubernetes resources, as well as char
 
 ## Requirements
 
-This plugins needs the following projects running in your cluster:
+This plugin needs the following projects running in your cluster:
 - OpenCost ([instructions](https://www.opencost.io/docs/installation/helm))
 - Prometheus ([instructions](https://prometheus.io/docs/prometheus/latest/installation/))
 

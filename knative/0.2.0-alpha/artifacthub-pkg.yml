@@ -35,6 +35,6 @@ changes:
     description: "Bumped tar to 7.5.3 and lodash to 4.17.23. Thanks to @skoeva"
 annotations:
   headlamp/plugin/archive-url: "https://github.com/headlamp-k8s/plugins/releases/download/knative-0.2.0-alpha/headlamp-k8s-knative-0.2.0-alpha.tar.gz"
-  headlamp/plugin/archive-checksum: "SHA256:TODO"
+  headlamp/plugin/archive-checksum: "SHA256:327d066ef895f68434e6f664385227367e674163871ff8ee7cf565602e36173e"
   headlamp/plugin/version-compat: ">=0.22"
   headlamp/plugin/distro-compat: in-cluster,web,docker-desktop,desktop

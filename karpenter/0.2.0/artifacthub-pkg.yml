@@ -1,7 +1,7 @@
 version: 0.2.0
 name: headlamp_karpenter
 displayName: Karpenter alpha for testing only
-createdAt: "2026-02-10T13:35:50Z"
+createdAt: "2026-02-10T22:46:14Z"
 logoURL: "https://raw.githubusercontent.com/aws/karpenter-provider-aws/refs/heads/main/website/assets/icons/logo.svg"
 description: A UI for viewing and managing Karpenter resources in Headlamp.
 changes:

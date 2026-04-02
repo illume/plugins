@@ -1,7 +1,7 @@
 version: 0.1.0-beta-1
 name: headlamp_flux
 displayName: Flux
-createdAt: "2024-11-07T15:34:00Z"
+createdAt: "2024-11-07T17:30:00Z"
 logoURL: "https://raw.githubusercontent.com/headlamp-k8s/plugins/main/flux/logo.png"
 description: A UI for viewing and managing Flux.
 changes:

@@ -1,7 +1,7 @@
 version: 0.0.1
 name: headlamp_example_change_logo
 displayName: Change Logo Example
-createdAt: "2024-07-24T05:35:50Z"
+createdAt: "2024-07-24T14:22:56Z"
 description: Allows to change the Headlamp logo. This is an plugin from the official examples.
 changes:
   - kind: added

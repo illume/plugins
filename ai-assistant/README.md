@@ -8,9 +8,9 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 ## End-to-end tests
 
-`npm run e2e` runs the complete cross-platform harness in `e2e/run-ai-assistant-e2e.ts`. It builds the plugin and Headlamp image, creates a Kind cluster, installs KWOK and the test fixtures, and runs the Playwright scenarios.
+`npm run e2e` runs the complete cross-platform harness in `e2e/run-ai-assistant-e2e.ts`. It builds the plugin and Headlamp image, creates a KWOK cluster and the test fixtures, and runs the Playwright scenarios.
 
-`npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create the Kind/KWOK cluster. See [e2e/README.md](e2e/README.md) for setup and configuration.
+`npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create the KWOK cluster. See [e2e/README.md](e2e/README.md) for setup and configuration.
 
 ## Key Features
 

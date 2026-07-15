@@ -13,6 +13,18 @@ test.describe.serial('AI Assistant on KWOK', () => {
   test('covers the main assistant scenarios', async ({ page }) => {
     await page.goto('/c/main/nodes');
 
+    const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
+    if (await tokenLogin.isVisible()) {
+      const token = process.env.HEADLAMP_TOKEN;
+      expect(
+        token,
+        'HEADLAMP_TOKEN must be set when Headlamp requires authentication'
+      ).toBeTruthy();
+      await tokenLogin.click();
+      await page.getByRole('textbox', { name: 'ID token' }).fill(token!);
+      await page.getByRole('button', { name: 'Authenticate' }).click();
+    }
+
     await expect(page.getByText('kwok-worker', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
     await page.screenshot({

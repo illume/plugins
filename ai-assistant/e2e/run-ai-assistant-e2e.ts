@@ -1,16 +1,17 @@
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, openSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const clusterName = process.env.E2E_CLUSTER_NAME || 'ai-assistant-e2e';
-const kwokVersion = process.env.KWOK_VERSION || 'v0.8.0';
 const headlampUrl = process.env.HEADLAMP_URL || 'http://127.0.0.1:4466';
+const headlampPort = new URL(headlampUrl).port || '4466';
+const headlampContainerName = `${clusterName}-headlamp`;
+const kubeconfigPath = path.join(tmpdir(), `${clusterName}-kubeconfig`);
+const headlampKubeconfigPath = path.join(tmpdir(), `${clusterName}-headlamp-kubeconfig`);
 const commandSuffix = process.platform === 'win32' ? '.cmd' : '';
-let portForward: ChildProcess | undefined;
-let portForwardLog: number | undefined;
 
 function executable(command: string): string {
   return command === 'npm' || command === 'npx' ? `${command}${commandSuffix}` : command;
@@ -39,7 +40,7 @@ function run(command: string, args: string[], captureOutput = false): string {
 
 function ensureCommands(): void {
   const locator = process.platform === 'win32' ? 'where' : 'which';
-  for (const command of ['docker', 'kind', 'kubectl', 'npm']) {
+  for (const command of ['docker', 'kwokctl', 'kubectl', 'npm']) {
     const result = spawnSync(locator, [executable(command)], { stdio: 'ignore' });
     if (result.status !== 0) {
       throw new Error(`Missing required command: ${command}`);
@@ -48,21 +49,23 @@ function ensureCommands(): void {
 }
 
 function deleteCluster(): void {
-  spawnSync('kind', ['delete', 'cluster', '--name', clusterName], {
+  spawnSync('kwokctl', ['delete', 'cluster', '--name', clusterName], {
     cwd: rootDir,
     stdio: 'ignore',
   });
 }
 
+function deleteHeadlampContainer(): void {
+  spawnSync('docker', ['rm', '--force', headlampContainerName], { stdio: 'ignore' });
+}
+
 function cleanup(): void {
-  portForward?.kill();
-  if (portForwardLog !== undefined) {
-    closeSync(portForwardLog);
-    portForwardLog = undefined;
-  }
+  deleteHeadlampContainer();
   if (process.env.KEEP_E2E_CLUSTER !== 'true') {
     deleteCluster();
   }
+  rmSync(kubeconfigPath, { force: true });
+  rmSync(headlampKubeconfigPath, { force: true });
 }
 
 async function waitForHeadlamp(): Promise<void> {
@@ -86,102 +89,69 @@ async function main(): Promise<void> {
   run('npm', ['run', 'build']);
   run('npx', ['playwright', 'install', 'chromium']);
 
+  deleteHeadlampContainer();
   deleteCluster();
-  run('kind', ['create', 'cluster', '--name', clusterName, '--config', 'e2e/kind.yaml']);
-  const controlPlaneIp = run(
+  run('kwokctl', [
+    'create',
+    'cluster',
+    '--name',
+    clusterName,
+    '--runtime',
+    'docker',
+    '--kubeconfig',
+    kubeconfigPath,
+  ]);
+  process.env.KUBECONFIG = kubeconfigPath;
+  run('kubectl', ['apply', '-f', 'e2e/kwok-fixtures.yaml']);
+  run('kubectl', ['wait', 'node/kwok-worker', '--for=condition=Ready', '--timeout=120s']);
+  const headlampToken = run(
     'kubectl',
-    [
-      'get',
-      'node',
-      `${clusterName}-control-plane`,
-      '-o',
-      'jsonpath={.status.addresses[?(@.type=="InternalIP")].address}',
-    ],
+    ['create', 'token', 'headlamp', '--namespace', 'headlamp-e2e', '--duration', '1h'],
     true
   );
 
-  const kwokImage = `registry.k8s.io/kwok/kwok:${kwokVersion}`;
-  const kwokReleaseUrl = `https://github.com/kubernetes-sigs/kwok/releases/download/${kwokVersion}`;
-  run('docker', ['pull', kwokImage]);
-  run('kind', ['load', 'docker-image', '--name', clusterName, kwokImage]);
-  run('kubectl', ['apply', '-f', `${kwokReleaseUrl}/kwok.yaml`]);
-  run('kubectl', ['apply', '-f', `${kwokReleaseUrl}/stage-fast.yaml`]);
-  run('kubectl', [
-    '-n',
-    'kube-system',
-    'patch',
-    'deployment',
-    'kwok-controller',
-    '--type=strategic',
-    '-p',
-    JSON.stringify({
-      spec: {
-        template: {
-          spec: {
-            hostNetwork: true,
-            dnsPolicy: 'ClusterFirstWithHostNet',
-            nodeSelector: { 'e2e.headlamp.dev/real-node': 'true' },
-            containers: [
-              {
-                name: 'kwok-controller',
-                env: [
-                  { name: 'KUBERNETES_SERVICE_HOST', value: controlPlaneIp },
-                  { name: 'KUBERNETES_SERVICE_PORT', value: '6443' },
-                ],
-              },
-            ],
-            tolerations: [
-              {
-                key: 'node-role.kubernetes.io/control-plane',
-                operator: 'Exists',
-                effect: 'NoSchedule',
-              },
-            ],
-          },
-        },
-      },
-    }),
-  ]);
-  run('kubectl', [
-    '-n',
-    'kube-system',
-    'rollout',
-    'status',
-    'deployment/kwok-controller',
-    '--timeout=180s',
-  ]);
-  run('kubectl', ['apply', '-f', 'e2e/kwok-fixtures.yaml']);
-  run('kubectl', ['wait', 'node/kwok-worker', '--for=condition=Ready', '--timeout=120s']);
-
   run('docker', ['build', '-f', 'e2e/Dockerfile.headlamp', '-t', 'headlamp-ai-e2e:local', '.']);
-  run('kind', ['load', 'docker-image', '--name', clusterName, 'headlamp-ai-e2e:local']);
-  run('kubectl', ['apply', '-f', 'e2e/headlamp.yaml']);
-  run('kubectl', [
-    '-n',
-    'headlamp',
-    'set',
-    'env',
-    'deployment/headlamp',
-    `KUBERNETES_SERVICE_HOST=${controlPlaneIp}`,
-    'KUBERNETES_SERVICE_PORT=6443',
+  const headlampKubeconfig = run(
+    'kwokctl',
+    [
+      'get',
+      'kubeconfig',
+      '--name',
+      clusterName,
+      '--host',
+      'host.docker.internal',
+      '--insecure-skip-tls-verify',
+    ],
+    true
+  )
+    .replace(/^    certificate-authority-data:.*\n/m, '')
+    .replaceAll(`kwok-${clusterName}`, 'main');
+  writeFileSync(headlampKubeconfigPath, headlampKubeconfig);
+  run('docker', [
+    'run',
+    '--detach',
+    '--name',
+    headlampContainerName,
+    '--add-host',
+    'host.docker.internal:host-gateway',
+    '--publish',
+    `${headlampPort}:4466`,
+    '--mount',
+    `type=bind,source=${headlampKubeconfigPath},target=/tmp/kubeconfig,readonly`,
+    'headlamp-ai-e2e:local',
+    '-kubeconfig=/tmp/kubeconfig',
+    '-plugins-dir=/headlamp/plugins',
   ]);
-  run('kubectl', ['-n', 'headlamp', 'scale', 'deployment/headlamp', '--replicas=1']);
-  run('kubectl', ['-n', 'headlamp', 'rollout', 'status', 'deployment/headlamp', '--timeout=180s']);
-
-  portForwardLog = openSync(path.join(tmpdir(), 'headlamp-e2e-port-forward.log'), 'w');
-  portForward = spawn(
-    'kubectl',
-    ['-n', 'headlamp', 'port-forward', 'service/headlamp', '4466:80'],
-    {
-      cwd: rootDir,
-      stdio: ['ignore', portForwardLog, portForwardLog],
-    }
-  );
-  await waitForHeadlamp();
+  try {
+    await waitForHeadlamp();
+  } catch (error) {
+    run('docker', ['logs', headlampContainerName]);
+    throw error;
+  }
 
   const result = spawnSync(executable('npm'), ['run', 'e2e:playwright'], {
     cwd: rootDir,
-    env: { ...process.env, HEADLAMP_URL: headlampUrl },
+    env: { ...process.env, HEADLAMP_URL: headlampUrl, HEADLAMP_TOKEN: headlampToken },
     stdio: 'inherit',
   });
   if (result.error) {

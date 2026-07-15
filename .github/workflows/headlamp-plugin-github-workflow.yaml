@@ -124,10 +124,12 @@ jobs:
         run: npm ci
 
       - name: Install kwokctl
+        env:
+          KWOK_VERSION: v0.8.0
+          KWOKCTL_SHA256: d5743166c657283d6e827c7c4c20cacfd9009fd94830f06718ca7b2c7099461f
         run: |
-          curl -fsSLo /tmp/kwokctl https://github.com/kubernetes-sigs/kwok/releases/download/v0.8.0/kwokctl-linux-amd64
-          echo "d5743166c657283d6e827c7c4c20cacfd9009fd94830f06718ca7b2c7099461f  /tmp/kwokctl" |
-            sha256sum --check
+          curl -fsSLo /tmp/kwokctl "https://github.com/kubernetes-sigs/kwok/releases/download/${KWOK_VERSION}/kwokctl-linux-amd64"
+          echo "${KWOKCTL_SHA256}  /tmp/kwokctl" | sha256sum --check
           sudo install /tmp/kwokctl /usr/local/bin/kwokctl
 
       - name: Install Chromium dependencies

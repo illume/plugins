@@ -137,7 +137,8 @@ async function main(): Promise<void> {
   if (!cluster || !context) {
     throw new Error(`kwokctl kubeconfig does not contain context ${generatedContextName}`);
   }
-  delete cluster.cluster['certificate-authority-data'];
+  const { 'certificate-authority-data': _, ...headlampClusterConfig } = cluster.cluster;
+  cluster.cluster = headlampClusterConfig;
   cluster.name = 'main';
   context.name = 'main';
   context.context.cluster = 'main';

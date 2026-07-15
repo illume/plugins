@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import JSZip from 'jszip';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
 
@@ -57,6 +58,60 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await expect(page.getByRole('heading', { name: 'Configured Providers' })).toBeVisible();
     await expect(page.getByText('Mock Testing Model', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Default', { exact: true })).toBeVisible();
+
+    const fakeMCP = page.getByRole('checkbox', { name: 'Fake MCP Server' });
+    await fakeMCP.check();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+      .toContain('"enableFakeMCP":true');
+    await page.reload();
+    await expect(fakeMCP).toBeChecked();
+    await page.screenshot({
+      path: path.join(screenshotsDir, '10-mock-mcp-settings.png'),
+      fullPage: true,
+    });
+
+    const mockSkillsZip = new JSZip();
+    mockSkillsZip.file(
+      'mock-skills-e2e/skills/pod-troubleshooting/SKILL.md',
+      `---
+name: mock-pod-troubleshooting
+description: Diagnose unhealthy Kubernetes pods using events and logs
+version: 1.0.0
+tags: [kubernetes, troubleshooting]
+---
+# Mock Pod Troubleshooting
+
+Inspect pod status, recent events, and container logs before recommending a fix.`
+    );
+    const mockSkillsArchive = await mockSkillsZip.generateAsync({ type: 'nodebuffer' });
+    await page.route('https://api.github.com/repos/headlamp-k8s/mock-skills/zipball/e2e', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/zip',
+        body: mockSkillsArchive,
+      })
+    );
+    await page.getByRole('button', { name: 'Add Repository' }).click();
+    await page
+      .getByRole('textbox', { name: 'Repository URL' })
+      .fill('https://github.com/headlamp-k8s/mock-skills');
+    await page.getByRole('textbox', { name: 'Ref (branch, tag, or SHA)' }).fill('e2e');
+    await page.getByRole('textbox', { name: 'Subdirectory' }).fill('skills');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+      .toContain('https://github.com/headlamp-k8s/mock-skills');
+    await page.getByRole('button', { name: 'View Loaded Skills' }).click();
+    await expect(page.getByRole('heading', { name: 'Loaded Skills' })).toBeVisible();
+    await expect(page.getByText('mock-pod-troubleshooting')).toBeVisible();
+    await expect(page.getByText(/Diagnose unhealthy Kubernetes pods/)).toBeVisible();
+    await page.screenshot({
+      path: path.join(screenshotsDir, '11-mock-skills.png'),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Close' }).click();
 
     const kubernetesTool = page.getByRole('checkbox', {
       name: 'Enable or disable Kubernetes API Request',

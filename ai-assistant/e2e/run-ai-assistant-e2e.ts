@@ -3,6 +3,7 @@ import { rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const clusterName = process.env.E2E_CLUSTER_NAME || 'ai-assistant-e2e';
@@ -111,22 +112,37 @@ async function main(): Promise<void> {
   );
 
   run('docker', ['build', '-f', 'e2e/Dockerfile.headlamp', '-t', 'headlamp-ai-e2e:local', '.']);
-  const headlampKubeconfig = run(
-    'kwokctl',
-    [
-      'get',
-      'kubeconfig',
-      '--name',
-      clusterName,
-      '--host',
-      'host.docker.internal',
-      '--insecure-skip-tls-verify',
-    ],
-    true
-  )
-    .replace(/^    certificate-authority-data:.*\n/m, '')
-    .replaceAll(`kwok-${clusterName}`, 'main');
-  writeFileSync(headlampKubeconfigPath, headlampKubeconfig);
+  const generatedContextName = `kwok-${clusterName}`;
+  const headlampKubeconfig = yaml.load(
+    run(
+      'kwokctl',
+      [
+        'get',
+        'kubeconfig',
+        '--name',
+        clusterName,
+        '--host',
+        'host.docker.internal',
+        '--insecure-skip-tls-verify',
+      ],
+      true
+    )
+  ) as {
+    clusters: Array<{ name: string; cluster: Record<string, unknown> }>;
+    contexts: Array<{ name: string; context: { cluster: string } }>;
+    'current-context': string;
+  };
+  const cluster = headlampKubeconfig.clusters.find(item => item.name === generatedContextName);
+  const context = headlampKubeconfig.contexts.find(item => item.name === generatedContextName);
+  if (!cluster || !context) {
+    throw new Error(`kwokctl kubeconfig does not contain context ${generatedContextName}`);
+  }
+  delete cluster.cluster['certificate-authority-data'];
+  cluster.name = 'main';
+  context.name = 'main';
+  context.context.cluster = 'main';
+  headlampKubeconfig['current-context'] = 'main';
+  writeFileSync(headlampKubeconfigPath, yaml.dump(headlampKubeconfig));
   run('docker', [
     'run',
     '--detach',

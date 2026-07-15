@@ -245,6 +245,8 @@ describe('DeveloperSettings component', () => {
         defaultProviderIndex: 0,
       })
     );
+    expect(onDevOptionsChange).toHaveBeenCalledOnce();
+    expect(onDevOptionsChange).toHaveBeenCalledWith({ enableMockModel: false });
     expect(onConfigsChange.mock.invocationCallOrder[0]).toBeLessThan(
       onDevOptionsChange.mock.invocationCallOrder[0]
     );

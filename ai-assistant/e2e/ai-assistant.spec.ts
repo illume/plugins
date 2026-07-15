@@ -23,6 +23,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
 
     await expect(page.getByText('Developer Options', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
     await page.getByText('Developer Options', { exact: true }).click();
     await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
 
@@ -37,16 +38,25 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await expect(page.getByText('AI Assistant (preview)', { exact: true })).toBeVisible();
     await page.getByLabel('Assistant mode').click();
     await page.getByRole('option', { name: 'Chat' }).click();
-    await page.waitForTimeout(500);
 
     const promptInput = page.locator('#deployment-ai-prompt');
     await expect(page.getByLabel('Ask AI')).toBeVisible();
+    await expect(promptInput).toBeEnabled();
     await promptInput.fill('What is a Pod?');
     await promptInput.press('Enter');
 
     await expect(page.getByText(/Kubernetes resource managed by the API server/i)).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '03-mock-model-chat.png'),
+      fullPage: true,
+    });
+
+    await promptInput.fill('List all Pod in demo');
+    await promptInput.press('Enter');
+
+    await expect(page.getByText(/kubectl get Pod -n demo/i)).toBeVisible();
+    await page.screenshot({
+      path: path.join(screenshotsDir, '05-mock-model-kubectl-guidance.png'),
       fullPage: true,
     });
 
@@ -68,6 +78,15 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await expect(page.getByText(/nginx-abc123.*CrashLoopBackOff/i).last()).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '04-mock-agent-diagnosis.png'),
+      fullPage: true,
+    });
+
+    await promptInput.fill('what is running in my cluster');
+    await promptInput.press('Enter');
+
+    await expect(page.getByText(/Everything looks healthy/i).last()).toBeVisible();
+    await page.screenshot({
+      path: path.join(screenshotsDir, '06-mock-agent-cluster-exploration.png'),
       fullPage: true,
     });
   });

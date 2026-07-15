@@ -123,7 +123,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install kwokctl
+      - name: Install Linux AMD64 kwokctl
         env:
           KWOK_VERSION: v0.8.0
           KWOKCTL_SHA256: d5743166c657283d6e827c7c4c20cacfd9009fd94830f06718ca7b2c7099461f

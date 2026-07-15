@@ -5,6 +5,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 
+interface Kubeconfig {
+  clusters: Array<{ name: string; cluster: Record<string, unknown> }>;
+  contexts: Array<{ name: string; context: { cluster: string } }>;
+  'current-context': string;
+}
+
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const clusterName = process.env.E2E_CLUSTER_NAME || 'ai-assistant-e2e';
 const headlampUrl = process.env.HEADLAMP_URL || 'http://127.0.0.1:4466';
@@ -127,17 +133,15 @@ async function main(): Promise<void> {
       ],
       true
     )
-  ) as {
-    clusters: Array<{ name: string; cluster: Record<string, unknown> }>;
-    contexts: Array<{ name: string; context: { cluster: string } }>;
-    'current-context': string;
-  };
+  ) as Kubeconfig;
   const cluster = headlampKubeconfig.clusters.find(item => item.name === generatedContextName);
   const context = headlampKubeconfig.contexts.find(item => item.name === generatedContextName);
   if (!cluster || !context) {
     throw new Error(`kwokctl kubeconfig does not contain context ${generatedContextName}`);
   }
-  const { 'certificate-authority-data': _, ...headlampClusterConfig } = cluster.cluster;
+  const { 'certificate-authority-data': unusedCertificateAuthority, ...headlampClusterConfig } =
+    cluster.cluster;
+  void unusedCertificateAuthority;
   cluster.cluster = headlampClusterConfig;
   cluster.name = 'main';
   context.name = 'main';

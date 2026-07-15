@@ -18,4 +18,4 @@ npm ci
 npm run e2e
 ```
 
-The runner builds the plugin and Headlamp image, creates the cluster, installs KWOK, runs Chromium, and deletes the cluster afterward. Set `KEEP_E2E_CLUSTER=true` to retain it for debugging. Screenshots are written to `e2e/screenshots`.
+The cross-platform TypeScript runner builds the plugin and Headlamp image, creates the cluster, installs KWOK, runs Chromium, and deletes the cluster afterward. Set `KEEP_E2E_CLUSTER=true` to retain it for debugging. Screenshots are written to `e2e/screenshots`.

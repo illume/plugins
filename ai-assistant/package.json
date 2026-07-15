@@ -12,7 +12,7 @@
     "package": "headlamp-plugin package",
     "tsc": "headlamp-plugin tsc",
     "check": "npm run format -- --check && npm run lint && npm run tsc && npx vitest run --config node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs --exclude \"**/packages/**\" --exclude \"**/node_modules/**\" && npm --prefix packages/ai-common run check --if-present",
-    "e2e": "./e2e/run.sh",
+    "e2e": "node e2e/run-ai-assistant-e2e.ts",
     "e2e:playwright": "playwright test --config e2e/playwright.config.ts",
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",

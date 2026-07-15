@@ -5,9 +5,12 @@ These Playwright tests run the production plugin in Headlamp v0.43.0 against a l
 The scenarios cover:
 
 - viewing the KWOK-backed cluster in Headlamp;
-- enabling the built-in mock testing model and mock testing agent;
+- changing and persisting preview, Kubernetes tool, and Holmes service settings;
+- adding and removing the built-in mock testing model;
 - chatting with the fixture-backed model; and
-- troubleshooting a pod with the scripted agent.
+- troubleshooting a pod with the scripted agent;
+- exploring cluster workloads with the scripted agent; and
+- opening a proactive diagnosis from a warning event on the overview page.
 
 ## Run
 

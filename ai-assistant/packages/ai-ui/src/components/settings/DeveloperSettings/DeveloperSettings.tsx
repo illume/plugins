@@ -173,8 +173,6 @@ export function DeveloperSettings({
    * @returns No value.
    */
   const handleToggleMockModel = (enabled: boolean): void => {
-    onDevOptionsChange({ ...devOptions, enableMockModel: enabled });
-
     // Also add/remove the mock-testing-model provider from saved configs
     if (onConfigsChange) {
       if (enabled) {
@@ -183,6 +181,8 @@ export function DeveloperSettings({
         onConfigsChange(removeMockModelProvider(savedConfigs));
       }
     }
+
+    onDevOptionsChange({ ...devOptions, enableMockModel: enabled });
   };
 
   /**

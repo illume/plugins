@@ -230,6 +230,11 @@ describe('ProviderConfigManager', () => {
   });
 
   describe('isSameStoredConfig', () => {
+    it('matches the same credential-free config object', () => {
+      const config = { providerId: 'mock-testing-model', config: {} };
+      expect(isSameStoredConfig(config, config)).toBe(true);
+    });
+
     it('matches configs with same provider and API key', () => {
       const a = { providerId: 'openai', config: { apiKey: 'sk-123', model: 'gpt-4o' } };
       const b = { providerId: 'openai', config: { apiKey: 'sk-123', model: 'gpt-4o' } };

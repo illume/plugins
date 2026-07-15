@@ -73,6 +73,7 @@ export interface SavedConfigurations {
  * @returns Whether provider identity and account-defining fields match.
  */
 export function isSameStoredConfig(a: StoredProviderConfig, b: StoredProviderConfig): boolean {
+  if (a === b) return true;
   if (a.providerId !== b.providerId) return false;
 
   // Azure: match on account name (sentinel configs have no real key)

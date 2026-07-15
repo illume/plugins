@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       dirs: ${{ steps.dirs.outputs.dirs }}
+      ai-assistant-changed: ${{ steps.dirs.outputs.ai-assistant-changed }}
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -33,6 +34,12 @@ jobs:
           # Get all top-level directories that had changes
           changed_dirs=$(git diff --name-only origin/main...HEAD | awk -F/ '{print $1}' | sort -u)
           echo "Changed directories: $changed_dirs"
+
+          if echo "$changed_dirs" | grep -qx 'ai-assistant'; then
+            echo "ai-assistant-changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ai-assistant-changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
           # If .github/ changed, run all plugins
           if echo "$changed_dirs" | tr ' ' '\n' | grep -q '^\.github$'; then
@@ -102,3 +109,34 @@ jobs:
 
       - name: Test ${{ matrix.dir }}
         run: npm run test
+
+  ai-assistant-e2e:
+    needs: find_changed_plugin_dirs
+    if: needs.find_changed_plugin_dirs.outputs.ai-assistant-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ./ai-assistant
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+          cache-dependency-path: ai-assistant/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Kind
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
+        with:
+          install_only: true
+
+      - name: Install Chromium dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run AI Assistant E2E tests
+        run: npm run e2e

@@ -27,18 +27,22 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
 
     await expect(page.getByRole('checkbox', { name: 'Mock Testing Model' })).toBeChecked();
+    await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeHidden();
     await page.screenshot({
       path: path.join(screenshotsDir, '02-mock-settings.png'),
       fullPage: true,
     });
-    await page.waitForTimeout(750);
 
-    await page.goto('/c/main');
     await page.getByRole('button', { name: 'AI Assistant' }).click();
     await expect(page.getByText('AI Assistant (preview)', { exact: true })).toBeVisible();
+    await page.getByLabel('Assistant mode').click();
+    await page.getByRole('option', { name: 'Chat' }).click();
+    await page.waitForTimeout(500);
 
-    await page.getByLabel('Ask AI').fill('What is a Pod?');
-    await page.getByLabel('Ask AI').press('Enter');
+    const promptInput = page.locator('#deployment-ai-prompt');
+    await expect(page.getByLabel('Ask AI')).toBeVisible();
+    await promptInput.fill('What is a Pod?');
+    await promptInput.press('Enter');
 
     await expect(page.getByText(/Kubernetes resource managed by the API server/i)).toBeVisible();
     await page.screenshot({
@@ -46,20 +50,22 @@ test.describe.serial('AI Assistant on KWOK', () => {
       fullPage: true,
     });
 
-    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
-    await page.getByText('Developer Options', { exact: true }).click();
+    await page
+      .getByRole('complementary', { name: 'AI Assistant panel' })
+      .getByRole('button', { name: 'Close' })
+      .click();
     await page.getByRole('checkbox', { name: 'Mock Testing Agent' }).check();
     await expect(page.getByRole('checkbox', { name: 'Mock Testing Agent' })).toBeChecked();
-    await page.waitForTimeout(750);
 
-    await page.goto('/c/main');
     await page.getByRole('button', { name: 'AI Assistant' }).click();
+    await page.getByLabel('Assistant mode').click();
+    await page.getByRole('option', { name: 'Holmes Agent' }).click();
 
-    await expect(page.getByLabel('Ask Holmes (Agent Mode)')).toBeVisible();
-    await page.getByLabel('Ask Holmes (Agent Mode)').fill('why is my pod failing');
-    await page.getByLabel('Ask Holmes (Agent Mode)').press('Enter');
+    await expect(promptInput).toBeVisible();
+    await promptInput.fill('why is my pod failing');
+    await promptInput.press('Enter');
 
-    await expect(page.getByText(/nginx-abc123.*CrashLoopBackOff/i)).toBeVisible();
+    await expect(page.getByText(/nginx-abc123.*CrashLoopBackOff/i).last()).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '04-mock-agent-diagnosis.png'),
       fullPage: true,

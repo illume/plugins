@@ -12,6 +12,8 @@
     "package": "headlamp-plugin package",
     "tsc": "headlamp-plugin tsc",
     "check": "npm run format -- --check && npm run lint && npm run tsc && npx vitest run --config node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs --exclude \"**/packages/**\" --exclude \"**/node_modules/**\" && npm --prefix packages/ai-common run check --if-present",
+    "e2e": "./e2e/run.sh",
+    "e2e:playwright": "playwright test --config e2e/playwright.config.ts",
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",
     "test": "headlamp-plugin test",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@kinvolk/headlamp-plugin": "^0.14.0",
+    "@playwright/test": "1.61.1",
     "tsx": "^4.22.4"
   },
   "dependencies": {

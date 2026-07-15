@@ -37,7 +37,7 @@ jobs:
           # If .github/ changed, run all plugins
           if echo "$changed_dirs" | tr ' ' '\n' | grep -q '^\.github$'; then
             echo "Changes detected in .github/ directory, running all plugins."
-            changed_dirs=$(grep -lR 'headlamp-plugin' ./*/package.json | xargs -n1 dirname | sort -u)
+            changed_dirs=$(grep -lR 'headlamp-plugin' ./*/package.json | xargs -n1 dirname | sed 's|^\./||' | sort -u)
             echo "Changed directories: $changed_dirs"
           fi
 

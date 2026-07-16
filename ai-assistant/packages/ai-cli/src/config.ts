@@ -80,7 +80,16 @@ export function loadConfigFile(configPath: string): CLIConfig {
 export function saveHeadlampAIConfig(config: CLIConfig): string {
   const configPath = path.join(getHeadlampDataDir(), 'headlamp-ai.json');
   fs.mkdirSync(getHeadlampDataDir(), { recursive: true });
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  // The config can contain a plaintext provider API key, so restrict the file
+  // to the owner (0600) instead of the default world-readable permissions.
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), { encoding: 'utf-8', mode: 0o600 });
+  // writeFileSync only applies mode when creating the file; enforce it on
+  // existing files too so key material is not left world-readable.
+  try {
+    fs.chmodSync(configPath, 0o600);
+  } catch {
+    /* best-effort on platforms without POSIX permissions */
+  }
   return configPath;
 }
 

@@ -150,6 +150,48 @@ export function getHolmesServiceProxyPath(config?: HolmesPluginConfig, subPath =
 }
 
 /**
+ * Extracts a searchable text representation from an unknown thrown value.
+ *
+ * @param err - The caught error/rejection value.
+ * @returns Concatenated message/body text, or an empty string.
+ */
+function errorText(err: unknown): string {
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object') {
+    const rec = err as Record<string, unknown>;
+    const parts: string[] = [];
+    for (const key of ['message', 'error', 'responseText', 'body'] as const) {
+      if (typeof rec[key] === 'string') parts.push(rec[key] as string);
+    }
+    try {
+      parts.push(JSON.stringify(err));
+    } catch {
+      /* ignore non-serializable errors */
+    }
+    return parts.join(' ');
+  }
+  return '';
+}
+
+/**
+ * Detects the Kubernetes API "service not found" error, which the API server
+ * returns (as a 404) when the Holmes Service does not exist in the cluster —
+ * i.e. Holmes is not installed. This must be distinguished from a 404 returned
+ * by the Holmes app itself (which means the pod is up and reachable).
+ *
+ * @param err - The caught error/rejection value.
+ * @returns Whether the error indicates the Kubernetes Service is missing.
+ */
+function isServiceNotFoundError(err: unknown): boolean {
+  const text = errorText(err);
+  if (!text) return false;
+  return (
+    /services?\s+"[^"]*"\s+not\s+found/i.test(text) ||
+    (/"kind"\s*:\s*"services"/i.test(text) && /not\s*found/i.test(text))
+  );
+}
+
+/**
  * Check if the Holmes agent is reachable via the K8s service proxy.
  * Uses the service proxy base path — the K8s API server returns 503 if
  * there are no ready endpoints, so a non-503 response means the pod is up.
@@ -175,11 +217,16 @@ export async function checkHolmesAgentHealth(
     });
     return true;
   } catch (err: unknown) {
-    // A 404/405 from the Holmes server itself means the pod IS reachable
-    // (the K8s service proxy forwarded the request successfully).
-    // Only 503 "no endpoints" or network errors mean it's truly unavailable.
+    // A 404 from the Holmes server itself means the pod IS reachable
+    // (the K8s service proxy forwarded the request successfully). But the K8s
+    // API server ALSO returns 404 when the Service does not exist (Holmes not
+    // installed) — that case must be treated as unavailable. Only 503
+    // "no endpoints" or network errors otherwise mean it's truly unavailable.
     const status =
       typeof err === 'object' && err !== null && 'status' in err ? err.status : undefined;
+    if (status === 404 && isServiceNotFoundError(err)) {
+      return false;
+    }
     if (status === 404 || status === 405 || status === 422) {
       return true;
     }

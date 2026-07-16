@@ -105,6 +105,30 @@ describe('holmesClient', () => {
       expect(result).toBe(true);
     });
 
+    it('returns false on 404 when the Service does not exist (Holmes not installed)', async () => {
+      const mockRequest: ClusterRequestFn = vi.fn().mockRejectedValue({
+        status: 404,
+        message:
+          'services "holmesgpt-holmes" not found',
+      });
+      const result = await checkHolmesAgentHealth(mockRequest, 'test-cluster');
+      expect(result).toBe(false);
+    });
+
+    it('returns false on 404 with a Kubernetes Status not-found body', async () => {
+      const mockRequest: ClusterRequestFn = vi.fn().mockRejectedValue({
+        status: 404,
+        message: JSON.stringify({
+          kind: 'Status',
+          reason: 'NotFound',
+          details: { name: 'holmesgpt-holmes', kind: 'services' },
+          code: 404,
+        }),
+      });
+      const result = await checkHolmesAgentHealth(mockRequest, 'test-cluster');
+      expect(result).toBe(false);
+    });
+
     it('returns true on 405 (pod reachable but method not allowed)', async () => {
       const mockRequest: ClusterRequestFn = vi.fn().mockRejectedValue({ status: 405 });
       const result = await checkHolmesAgentHealth(mockRequest, 'test-cluster');

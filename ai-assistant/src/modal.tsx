@@ -1756,9 +1756,7 @@ export default function AIPrompt(props: {
               handleUseHolmes();
             }}
           >
-            {agentModeStatus === 'checking'
-              ? t('Checking for Holmes…')
-              : t('Use Holmes Agent')}
+            {agentModeStatus === 'checking' ? t('Checking for Holmes…') : t('Use Holmes Agent')}
           </Button>
         </Box>
       </Box>

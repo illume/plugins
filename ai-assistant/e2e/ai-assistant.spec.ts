@@ -219,11 +219,15 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       .click();
     await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
     await page.getByRole('checkbox', { name: 'Mock Testing Model' }).uncheck();
+    await page.getByRole('checkbox', { name: 'Mock Testing Agent' }).uncheck();
+    await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+      .toContain('"enableMockAgent":false');
+    await page.reload();
     await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
 
     await page.getByRole('button', { name: 'AI Assistant' }).click();
-    await page.getByLabel('Assistant mode').click();
-    await page.getByRole('option', { name: 'Chat' }).click();
     await expect(page.getByRole('heading', { name: 'AI Assistant Setup Required' })).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '09-no-provider-setup.png'),

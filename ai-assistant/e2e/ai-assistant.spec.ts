@@ -51,6 +51,18 @@ test.describe.serial('AI Assistant on KWOK', () => {
     await previewFeatures.check();
     await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
 
+    await expect(page.getByText('Proactive Diagnosis (preview)', { exact: true })).toBeVisible();
+    const proactiveDiagnosisSetting = page.getByRole('checkbox', {
+      name: /Proactive Diagnosis \(preview\)/,
+    });
+    await expect(proactiveDiagnosisSetting).not.toBeChecked();
+    await proactiveDiagnosisSetting.check();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+      .toContain('"proactiveDiagnosisEnabled":true');
+    await page.reload();
+    await expect(proactiveDiagnosisSetting).toBeChecked();
+
     await page.getByText('Developer Options', { exact: true }).click();
     await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
 

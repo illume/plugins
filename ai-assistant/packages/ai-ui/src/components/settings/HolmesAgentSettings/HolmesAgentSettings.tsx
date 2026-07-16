@@ -1,6 +1,7 @@
-import { Box, TextField, Typography } from '@mui/material';
+import { Box, Link, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { DEFAULT_HOLMES_DOCS_URL } from '../../assistant/HolmesSetupGuide/HolmesSetupGuide';
 import { DefaultSectionWrapper } from '../../defaults/DefaultSlots/DefaultSlots';
 
 /** Default Holmes service namespace. */
@@ -133,10 +134,15 @@ export function HolmesAgentSettings({
 
   return (
     <SectionWrapper title={t('Holmes Agent')}>
-      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
         {t(
-          'Configure how the plugin reaches the HolmesGPT service through the Kubernetes API service proxy.'
+          'HolmesGPT is cluster-scoped: it must be installed and running inside your Kubernetes cluster. The plugin reaches the HolmesGPT service through the Kubernetes API service proxy.'
         )}
+      </Typography>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+        <Link href={DEFAULT_HOLMES_DOCS_URL} target="_blank" rel="noopener noreferrer">
+          {t('Learn how to install HolmesGPT in your cluster →')}
+        </Link>
       </Typography>
 
       <Box display="flex" flexDirection="column" gap={2} sx={{ ml: 1, maxWidth: 480 }}>

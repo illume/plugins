@@ -354,6 +354,18 @@ describe('SettingsPage optional sections', () => {
     ).toBe(true);
   });
 
+  it('defaults proactive diagnosis to disabled and wires the preview toggle', () => {
+    const onProactiveDiagnosisChange = vi.fn();
+    renderSettings(emptySettingsArgs, { onProactiveDiagnosisChange });
+    const toggle = screen.getByRole<HTMLInputElement>('checkbox', {
+      name: /Proactive Diagnosis \(preview\)/,
+    });
+
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
+    expect(onProactiveDiagnosisChange).toHaveBeenCalledWith(true);
+  });
+
   it('renders test mode, toggles it, and resets a shown popover', () => {
     const onTestModeChange = vi.fn();
     const onResetPopover = vi.fn();

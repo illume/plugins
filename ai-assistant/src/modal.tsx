@@ -130,6 +130,7 @@ export default function AIPrompt(props: {
   const dynamicPrompts = useDynamicPrompts();
   const prompWidthContext = usePromptWidth();
   const { t } = useTranslation();
+  const proactiveDiagnosisEnabled = pluginSettings?.proactiveDiagnosisEnabled === true;
 
   // Proactive diagnosis UI state
   const { diagnoses, isCycleRunning, scrollToEventUid, clearScrollTarget } =
@@ -239,6 +240,11 @@ export default function AIPrompt(props: {
   const DIAGNOSIS_COOLDOWN_MS = 20 * 60 * 1000; // 20 minutes
 
   useEffect(() => {
+    if (!proactiveDiagnosisEnabled) {
+      initialCycleRanRef.current = false;
+      return;
+    }
+
     // Don't start until the diagnose function is available
     if (!diagnoseFnReady) return;
 
@@ -279,7 +285,7 @@ export default function AIPrompt(props: {
       }
       proactiveDiagnosisManager.removeListener('cycle-end', handleCycleEnd);
     };
-  }, [diagnoseFnReady]); // runProactiveCycle is now stable, no need in deps
+  }, [diagnoseFnReady, proactiveDiagnosisEnabled]); // runProactiveCycle is stable
   // ─── End Proactive Diagnosis Setup ──────────────────────────────────
 
   const [activeConfig, setActiveConfig] = useState<StoredProviderConfig | null>(null);
@@ -1813,14 +1819,16 @@ export default function AIPrompt(props: {
               minWidth: 0,
             }}
           >
-            <ProactiveDiagnosisSection
-              diagnoses={diagnoses}
-              scrollToEventUid={scrollToEventUid}
-              onScrollComplete={clearScrollTarget}
-              isCycleRunning={isCycleRunning}
-              onYamlAction={handleYamlAction}
-              ContentRendererSlot={ContentRenderer}
-            />
+            {proactiveDiagnosisEnabled && (
+              <ProactiveDiagnosisSection
+                diagnoses={diagnoses}
+                scrollToEventUid={scrollToEventUid}
+                onScrollComplete={clearScrollTarget}
+                isCycleRunning={isCycleRunning}
+                onYamlAction={handleYamlAction}
+                ContentRendererSlot={ContentRenderer}
+              />
+            )}
             <AIChatContent
               history={memoizedHistory}
               isLoading={loading}

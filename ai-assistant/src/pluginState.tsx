@@ -193,6 +193,8 @@ interface PluginConfig extends SavedConfigurations {
   mcpConfig?: MCPConfig;
   /** Is the AI Assistant preview enabled? Disabled by default. */
   previewEnabled?: boolean;
+  /** Is proactive diagnosis enabled? Disabled by default. */
+  proactiveDiagnosisEnabled?: boolean;
   /**
    * Provider IDs the user has explicitly dismissed during auto-detection.
    * Detection still runs each session but skips these provider types so

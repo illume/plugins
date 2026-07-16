@@ -1339,6 +1339,21 @@ export default function AIPrompt(props: {
     }
   }, [pluginSettings, handleToggleAgentMode]);
 
+  // In-chat "agent mode" toggle. Enabling verifies Holmes is reachable first
+  // (via handleUseHolmes) so users never land in a dead agent mode; disabling
+  // returns to chat and clears any setup guidance.
+  const handleToggleAgentModeRequest = React.useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        handleUseHolmes();
+      } else {
+        setShowHolmesSetup(false);
+        handleToggleAgentMode(false);
+      }
+    },
+    [handleUseHolmes, handleToggleAgentMode]
+  );
+
   // Auto-initialize agent mode on first mount if Holmes is reachable
   // or if mock agent is enabled.
   // Holmes takes priority over chat mode: if Holmes is available, always
@@ -1371,7 +1386,14 @@ export default function AIPrompt(props: {
   const handleAgentSend = React.useCallback(
     async (prompt: string) => {
       const agent = holmesAgentRef.current;
-      if (!agent) return;
+      if (!agent) {
+        // Holmes agent isn't available (not installed / unreachable in this
+        // cluster). Surface the setup guide instead of silently dropping the
+        // prompt with no feedback.
+        setIsAgentMode(false);
+        setShowHolmesSetup(true);
+        return;
+      }
 
       setOpenPopup(true);
       setPromptHistory(prev => [...prev, { role: 'user', content: prompt }]);
@@ -1669,24 +1691,31 @@ export default function AIPrompt(props: {
     return promptHistory;
   }, [shouldShowGreeting, getGreetingMessage, promptHistory]);
 
+  // Holmes was requested but is not reachable — guide the user to install it in
+  // their cluster and configure the connection in Settings. Shown regardless of
+  // provider config or agent-mode state so users are never stuck in a dead
+  // agent mode.
+  if (showHolmesSetup) {
+    return (
+      <HolmesSetupGuide
+        onOpenSettings={() => {
+          history.push(getSettingsURL());
+          setOpenPopup(false);
+        }}
+        onRetry={handleUseHolmes}
+        onDismiss={() => {
+          setShowHolmesSetup(false);
+          setChatMode('chat');
+        }}
+        namespace={pluginSettings?.holmesNamespace}
+        serviceName={pluginSettings?.holmesServiceName}
+        port={pluginSettings?.holmesPort}
+      />
+    );
+  }
+
   // If no valid configuration AND NOT in agent mode, show setup message
   if (!hasValidConfig && !isAgentMode && chatMode !== 'agent') {
-    // Holmes was requested but is not reachable — guide the user to install it
-    // in their cluster and configure the connection in Settings.
-    if (showHolmesSetup) {
-      return (
-        <HolmesSetupGuide
-          onOpenSettings={() => {
-            history.push(getSettingsURL());
-            setOpenPopup(false);
-          }}
-          onRetry={handleUseHolmes}
-          namespace={pluginSettings?.holmesNamespace}
-          serviceName={pluginSettings?.holmesServiceName}
-          port={pluginSettings?.holmesPort}
-        />
-      );
-    }
     return (
       <Box
         sx={{
@@ -1869,7 +1898,7 @@ export default function AIPrompt(props: {
                 handleChangeConfig(config, model);
               }}
               onTestModeResponse={handleTestModeResponse}
-              onToggleAgentMode={handleToggleAgentMode}
+              onToggleAgentMode={handleToggleAgentModeRequest}
               onToolsChange={newEnabledTools => {
                 setEnabledTools(newEnabledTools);
                 // Recreate AI manager with new tools

@@ -29,6 +29,8 @@ export interface HolmesSetupGuideProps {
   onOpenSettings: () => void;
   /** Optional: re-checks whether Holmes has become reachable. */
   onRetry?: () => void;
+  /** Optional: dismisses the guide (e.g. to go back to AI Chat mode). */
+  onDismiss?: () => void;
   /** Documentation URL for installing HolmesGPT. */
   docsUrl?: string;
   /** Namespace the plugin currently looks for the Holmes service in. */
@@ -52,6 +54,7 @@ export interface HolmesSetupGuideProps {
 export function HolmesSetupGuide({
   onOpenSettings,
   onRetry,
+  onDismiss,
   docsUrl = DEFAULT_HOLMES_DOCS_URL,
   namespace,
   serviceName,
@@ -155,6 +158,14 @@ export function HolmesSetupGuide({
             </Button>
           )}
         </Box>
+
+        {onDismiss && (
+          <Box sx={{ mt: 1.5 }}>
+            <Button variant="text" size="small" color="inherit" onClick={onDismiss}>
+              {t('Back to AI Chat')}
+            </Button>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

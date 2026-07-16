@@ -635,14 +635,17 @@ export default function ProactiveDiagnosisSection({
         />
       </Box>
 
-      {/* Task list — one row per event with status icon */}
-      {diagnoses.map(d => (
-        <div
-          key={d.eventUid}
-          ref={el => {
-            itemRefs.current[d.eventUid] = el;
-          }}
-        >
+      {/* Task list — one row per event with status icon.
+          aria-live announces status changes as diagnoses stream in so screen
+          reader users are notified without needing to re-read the region. */}
+      <Box aria-live="polite" aria-busy={isCycleRunning}>
+        {diagnoses.map(d => (
+          <div
+            key={d.eventUid}
+            ref={el => {
+              itemRefs.current[d.eventUid] = el;
+            }}
+          >
           {/* Status row */}
           <Box
             sx={{
@@ -716,6 +719,7 @@ export default function ProactiveDiagnosisSection({
           )}
         </div>
       ))}
+      </Box>
 
       {/* Separator between proactive diagnoses and regular chat */}
       {diagnoses.length > 0 && (

@@ -21,7 +21,7 @@ interface AIChatContentProps {
   onYamlAction: (yaml: string, title: string, type: string, isDeleteOp: boolean) => void;
   /** Callback to retry a failed tool invocation with the given name and arguments. */
   onRetryTool?: (toolName: string, args: Record<string, any>) => void;
-  /** Live thinking steps streamed from the AKS agent during processing. */
+  /** Live thinking steps streamed during processing. */
   agentThinkingSteps?: AgentThinkingStep[];
 }
 

@@ -3,6 +3,8 @@
  * suitable for display or as LLM context.
  */
 
+import { redactSecrets } from '../../security/redactSecrets';
+
 export interface ToolResult {
   /** Truthy when the tool failed. */
   error?: boolean | string;
@@ -45,7 +47,9 @@ export function aggregateToolResults(results: Record<string, ToolResult>): strin
     }
   }
 
-  return aggregation;
+  // Redact secret material (e.g. Kubernetes Secret values) before this text is
+  // shown in the UI or sent to the LLM provider.
+  return redactSecrets(aggregation);
 }
 
 /**
@@ -87,5 +91,6 @@ export function formatToolResultsForLLM(results: Record<string, ToolResult>): st
     }
   }
 
-  return formatted;
+  // Redact secret material before this text is sent to the LLM provider.
+  return redactSecrets(formatted);
 }

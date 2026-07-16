@@ -36,6 +36,12 @@
 export function redactSecrets(input: string): string {
   let out = input;
 
+  // Kubernetes Secret payloads first: redact every value under `data` /
+  // `stringData` regardless of the key name (the generic key-name patterns
+  // below only catch credential-sounding keys and would miss entries like
+  // `DATABASE_URL` or `session`). Covers both `-o json` and `-o yaml` output.
+  out = redactKubernetesSecretValues(out);
+
   // PEM blocks — run first so private-key content is gone before the
   // generic key-value patterns could match individual lines inside them.
   out = out.replace(/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[REDACTED]');
@@ -46,6 +52,22 @@ export function redactSecrets(input: string): string {
 
   // AWS access key IDs (20-char uppercase alphanumeric starting with AKIA).
   out = out.replace(/\bAKIA[0-9A-Z]{16}\b/g, '[REDACTED]');
+
+  // High-confidence provider token formats with distinctive prefixes. These
+  // have negligible false-positive risk and cover credentials the generic
+  // key-name patterns miss when they appear as bare values.
+  // GitHub personal access / OAuth / app tokens.
+  out = out.replace(/\b(gh[posur]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/g, '[REDACTED]');
+  // Google API keys.
+  out = out.replace(/\bAIza[0-9A-Za-z_-]{35}\b/g, '[REDACTED]');
+  // Google OAuth client secrets.
+  out = out.replace(/\bGOCSPX-[A-Za-z0-9_-]{10,}\b/g, '[REDACTED]');
+  // Slack tokens.
+  out = out.replace(/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, '[REDACTED]');
+  // OpenAI / Stripe-style secret keys (sk-..., including sk-proj-...).
+  out = out.replace(/\b(sk|rk)-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]');
+  // Azure Storage account keys and connection-string key material.
+  out = out.replace(/\b(AccountKey|SharedAccessKey|SharedAccessSignature)\s*=\s*[^;"'\s]+/gi, '$1=[REDACTED]');
 
   // HTTP Authorization / credential headers — JSON-quoted form first so the
   // quoted key and value are matched before the unquoted fallback below.
@@ -91,4 +113,134 @@ export function redactSecrets(input: string): string {
   );
 
   return out;
+}
+
+/**
+ * Redacts every value under `data` / `stringData` of Kubernetes Secret objects.
+ *
+ * Unlike the key-name heuristics, this removes secret material even when the
+ * data keys are arbitrary (e.g. `DATABASE_URL`, `session`). Handles both JSON
+ * (`kubectl -o json`, including `List` responses) and YAML (`-o yaml`) output.
+ * Input that does not look like a Secret is returned unchanged so ConfigMaps
+ * and unrelated payloads are not over-redacted.
+ *
+ * @param input - Raw text that may contain one or more Kubernetes Secrets.
+ * @returns The input with Secret data values replaced by `[REDACTED]`.
+ */
+function redactKubernetesSecretValues(input: string): string {
+  // Cheap early-out: only act when the text mentions a Secret kind.
+  if (!/\bkind\b["\s]*:\s*["']?Secret\b/i.test(input)) {
+    return input;
+  }
+
+  const trimmed = input.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (redactSecretsInParsedJson(parsed)) {
+        return JSON.stringify(parsed, null, 2);
+      }
+      return input;
+    } catch {
+      // Not valid JSON — fall through to the YAML line scanner.
+    }
+  }
+
+  return redactKubernetesSecretValuesYaml(input);
+}
+
+/**
+ * Recursively redacts `data` / `stringData` values of Secret objects in a
+ * parsed JSON structure. Mutates the value in place.
+ *
+ * @param value - Parsed JSON value to walk.
+ * @returns Whether any redaction was applied.
+ */
+function redactSecretsInParsedJson(value: unknown): boolean {
+  let changed = false;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      changed = redactSecretsInParsedJson(item) || changed;
+    }
+    return changed;
+  }
+
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+
+    if (obj.kind === 'Secret') {
+      for (const field of ['data', 'stringData'] as const) {
+        const bag = obj[field];
+        if (bag && typeof bag === 'object' && !Array.isArray(bag)) {
+          for (const key of Object.keys(bag as Record<string, unknown>)) {
+            (bag as Record<string, unknown>)[key] = '[REDACTED]';
+            changed = true;
+          }
+        }
+      }
+    }
+
+    for (const key of Object.keys(obj)) {
+      changed = redactSecretsInParsedJson(obj[key]) || changed;
+    }
+  }
+
+  return changed;
+}
+
+/**
+ * Line-based fallback that redacts `data` / `stringData` blocks of YAML Secret
+ * documents. Over-redaction is preferred to leakage, so once a `Secret` kind is
+ * seen the block scan stays active until a non-Secret `kind` or document break.
+ *
+ * @param input - YAML text that may contain Secret documents.
+ * @returns The YAML with Secret data values replaced by `[REDACTED]`.
+ */
+function redactKubernetesSecretValuesYaml(input: string): string {
+  const lines = input.split('\n');
+  let inSecret = false;
+  let dataBlockIndent: number | null = null;
+
+  const redacted = lines.map(line => {
+    // Document boundary resets all state.
+    if (/^\s*---\s*$/.test(line)) {
+      inSecret = false;
+      dataBlockIndent = null;
+      return line;
+    }
+
+    const kindMatch = line.match(/^\s*(?:- )?kind:\s*["']?([A-Za-z0-9]+)["']?\s*$/);
+    if (kindMatch) {
+      inSecret = kindMatch[1] === 'Secret';
+      dataBlockIndent = null;
+      return line;
+    }
+
+    if (!inSecret) {
+      return line;
+    }
+
+    const dataMatch = line.match(/^(\s*)(data|stringData):\s*$/);
+    if (dataMatch) {
+      dataBlockIndent = dataMatch[1].length;
+      return line;
+    }
+
+    if (dataBlockIndent !== null && line.trim() !== '') {
+      const entryMatch = line.match(/^(\s*)([^\s:][^:]*):\s*.*$/);
+      if (entryMatch) {
+        const indent = entryMatch[1].length;
+        if (indent > dataBlockIndent) {
+          return `${entryMatch[1]}${entryMatch[2]}: [REDACTED]`;
+        }
+        // Dedented back out of the data block; leave sibling keys intact.
+        dataBlockIndent = null;
+      }
+    }
+
+    return line;
+  });
+
+  return redacted.join('\n');
 }

@@ -15,7 +15,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { getAllAvailableTools, isBuiltInTool } from './toolDefinitions';
+import {
+  getAllAvailableTools,
+  isBuiltInTool,
+  isSensitiveBuiltInToolCall,
+} from './toolDefinitions';
 
 describe('toolDefinitions', () => {
   it('returns the built-in tools', () => {
@@ -33,5 +37,27 @@ describe('toolDefinitions', () => {
   it('identifies tools in the built-in registry', () => {
     expect(isBuiltInTool('kubernetes_api_request')).toBe(true);
     expect(isBuiltInTool('github__search')).toBe(false);
+  });
+
+  it('flags Kubernetes Secret access as sensitive, other reads as not', () => {
+    expect(
+      isSensitiveBuiltInToolCall('kubernetes_api_request', {
+        url: '/api/v1/namespaces/default/secrets/db',
+        method: 'GET',
+      })
+    ).toBe(true);
+    expect(
+      isSensitiveBuiltInToolCall('kubernetes_api_request', { url: '/api/v1/secrets', method: 'GET' })
+    ).toBe(true);
+    expect(
+      isSensitiveBuiltInToolCall('kubernetes_api_request', {
+        url: '/api/v1/namespaces/default/pods?labelSelector=x',
+        method: 'GET',
+      })
+    ).toBe(false);
+    // Not a built-in tool, or missing/invalid url.
+    expect(isSensitiveBuiltInToolCall('github__search', { url: '/secrets' })).toBe(false);
+    expect(isSensitiveBuiltInToolCall('kubernetes_api_request', {})).toBe(false);
+    expect(isSensitiveBuiltInToolCall('kubernetes_api_request', null)).toBe(false);
   });
 });

@@ -19,6 +19,9 @@ const headlampContainerName = `${clusterName}-headlamp`;
 const kubeconfigPath = path.join(tmpdir(), `${clusterName}-kubeconfig`);
 const headlampKubeconfigPath = path.join(tmpdir(), `${clusterName}-headlamp-kubeconfig`);
 const commandSuffix = process.platform === 'win32' ? '.cmd' : '';
+const playwrightScript = process.argv.includes('--walkthrough')
+  ? 'e2e:walkthrough:playwright'
+  : 'e2e:playwright';
 
 function executable(command: string): string {
   return command === 'npm' || command === 'npx' ? `${command}${commandSuffix}` : command;
@@ -170,7 +173,7 @@ async function main(): Promise<void> {
     throw error;
   }
 
-  const result = spawnSync(executable('npm'), ['run', 'e2e:playwright'], {
+  const result = spawnSync(executable('npm'), ['run', playwrightScript], {
     cwd: rootDir,
     env: { ...process.env, HEADLAMP_URL: headlampUrl, HEADLAMP_TOKEN: headlampToken },
     stdio: 'inherit',

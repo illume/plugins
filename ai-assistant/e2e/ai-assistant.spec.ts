@@ -5,6 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
+const titleScreenDuration = 1_500;
+const titleScreenTransitionDelay = 300;
 
 async function showTitleScreen(page: Page, title: string, enabled: boolean): Promise<void> {
   if (!enabled) {
@@ -36,9 +38,9 @@ async function showTitleScreen(page: Page, title: string, enabled: boolean): Pro
     titleScreen.appendChild(heading);
     document.body.appendChild(titleScreen);
   }, title);
-  await page.waitForTimeout(1_500);
+  await page.waitForTimeout(titleScreenDuration);
   await page.locator('[data-walkthrough-title]').evaluate(element => element.remove());
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(titleScreenTransitionDelay);
 }
 
 test.describe.serial('AI Assistant on KWOK', () => {

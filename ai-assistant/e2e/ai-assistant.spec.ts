@@ -5,8 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
-const titleScreenDuration = 1_500;
-const titleScreenTransitionDelay = 300;
+const TITLE_SCREEN_DURATION_MS = 1_500;
+const TITLE_SCREEN_TRANSITION_DELAY_MS = 300;
 
 async function showTitleScreen(page: Page, title: string, enabled: boolean): Promise<void> {
   if (!enabled) {
@@ -38,9 +38,9 @@ async function showTitleScreen(page: Page, title: string, enabled: boolean): Pro
     titleScreen.appendChild(heading);
     document.body.appendChild(titleScreen);
   }, title);
-  await page.waitForTimeout(titleScreenDuration);
+  await page.waitForTimeout(TITLE_SCREEN_DURATION_MS);
   await page.locator('[data-walkthrough-title]').evaluate(element => element.remove());
-  await page.waitForTimeout(titleScreenTransitionDelay);
+  await page.waitForTimeout(TITLE_SCREEN_TRANSITION_DELAY_MS);
 }
 
 test.describe.serial('AI Assistant on KWOK', () => {
@@ -49,7 +49,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
   });
 
   test('covers the main assistant scenarios', async ({ page }, testInfo) => {
-    const walkthrough = testInfo.config.metadata.walkthrough === true;
+    const walkthrough = testInfo.config.metadata?.walkthrough === true;
     if (walkthrough) {
       await page.addInitScript(() => {
         localStorage.setItem('headlampThemePreference', 'dark');

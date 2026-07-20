@@ -7,12 +7,21 @@ import { fileURLToPath } from 'node:url';
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
 const TITLE_SCREEN_DURATION_MS = 1_500;
 const TITLE_SCREEN_TRANSITION_DELAY_MS = 300;
+const SCENE_END_DELAY_MS = 2_000;
 
-async function showTitleScreen(page: Page, title: string, enabled: boolean): Promise<void> {
+async function showTitleScreen(
+  page: Page,
+  title: string,
+  enabled: boolean,
+  pauseBefore = true
+): Promise<void> {
   if (!enabled) {
     return;
   }
 
+  if (pauseBefore) {
+    await page.waitForTimeout(SCENE_END_DELAY_MS);
+  }
   await page.evaluate(title => {
     const titleScreen = document.createElement('div');
     titleScreen.dataset.walkthroughTitle = '';
@@ -56,7 +65,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       });
     }
 
-    await showTitleScreen(page, 'Cluster overview', walkthrough);
+    await showTitleScreen(page, 'Cluster overview', walkthrough, false);
     await page.goto('/c/main/nodes');
 
     const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
@@ -285,5 +294,8 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       path: path.join(screenshotsDir, '09-no-provider-setup.png'),
       fullPage: true,
     });
+    if (walkthrough) {
+      await page.waitForTimeout(SCENE_END_DELAY_MS);
+    }
   });
 });

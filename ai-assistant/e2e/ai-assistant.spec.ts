@@ -8,6 +8,7 @@ const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '
 const TITLE_SCREEN_DURATION_MS = 1_500;
 const TITLE_SCREEN_TRANSITION_DELAY_MS = 300;
 const SCENE_END_DELAY_MS = 2_000;
+const DIAGNOSIS_READ_DELAY_MS = 3_000;
 
 async function showTitleScreen(
   page: Page,
@@ -65,7 +66,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       });
     }
 
-    await showTitleScreen(page, 'Cluster overview', walkthrough, false);
+    await showTitleScreen(page, 'Configure the AI Assistant', walkthrough, false);
     await page.goto('/c/main/nodes');
 
     const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
@@ -91,7 +92,6 @@ test.describe.serial('AI Assistant on KWOK', () => {
 
     await expect(page.getByText('Developer Options', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
-    await showTitleScreen(page, 'Configure the AI Assistant', walkthrough);
 
     const previewFeatures = page.getByRole('checkbox', { name: 'Preview Features' });
     await expect(previewFeatures).toBeChecked();
@@ -184,6 +184,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();
 
+    await showTitleScreen(page, 'Configure the Holmes Agent', walkthrough);
     await page.getByRole('textbox', { name: 'Namespace' }).fill('ai-e2e');
     await page.getByRole('textbox', { name: 'Service name' }).fill('holmes-e2e');
     const holmesPort = page.getByRole('spinbutton', { name: 'Port' });
@@ -222,11 +223,19 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       fullPage: true,
     });
 
+    await page
+      .getByRole('complementary', { name: 'AI Assistant panel' })
+      .getByRole('button', { name: 'Close' })
+      .click();
+    await page.goto('/c/main');
+    await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
     await showTitleScreen(page, 'Get Kubernetes guidance', walkthrough);
-    await promptInput.fill('List all Pod in demo');
+    await page.getByRole('button', { name: 'AI Assistant' }).click();
+    await expect(promptInput).toBeEnabled();
+    await promptInput.fill('List all pods in demo');
     await promptInput.press('Enter');
 
-    await expect(page.getByText(/kubectl get Pod -n demo/i)).toBeVisible();
+    await expect(page.getByText(/kubectl get pods -n demo/i)).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '05-mock-model-kubectl-guidance.png'),
       fullPage: true,
@@ -236,6 +245,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       .getByRole('complementary', { name: 'AI Assistant panel' })
       .getByRole('button', { name: 'Close' })
       .click();
+    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
     await page.getByRole('checkbox', { name: 'Mock Testing Agent' }).check();
     await expect(page.getByRole('checkbox', { name: 'Mock Testing Agent' })).toBeChecked();
 
@@ -262,6 +272,9 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       path: path.join(screenshotsDir, '04-mock-agent-diagnosis.png'),
       fullPage: true,
     });
+    if (walkthrough) {
+      await page.waitForTimeout(DIAGNOSIS_READ_DELAY_MS);
+    }
 
     await showTitleScreen(page, 'Explore cluster workloads', walkthrough);
     await promptInput.fill('what is running in my cluster');
@@ -287,7 +300,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await page.reload();
     await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
 
-    await showTitleScreen(page, 'Provider setup guidance', walkthrough);
+    await showTitleScreen(page, 'New provider setup guidance', walkthrough);
     await page.getByRole('button', { name: 'AI Assistant' }).click();
     await expect(page.getByRole('heading', { name: 'AI Assistant Setup Required' })).toBeVisible();
     await page.screenshot({

@@ -1,17 +1,72 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import JSZip from 'jszip';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
+const TITLE_SCREEN_DURATION_MS = 1_500;
+const TITLE_SCREEN_TRANSITION_DELAY_MS = 300;
+const SCENE_END_DELAY_MS = 2_000;
+const DIAGNOSIS_READ_DELAY_MS = 3_000;
+
+async function showTitleScreen(
+  page: Page,
+  title: string,
+  enabled: boolean,
+  pauseBefore = true
+): Promise<void> {
+  if (!enabled) {
+    return;
+  }
+
+  if (pauseBefore) {
+    await page.waitForTimeout(SCENE_END_DELAY_MS);
+  }
+  await page.evaluate(title => {
+    const titleScreen = document.createElement('div');
+    titleScreen.dataset.walkthroughTitle = '';
+    Object.assign(titleScreen.style, {
+      alignItems: 'center',
+      background: '#121212',
+      color: '#ffffff',
+      display: 'flex',
+      inset: '0',
+      justifyContent: 'center',
+      position: 'fixed',
+      zIndex: '2147483647',
+    });
+
+    const heading = document.createElement('h1');
+    heading.textContent = title;
+    Object.assign(heading.style, {
+      font: '500 64px system-ui, sans-serif',
+      margin: '0',
+      maxWidth: '80%',
+      textAlign: 'center',
+    });
+    titleScreen.appendChild(heading);
+    document.body.appendChild(titleScreen);
+  }, title);
+  await page.waitForTimeout(TITLE_SCREEN_DURATION_MS);
+  await page.locator('[data-walkthrough-title]').evaluate(element => element.remove());
+  await page.waitForTimeout(TITLE_SCREEN_TRANSITION_DELAY_MS);
+}
 
 test.describe.serial('AI Assistant on KWOK', () => {
   test.beforeAll(() => {
     fs.mkdirSync(screenshotsDir, { recursive: true });
   });
 
-  test('covers the main assistant scenarios', async ({ page }) => {
+  test('covers the main assistant scenarios', async ({ page }, testInfo) => {
+    const walkthrough = testInfo.config.metadata?.walkthrough === true;
+    if (walkthrough) {
+      await page.addInitScript(() => {
+        localStorage.setItem('headlampThemePreference', 'dark');
+      });
+    }
+
+    await showTitleScreen(page, 'Configure the AI Assistant', walkthrough, false);
     await page.goto('/c/main/nodes');
 
     const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
@@ -71,6 +126,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       fullPage: true,
     });
 
+    await showTitleScreen(page, 'Load skills from a repository', walkthrough);
     const mockSkillContent = `---
 name: mock-pod-troubleshooting
 description: Diagnose unhealthy Kubernetes pods using events and logs
@@ -128,6 +184,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();
 
+    await showTitleScreen(page, 'Configure the Holmes Agent', walkthrough);
     await page.getByRole('textbox', { name: 'Namespace' }).fill('ai-e2e');
     await page.getByRole('textbox', { name: 'Service name' }).fill('holmes-e2e');
     const holmesPort = page.getByRole('spinbutton', { name: 'Port' });
@@ -147,6 +204,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       fullPage: true,
     });
 
+    await showTitleScreen(page, 'Chat with a model', walkthrough);
     await page.getByRole('button', { name: 'AI Assistant' }).click();
     await expect(page.getByText('AI Assistant (preview)', { exact: true })).toBeVisible();
     await page.getByLabel('Assistant mode').click();
@@ -165,10 +223,19 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       fullPage: true,
     });
 
-    await promptInput.fill('List all Pod in demo');
+    await page
+      .getByRole('complementary', { name: 'AI Assistant panel' })
+      .getByRole('button', { name: 'Close' })
+      .click();
+    await page.goto('/c/main');
+    await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
+    await showTitleScreen(page, 'Get Kubernetes guidance', walkthrough);
+    await page.getByRole('button', { name: 'AI Assistant' }).click();
+    await expect(promptInput).toBeEnabled();
+    await promptInput.fill('List all pods in demo');
     await promptInput.press('Enter');
 
-    await expect(page.getByText(/kubectl get Pod -n demo/i)).toBeVisible();
+    await expect(page.getByText(/kubectl get pods -n demo/i)).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '05-mock-model-kubectl-guidance.png'),
       fullPage: true,
@@ -178,6 +245,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       .getByRole('complementary', { name: 'AI Assistant panel' })
       .getByRole('button', { name: 'Close' })
       .click();
+    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
     await page.getByRole('checkbox', { name: 'Mock Testing Agent' }).check();
     await expect(page.getByRole('checkbox', { name: 'Mock Testing Agent' })).toBeChecked();
 
@@ -192,6 +260,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       .click();
     await page.goto('/c/main');
 
+    await showTitleScreen(page, 'Troubleshoot a failing pod', walkthrough);
     await page.getByRole('button', { name: 'AI Assistant' }).click();
 
     await expect(promptInput).toBeVisible();
@@ -203,7 +272,11 @@ Inspect pod status, recent events, and container logs before recommending a fix.
       path: path.join(screenshotsDir, '04-mock-agent-diagnosis.png'),
       fullPage: true,
     });
+    if (walkthrough) {
+      await page.waitForTimeout(DIAGNOSIS_READ_DELAY_MS);
+    }
 
+    await showTitleScreen(page, 'Explore cluster workloads', walkthrough);
     await promptInput.fill('what is running in my cluster');
     await promptInput.press('Enter');
 
@@ -227,11 +300,15 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await page.reload();
     await expect(page.getByRole('heading', { name: 'No Configured Providers' })).toBeVisible();
 
+    await showTitleScreen(page, 'New provider setup guidance', walkthrough);
     await page.getByRole('button', { name: 'AI Assistant' }).click();
     await expect(page.getByRole('heading', { name: 'AI Assistant Setup Required' })).toBeVisible();
     await page.screenshot({
       path: path.join(screenshotsDir, '09-no-provider-setup.png'),
       fullPage: true,
     });
+    if (walkthrough) {
+      await page.waitForTimeout(SCENE_END_DELAY_MS);
+    }
   });
 });

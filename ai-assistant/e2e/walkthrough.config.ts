@@ -17,7 +17,7 @@ export default defineConfig({
     colorScheme: 'dark',
     launchOptions: {
       ...baseConfig.use?.launchOptions,
-      slowMo: 200,
+      slowMo: 800,
     },
     screenshot: 'off',
     trace: 'off',

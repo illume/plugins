@@ -56,6 +56,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       });
     }
 
+    await showTitleScreen(page, 'Cluster overview', walkthrough);
     await page.goto('/c/main/nodes');
 
     const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
@@ -72,7 +73,6 @@ test.describe.serial('AI Assistant on KWOK', () => {
 
     await expect(page.getByText('kwok-worker', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'AI Assistant' })).toBeVisible();
-    await showTitleScreen(page, 'Cluster overview', walkthrough);
     await page.screenshot({
       path: path.join(screenshotsDir, '01-kwok-cluster.png'),
       fullPage: true,

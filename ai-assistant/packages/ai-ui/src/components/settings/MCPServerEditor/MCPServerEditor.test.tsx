@@ -106,6 +106,16 @@ it('loads Grafana with write tools disabled', () => {
   );
 });
 
+it('ignores the blank observability preset option', () => {
+  render(<MCPServerEditor {...addServerArgs} />);
+
+  fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
+    target: { value: '' },
+  });
+
+  expect(screen.getByRole('textbox', { name: /Server Name/ })).toHaveProperty('value', '');
+});
+
 it.each([
   ['', 'npx', '[]', 'Server name is required'],
   ['server', '', '[]', 'Command is required'],

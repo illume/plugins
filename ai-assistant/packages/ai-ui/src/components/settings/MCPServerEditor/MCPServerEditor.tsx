@@ -231,7 +231,11 @@ export default function MCPServerEditor({
                 size="small"
                 label={t('Select Provider')}
                 value={preset}
-                onChange={event => handleLoadPreset(event.target.value as ObservabilityPreset)}
+                onChange={event => {
+                  if (event.target.value) {
+                    handleLoadPreset(event.target.value as ObservabilityPreset);
+                  }
+                }}
                 SelectProps={{ native: true }}
                 sx={{ minWidth: 180 }}
               >

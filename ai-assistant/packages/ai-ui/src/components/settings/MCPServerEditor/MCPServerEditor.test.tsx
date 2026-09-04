@@ -76,6 +76,37 @@ it('loads the example server and clears stale validation', () => {
 });
 
 it.each([
+  ['Datadog', 'datadog', 'npx'],
+  ['Splunk', 'splunk', 'npx'],
+  ['Grafana', 'grafana', 'docker'],
+  ['Prometheus', 'prometheus', 'docker'],
+] as const)('loads the read-only %s preset', (option, name, command) => {
+  render(<MCPServerEditor {...addServerArgs} />);
+
+  fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
+    target: { value: name },
+  });
+
+  expect(screen.getByRole('textbox', { name: /Server Name/ })).toHaveProperty('value', name);
+  expect(screen.getByRole('textbox', { name: /Command/ })).toHaveProperty('value', command);
+  expect(screen.getByRole('checkbox', { name: 'Auto Approve' })).toHaveProperty('checked', false);
+  expect(screen.getByRole('option', { name: option })).toHaveProperty('value', name);
+});
+
+it('loads Grafana with write tools disabled', () => {
+  render(<MCPServerEditor {...addServerArgs} />);
+
+  fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
+    target: { value: 'grafana' },
+  });
+
+  expect(screen.getByRole('textbox', { name: /Arguments/ })).toHaveProperty(
+    'value',
+    expect.stringContaining('--disable-write')
+  );
+});
+
+it.each([
   ['', 'npx', '[]', 'Server name is required'],
   ['server', '', '[]', 'Command is required'],
   [' EXISTING-SERVER ', 'npx', '[]', 'A server with this name already exists'],

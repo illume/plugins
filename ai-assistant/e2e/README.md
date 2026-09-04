@@ -6,6 +6,7 @@ The scenarios cover:
 
 - viewing the KWOK-backed cluster in Headlamp;
 - changing and persisting preview, Kubernetes tool, and Holmes service settings;
+- loading and persisting read-only observability MCP server presets;
 - adding and removing the built-in mock testing model;
 - chatting with the fixture-backed model;
 - troubleshooting a pod with the scripted agent;

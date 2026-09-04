@@ -135,3 +135,56 @@ Once servers are configured, the assistant automatically discovers the tools the
 - View tool descriptions and input schemas.
 - Track tool usage statistics.
 - Use bulk operations to enable or disable all tools at once.
+
+### Read-only observability data sources
+
+In the desktop app, select **Add MCP Server**, choose an **Observability preset**, replace its
+placeholder URL and credentials, and save the changes. Docker is required for the Grafana and
+Prometheus presets; Node.js and `npx` are required for Datadog and Splunk.
+
+Keep **Auto Approve** off unless you trust both the server and every tool it exposes. Credentials
+are passed only to the configured MCP process, but tool results are sent to the selected model.
+Use a dedicated least-privilege account and restrict it to the logs, metrics, indexes, and
+dashboards that the assistant may inspect.
+
+#### Datadog
+
+The preset connects to Datadog's managed MCP endpoint through `mcp-remote`. The first connection
+opens Datadog's OAuth flow. Replace `datadoghq.com` in the endpoint with your
+[Datadog site](https://docs.datadoghq.com/getting_started/site/) when necessary (for example,
+`datadoghq.eu`), then authenticate as a user or service account with read-only access.
+
+See [Datadog's MCP setup guide](https://docs.datadoghq.com/bits_ai/mcp_server/setup/) for supported
+sites and permissions.
+
+#### Splunk
+
+Install and configure the Splunk MCP Server in Splunk, replace `YOUR_SPLUNK_HOST` in the preset
+with its hostname, and complete the server's authentication flow. Grant the connecting identity
+only search and index-read capabilities. The preset targets `/services/mcp`; adjust that path if
+your Splunk deployment exposes the MCP server elsewhere.
+
+See the [Splunk MCP Server listing](https://splunkbase.splunk.com/app/7931/) for installation and
+token setup.
+
+#### Grafana
+
+Replace `GRAFANA_URL` and `GRAFANA_SERVICE_ACCOUNT_TOKEN` with a Grafana URL and a service-account
+token assigned the **Viewer** role. The preset runs the official `grafana/mcp-grafana` image with
+`--disable-write`, which removes write-capable tools while retaining dashboard, alert, PromQL,
+LogQL, and other read operations.
+
+See [Grafana's MCP documentation](https://grafana.com/docs/grafana/latest/developer-resources/mcp/)
+for granular RBAC scopes and network requirements.
+
+#### Prometheus
+
+Replace `PROMETHEUS_URL` with the Prometheus base URL reachable from Docker. The preset runs the
+query-only `pab1it0/prometheus-mcp-server`, which exposes health, PromQL, metric metadata, and
+target discovery tools. If the endpoint requires authentication, add the appropriate
+`PROMETHEUS_TOKEN` or `PROMETHEUS_USERNAME`/`PROMETHEUS_PASSWORD` environment variables and add
+matching `-e` arguments to the Docker command.
+
+Use a read-only Prometheus endpoint or reverse proxy and consult the
+[server configuration](https://github.com/pab1it0/prometheus-mcp-server#configuration-options) for
+TLS and multi-tenant headers.

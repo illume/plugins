@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import JSZip from 'jszip';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +8,55 @@ const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '
 test.describe.serial('AI Assistant on KWOK', () => {
   test.beforeAll(() => {
     fs.mkdirSync(screenshotsDir, { recursive: true });
+  });
+
+  test('configures read-only observability MCP presets', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'userAgent', {
+        value: `${navigator.userAgent} Electron`,
+        configurable: true,
+      });
+      const config = { enabled: false, servers: [] };
+      (window as any).desktopApi = {
+        send: () => undefined,
+        receive: () => undefined,
+        removeListener: () => undefined,
+        mcp: {
+          getConfig: async () => ({ success: true, config }),
+          updateConfig: async (nextConfig: unknown) => {
+            (window as any).__e2eMCPConfig = nextConfig;
+            return { success: true };
+          },
+        },
+      };
+    });
+    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
+
+    await page.getByRole('checkbox', { name: 'Enable MCP Servers' }).check();
+    for (const provider of ['datadog', 'splunk', 'grafana', 'prometheus']) {
+      await page.getByRole('button', { name: 'Add MCP Server' }).click();
+      await page.getByRole('combobox', { name: 'Select Provider' }).selectOption(provider);
+      await expect(page.getByRole('textbox', { name: 'Server Name' })).toHaveValue(provider);
+      await expect(page.getByRole('checkbox', { name: 'Auto Approve' })).not.toBeChecked();
+      if (provider === 'grafana') {
+        await expect(page.getByRole('textbox', { name: 'Arguments' })).toHaveValue(
+          /--disable-write/
+        );
+      }
+      await page.getByRole('button', { name: 'Cancel' }).click();
+    }
+
+    await page.getByRole('button', { name: 'Add MCP Server' }).click();
+    await page.getByRole('combobox', { name: 'Select Provider' }).selectOption('prometheus');
+    await page.getByRole('button', { name: 'Add Server' }).click();
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as any).__e2eMCPConfig?.servers?.[0]?.name as string | undefined
+        )
+      )
+      .toBe('prometheus');
   });
 
   test('covers the main assistant scenarios', async ({ page }) => {

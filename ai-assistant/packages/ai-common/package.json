@@ -29,6 +29,7 @@
     "./mcp/routing/ToolRouter": "./src/mcp/routing/ToolRouter.ts",
     "./mcp/types": "./src/mcp/types.ts",
     "./mcp/config/builtinServers": "./src/mcp/config/builtinServers.ts",
+    "./mcp/config/observabilityPresets": "./src/mcp/config/observabilityPresets.ts",
     "./mcp/config/serverConfig": "./src/mcp/config/serverConfig.ts",
     "./mcp/persistence/FileStorage": "./src/mcp/persistence/FileStorage.ts",
     "./mcp/persistence/Storage": "./src/mcp/persistence/Storage.ts",

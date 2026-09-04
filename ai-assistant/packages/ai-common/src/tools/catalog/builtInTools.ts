@@ -16,9 +16,21 @@
 
 import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
 import type { LangChainTool } from '../langchain/LangChainTool';
+import {
+  DatadogTool,
+  GrafanaTool,
+  PrometheusTool,
+  SplunkTool,
+} from '../observability/ObservabilityTools';
 
 /** Constructors for all built-in tools available to the assistant. */
-export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [KubernetesTool];
+export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [
+  KubernetesTool,
+  DatadogTool,
+  SplunkTool,
+  GrafanaTool,
+  PrometheusTool,
+];
 
 /**
  * Finds a configured tool instance by name.

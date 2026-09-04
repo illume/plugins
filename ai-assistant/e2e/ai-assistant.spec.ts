@@ -1,11 +1,14 @@
-import { MCPClient } from '@headlamp-k8s/ai-common/mcp/langchain/MCPClient';
-import type { MCPSettings } from '@headlamp-k8s/ai-common/mcp/types';
+import {
+  DatadogTool,
+  GrafanaTool,
+  PrometheusTool,
+  SplunkTool,
+} from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { startMockObservabilityMCPServer } from './mock-observability-mcp';
+import { startMockObservabilityApi } from './mock-observability-api';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
 
@@ -14,136 +17,51 @@ test.describe.serial('AI Assistant on KWOK', () => {
     fs.mkdirSync(screenshotsDir, { recursive: true });
   });
 
-  for (const provider of ['datadog', 'splunk', 'grafana', 'prometheus'] as const) {
-    test(`connects to and executes the read-only ${provider} MCP preset`, async ({ page }) => {
-      const mockServer = await startMockObservabilityMCPServer(provider);
-      const stateDirectory = fs.mkdtempSync(path.join(os.tmpdir(), `${provider}-mcp-e2e-`));
-      const stateFile = path.join(stateDirectory, 'tools.json');
-      let savedConfig: MCPSettings | undefined;
-
-      try {
-        await page.addInitScript(() => {
-          Object.defineProperty(navigator, 'userAgent', {
-            value: `${navigator.userAgent} Electron`,
-            configurable: true,
-          });
-          const config = { enabled: false, servers: [] };
-          (window as any).desktopApi = {
-            send: () => undefined,
-            receive: () => undefined,
-            removeListener: () => undefined,
-            mcp: {
-              getConfig: async () => ({ success: true, config }),
-              updateConfig: async (nextConfig: unknown) => {
-                (window as any).__e2eMCPConfig = nextConfig;
-                return { success: true };
-              },
-            },
-          };
-        });
-        await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
-
-        await page.getByRole('checkbox', { name: 'Enable MCP Servers' }).check();
-        await page.getByRole('button', { name: 'Add MCP Server' }).click();
-        await page.getByRole('combobox', { name: 'Select Provider' }).selectOption(provider);
-        await expect(page.getByRole('textbox', { name: 'Server Name' })).toHaveValue(provider);
-        await expect(page.getByRole('checkbox', { name: 'Auto Approve' })).not.toBeChecked();
-        await page.getByRole('textbox', { name: 'Server URL' }).fill(mockServer.url);
-        await page
-          .getByRole('textbox', { name: 'Request Headers' })
-          .fill(JSON.stringify({ 'X-E2E-Provider': provider }));
-        await page.getByRole('button', { name: 'Add Server' }).click();
-        await page.getByRole('button', { name: 'Save Changes' }).click();
-
-        await expect
-          .poll(() => page.evaluate(() => Boolean((window as any).__e2eMCPConfig)))
-          .toBe(true);
-        savedConfig = await page.evaluate(
-          () => (window as any).__e2eMCPConfig as MCPSettings | undefined
-        );
-        expect(savedConfig?.servers[0]).toMatchObject({
-          name: provider,
-          transport: 'http',
-          url: mockServer.url,
-          headers: { 'X-E2E-Provider': provider },
-          autoApprove: false,
-        });
-
-        const client = new MCPClient(stateFile, {
-          loadMCPSettings: () => savedConfig ?? null,
-          saveMCPSettings: settings => {
-            savedConfig = settings;
-          },
-        });
-        await client.initialize();
-        try {
-          expect(client.getToolsConfig().config?.[provider]?.query).toBeDefined();
-          const result = await client.executeTool(
-            `${provider}__query`,
-            { query: 'up' },
-            `${provider}-call`
-          );
-          expect(result).toMatchObject({ success: true, toolCallId: `${provider}-call` });
-          expect(JSON.stringify(result?.result)).toContain(`${provider} read-only result for up`);
-          expect(mockServer.receivedProviderHeader()).toBe(true);
-          await expect.poll(() => fs.existsSync(stateFile)).toBe(true);
-        } finally {
-          await client.cleanup();
-        }
-      } finally {
-        await mockServer.close();
-        fs.rmSync(stateDirectory, { recursive: true, force: true });
-      }
-    });
-  }
-
-  test('configures read-only observability MCP presets', async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'userAgent', {
-        value: `${navigator.userAgent} Electron`,
-        configurable: true,
-      });
-      const config = { enabled: false, servers: [] };
-      (window as any).desktopApi = {
-        send: () => undefined,
-        receive: () => undefined,
-        removeListener: () => undefined,
-        mcp: {
-          getConfig: async () => ({ success: true, config }),
-          updateConfig: async (nextConfig: unknown) => {
-            (window as any).__e2eMCPConfig = nextConfig;
-            return { success: true };
-          },
-        },
-      };
-    });
+  test('configures and executes all native read-only observability tools', async ({ page }) => {
+    const api = await startMockObservabilityApi();
     await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
-
-    await page.getByRole('checkbox', { name: 'Enable MCP Servers' }).check();
-    for (const provider of ['datadog', 'splunk', 'grafana', 'prometheus']) {
-      await page.getByRole('button', { name: 'Add MCP Server' }).click();
-      await page.getByRole('combobox', { name: 'Select Provider' }).selectOption(provider);
-      await expect(page.getByRole('textbox', { name: 'Server Name' })).toHaveValue(provider);
-      await expect(page.getByRole('checkbox', { name: 'Auto Approve' })).not.toBeChecked();
-      if (provider === 'grafana') {
-        await expect(page.getByRole('textbox', { name: 'Server URL' })).toHaveValue(
-          /YOUR_GRAFANA_MCP_HOST/
-        );
+    try {
+      for (const provider of ['Datadog', 'Splunk', 'Grafana', 'Prometheus']) {
+        await page.getByRole('textbox', { name: `${provider} URL` }).fill(api.url);
       }
-      await page.getByRole('button', { name: 'Cancel' }).click();
-    }
+      await page.getByLabel('API Key').fill('datadog-api');
+      await page.getByLabel('Application Key').fill('datadog-app');
+      await page.getByLabel('Access Token').fill('splunk-token');
+      await page.getByLabel('Service Account Token').fill('grafana-token');
+      await page.getByLabel('HTTP Token').fill('prometheus-token');
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+        .toContain(api.url);
 
-    await page.getByRole('button', { name: 'Add MCP Server' }).click();
-    await page.getByRole('combobox', { name: 'Select Provider' }).selectOption('prometheus');
-    await page.getByRole('button', { name: 'Add Server' }).click();
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () => (window as any).__e2eMCPConfig?.servers?.[0]?.name as string | undefined
-        )
-      )
-      .toBe('prometheus');
+      const config = {
+        datadog: { baseUrl: api.url, apiKey: 'datadog-api', applicationKey: 'datadog-app' },
+        splunk: { baseUrl: api.url, token: 'splunk-token' },
+        grafana: { baseUrl: api.url, token: 'grafana-token' },
+        prometheus: { baseUrl: api.url, token: 'prometheus-token' },
+      };
+      const calls = [
+        [new DatadogTool(), { action: 'logs', query: 'service:web' }],
+        [new SplunkTool(), { action: 'search', query: 'search index=main error' }],
+        [new GrafanaTool(), { action: 'search_dashboards', query: 'Kubernetes' }],
+        [new PrometheusTool(), { action: 'query', query: 'up' }],
+      ] as const;
+      for (const [tool, args] of calls) {
+        tool.setContext({ config });
+        await expect(tool.handler(args)).resolves.toMatchObject({ success: true });
+      }
+      expect(api.requests).toHaveLength(4);
+      expect(api.requests.map(request => request.method)).toEqual(['POST', 'POST', 'GET', 'GET']);
+      expect(api.requests[0]).toMatchObject({
+        datadogApiKey: 'datadog-api',
+        datadogApplicationKey: 'datadog-app',
+      });
+      expect(api.requests[1].authorization).toBe('Splunk splunk-token');
+      expect(api.requests[2].authorization).toBe(['Bearer', 'grafana-token'].join(' '));
+      expect(api.requests[3].authorization).toBe(['Bearer', 'prometheus-token'].join(' '));
+      expect(api.requests.every(request => !/PUT|PATCH|DELETE/.test(request.method))).toBe(true);
+    } finally {
+      await api.close();
+    }
   });
 
   test('covers the main assistant scenarios', async ({ page }) => {

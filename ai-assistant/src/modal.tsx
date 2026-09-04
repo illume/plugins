@@ -590,7 +590,10 @@ export default function AIPrompt(props: {
           enabledTools,
           pluginSettings?.devOptions?.enableMockTools
             ? { toolManager: createMockKubernetesToolManager() }
-            : { mcpClient: electronMCPClient }
+            : {
+                mcpClient: electronMCPClient,
+                observabilityContext: { config: pluginSettings.observability ?? {} },
+              }
         );
         setAiManager(newManager);
       } catch (error: unknown) {
@@ -674,7 +677,10 @@ export default function AIPrompt(props: {
             enabledTools,
             pluginSettings?.devOptions?.enableMockTools
               ? { toolManager: createMockKubernetesToolManager() }
-              : { mcpClient: electronMCPClient }
+              : {
+                  mcpClient: electronMCPClient,
+                  observabilityContext: { config: pluginSettings.observability ?? {} },
+                }
           );
           // LangChain doesn't stream intermediate events, so just report start/end
           onStep?.({

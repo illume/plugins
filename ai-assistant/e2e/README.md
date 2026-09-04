@@ -6,7 +6,7 @@ The scenarios cover:
 
 - viewing the KWOK-backed cluster in Headlamp;
 - changing and persisting preview, Kubernetes tool, and Holmes service settings;
-- loading, connecting to, and executing read-only tools from the Datadog, Splunk, Grafana, and Prometheus MCP server presets;
+- configuring and executing native read-only Datadog, Splunk, Grafana, and Prometheus API tools;
 - adding and removing the built-in mock testing model;
 - chatting with the fixture-backed model;
 - troubleshooting a pod with the scripted agent;

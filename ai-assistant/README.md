@@ -141,57 +141,38 @@ Once servers are configured, the assistant automatically discovers the tools the
 
 ### Read-only observability data sources
 
-In the desktop app, select **Add MCP Server**, choose an observability provider, replace its
-placeholder URL and request headers, and save the changes. These presets use streamable HTTP, so
-Headlamp needs no local MCP executable, Docker image, Node.js package, or Python package. The
-provider's managed MCP endpoint or your separately deployed MCP server must be reachable from
-Headlamp.
+The AI Assistant includes native tools for Datadog, Splunk, Grafana, and Prometheus. Configure
+them under **Observability Data Sources** and enable the corresponding tool under **AI Tools**.
+They use the browser's built-in `fetch` API and connect directly to provider HTTP APIs, so no MCP
+server, executable, container, Node.js package, or Python package is required.
 
-Keep **Auto Approve** off unless you trust both the server and every tool it exposes. Credentials
-are passed only to the configured MCP process, but tool results are sent to the selected model.
-Use a dedicated least-privilege account and restrict it to the logs, metrics, indexes, and
-dashboards that the assistant may inspect.
+Use dedicated least-privilege credentials. Tool results are sent to the selected model provider.
+Self-hosted APIs must be reachable from Headlamp and allow its origin through CORS. Every native
+tool is read-only, caps result counts at 100, uses a 30-second request timeout, and exposes no
+create, update, or delete action.
 
 #### Datadog
 
-The preset connects directly to Datadog's managed MCP endpoint. Replace the `DD-API-KEY` and
-`DD-APPLICATION-KEY` request-header placeholders with scoped credentials. Replace `datadoghq.com`
-in the endpoint with your
-[Datadog site](https://docs.datadoghq.com/getting_started/site/) when necessary (for example,
-`datadoghq.eu`). Use credentials limited to read-only MCP tools.
-
-See [Datadog's MCP setup guide](https://docs.datadoghq.com/bits_ai/mcp_server/setup/) for supported
-sites and permissions.
+Set the API base URL for your
+[Datadog site](https://docs.datadoghq.com/getting_started/site/) and provide a scoped API key and
+application key. `datadog_read` searches logs, queries metrics, and lists monitors through the
+Datadog v1/v2 APIs. Log searches default to the last hour.
 
 #### Splunk
 
-Install and configure the Splunk MCP Server in Splunk, replace `YOUR_SPLUNK_HOST` in the preset
-with its hostname, and replace the `Authorization` header value with the format and token issued
-by that server. Grant the connecting identity only search and index-read capabilities. The preset
-targets `/services/mcp`; adjust that path if your Splunk deployment exposes the MCP server
-elsewhere.
-
-See the [Splunk MCP Server listing](https://splunkbase.splunk.com/app/7931/) for installation and
-token setup.
+Set the Splunk management API URL (normally `https://HOST:8089`) and provide either a Splunk token
+or username and password for a search-only role. `splunk_read` runs one-shot searches and lists
+indexes or saved searches. Searches default to the last 24 hours, return at most 100 results, and
+reject SPL commands that write data or execute external actions.
 
 #### Grafana
 
-Deploy the official Grafana MCP server using streamable HTTP and `--disable-write`, backed by a
-Grafana service account assigned the **Viewer** role. Replace `YOUR_GRAFANA_MCP_HOST` with that MCP
-server's host and replace the `Authorization` header placeholder if caller authentication is
-enabled. `--disable-write` removes write-capable tools while retaining dashboard, alert, PromQL,
-LogQL, and other read operations.
-
-See [Grafana's MCP documentation](https://grafana.com/docs/grafana/latest/developer-resources/mcp/)
-for granular RBAC scopes and network requirements.
+Set the Grafana URL and a Viewer service-account token. Set an organization ID for multi-org
+installations. `grafana_read` searches dashboards, retrieves a dashboard by UID, and lists data
+sources using only Grafana `GET` endpoints.
 
 #### Prometheus
 
-Deploy the query-only `pab1it0/prometheus-mcp-server` with streamable HTTP and replace
-`YOUR_PROMETHEUS_MCP_HOST` with its host. The server exposes health, PromQL, metric metadata, and
-target discovery tools. Configure Prometheus authentication on the MCP server; if caller
-authentication is enabled in front of it, add the required request header in Headlamp.
-
-Use a read-only Prometheus endpoint or reverse proxy and consult the
-[server configuration](https://github.com/pab1it0/prometheus-mcp-server#configuration-options) for
-TLS and multi-tenant headers.
+Set the Prometheus-compatible API URL and optional HTTP token. For Thanos or Mimir, set the tenant
+ID sent as `X-Scope-OrgID`. `prometheus_read` supports instant and range PromQL queries, metric
+metadata, and active target discovery. Range queries are limited to 24 hours.

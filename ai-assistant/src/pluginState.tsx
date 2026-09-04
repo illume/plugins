@@ -28,6 +28,7 @@ import {
   isMCPTool as discoverMCPTool,
   type MCPToolCatalogLoader,
 } from '@headlamp-k8s/ai-common/tools/catalog/discoverTools';
+import type { ObservabilityConfig } from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
 import type { DeveloperOptionsConfig } from '@headlamp-k8s/ai-ui/components/settings/DeveloperSettings';
 import type { MCPConfig } from '@headlamp-k8s/ai-ui/components/settings/MCPSettings';
 import { ConfigStore } from '@kinvolk/headlamp-plugin/lib';
@@ -264,6 +265,8 @@ export interface PluginConfig extends SavedConfigurations {
 
   /** Developer options for mock/fake implementations. */
   devOptions?: DeveloperOptionsConfig;
+  /** Native read-only observability API connections. */
+  observability?: ObservabilityConfig;
 }
 
 export const pluginStore = new ConfigStore<PluginConfig>(PLUGIN_NAME);

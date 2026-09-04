@@ -212,6 +212,11 @@ export default function Settings() {
           const updatedSettings = toggleTool(pluginSettings, toolId);
           pluginStore.update(updatedSettings);
         }}
+        observabilityConfig={pluginSettings?.observability}
+        onObservabilityConfigChange={observability => {
+          const current = pluginStore.get() || {};
+          pluginStore.update({ ...current, observability });
+        }}
         isRunningAsApp={isRunningAsApp}
         configStore={pluginStore}
         loadSkills={loadSkills}

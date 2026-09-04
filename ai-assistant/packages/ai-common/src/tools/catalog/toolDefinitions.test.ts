@@ -27,11 +27,36 @@ describe('toolDefinitions', () => {
           'Make requests to the Kubernetes API server to fetch, create, update or delete resources.',
         source: 'built-in',
       },
+      {
+        id: 'datadog_read',
+        name: 'Datadog Read',
+        description: 'Query Datadog logs, metrics, and monitors without changing data.',
+        source: 'built-in',
+      },
+      {
+        id: 'splunk_read',
+        name: 'Splunk Read',
+        description: 'Run guarded Splunk searches and inspect indexes or saved searches.',
+        source: 'built-in',
+      },
+      {
+        id: 'grafana_read',
+        name: 'Grafana Read',
+        description: 'Search and inspect Grafana dashboards and datasources.',
+        source: 'built-in',
+      },
+      {
+        id: 'prometheus_read',
+        name: 'Prometheus Read',
+        description: 'Query Prometheus metrics, metadata, and active targets.',
+        source: 'built-in',
+      },
     ]);
   });
 
   it('identifies tools in the built-in registry', () => {
     expect(isBuiltInTool('kubernetes_api_request')).toBe(true);
+    expect(isBuiltInTool('prometheus_read')).toBe(true);
     expect(isBuiltInTool('github__search')).toBe(false);
   });
 

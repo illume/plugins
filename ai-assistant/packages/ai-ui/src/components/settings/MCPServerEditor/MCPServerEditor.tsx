@@ -1,8 +1,3 @@
-import {
-  createObservabilityPreset,
-  OBSERVABILITY_PRESETS,
-  type ObservabilityPreset,
-} from '@headlamp-k8s/ai-common/mcp/config/observabilityPresets';
 import type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import {
@@ -64,7 +59,6 @@ export default function MCPServerEditor({
   const [enabled, setEnabled] = useState(true);
   const [autoApprove, setAutoApprove] = useState(false);
   const [validationError, setValidationError] = useState('');
-  const [preset, setPreset] = useState('');
   const titleId = React.useId();
 
   const isEditing = !!server;
@@ -95,7 +89,6 @@ export default function MCPServerEditor({
         setAutoApprove(false);
       }
       setValidationError('');
-      setPreset('');
     }
   }, [open, server]);
 
@@ -136,24 +129,6 @@ export default function MCPServerEditor({
     setEnv([{ key: 'KUBECONFIG', value: 'PATH_TO_KUBECONFIG' }]);
     setEnabled(true);
     setAutoApprove(false);
-    setValidationError('');
-  };
-
-  /** Loads an editable read-only observability server preset. @returns No value. */
-  const handleLoadPreset = (selectedPreset: ObservabilityPreset): void => {
-    const selected = createObservabilityPreset(selectedPreset);
-    setPreset(selectedPreset);
-    setName(selected.name);
-    setTransport(selected.transport ?? 'stdio');
-    setCommand(selected.command ?? '');
-    setArgs(JSON.stringify(selected.args ?? []));
-    setUrl(selected.url ?? '');
-    setHeaders(JSON.stringify(selected.headers ?? {}, null, 2));
-    setEnv(
-      selected.env ? Object.entries(selected.env).map(([key, value]) => ({ key, value })) : []
-    );
-    setEnabled(selected.enabled);
-    setAutoApprove(selected.autoApprove ?? false);
     setValidationError('');
   };
 
@@ -276,27 +251,7 @@ export default function MCPServerEditor({
             {isEditing ? t('Edit Server') : t('Add MCP Server')}
           </Typography>
           {!isEditing && (
-            <Box display="flex" gap={1} alignItems="center">
-              <TextField
-                select
-                size="small"
-                label={t('Select Provider')}
-                value={preset}
-                onChange={event => {
-                  if (event.target.value) {
-                    handleLoadPreset(event.target.value as ObservabilityPreset);
-                  }
-                }}
-                SelectProps={{ native: true }}
-                sx={{ minWidth: 180 }}
-              >
-                <option value="" />
-                {OBSERVABILITY_PRESETS.map(item => (
-                  <option key={item} value={item}>
-                    {item[0].toUpperCase() + item.slice(1)}
-                  </option>
-                ))}
-              </TextField>
+            <Box display="flex" alignItems="center">
               <Button
                 size="small"
                 variant="text"

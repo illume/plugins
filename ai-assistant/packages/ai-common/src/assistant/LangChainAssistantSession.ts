@@ -69,6 +69,7 @@ import type { KubernetesToolContext } from '../tools/kubernetes/context';
 import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion';
 import { LangChainToolManager } from '../tools/langchain/LangChainToolManager';
 import { RecommendedTool, ToolPlanner } from '../tools/langchain/ToolPlanner';
+import type { ObservabilityToolContext } from '../tools/observability/ObservabilityTools';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
@@ -230,6 +231,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       toolManager?: LangChainToolRuntime;
       /** Host MCP bridge used to discover and execute MCP tools. */
       mcpClient?: ToolClient;
+      /** Connection settings for native read-only observability tools. */
+      observabilityContext?: ObservabilityToolContext;
     }
   ) {
     super();
@@ -241,7 +244,11 @@ export default class LangChainAssistantSession extends AssistantSession {
     );
     this.toolManager =
       options?.toolManager ??
-      new LangChainToolManager({ enabledToolIds, mcpClient: options?.mcpClient });
+      new LangChainToolManager({
+        enabledToolIds,
+        mcpClient: options?.mcpClient,
+        observabilityContext: options?.observabilityContext,
+      });
     this.model = this.createModel(providerId, config);
 
     // Initialize prompt template and output parser

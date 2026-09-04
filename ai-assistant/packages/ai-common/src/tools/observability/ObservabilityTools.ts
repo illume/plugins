@@ -108,7 +108,9 @@ function validateSplunkTimeRange(earliest: string, latest: string): void {
 
 function appendPath(base: URL, path: string): URL {
   const url = new URL(base);
-  url.pathname = `${url.pathname.replace(/\/+$/, '')}${path}`;
+  let pathEnd = url.pathname.length;
+  while (pathEnd > 0 && url.pathname.charCodeAt(pathEnd - 1) === 47) pathEnd--;
+  url.pathname = `${url.pathname.slice(0, pathEnd)}${path}`;
   return url;
 }
 

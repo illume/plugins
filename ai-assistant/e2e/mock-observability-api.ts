@@ -1,7 +1,5 @@
 import { createServer } from 'node:http';
-
-const GRAFANA_E2E_ORIGIN = 'http://127.0.0.1:13000';
-const PROMETHEUS_E2E_ORIGIN = 'http://127.0.0.1:19090';
+import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-services';
 
 export interface ObservabilityApiRequest {
   /** Provider whose API received the request. */
@@ -46,8 +44,8 @@ export async function startMockObservabilityApi(
   options: ObservabilityApiOptions
 ): Promise<MockObservabilityApi> {
   if (
-    options.grafanaUrl !== GRAFANA_E2E_ORIGIN ||
-    options.prometheusUrl !== PROMETHEUS_E2E_ORIGIN
+    options.grafanaUrl !== E2E_GRAFANA_ORIGIN ||
+    options.prometheusUrl !== E2E_PROMETHEUS_ORIGIN
   ) {
     throw new Error('Observability E2E services must use the runner-managed origins');
   }
@@ -81,9 +79,9 @@ export async function startMockObservabilityApi(
       });
       const upstreamUrl =
         provider === 'grafana'
-          ? `${GRAFANA_E2E_ORIGIN}/api/search?type=dash-db&query=&limit=100`
+          ? `${E2E_GRAFANA_ORIGIN}/api/search?type=dash-db&query=&limit=100`
           : provider === 'prometheus'
-          ? `${PROMETHEUS_E2E_ORIGIN}/api/v1/query?query=up`
+          ? `${E2E_PROMETHEUS_ORIGIN}/api/v1/query?query=up`
           : undefined;
       if (upstreamUrl) {
         const upstreamResponse = await fetch(upstreamUrl);

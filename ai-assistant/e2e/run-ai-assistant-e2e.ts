@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
+import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-services';
 
 interface Kubeconfig {
   clusters: Array<{ name: string; cluster: Record<string, unknown> }>;
@@ -18,8 +19,8 @@ const headlampPort = new URL(headlampUrl).port || '4466';
 const headlampContainerName = `${clusterName}-headlamp`;
 const prometheusContainerName = `${clusterName}-prometheus`;
 const grafanaContainerName = `${clusterName}-grafana`;
-const prometheusPort = '19090';
-const grafanaPort = '13000';
+const prometheusPort = new URL(E2E_PROMETHEUS_ORIGIN).port;
+const grafanaPort = new URL(E2E_GRAFANA_ORIGIN).port;
 const kubeconfigPath = path.join(tmpdir(), `${clusterName}-kubeconfig`);
 const headlampKubeconfigPath = path.join(tmpdir(), `${clusterName}-headlamp-kubeconfig`);
 const commandSuffix = process.platform === 'win32' ? '.cmd' : '';
@@ -249,8 +250,8 @@ async function main(): Promise<void> {
       ...process.env,
       HEADLAMP_URL: headlampUrl,
       HEADLAMP_TOKEN: headlampToken,
-      E2E_PROMETHEUS_URL: `http://127.0.0.1:${prometheusPort}`,
-      E2E_GRAFANA_URL: `http://127.0.0.1:${grafanaPort}`,
+      E2E_PROMETHEUS_URL: E2E_PROMETHEUS_ORIGIN,
+      E2E_GRAFANA_URL: E2E_GRAFANA_ORIGIN,
     },
     stdio: 'inherit',
   });

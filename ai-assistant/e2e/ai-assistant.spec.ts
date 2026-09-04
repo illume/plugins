@@ -23,6 +23,22 @@ test.describe.serial('AI Assistant on KWOK', () => {
       await page.getByLabel('Access Token').fill('splunk-token');
       await page.getByLabel('Service Account Token').fill('grafana-token');
       await page.getByLabel('HTTP Token').fill('prometheus-token');
+
+      for (const toolName of ['Datadog Read', 'Splunk Read', 'Grafana Read', 'Prometheus Read']) {
+        const toolToggle = page.getByRole('checkbox', {
+          name: `Enable or disable ${toolName}`,
+        });
+        await expect(toolToggle).toBeChecked();
+        await toolToggle.uncheck();
+        await expect(toolToggle).not.toBeChecked();
+        await toolToggle.check();
+        await expect(toolToggle).toBeChecked();
+      }
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+        .toContain(
+          '"enabledTools":{"kubernetes_api_request":true,"datadog_read":true,"splunk_read":true,"grafana_read":true,"prometheus_read":true}'
+        );
       await expect
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
         .toContain(api.url);

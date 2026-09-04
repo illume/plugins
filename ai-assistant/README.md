@@ -164,8 +164,9 @@ lists monitors through the Datadog v1/v2 APIs. Log searches default to the last 
 Set the Splunk management API URL (normally `https://HOST:8089`) and provide either a Splunk token
 or username and password for a search-only role. `splunk_read` runs one-shot searches and lists
 indexes or saved searches. Searches default to the last 24 hours, return at most 100 results, and
-accept only an allowlist of built-in read-only SPL commands. A search-only role remains required to
-enforce the security boundary against custom commands and server-side permission changes.
+must begin with the explicit `search` command followed only by allowlisted built-in read-only SPL
+commands. A search-only role remains required to enforce the security boundary against custom
+commands and server-side permission changes.
 
 #### Grafana
 

@@ -263,7 +263,7 @@ export function settingsChanges(
     if (!value) return '';
     try {
       const url = new URL(value);
-      return `${url.origin}${url.pathname}${url.search ? '?…' : ''}`;
+      return `${url.protocol}//${url.host}${url.pathname}${url.search ? '?…' : ''}`;
     } catch {
       return '[invalid URL]';
     }

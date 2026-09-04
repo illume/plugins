@@ -343,7 +343,7 @@ export class SplunkTool extends ObservabilityTool {
     name: 'splunk_read',
     shortDescription: 'Search Splunk and inspect indexes or saved searches',
     description:
-      'Run bounded read-only SPL searches or list indexes and saved searches. Mutating and external-execution SPL commands are rejected.',
+      'Run bounded read-only SPL searches or list indexes and saved searches. Searches must begin with the explicit search command and may use only allowlisted read-only commands.',
     schema: z.object({
       action: z.enum(['search', 'indexes', 'saved_searches']),
       query: z.string().optional(),

@@ -165,6 +165,30 @@ it('saves a remote HTTP server without a local command', () => {
   });
 });
 
+it('rejects invalid remote HTTP headers', () => {
+  const onSave = vi.fn();
+  render(<MCPServerEditor {...addServerArgs} onSave={onSave} />);
+  fireEvent.change(screen.getByRole('textbox', { name: /Server Name/ }), {
+    target: { value: 'remote' },
+  });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Transport' }), {
+    target: { value: 'http' },
+  });
+  fireEvent.change(screen.getByRole('textbox', { name: 'Server URL' }), {
+    target: { value: 'https://example.com/mcp' },
+  });
+  fireEvent.change(screen.getByRole('textbox', { name: /Headers/ }), {
+    target: { value: JSON.stringify({ 'Bad Header': 'value' }) },
+  });
+
+  save();
+
+  expect(screen.getByRole('alert').textContent).toBe(
+    'Headers must contain valid HTTP names and string values'
+  );
+  expect(onSave).not.toHaveBeenCalled();
+});
+
 it('round-trips editing state and excludes the original name from duplicates', () => {
   const onSave = vi.fn();
   render(<MCPServerEditor {...editServerArgs} onSave={onSave} />);

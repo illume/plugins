@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-services';
+import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-services.ts';
 
 export interface ObservabilityApiRequest {
   /** Provider whose API received the request. */

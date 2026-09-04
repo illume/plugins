@@ -28,4 +28,4 @@ hosted/licensed products cannot run as portable local test dependencies. Set `KE
 to retain the KWOK cluster for debugging. Each run writes local, untracked screenshots to
 `e2e/screenshots`.
 
-`npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create a cluster. Set `HEADLAMP_URL` if Headlamp is not available at `http://127.0.0.1:4466`.
+`npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp, create a cluster, or start observability services, so the observability scenario is skipped. Set `HEADLAMP_URL` if Headlamp is not available at `http://127.0.0.1:4466`.

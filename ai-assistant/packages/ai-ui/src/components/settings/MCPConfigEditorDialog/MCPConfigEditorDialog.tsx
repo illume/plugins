@@ -15,6 +15,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DefaultDialog } from '../../defaults/DefaultSlots/DefaultSlots';
+import { isValidHttpHeaders } from '../mcpValidation';
 
 /** Top-level MCP configuration edited by this dialog. */
 export type MCPConfig = MCPSettings;
@@ -130,10 +131,10 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
       };
     }
     const headers = server.headers;
-    if (headers !== undefined && !isStringRecord(headers)) {
+    if (headers !== undefined && !isValidHttpHeaders(headers)) {
       return {
         valid: false,
-        error: t('Server {{number}}: headers must contain only string key-value pairs', {
+        error: t('Server {{number}}: headers must contain valid HTTP names and string values', {
           number,
         }),
       };
@@ -164,7 +165,7 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
             name: normalizedName,
             transport: transport as 'http' | 'sse',
             url: server.url as string,
-            ...(isStringRecord(headers) ? { headers } : {}),
+            ...(isValidHttpHeaders(headers) ? { headers } : {}),
             enabled: server.enabled,
           };
     if (isStringRecord(env)) normalizedServer.env = env;

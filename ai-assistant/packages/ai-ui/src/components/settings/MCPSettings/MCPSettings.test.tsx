@@ -280,12 +280,38 @@ it('uses the empty config for a malformed remote server URL', async () => {
       ],
     },
   });
+
   render(<MCPSettings isRunningAsApp configStore={store} />);
 
   expect(await screen.findByRole('checkbox', { name: 'Enable MCP Servers' })).toHaveProperty(
     'checked',
     false
   );
+});
+
+it('uses the empty config for invalid stored HTTP headers', async () => {
+  const store = createMemoryConfigStore({
+    mcpConfig: {
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          headers: { 'Bad Header': 'value' },
+          enabled: true,
+        },
+      ],
+    },
+  });
+
+  render(<MCPSettings isRunningAsApp configStore={store} />);
+
+  expect(await screen.findByRole('checkbox', { name: 'Enable MCP Servers' })).toHaveProperty(
+    'checked',
+    false
+  );
+  expect(screen.queryByText('remote')).toBeNull();
 });
 
 it('rejects duplicate stored server names case-insensitively', async () => {

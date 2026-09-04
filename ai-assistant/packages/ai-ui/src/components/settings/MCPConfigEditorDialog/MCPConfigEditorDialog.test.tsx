@@ -201,6 +201,21 @@ it.each([
     'Server 1: env must contain only string key-value pairs',
   ],
   [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          headers: { 'Bad Header': 'value' },
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: headers must contain valid HTTP names and string values',
+  ],
+  [
     { enabled: true, servers: [{ name: 's', command: 'cmd', args: [], enabled: 'yes' }] },
     'Server 1: enabled must be a boolean',
   ],

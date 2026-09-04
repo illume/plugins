@@ -15,6 +15,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DefaultDialog } from '../../defaults/DefaultSlots/DefaultSlots';
+import { isValidHttpHeaders } from '../mcpValidation';
 
 export type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 
@@ -151,12 +152,9 @@ export default function MCPServerEditor({
   const parseHeaders = (): { headers?: Record<string, string>; error?: string } => {
     try {
       const parsed: unknown = JSON.parse(headers);
-      return typeof parsed === 'object' &&
-        parsed !== null &&
-        !Array.isArray(parsed) &&
-        Object.values(parsed).every(value => typeof value === 'string')
+      return isValidHttpHeaders(parsed)
         ? { headers: parsed as Record<string, string> }
-        : { error: t('Headers must be a JSON object containing string values') };
+        : { error: t('Headers must contain valid HTTP names and string values') };
     } catch {
       return { error: t('Headers must be valid JSON') };
     }

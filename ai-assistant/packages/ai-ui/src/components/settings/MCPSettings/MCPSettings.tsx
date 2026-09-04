@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { DefaultDialog, DefaultSectionWrapper } from '../../defaults/DefaultSlots/DefaultSlots';
 import MCPConfigEditorDialog from '../MCPConfigEditorDialog/MCPConfigEditorDialog';
 import MCPServerEditor from '../MCPServerEditor/MCPServerEditor';
+import { isValidHttpHeaders } from '../mcpValidation';
 
 export type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 export type { MCPConfig };
@@ -86,7 +87,7 @@ function isMCPConfig(value: unknown): value is MCPConfig {
         return false;
       }
     }
-    if (server.headers !== undefined && !isStringRecord(server.headers)) return false;
+    if (server.headers !== undefined && !isValidHttpHeaders(server.headers)) return false;
     const normalizedName = server.name.trim().toLowerCase();
     if (!normalizedName || serverNames.has(normalizedName)) return false;
     serverNames.add(normalizedName);

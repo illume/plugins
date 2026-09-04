@@ -18,14 +18,14 @@ import {
   createAksMcpServer,
   reconcileBuiltinServers,
 } from '@headlamp-k8s/ai-common/mcp/config/builtinServers';
-import type { MCPServer, MCPSettings } from '@headlamp-k8s/ai-common/mcp/types';
+import type { MCPSettings, MCPStdioServer } from '@headlamp-k8s/ai-common/mcp/types';
 import { isAksDesktopHost } from '@headlamp-k8s/ai-ui/mcp/host';
 import { pluginStore } from '../pluginState';
 
 const EMPTY_MCP_CONFIG: MCPSettings = { enabled: false, servers: [] };
 
 /** @returns Built-in MCP servers the current desktop host preconfigures. */
-function getBuiltinServersForHost(): MCPServer[] {
+function getBuiltinServersForHost(): MCPStdioServer[] {
   return isAksDesktopHost() ? [createAksMcpServer()] : [];
 }
 

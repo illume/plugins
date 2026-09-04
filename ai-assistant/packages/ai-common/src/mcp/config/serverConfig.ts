@@ -17,7 +17,7 @@
 import type { MCPSettings, MCPToolState } from '../types';
 
 /** Runtime MCP server configuration consumed by MultiServerMCPClient. */
-type MCPServerConfig = {
+type StdioMCPServerConfig = {
   /** Process transport used to communicate with the server. */
   transport: 'stdio';
   /** Executable used to start the MCP server. */
@@ -36,6 +36,27 @@ type MCPServerConfig = {
     delayMs: number;
   };
 };
+
+/** Runtime remote MCP server configuration consumed by MultiServerMCPClient. */
+type RemoteMCPServerConfig = {
+  /** Network transport used to connect to the server. */
+  transport: 'http' | 'sse';
+  /** MCP endpoint URL. */
+  url: string;
+  /** Optional authentication and routing headers. */
+  headers?: Record<string, string>;
+  /** Automatic reconnection policy. */
+  reconnect: {
+    /** Whether the MCP client should reconnect after a disconnect. */
+    enabled: boolean;
+    /** Maximum number of reconnect attempts. */
+    maxAttempts: number;
+    /** Delay between reconnect attempts in milliseconds. */
+    delayMs: number;
+  };
+};
+
+type MCPServerConfig = StdioMCPServerConfig | RemoteMCPServerConfig;
 
 /**
  * Expand environment variables and resolve paths in arguments.
@@ -143,9 +164,26 @@ export function makeMcpServers(
   }
 
   for (const server of mcpSettings.servers) {
-    if (!server.enabled || !server.name || !server.command) {
+    if (!server.enabled || !server.name) {
       continue;
     }
+
+    const transport = server.transport ?? 'stdio';
+    if (transport !== 'stdio') {
+      if (!server.url) continue;
+      mcpServers[server.name] = {
+        transport,
+        url: server.url,
+        ...(server.headers ? { headers: server.headers } : {}),
+        reconnect: {
+          enabled: true,
+          maxAttempts: 3,
+          delayMs: 2000,
+        },
+      };
+      continue;
+    }
+    if (!server.command) continue;
 
     const expandedArgs = expandEnvAndResolvePaths(server.args || [], clusters[0] || null);
 
@@ -224,7 +262,9 @@ export function settingsChanges(
 
   for (const server of nextServers) {
     if (!currentServerNames.has(server.name)) {
-      changes.push(`• ADD server: "${server.name}" (${server.command})`);
+      const location =
+        server.transport && server.transport !== 'stdio' ? server.url : server.command;
+      changes.push(`• ADD server: "${server.name}" (${location})`);
     }
   }
 
@@ -246,6 +286,16 @@ export function settingsChanges(
       if (currentServer.command !== nextServer.command) {
         serverChanges.push(`change command: "${currentServer.command}" → "${nextServer.command}"`);
       }
+      if ((currentServer.transport ?? 'stdio') !== (nextServer.transport ?? 'stdio')) {
+        serverChanges.push(
+          `change transport: "${currentServer.transport ?? 'stdio'}" → "${
+            nextServer.transport ?? 'stdio'
+          }"`
+        );
+      }
+      if (currentServer.url !== nextServer.url) {
+        serverChanges.push(`change URL: "${currentServer.url ?? ''}" → "${nextServer.url ?? ''}"`);
+      }
 
       const currentArgs = JSON.stringify(currentServer.args || []);
       const nextArgs = JSON.stringify(nextServer.args || []);
@@ -257,6 +307,11 @@ export function settingsChanges(
       const nextEnv = JSON.stringify(nextServer.env || {});
       if (currentEnv !== nextEnv) {
         serverChanges.push('change environment variables');
+      }
+      if (
+        JSON.stringify(currentServer.headers || {}) !== JSON.stringify(nextServer.headers || {})
+      ) {
+        serverChanges.push('change request headers');
       }
 
       if (serverChanges.length > 0) {

@@ -117,9 +117,12 @@ MCP is an open protocol that enables AI assistants to interact with external too
 Navigate to the AI Assistant settings to add and manage MCP servers. Each server is configured with:
 
 - **Name** — A unique identifier for the server.
+- **Transport** — Local `stdio`, streamable `HTTP`, or `SSE`.
 - **Command** — The executable to run (e.g., `flux-operator-mcp`).
 - **Args** — Command-line arguments (e.g., `serve --kube-context HEADLAMP_CURRENT_CLUSTER`).
 - **Environment Variables** — Optional env vars required by the server (e.g., `KUBECONFIG`).
+- **Server URL and Request Headers** — The endpoint and optional authentication for HTTP/SSE
+  servers.
 
 You can configure servers using the form-based UI or by editing the JSON configuration directly.
 
@@ -138,9 +141,11 @@ Once servers are configured, the assistant automatically discovers the tools the
 
 ### Read-only observability data sources
 
-In the desktop app, select **Add MCP Server**, choose an **Observability preset**, replace its
-placeholder URL and credentials, and save the changes. Docker is required for the Grafana and
-Prometheus presets; Node.js and `npx` are required for Datadog and Splunk.
+In the desktop app, select **Add MCP Server**, choose an observability provider, replace its
+placeholder URL and request headers, and save the changes. These presets use streamable HTTP, so
+Headlamp needs no local MCP executable, Docker image, Node.js package, or Python package. The
+provider's managed MCP endpoint or your separately deployed MCP server must be reachable from
+Headlamp.
 
 Keep **Auto Approve** off unless you trust both the server and every tool it exposes. Credentials
 are passed only to the configured MCP process, but tool results are sent to the selected model.
@@ -149,10 +154,11 @@ dashboards that the assistant may inspect.
 
 #### Datadog
 
-The preset connects to Datadog's managed MCP endpoint through `mcp-remote`. The first connection
-opens Datadog's OAuth flow. Replace `datadoghq.com` in the endpoint with your
+The preset connects directly to Datadog's managed MCP endpoint. Replace the `DD-API-KEY` and
+`DD-APPLICATION-KEY` request-header placeholders with scoped credentials. Replace `datadoghq.com`
+in the endpoint with your
 [Datadog site](https://docs.datadoghq.com/getting_started/site/) when necessary (for example,
-`datadoghq.eu`), then authenticate as a user or service account with read-only access.
+`datadoghq.eu`). Use credentials limited to read-only MCP tools.
 
 See [Datadog's MCP setup guide](https://docs.datadoghq.com/bits_ai/mcp_server/setup/) for supported
 sites and permissions.
@@ -160,18 +166,20 @@ sites and permissions.
 #### Splunk
 
 Install and configure the Splunk MCP Server in Splunk, replace `YOUR_SPLUNK_HOST` in the preset
-with its hostname, and complete the server's authentication flow. Grant the connecting identity
-only search and index-read capabilities. The preset targets `/services/mcp`; adjust that path if
-your Splunk deployment exposes the MCP server elsewhere.
+with its hostname, and replace the `Authorization` header value with the format and token issued
+by that server. Grant the connecting identity only search and index-read capabilities. The preset
+targets `/services/mcp`; adjust that path if your Splunk deployment exposes the MCP server
+elsewhere.
 
 See the [Splunk MCP Server listing](https://splunkbase.splunk.com/app/7931/) for installation and
 token setup.
 
 #### Grafana
 
-Replace `GRAFANA_URL` and `GRAFANA_SERVICE_ACCOUNT_TOKEN` with a Grafana URL and a service-account
-token assigned the **Viewer** role. The preset runs the official `grafana/mcp-grafana` image with
-`--disable-write`, which removes write-capable tools while retaining dashboard, alert, PromQL,
+Deploy the official Grafana MCP server using streamable HTTP and `--disable-write`, backed by a
+Grafana service account assigned the **Viewer** role. Replace `YOUR_GRAFANA_MCP_HOST` with that MCP
+server's host and replace the `Authorization` header placeholder if caller authentication is
+enabled. `--disable-write` removes write-capable tools while retaining dashboard, alert, PromQL,
 LogQL, and other read operations.
 
 See [Grafana's MCP documentation](https://grafana.com/docs/grafana/latest/developer-resources/mcp/)
@@ -179,11 +187,10 @@ for granular RBAC scopes and network requirements.
 
 #### Prometheus
 
-Replace `PROMETHEUS_URL` with the Prometheus base URL reachable from Docker. The preset runs the
-query-only `pab1it0/prometheus-mcp-server`, which exposes health, PromQL, metric metadata, and
-target discovery tools. If the endpoint requires authentication, add the appropriate
-`PROMETHEUS_TOKEN` or `PROMETHEUS_USERNAME`/`PROMETHEUS_PASSWORD` environment variables and add
-matching `-e` arguments to the Docker command.
+Deploy the query-only `pab1it0/prometheus-mcp-server` with streamable HTTP and replace
+`YOUR_PROMETHEUS_MCP_HOST` with its host. The server exposes health, PromQL, metric metadata, and
+target discovery tools. Configure Prometheus authentication on the MCP server; if caller
+authentication is enabled in front of it, add the required request header in Headlamp.
 
 Use a read-only Prometheus endpoint or reverse proxy and consult the
 [server configuration](https://github.com/pab1it0/prometheus-mcp-server#configuration-options) for

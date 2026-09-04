@@ -108,7 +108,45 @@ it('normalizes and saves a valid configuration before closing', () => {
       },
     ],
   });
+
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+it('normalizes and saves a dependency-free HTTP server', () => {
+  const onSave = vi.fn();
+  render(<MCPConfigEditorDialog {...openMCPConfigEditorArgs} onSave={onSave} />);
+  setEditorContent(
+    JSON.stringify({
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'https://example.com/mcp',
+          headers: { Authorization: 'token' },
+          enabled: true,
+        },
+      ],
+    })
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+  expect(onSave).toHaveBeenCalledWith({
+    enabled: true,
+    servers: [
+      {
+        name: 'remote',
+        transport: 'http',
+        command: '',
+        args: [],
+        url: 'https://example.com/mcp',
+        headers: { Authorization: 'token' },
+        enabled: true,
+      },
+    ],
+  });
 });
 
 it.each([
@@ -122,6 +160,22 @@ it.each([
   [
     { enabled: true, servers: [{ name: 's', command: '', args: [], enabled: true }] },
     'Server 1: command must be a non-empty string',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'file:///tmp/mcp',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
   ],
   [
     { enabled: true, servers: [{ name: 's', command: 'cmd', args: [1], enabled: true }] },

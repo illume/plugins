@@ -76,10 +76,26 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
         error: t('Server {{number}}: name must be a non-empty string', { number }),
       };
     }
-    if (typeof server.command !== 'string' || !server.command.trim()) {
+    const transport = server.transport ?? 'stdio';
+    if (typeof transport !== 'string' || !['stdio', 'http', 'sse'].includes(transport)) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: transport must be stdio, http, or sse', { number }),
+      };
+    }
+    if (transport === 'stdio' && (typeof server.command !== 'string' || !server.command.trim())) {
       return {
         valid: false,
         error: t('Server {{number}}: command must be a non-empty string', { number }),
+      };
+    }
+    if (
+      transport !== 'stdio' &&
+      (typeof server.url !== 'string' || !/^https?:\/\//.test(server.url))
+    ) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: url must be an HTTP URL', { number }),
       };
     }
     const normalizedName = server.name.trim();
@@ -103,6 +119,15 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
         error: t('Server {{number}}: env must contain only string key-value pairs', { number }),
       };
     }
+    const headers = server.headers;
+    if (headers !== undefined && !isStringRecord(headers)) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: headers must contain only string key-value pairs', {
+          number,
+        }),
+      };
+    }
     if (typeof server.enabled !== 'boolean') {
       return {
         valid: false,
@@ -119,10 +144,15 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
 
     const normalizedServer: MCPServer = {
       name: normalizedName,
-      command: server.command.trim(),
+      command: typeof server.command === 'string' ? server.command.trim() : '',
       args: server.args,
       enabled: server.enabled,
     };
+    if (transport !== 'stdio') {
+      normalizedServer.transport = transport as 'http' | 'sse';
+      normalizedServer.url = server.url as string;
+    }
+    if (isStringRecord(headers)) normalizedServer.headers = headers;
     if (isStringRecord(env)) normalizedServer.env = env;
     if (typeof autoApprove === 'boolean') normalizedServer.autoApprove = autoApprove;
     servers.push(normalizedServer);
@@ -233,8 +263,13 @@ export default function MCPConfigEditorDialog({
       servers: [
         {
           name: t('string - Unique server name'),
+          transport: t('stdio, http, or sse (optional; defaults to stdio)'),
           command: t('string - Executable command or path'),
           args: [t('array of strings - Command arguments')],
+          url: t('string - HTTP or SSE endpoint URL'),
+          headers: {
+            Authorization: t('string value - Request headers (optional)'),
+          },
           env: {
             KEY: t('string value - Environment variables (optional)'),
           },

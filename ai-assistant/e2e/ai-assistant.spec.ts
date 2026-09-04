@@ -39,8 +39,8 @@ test.describe.serial('AI Assistant on KWOK', () => {
       await expect(page.getByRole('textbox', { name: 'Server Name' })).toHaveValue(provider);
       await expect(page.getByRole('checkbox', { name: 'Auto Approve' })).not.toBeChecked();
       if (provider === 'grafana') {
-        await expect(page.getByRole('textbox', { name: 'Arguments' })).toHaveValue(
-          /--disable-write/
+        await expect(page.getByRole('textbox', { name: 'Server URL' })).toHaveValue(
+          /YOUR_GRAFANA_MCP_HOST/
         );
       }
       await page.getByRole('button', { name: 'Cancel' }).click();

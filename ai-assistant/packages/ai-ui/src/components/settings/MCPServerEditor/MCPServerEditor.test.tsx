@@ -76,11 +76,11 @@ it('loads the example server and clears stale validation', () => {
 });
 
 it.each([
-  ['Datadog', 'datadog', 'npx'],
-  ['Splunk', 'splunk', 'npx'],
-  ['Grafana', 'grafana', 'docker'],
-  ['Prometheus', 'prometheus', 'docker'],
-] as const)('loads the read-only %s preset', (option, name, command) => {
+  ['Datadog', 'datadog', 'mcp.datadoghq.com'],
+  ['Splunk', 'splunk', 'YOUR_SPLUNK_HOST'],
+  ['Grafana', 'grafana', 'YOUR_GRAFANA_MCP_HOST'],
+  ['Prometheus', 'prometheus', 'YOUR_PROMETHEUS_MCP_HOST'],
+] as const)('loads the dependency-free %s preset', (option, name, host) => {
   render(<MCPServerEditor {...addServerArgs} />);
 
   fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
@@ -88,21 +88,25 @@ it.each([
   });
 
   expect(screen.getByRole('textbox', { name: /Server Name/ })).toHaveProperty('value', name);
-  expect(screen.getByRole('textbox', { name: /Command/ })).toHaveProperty('value', command);
+  expect(screen.getByRole('combobox', { name: 'Transport' })).toHaveProperty('value', 'http');
+  expect(screen.getByRole('textbox', { name: 'Server URL' })).toHaveProperty(
+    'value',
+    expect.stringContaining(host)
+  );
   expect(screen.getByRole('checkbox', { name: 'Auto Approve' })).toHaveProperty('checked', false);
   expect(screen.getByRole('option', { name: option })).toHaveProperty('value', name);
 });
 
-it('loads Grafana with write tools disabled', () => {
+it('loads Grafana with an authentication header placeholder', () => {
   render(<MCPServerEditor {...addServerArgs} />);
 
   fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
     target: { value: 'grafana' },
   });
 
-  expect(screen.getByRole('textbox', { name: /Arguments/ })).toHaveProperty(
+  expect(screen.getByRole('textbox', { name: /Request Headers/ })).toHaveProperty(
     'value',
-    expect.stringContaining('--disable-write')
+    expect.stringContaining('Authorization')
   );
 });
 
@@ -174,7 +178,28 @@ it('saves normalized fields while preserving exact argument values and auto appr
     enabled: true,
     autoApprove: true,
   });
+
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+it('saves a remote HTTP server without a local command', () => {
+  const onSave = vi.fn();
+  render(<MCPServerEditor {...addServerArgs} onSave={onSave} />);
+  fireEvent.change(screen.getByRole('combobox', { name: 'Select Provider' }), {
+    target: { value: 'prometheus' },
+  });
+
+  save();
+
+  expect(onSave).toHaveBeenCalledWith({
+    name: 'prometheus',
+    transport: 'http',
+    command: '',
+    args: [],
+    url: 'https://YOUR_PROMETHEUS_MCP_HOST/mcp',
+    enabled: true,
+    autoApprove: false,
+  });
 });
 
 it('round-trips editing state and excludes the original name from duplicates', () => {

@@ -113,6 +113,7 @@ describe('makeMcpServers', () => {
         },
         []
       );
+      if (result.server.transport !== 'stdio') throw new Error('Expected stdio configuration');
       expect(result.server.env).toEqual({});
     } finally {
       vi.stubGlobal('process', originalProcess);
@@ -165,6 +166,7 @@ describe('makeMcpServers', () => {
 
     const entry = result['valid'];
     expect(entry.transport).toBe('stdio');
+    if (entry.transport !== 'stdio') throw new Error('Expected stdio configuration');
     expect(entry.command).toBe('cmd');
     expect(entry.args).toEqual(['arg1']);
     // env should include process.env and server.env overrides
@@ -194,7 +196,35 @@ describe('makeMcpServers', () => {
 
     expect(result).toHaveProperty('withCluster');
     const entry = result['withCluster'];
+    if (entry.transport !== 'stdio') throw new Error('Expected stdio configuration');
     expect(entry.args).toEqual(['connect', 'my-current-cluster']);
+  });
+
+  it('builds a dependency-free HTTP server with headers', () => {
+    const result = makeMcpServers(
+      {
+        enabled: true,
+        servers: [
+          {
+            name: 'remote',
+            transport: 'http',
+            command: '',
+            args: [],
+            url: 'https://example.com/mcp',
+            headers: { Authorization: '******' },
+            enabled: true,
+          },
+        ],
+      },
+      []
+    );
+
+    expect(result.remote).toEqual({
+      transport: 'http',
+      url: 'https://example.com/mcp',
+      headers: { Authorization: '******' },
+      reconnect: { enabled: true, maxAttempts: 3, delayMs: 2000 },
+    });
   });
 });
 
@@ -245,6 +275,53 @@ describe('settingsChanges', () => {
     const result = settingsChanges(null, nextSettings);
     expect(result).toContain('• MCP will be ENABLED');
     expect(result).toContain('• ADD server: "s1" (cmd1)');
+  });
+
+  it('reports remote server endpoints and changes without exposing headers', () => {
+    const current: MCPSettings = {
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'https://old.example/mcp',
+          headers: { Authorization: 'old-secret' },
+          enabled: true,
+        },
+      ],
+    };
+    const next: MCPSettings = {
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'sse',
+          command: '',
+          args: [],
+          url: 'https://new.example/mcp',
+          headers: { Authorization: 'new-secret' },
+          enabled: true,
+        },
+        {
+          name: 'added',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'https://added.example/mcp',
+          enabled: true,
+        },
+      ],
+    };
+
+    const result = settingsChanges(current, next);
+
+    expect(result).toContain('• ADD server: "added" (https://added.example/mcp)');
+    expect(result.join(' ')).toContain('change transport');
+    expect(result.join(' ')).toContain('change URL');
+    expect(result.join(' ')).toContain('change request headers');
+    expect(result.join(' ')).not.toContain('new-secret');
   });
 
   it('returns empty array when both current and next settings are null', () => {

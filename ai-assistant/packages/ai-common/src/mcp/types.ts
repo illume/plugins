@@ -34,10 +34,16 @@ export interface MCPSettings {
 export interface MCPServer {
   /** Unique server name used in tool prefixes and settings. */
   name: string;
-  /** Executable or command used to start the server. */
+  /** Transport type. Missing values retain the legacy stdio behavior. */
+  transport?: 'stdio' | 'http' | 'sse';
+  /** Executable used to start a stdio MCP server. */
   command: string;
-  /** Arguments passed to the MCP server command. */
+  /** Arguments passed to a stdio MCP server command. */
   args: string[];
+  /** Endpoint used by an HTTP or SSE MCP server. */
+  url?: string;
+  /** Optional request headers used by an HTTP or SSE MCP server. */
+  headers?: Record<string, string>;
   /** Whether this server should be started by the client. */
   enabled: boolean;
   /** Whether tools from this server may run without prompting. */

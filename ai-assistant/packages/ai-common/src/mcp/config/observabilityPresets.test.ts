@@ -18,31 +18,33 @@ import { describe, expect, it } from 'vitest';
 import { createObservabilityPreset, OBSERVABILITY_PRESETS } from './observabilityPresets';
 
 describe('observability MCP presets', () => {
-  it.each(OBSERVABILITY_PRESETS)('creates a guarded %s configuration', preset => {
+  it.each(OBSERVABILITY_PRESETS)('creates a dependency-free %s configuration', preset => {
     const server = createObservabilityPreset(preset);
 
     expect(server.name).toBe(preset);
     expect(server.enabled).toBe(true);
     expect(server.autoApprove).toBe(false);
-    expect(server.args.join(' ')).not.toContain('latest');
+    expect(server.transport).toBe('http');
+    expect(server.url).toMatch(/^https:\/\//);
+    expect(server.command).toBe('');
+    expect(server.args).toEqual([]);
   });
 
-  it('disables Grafana write tools', () => {
-    expect(createObservabilityPreset('grafana').args).toContain('--disable-write');
+  it.each(['datadog', 'splunk', 'grafana'] as const)(
+    'includes authentication header placeholders for %s',
+    preset => {
+      expect(createObservabilityPreset(preset).headers).not.toEqual({});
+    }
+  );
+
+  it('uses the managed Datadog endpoint', () => {
+    expect(createObservabilityPreset('datadog').url).toBe('https://mcp.datadoghq.com/v1/mcp');
   });
 
-  it('uses query-only Prometheus tools', () => {
+  it('uses a configurable Prometheus MCP endpoint', () => {
     const server = createObservabilityPreset('prometheus');
 
-    expect(server.command).toBe('docker');
-    expect(server.env).toHaveProperty('PROMETHEUS_URL');
-  });
-
-  it.each(['datadog', 'splunk'] as const)('bridges the %s HTTP MCP endpoint over stdio', preset => {
-    const server = createObservabilityPreset(preset);
-
-    expect(server.command).toBe('npx');
-    expect(server.args).toContain('mcp-remote@0.8.3');
-    expect(server.args.at(-1)).toMatch(/^https:\/\//);
+    expect(server.url).toContain('YOUR_PROMETHEUS_MCP_HOST');
+    expect(server.headers).toBeUndefined();
   });
 });

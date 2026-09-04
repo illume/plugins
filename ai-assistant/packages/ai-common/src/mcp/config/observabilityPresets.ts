@@ -30,9 +30,9 @@ export const OBSERVABILITY_PRESETS: readonly ObservabilityPreset[] = [
 /**
  * Creates an editable MCP server configuration for an observability provider.
  *
- * Placeholder values must be replaced before use. Write-capable Grafana tools
- * are explicitly disabled; the other servers expose queries or inherit the
- * read-only permissions of the configured backend identity.
+ * Placeholder values must be replaced before use. The remote servers require
+ * no local executable; read-only access is enforced by their backend identity
+ * and server deployment.
  *
  * @param preset - Provider configuration to create.
  * @returns A new MCP server configuration.
@@ -42,56 +42,46 @@ export function createObservabilityPreset(preset: ObservabilityPreset): MCPServe
     case 'datadog':
       return {
         name: 'datadog',
-        command: 'npx',
-        args: ['-y', 'mcp-remote@0.8.3', 'https://mcp.datadoghq.com/v1/mcp'],
+        transport: 'http',
+        command: '',
+        args: [],
+        url: 'https://mcp.datadoghq.com/v1/mcp',
+        headers: {
+          'DD-API-KEY': 'REPLACE_WITH_API_KEY',
+          'DD-APPLICATION-KEY': 'REPLACE_WITH_APPLICATION_KEY',
+        },
         enabled: true,
         autoApprove: false,
       };
     case 'splunk':
       return {
         name: 'splunk',
-        command: 'npx',
-        args: ['-y', 'mcp-remote@0.8.3', 'https://YOUR_SPLUNK_HOST/services/mcp'],
+        transport: 'http',
+        command: '',
+        args: [],
+        url: 'https://YOUR_SPLUNK_HOST/services/mcp',
+        headers: { Authorization: 'REPLACE_WITH_AUTHORIZATION_VALUE' },
         enabled: true,
         autoApprove: false,
       };
     case 'grafana':
       return {
         name: 'grafana',
-        command: 'docker',
-        args: [
-          'run',
-          '--rm',
-          '-i',
-          '-e',
-          'GRAFANA_URL',
-          '-e',
-          'GRAFANA_SERVICE_ACCOUNT_TOKEN',
-          'grafana/mcp-grafana:1.3.0',
-          '-t',
-          'stdio',
-          '--disable-write',
-        ],
-        env: {
-          GRAFANA_URL: 'https://YOUR_GRAFANA_HOST',
-          GRAFANA_SERVICE_ACCOUNT_TOKEN: 'REPLACE_WITH_VIEWER_TOKEN',
-        },
+        transport: 'http',
+        command: '',
+        args: [],
+        url: 'https://YOUR_GRAFANA_MCP_HOST/mcp',
+        headers: { Authorization: 'REPLACE_WITH_AUTHORIZATION_VALUE' },
         enabled: true,
         autoApprove: false,
       };
     case 'prometheus':
       return {
         name: 'prometheus',
-        command: 'docker',
-        args: [
-          'run',
-          '--rm',
-          '-i',
-          '-e',
-          'PROMETHEUS_URL',
-          'ghcr.io/pab1it0/prometheus-mcp-server:v1.6.2',
-        ],
-        env: { PROMETHEUS_URL: 'https://YOUR_PROMETHEUS_HOST' },
+        transport: 'http',
+        command: '',
+        args: [],
+        url: 'https://YOUR_PROMETHEUS_MCP_HOST/mcp',
         enabled: true,
         autoApprove: false,
       };

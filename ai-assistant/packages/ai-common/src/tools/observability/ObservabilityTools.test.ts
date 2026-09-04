@@ -168,6 +168,23 @@ describe('native observability tools', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('rejects Prometheus ranges whose end precedes their start', async () => {
+    const fetch = jsonFetch();
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(
+      tool.handler({
+        action: 'query_range',
+        query: 'up',
+        start: '2026-01-02T00:00:00Z',
+        end: '2026-01-01T00:00:00Z',
+        step: '1m',
+      })
+    ).rejects.toThrow('Prometheus time range is invalid');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('rejects non-HTTP provider URLs and redacts credentials from errors', async () => {
     const tool = new GrafanaTool();
     tool.setContext({

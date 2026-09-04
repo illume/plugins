@@ -59,6 +59,7 @@ export interface ObservabilityToolContext {
 
 type Provider = keyof ObservabilityConfig;
 const MAX_RESPONSE_BYTES = 200_000;
+const MAX_TOOL_CONTENT_CHARACTERS = MAX_RESPONSE_BYTES;
 
 /**
  * Recursively caps arrays in provider responses to the documented item limit.
@@ -88,8 +89,10 @@ function boundArrays(value: unknown): unknown {
 function toolResult(data: unknown): ToolExecutionResult {
   const boundedData = boundArrays(data);
   const serialized = JSON.stringify(boundedData);
-  const truncated = serialized.length > 200_000;
-  const content = truncated ? `${serialized.slice(0, 200_000)}… [response truncated]` : serialized;
+  const truncated = serialized.length > MAX_TOOL_CONTENT_CHARACTERS;
+  const content = truncated
+    ? `${serialized.slice(0, MAX_TOOL_CONTENT_CHARACTERS)}… [response truncated]`
+    : serialized;
   return {
     content,
     data: truncated ? undefined : boundedData,
@@ -611,10 +614,7 @@ export class PrometheusTool extends ObservabilityTool {
       ) {
         throw new Error('Range query requires start, end, and step');
       }
-      const duration = rangeMilliseconds(args.end) - rangeMilliseconds(args.start);
-      if (duration < 0 || duration > 24 * 60 * 60 * 1000) {
-        throw new Error('Prometheus range queries must cover at most 24 hours');
-      }
+      assertMaximumRange(rangeMilliseconds(args.start), rangeMilliseconds(args.end), 'Prometheus');
       return toolResult(
         await requestJson(context, 'prometheus', '/api/v1/query_range', undefined, {
           query: args.query as string,

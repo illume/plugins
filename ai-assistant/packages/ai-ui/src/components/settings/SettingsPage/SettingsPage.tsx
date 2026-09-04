@@ -489,7 +489,7 @@ export function SettingsPage({
         </>
       )}
 
-      {/* MCP Servers Section */}
+      {/* Observability Data Sources Section */}
       {onObservabilityConfigChange && (
         <>
           <Divider sx={{ my: 3 }} />

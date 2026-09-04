@@ -263,7 +263,7 @@ export function settingsChanges(
   for (const server of nextServers) {
     if (!currentServerNames.has(server.name)) {
       const location =
-        server.transport && server.transport !== 'stdio' ? server.url : server.command;
+        server.transport && server.transport !== 'stdio' ? server.url ?? '' : server.command;
       changes.push(`• ADD server: "${server.name}" (${location})`);
     }
   }

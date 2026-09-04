@@ -135,3 +135,6 @@ Once servers are configured, the assistant automatically discovers the tools the
 - View tool descriptions and input schemas.
 - Track tool usage statistics.
 - Use bulk operations to enable or disable all tools at once.
+
+For observability services, Kubernetes deployments, AKS, and runbook guidance, see
+[Connecting observability data sources](docs/data-sources.md).

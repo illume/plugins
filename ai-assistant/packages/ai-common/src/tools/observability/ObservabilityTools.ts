@@ -170,16 +170,19 @@ function parseDatadogTime(value: string, seconds: boolean): number {
  */
 function validateSplunkTimeRange(earliest: string, latest: string): void {
   const relative = /^-(\d+)([smhd])$/.exec(earliest);
-  if (relative && latest === 'now') {
+  if (relative) {
+    if (latest !== 'now') {
+      throw new Error('Splunk relative search times must end at now');
+    }
     const unit = { s: 1, m: 60, h: 3600, d: 86400 }[relative[2] as 's' | 'm' | 'h' | 'd'];
     if (Number(relative[1]) * unit <= 86_400) return;
-  } else {
-    const start = Date.parse(earliest);
-    const end = Date.parse(latest);
-    if (Number.isFinite(start) && Number.isFinite(end)) {
-      assertMaximumRange(start, end, 'Splunk');
-      return;
-    }
+    throw new Error('Splunk time range must cover at most 24 hours');
+  }
+  const start = Date.parse(earliest);
+  const end = Date.parse(latest);
+  if (Number.isFinite(start) && Number.isFinite(end)) {
+    assertMaximumRange(start, end, 'Splunk');
+    return;
   }
   throw new Error('Splunk searches must use a valid time range of at most 24 hours');
 }
@@ -282,10 +285,11 @@ async function requestJson(
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
     throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
   }
-  const reader = response.body?.getReader();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-  if (reader) {
+  let text: string;
+  if (response.body) {
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let received = 0;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -296,14 +300,16 @@ async function requestJson(
       }
       chunks.push(value);
     }
+    const bytes = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    text = new TextDecoder().decode(bytes);
+  } else {
+    text = await response.text();
   }
-  const bytes = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  const text = reader ? new TextDecoder().decode(bytes) : await response.text();
   if (!response.ok) {
     throw new Error(`${provider} request failed (${response.status}): ${text.slice(0, 500)}`);
   }

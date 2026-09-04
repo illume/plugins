@@ -81,6 +81,22 @@ describe('native observability tools', () => {
     expect(fetch).toHaveBeenCalledOnce();
   });
 
+  it('rejects relative Splunk ranges longer than 24 hours clearly', async () => {
+    const fetch = jsonFetch();
+    const tool = new SplunkTool();
+    tool.setContext({ config, fetch });
+
+    await expect(
+      tool.handler({
+        action: 'search',
+        query: 'search index=main',
+        earliestTime: '-2d',
+        latestTime: 'now',
+      })
+    ).rejects.toThrow('Splunk time range must cover at most 24 hours');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('runs bounded Splunk searches and uses Splunk token authentication', async () => {
     const fetch = jsonFetch();
     const tool = new SplunkTool();

@@ -295,7 +295,11 @@ async function requestJson(
       if (done) break;
       received += value.byteLength;
       if (received > MAX_RESPONSE_BYTES) {
-        await reader.cancel();
+        try {
+          await reader.cancel();
+        } catch {
+          // Preserve the response-size error if stream cancellation fails.
+        }
         throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
       }
       chunks.push(value);

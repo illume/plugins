@@ -18,10 +18,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       !grafanaUrl || !prometheusUrl,
       'The observability scenario requires runner-managed Grafana and Prometheus services'
     );
-    const api = await startMockObservabilityApi({
-      grafanaUrl: grafanaUrl!,
-      prometheusUrl: prometheusUrl!,
-    });
+    const api = await startMockObservabilityApi();
     try {
       await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
       for (const [provider, url] of Object.entries(api.urls)) {

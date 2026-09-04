@@ -36,28 +36,12 @@ export interface MockObservabilityApi {
   close: () => Promise<void>;
 }
 
-export interface ObservabilityApiOptions {
-  /** Real Grafana API origin proxied by the fixture. */
-  grafanaUrl: string;
-  /** Real Prometheus API origin proxied by the fixture. */
-  prometheusUrl: string;
-}
-
 /**
  * Starts a dependency-free JSON API fixture used by native tool E2E tests.
  *
- * @param options - Origins of the real services proxied by the fixture.
  * @returns The running fixture URL, captured requests, and an asynchronous close function.
  */
-export async function startMockObservabilityApi(
-  options: ObservabilityApiOptions
-): Promise<MockObservabilityApi> {
-  if (
-    options.grafanaUrl !== E2E_GRAFANA_ORIGIN ||
-    options.prometheusUrl !== E2E_PROMETHEUS_ORIGIN
-  ) {
-    throw new Error('Observability E2E services must use the runner-managed origins');
-  }
+export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
   const servers = (['datadog', 'splunk', 'grafana', 'prometheus'] as const).map(provider =>
     createServer(async (request, response) => {

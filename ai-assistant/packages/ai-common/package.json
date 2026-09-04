@@ -6,6 +6,7 @@
   "exports": {
     "./agents/holmes/client": "./src/agents/holmes/client.ts",
     "./agents/holmes/MockHolmesAgent": "./src/agents/holmes/MockHolmesAgent.ts",
+    "./agents/langchain/createAgentHarness": "./src/agents/langchain/createAgentHarness.ts",
     "./agents/types": "./src/agents/types.ts",
     "./agents/scripted/ScriptedAgent": "./src/agents/scripted/ScriptedAgent.ts",
     "./agents/scripted/fixtures": "./src/agents/scripted/fixtures.ts",

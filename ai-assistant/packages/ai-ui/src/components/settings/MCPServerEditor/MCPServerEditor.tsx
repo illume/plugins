@@ -124,8 +124,11 @@ export default function MCPServerEditor({
   /** Loads a valid example server. @returns No value. */
   const handleLoadExample = (): void => {
     setName('flux-mcp');
+    setTransport('stdio');
     setCommand('flux-operator-mcp');
     setArgs(JSON.stringify(['serve', '--kube-context', 'HEADLAMP_CURRENT_CLUSTER']));
+    setUrl('');
+    setHeaders('{}');
     setEnv([{ key: 'KUBECONFIG', value: 'PATH_TO_KUBECONFIG' }]);
     setEnabled(true);
     setAutoApprove(false);

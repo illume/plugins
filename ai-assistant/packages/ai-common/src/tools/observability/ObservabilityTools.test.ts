@@ -197,15 +197,24 @@ describe('native observability tools', () => {
     );
   });
 
-  it('retains bounded structured data when the response fits the payload limit', async () => {
+  it('bounds array and map-shaped structured data', async () => {
     const fetch: typeof globalThis.fetch = async () =>
-      new Response(JSON.stringify({ data: Array.from({ length: 150 }, (_, index) => index) }));
+      new Response(
+        JSON.stringify({
+          data: Array.from({ length: 150 }, (_, index) => index),
+          metadata: Object.fromEntries(
+            Array.from({ length: 150 }, (_, index) => [`metric_${index}`, [{ type: 'gauge' }]])
+          ),
+        })
+      );
     const tool = new PrometheusTool();
     tool.setContext({ config, fetch });
 
     const result = await tool.handler({ action: 'metadata' });
 
-    expect((result.data as { data: number[] }).data).toHaveLength(100);
+    const data = result.data as { data: number[]; metadata: Record<string, unknown> };
+    expect(data.data).toHaveLength(100);
+    expect(Object.keys(data.metadata)).toHaveLength(100);
   });
 
   it('rejects oversized responses while reading the response stream', async () => {

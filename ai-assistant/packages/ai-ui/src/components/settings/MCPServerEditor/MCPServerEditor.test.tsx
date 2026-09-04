@@ -54,12 +54,16 @@ it('renders accessible add-server defaults and passes axe', async () => {
 
 it('loads the example server and clears stale validation', () => {
   render(<MCPServerEditor {...addServerArgs} />);
+  fireEvent.change(screen.getByRole('combobox', { name: 'Transport' }), {
+    target: { value: 'http' },
+  });
   save();
   expect(screen.getByRole('alert').textContent).toBe('Server name is required');
 
   fireEvent.click(screen.getByRole('button', { name: 'Load Example' }));
 
   expect(screen.queryByRole('alert')).toBeNull();
+  expect(screen.getByRole('combobox', { name: 'Transport' })).toHaveProperty('value', 'stdio');
   expect(screen.getByRole('textbox', { name: /Server Name/ })).toHaveProperty('value', 'flux-mcp');
   expect(screen.getByRole('textbox', { name: /Command/ })).toHaveProperty(
     'value',

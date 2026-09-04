@@ -61,19 +61,18 @@ type Provider = keyof ObservabilityConfig;
 const MAX_RESPONSE_BYTES = 200_000;
 
 /**
- * Recursively caps arrays in provider responses to the documented item limit.
+ * Recursively caps arrays and records in provider responses to the documented item limit.
  *
  * @param value - Parsed provider response value.
- * @returns A response copy whose arrays contain no more than 100 items.
+ * @returns A response copy whose arrays and records contain no more than 100 entries.
  */
 function boundArrays(value: unknown): unknown {
   if (Array.isArray(value)) return value.slice(0, 100).map(boundArrays);
   if (value && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
-        key,
-        boundArrays(item),
-      ])
+      Object.entries(value as Record<string, unknown>)
+        .slice(0, 100)
+        .map(([key, item]) => [key, boundArrays(item)])
     );
   }
   return value;

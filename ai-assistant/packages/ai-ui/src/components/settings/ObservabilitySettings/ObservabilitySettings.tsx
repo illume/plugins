@@ -162,7 +162,7 @@ export function ObservabilitySettings({
         {PROVIDERS.map(provider => {
           const providerConfig = config[provider.id] ?? {};
           return (
-            <Box key={provider.id}>
+            <Box key={provider.id} role="group" aria-label={provider.name}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 {provider.name}
               </Typography>

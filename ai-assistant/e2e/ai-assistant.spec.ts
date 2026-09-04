@@ -18,11 +18,23 @@ test.describe.serial('AI Assistant on KWOK', () => {
       for (const provider of ['Datadog', 'Splunk', 'Grafana', 'Prometheus']) {
         await page.getByRole('textbox', { name: `${provider} URL` }).fill(api.url);
       }
-      await page.getByLabel('API Key').fill('datadog-api');
-      await page.getByLabel('Application Key').fill('datadog-app');
-      await page.getByLabel('Access Token').fill('splunk-token');
-      await page.getByLabel('Service Account Token').fill('grafana-token');
-      await page.getByLabel('HTTP Token').fill('prometheus-token');
+      await page.getByRole('group', { name: 'Datadog' }).getByLabel('API Key').fill('datadog-api');
+      await page
+        .getByRole('group', { name: 'Datadog' })
+        .getByLabel('Application Key')
+        .fill('datadog-app');
+      await page
+        .getByRole('group', { name: 'Splunk' })
+        .getByLabel('Access Token')
+        .fill('splunk-token');
+      await page
+        .getByRole('group', { name: 'Grafana' })
+        .getByLabel('Service Account Token')
+        .fill('grafana-token');
+      await page
+        .getByRole('group', { name: 'Prometheus' })
+        .getByLabel('HTTP Token')
+        .fill('prometheus-token');
 
       for (const toolName of ['Datadog Read', 'Splunk Read', 'Grafana Read', 'Prometheus Read']) {
         const toolToggle = page.getByRole('checkbox', {

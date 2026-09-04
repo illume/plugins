@@ -19,6 +19,7 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   expect(onChange).toHaveBeenCalledWith({
     grafana: { baseUrl: 'https://grafana.example' },
   });
+  expect(screen.getByRole('group', { name: 'Grafana' })).toBeTruthy();
   expect(screen.getByLabelText('Service Account Token')).toHaveProperty('type', 'password');
   expect(screen.getByText(/require no MCP server/)).toBeTruthy();
 });

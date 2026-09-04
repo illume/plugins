@@ -255,6 +255,36 @@ describe('createFixtureChatModel', () => {
     expect(result.content).toBe('Custom hello!');
   });
 
+  it('returns deterministic tool calls from fixtures after binding tools', async () => {
+    const model = createFixtureChatModel({
+      extraFixtures: [
+        {
+          prompt: 'Check metrics',
+          response: 'Checking metrics.',
+          toolCalls: [{ name: 'prometheus_read', args: { action: 'query', query: 'up' } }],
+        },
+      ],
+    });
+    const bound = model.bindTools!([
+      {
+        name: 'prometheus_read',
+        description: 'Read Prometheus',
+        schema: { type: 'object', properties: {} },
+      },
+    ]);
+
+    const result = await bound.invoke([new HumanMessage('Check metrics')]);
+
+    expect(result.tool_calls).toEqual([
+      {
+        id: 'fixture-tool-call-0',
+        name: 'prometheus_read',
+        args: { action: 'query', query: 'up' },
+        type: 'tool_call',
+      },
+    ]);
+  });
+
   it('plays back a sequence in order', async () => {
     const model = createFixtureChatModel({
       sequenceName: 'cluster-exploration-demo',

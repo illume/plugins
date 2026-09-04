@@ -1,9 +1,3 @@
-import {
-  DatadogTool,
-  GrafanaTool,
-  PrometheusTool,
-  SplunkTool,
-} from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +11,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
     fs.mkdirSync(screenshotsDir, { recursive: true });
   });
 
-  test('configures and executes all native read-only observability tools', async ({ page }) => {
+  test('configures and executes native read-only observability tools', async ({ page }) => {
     const api = await startMockObservabilityApi();
     await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
     try {
@@ -33,32 +27,36 @@ test.describe.serial('AI Assistant on KWOK', () => {
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
         .toContain(api.url);
 
-      const config = {
-        datadog: { baseUrl: api.url, apiKey: 'datadog-api', applicationKey: 'datadog-app' },
-        splunk: { baseUrl: api.url, token: 'splunk-token' },
-        grafana: { baseUrl: api.url, token: 'grafana-token' },
-        prometheus: { baseUrl: api.url, token: 'prometheus-token' },
-      };
-      const calls = [
-        [new DatadogTool(), { action: 'logs', query: 'service:web' }],
-        [new SplunkTool(), { action: 'search', query: 'search index=main error' }],
-        [new GrafanaTool(), { action: 'search_dashboards', query: 'Kubernetes' }],
-        [new PrometheusTool(), { action: 'query', query: 'up' }],
-      ] as const;
-      for (const [tool, args] of calls) {
-        tool.setContext({ config });
-        await expect(tool.handler(args)).resolves.toMatchObject({ success: true });
-      }
-      expect(api.requests).toHaveLength(4);
-      expect(api.requests.map(request => request.method)).toEqual(['POST', 'POST', 'GET', 'GET']);
-      expect(api.requests[0]).toMatchObject({
+      await page.getByText('Developer Options', { exact: true }).click();
+      await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
+      await page.getByRole('button', { name: 'AI Assistant' }).click();
+      await page.getByLabel('Assistant mode').click();
+      await page.getByRole('option', { name: 'Chat' }).click();
+      const promptInput = page.locator('#deployment-ai-prompt');
+      await promptInput.fill('E2E query all observability providers');
+      await promptInput.press('Enter');
+
+      await expect.poll(() => api.requests.length).toBe(4);
+      expect(api.requests.find(request => request.path.startsWith('/api/v2/logs/'))).toMatchObject({
+        method: 'POST',
         datadogApiKey: 'datadog-api',
         datadogApplicationKey: 'datadog-app',
       });
-      expect(api.requests[1].authorization).toBe('Splunk splunk-token');
-      expect(api.requests[2].authorization).toBe(['Bearer', 'grafana-token'].join(' '));
-      expect(api.requests[3].authorization).toBe(['Bearer', 'prometheus-token'].join(' '));
-      expect(api.requests.every(request => !/PUT|PATCH|DELETE/.test(request.method))).toBe(true);
+      expect(api.requests.find(request => request.path.startsWith('/services/search/'))).toMatchObject(
+        {
+          method: 'POST',
+          authorization: 'Splunk splunk-token',
+        }
+      );
+      expect(api.requests.find(request => request.path.startsWith('/api/search'))).toMatchObject({
+        method: 'GET',
+        authorization: ['Bearer', 'grafana-token'].join(' '),
+      });
+      expect(api.requests.find(request => request.path.startsWith('/api/v1/query'))).toMatchObject({
+        method: 'GET',
+        path: '/api/v1/query?query=up',
+        authorization: ['Bearer', 'prometheus-token'].join(' '),
+      });
     } finally {
       await api.close();
     }
@@ -176,7 +174,9 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await kubernetesTool.uncheck();
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-      .toContain('"enabledTools":[]');
+      .toContain(
+        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read"]'
+      );
     await page.reload();
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();

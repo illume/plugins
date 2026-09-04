@@ -46,15 +46,27 @@ export interface ObservabilityToolContext {
 
 type Provider = keyof ObservabilityConfig;
 
+function boundArrays(value: unknown): unknown {
+  if (Array.isArray(value)) return value.slice(0, 100).map(boundArrays);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        boundArrays(item),
+      ])
+    );
+  }
+  return value;
+}
+
 function toolResult(data: unknown): ToolExecutionResult {
-  const serialized = JSON.stringify(data);
-  const content =
-    serialized.length > 200_000
-      ? `${serialized.slice(0, 200_000)}… [response truncated]`
-      : serialized;
+  const boundedData = boundArrays(data);
+  const serialized = JSON.stringify(boundedData);
+  const truncated = serialized.length > 200_000;
+  const content = truncated ? `${serialized.slice(0, 200_000)}… [response truncated]` : serialized;
   return {
     content,
-    data,
+    data: truncated ? undefined : boundedData,
     success: true,
     shouldAddToHistory: true,
     shouldProcessFollowUp: true,

@@ -67,11 +67,13 @@ function isMCPConfig(value: unknown): value is MCPConfig {
     if (typeof transport !== 'string' || !['stdio', 'http', 'sse'].includes(transport))
       return false;
     if (transport === 'stdio' && !server.command.trim()) return false;
-    if (
-      transport !== 'stdio' &&
-      (typeof server.url !== 'string' || !/^https?:\/\//.test(server.url))
-    ) {
-      return false;
+    if (transport !== 'stdio') {
+      try {
+        const url = new URL(typeof server.url === 'string' ? server.url : '');
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+      } catch {
+        return false;
+      }
     }
     if (server.headers !== undefined && !isStringRecord(server.headers)) return false;
     const normalizedName = server.name.trim().toLowerCase();

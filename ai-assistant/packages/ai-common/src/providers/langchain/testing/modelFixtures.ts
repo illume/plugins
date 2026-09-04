@@ -27,6 +27,16 @@ import type { FixtureEntry, FixtureSequence } from './FixtureChatModel';
 /** Built-in prompt and response fixtures used by the mock testing model. */
 export const GENERAL_FIXTURES: FixtureEntry[] = [
   {
+    prompt: 'E2E query all observability providers',
+    response: 'Querying the configured observability providers.',
+    toolCalls: [
+      { name: 'datadog_read', args: { action: 'logs', query: 'service:web' } },
+      { name: 'splunk_read', args: { action: 'search', query: 'search index=main error' } },
+      { name: 'grafana_read', args: { action: 'search_dashboards', query: 'Kubernetes' } },
+      { name: 'prometheus_read', args: { action: 'query', query: 'up' } },
+    ],
+  },
+  {
     prompt: 'Hello',
     response:
       "Hello! I'm the Headlamp AI assistant. I can help you explore and manage your Kubernetes cluster. What would you like to know?",

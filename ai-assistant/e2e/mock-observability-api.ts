@@ -19,6 +19,16 @@ export interface MockObservabilityApi {
 export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
   const server = createServer(async (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'access-control-allow-origin': '*',
+        'access-control-allow-headers':
+          'authorization, content-type, dd-api-key, dd-application-key, x-grafana-org-id, x-scope-orgid',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+      });
+      response.end();
+      return;
+    }
     const chunks: Buffer[] = [];
     for await (const chunk of request) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -33,7 +43,10 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
       datadogApplicationKey: request.headers['dd-application-key'] as string | undefined,
       body,
     });
-    response.writeHead(200, { 'content-type': 'application/json' });
+    response.writeHead(200, {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+    });
     response.end(JSON.stringify({ status: 'success', data: [{ source: url.pathname }] }));
   });
   await new Promise<void>((resolve, reject) => {

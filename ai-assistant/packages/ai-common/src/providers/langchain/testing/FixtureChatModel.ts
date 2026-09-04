@@ -15,6 +15,7 @@
  */
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage } from '@langchain/core/messages';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { DEMO_CLUSTER_EXPLORATION, DIAGNOSIS_FIXTURES, GENERAL_FIXTURES } from './modelFixtures.js';
 
@@ -61,6 +62,13 @@ export interface FixtureEntry {
   prompt: string;
   /** Response template returned when the prompt matches. */
   response: string;
+  /** Optional deterministic tool calls returned instead of plain text. */
+  toolCalls?: Array<{
+    /** Tool name. */
+    name: string;
+    /** Tool arguments. */
+    args: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -470,6 +478,7 @@ export function createFixtureChatModel(options: FixtureChatModelOptions = {}): B
     const superGenerate = prototype._generate.bind(patchedModel);
     patchedModel._generate = async function (messages, options, runManager) {
       let matched: string;
+      let toolCalls: FixtureEntry['toolCalls'];
 
       if (sequenceTurns) {
         matched = sequenceTurns[sequenceIndex % sequenceTurns.length].response;
@@ -478,13 +487,27 @@ export function createFixtureChatModel(options: FixtureChatModelOptions = {}): B
         const lastHuman = [...messages].reverse().find(message => message._getType() === 'human');
         const input = extractMessageText(lastHuman?.content);
 
+        toolCalls = allFixtures.find(
+          fixture => matchTemplate(input.trim(), fixture.prompt) && fixture.toolCalls?.length
+        )?.toolCalls;
         matched = matchFixtures(input, allFixtures) ?? fallback;
       }
 
       patchedModel.responses = [matched];
       patchedModel.i = 0;
 
-      return superGenerate(messages, options, runManager);
+      const result = await superGenerate(messages, options, runManager);
+      if (toolCalls?.length && result.generations[0]) {
+        result.generations[0].message = new AIMessage({
+          content: matched,
+          tool_calls: toolCalls.map((toolCall, index) => ({
+            ...toolCall,
+            id: `fixture-tool-call-${index}`,
+            type: 'tool_call' as const,
+          })),
+        });
+      }
+      return result;
     };
 
     // Override bindTools so the patch survives tool-binding.

@@ -266,6 +266,30 @@ it('uses the empty config for malformed stored data', async () => {
   expect(screen.queryByText('Configured Servers')).toBeNull();
 });
 
+it('uses the empty config for a malformed remote server URL', async () => {
+  const store = createMemoryConfigStore({
+    mcpConfig: {
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          command: '',
+          args: [],
+          enabled: true,
+          transport: 'http',
+          url: 'https://',
+        },
+      ],
+    },
+  });
+  render(<MCPSettings isRunningAsApp configStore={store} />);
+
+  expect(await screen.findByRole('checkbox', { name: 'Enable MCP Servers' })).toHaveProperty(
+    'checked',
+    false
+  );
+});
+
 it('rejects duplicate stored server names case-insensitively', async () => {
   const duplicateConfig = {
     enabled: true,

@@ -89,10 +89,16 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
         error: t('Server {{number}}: command must be a non-empty string', { number }),
       };
     }
-    if (
-      transport !== 'stdio' &&
-      (typeof server.url !== 'string' || !/^https?:\/\//.test(server.url))
-    ) {
+    let remoteUrlIsValid = true;
+    if (transport !== 'stdio') {
+      try {
+        const url = new URL(typeof server.url === 'string' ? server.url : '');
+        remoteUrlIsValid = url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        remoteUrlIsValid = false;
+      }
+    }
+    if (!remoteUrlIsValid) {
       return {
         valid: false,
         error: t('Server {{number}}: url must be an HTTP URL', { number }),

@@ -178,6 +178,22 @@ it.each([
     'Server 1: url must be an HTTP URL',
   ],
   [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'https://',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
     { enabled: true, servers: [{ name: 's', command: 'cmd', args: [1], enabled: true }] },
     'Server 1: args must be an array of strings',
   ],

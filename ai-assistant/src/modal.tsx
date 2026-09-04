@@ -614,6 +614,7 @@ export default function AIPrompt(props: {
     activeConfig,
     selectedModel,
     mcpConfigKey,
+    pluginSettings?.observability,
     pluginSettings?.devOptions?.enableMockTools,
   ]);
 

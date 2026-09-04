@@ -16,10 +16,22 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 - **Conversational Kubernetes Management**: Interact with your cluster using natural language. Ask questions, get explanations, and issue commands.
 - **Context-Aware Assistance**: The AI has access to cluster information, making its responses relevant to your current setup.
+- **Organization Runbooks**: Make shared troubleshooting procedures available to the assistant as Git-backed skills.
 - **Multi-Provider Support**: Choose from a wide range of AI providers.
 - **Configurable Tools**: Fine-tune the AI's capabilities by enabling or disabling specific tools, like direct Kubernetes API access.
 - **Resource Generation**: Ask the AI to generate Kubernetes YAML manifests for deployments, services, and more.
 - **In-depth Analysis**: Get help diagnosing issues, understanding resource configurations, and interpreting logs.
+
+## Organization runbooks
+
+The AI Assistant supports organization-level troubleshooting runbooks through
+Git-backed **Skills**. See [Organization runbooks](docs/runbooks.md) for supported
+formats, current industry practices, safety warnings, configuration guidance, and a
+recommended `SKILL.md` template.
+
+> [!WARNING]
+> Treat runbooks as untrusted reference content. Review and pin sources, keep secrets
+> out of Skills, and verify commands, targets, and rollback plans before approving tools.
 
 ## Supported Providers
 

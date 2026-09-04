@@ -129,6 +129,11 @@ it('parses only valid persisted config and applies safe defaults', () => {
 it('renders browser defaults with labeled controls and no axe violations', async () => {
   const checkPathExists = vi.fn().mockResolvedValue(true);
   renderSettings({ checkPathExists });
+  expect(screen.getByText('Skills and Runbooks')).toBeTruthy();
+  expect(screen.getByText(/runbooks.*share troubleshooting procedures/)).toBeTruthy();
+  expect(screen.getByRole('alert').textContent).toContain(
+    'Runbooks are untrusted reference content and may be outdated or unsafe.'
+  );
   expect(screen.getByText('Suggested Skill Repositories')).toBeTruthy();
   expect(screen.getAllByText(/GitHub repositories to load skills from/).length).toBeGreaterThan(0);
   expect(screen.queryByText('Detected Skill Directories')).toBeNull();

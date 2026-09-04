@@ -21,31 +21,50 @@ import type { ToolExecutionResult } from '../ToolRuntime';
 
 /** Connection settings for one native observability provider. */
 export interface ObservabilityProviderConfig {
+  /** Provider-compatible HTTP endpoint. */
   baseUrl?: string;
+  /** Bearer-style access token. */
   token?: string;
+  /** Datadog API key. */
   apiKey?: string;
+  /** Datadog application key. */
   applicationKey?: string;
+  /** Username used for Splunk Basic authentication. */
   username?: string;
+  /** Password used for Splunk Basic authentication. */
   password?: string;
+  /** Grafana organization or Prometheus-compatible tenant identifier. */
   organizationId?: string;
 }
 
 /** Native observability provider settings. */
 export interface ObservabilityConfig {
+  /** Datadog connection settings. */
   datadog?: ObservabilityProviderConfig;
+  /** Splunk connection settings. */
   splunk?: ObservabilityProviderConfig;
+  /** Grafana connection settings. */
   grafana?: ObservabilityProviderConfig;
+  /** Prometheus-compatible connection settings. */
   prometheus?: ObservabilityProviderConfig;
 }
 
 /** Runtime dependencies supplied to native observability tools. */
 export interface ObservabilityToolContext {
+  /** Provider connection settings. */
   config: ObservabilityConfig;
+  /** Optional request implementation, primarily for tests. */
   fetch?: typeof fetch;
 }
 
 type Provider = keyof ObservabilityConfig;
 
+/**
+ * Recursively caps arrays in provider responses to the documented item limit.
+ *
+ * @param value - Parsed provider response value.
+ * @returns A response copy whose arrays contain no more than 100 items.
+ */
 function boundArrays(value: unknown): unknown {
   if (Array.isArray(value)) return value.slice(0, 100).map(boundArrays);
   if (value && typeof value === 'object') {
@@ -59,6 +78,12 @@ function boundArrays(value: unknown): unknown {
   return value;
 }
 
+/**
+ * Converts provider data into a bounded tool execution result.
+ *
+ * @param data - Parsed provider response.
+ * @returns A successful result with bounded structured data and model-facing content.
+ */
 function toolResult(data: unknown): ToolExecutionResult {
   const boundedData = boundArrays(data);
   const serialized = JSON.stringify(boundedData);
@@ -73,6 +98,14 @@ function toolResult(data: unknown): ToolExecutionResult {
   };
 }
 
+/**
+ * Parses and normalizes a configured provider base URL.
+ *
+ * @param value - Configured URL.
+ * @param provider - Provider used in configuration errors.
+ * @returns A normalized HTTP or HTTPS URL without trailing pathname separators.
+ * @throws When the URL is missing or does not use HTTP or HTTPS.
+ */
 function safeBaseUrl(value: string | undefined, provider: Provider): URL {
   if (!value) throw new Error(`${provider} is not configured`);
   const url = new URL(value);
@@ -83,10 +116,26 @@ function safeBaseUrl(value: string | undefined, provider: Provider): URL {
   return url;
 }
 
+/**
+ * Clamps a requested item limit to the supported range.
+ *
+ * @param value - Requested limit.
+ * @param fallback - Limit used when the request omits a numeric value.
+ * @returns An integer from 1 through 100.
+ */
 function capLimit(value: unknown, fallback = 100): number {
   return Math.min(Math.max(typeof value === 'number' ? Math.trunc(value) : fallback, 1), 100);
 }
 
+/**
+ * Validates a provider query window.
+ *
+ * @param start - Window start in milliseconds.
+ * @param end - Window end in milliseconds.
+ * @param provider - Provider used in validation errors.
+ * @returns No value when the range is valid.
+ * @throws When the range is invalid or exceeds 24 hours.
+ */
 function assertMaximumRange(start: number, end: number, provider: string): void {
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
     throw new Error(`${provider} time range is invalid`);
@@ -96,12 +145,27 @@ function assertMaximumRange(start: number, end: number, provider: string): void 
   }
 }
 
+/**
+ * Parses an ISO timestamp or numeric Datadog timestamp.
+ *
+ * @param value - Timestamp value.
+ * @param seconds - Whether numeric input is expressed in POSIX seconds.
+ * @returns The timestamp in milliseconds, or `NaN` for invalid input.
+ */
 function parseDatadogTime(value: string, seconds: boolean): number {
   const numeric = Number(value);
   if (Number.isFinite(numeric)) return numeric * (seconds ? 1000 : 1);
   return Date.parse(value);
 }
 
+/**
+ * Validates Splunk absolute or supported relative search times.
+ *
+ * @param earliest - Earliest search time.
+ * @param latest - Latest search time.
+ * @returns No value when the range is valid.
+ * @throws When the range is invalid or exceeds 24 hours.
+ */
 function validateSplunkTimeRange(earliest: string, latest: string): void {
   const relative = /^-(\d+)([smhd])$/.exec(earliest);
   if (relative && latest === 'now') {
@@ -118,6 +182,13 @@ function validateSplunkTimeRange(earliest: string, latest: string): void {
   throw new Error('Splunk searches must use a valid time range of at most 24 hours');
 }
 
+/**
+ * Appends an API path without discarding a configured base pathname.
+ *
+ * @param base - Normalized provider base URL.
+ * @param path - Provider API path beginning with a slash.
+ * @returns A new URL containing the appended path.
+ */
 function appendPath(base: URL, path: string): URL {
   const url = new URL(base);
   let pathEnd = url.pathname.length;
@@ -126,12 +197,27 @@ function appendPath(base: URL, path: string): URL {
   return url;
 }
 
+/**
+ * Creates an RFC 7617 Basic authorization value from Unicode credentials.
+ *
+ * @param username - Splunk username.
+ * @param password - Splunk password.
+ * @returns A Basic authorization header value encoded from UTF-8 bytes.
+ */
 function basicAuth(username: string, password: string): string {
   const bytes = new TextEncoder().encode(`${username}:${password}`);
   const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
   return `Basic ${globalThis.btoa(binary)}`;
 }
 
+/**
+ * Creates provider-specific request headers.
+ *
+ * @param provider - Observability provider.
+ * @param config - Provider connection settings.
+ * @returns Headers containing the configured authentication and tenant values.
+ * @throws When required provider credentials are missing.
+ */
 function providerHeaders(provider: Provider, config: ObservabilityProviderConfig): Headers {
   const headers = new Headers({ Accept: 'application/json' });
   if (provider === 'datadog') {
@@ -160,6 +246,17 @@ function providerHeaders(provider: Provider, config: ObservabilityProviderConfig
   return headers;
 }
 
+/**
+ * Executes a bounded provider HTTP request and parses its JSON response.
+ *
+ * @param context - Runtime configuration and request implementation.
+ * @param provider - Observability provider.
+ * @param path - Provider API path.
+ * @param init - Optional request initialization.
+ * @param search - Optional query-string values.
+ * @returns The parsed JSON response.
+ * @throws When the request fails or returns invalid JSON.
+ */
 async function requestJson(
   context: ObservabilityToolContext,
   provider: Provider,
@@ -194,10 +291,22 @@ async function requestJson(
 export abstract class ObservabilityTool extends LangChainTool {
   protected context: ObservabilityToolContext | null = null;
 
+  /**
+   * Supplies provider configuration and runtime dependencies.
+   *
+   * @param context - Context used by subsequent tool executions.
+   * @returns No value.
+   */
   setContext(context: ObservabilityToolContext): void {
     this.context = context;
   }
 
+  /**
+   * Retrieves the configured runtime context.
+   *
+   * @returns The current observability tool context.
+   * @throws When context has not been configured.
+   */
   protected getContext(): ObservabilityToolContext {
     if (!this.context) throw new Error('Observability tool context not configured');
     return this.context;
@@ -304,6 +413,13 @@ const SAFE_SPLUNK_COMMANDS = new Set([
   'where',
 ]);
 
+/**
+ * Validates that an SPL query uses only explicitly allowlisted read-only commands.
+ *
+ * @param query - SPL query beginning with the explicit `search` command.
+ * @returns No value when the query is valid.
+ * @throws When the query contains a command outside the allowlist.
+ */
 function assertReadOnlySpl(query: string): void {
   let quote = '';
   let escaped = false;

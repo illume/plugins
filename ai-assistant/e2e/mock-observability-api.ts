@@ -1,21 +1,34 @@
 import { createServer } from 'node:http';
 
 export interface ObservabilityApiRequest {
+  /** HTTP method received by the fixture. */
   method: string;
+  /** Request pathname and query string. */
   path: string;
+  /** Authorization header, when supplied. */
   authorization?: string;
+  /** Datadog API key header, when supplied. */
   datadogApiKey?: string;
+  /** Datadog application key header, when supplied. */
   datadogApplicationKey?: string;
+  /** UTF-8 request body. */
   body: string;
 }
 
 export interface MockObservabilityApi {
+  /** Origin of the running fixture server. */
   url: string;
+  /** Non-preflight requests received by the fixture. */
   requests: ObservabilityApiRequest[];
+  /** Stops the fixture server. */
   close: () => Promise<void>;
 }
 
-/** Starts a dependency-free JSON API fixture used by the native tool E2E tests. */
+/**
+ * Starts a dependency-free JSON API fixture used by native tool E2E tests.
+ *
+ * @returns The running fixture URL, captured requests, and an asynchronous close function.
+ */
 export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
   const server = createServer(async (request, response) => {

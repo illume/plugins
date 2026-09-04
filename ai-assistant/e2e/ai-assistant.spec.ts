@@ -42,12 +42,12 @@ test.describe.serial('AI Assistant on KWOK', () => {
         datadogApiKey: 'datadog-api',
         datadogApplicationKey: 'datadog-app',
       });
-      expect(api.requests.find(request => request.path.startsWith('/services/search/'))).toMatchObject(
-        {
-          method: 'POST',
-          authorization: 'Splunk splunk-token',
-        }
-      );
+      expect(
+        api.requests.find(request => request.path.startsWith('/services/search/'))
+      ).toMatchObject({
+        method: 'POST',
+        authorization: 'Splunk splunk-token',
+      });
       expect(api.requests.find(request => request.path.startsWith('/api/search'))).toMatchObject({
         method: 'GET',
         authorization: ['Bearer', 'grafana-token'].join(' '),
@@ -174,9 +174,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await kubernetesTool.uncheck();
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-      .toContain(
-        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read"]'
-      );
+      .toContain('"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read"]');
     await page.reload();
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();

@@ -22,15 +22,28 @@ import { Box, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export interface ObservabilitySettingsProps {
+  /** Current native observability configuration. */
   config?: ObservabilityConfig;
+  /** Called with the complete configuration after an edit. */
   onChange: (config: ObservabilityConfig) => void;
 }
 
 const PROVIDERS: Array<{
+  /** Configuration key for the provider. */
   id: keyof ObservabilityConfig;
+  /** Provider name shown in settings. */
   name: string;
+  /** Initial endpoint shown and persisted when another field changes. */
   defaultUrl: string;
-  fields: Array<{ key: keyof ObservabilityProviderConfig; label: string; secret?: boolean }>;
+  /** Provider-specific credential and tenant fields. */
+  fields: Array<{
+    /** Provider configuration property. */
+    key: keyof ObservabilityProviderConfig;
+    /** Human-readable field label. */
+    label: string;
+    /** Whether the input must conceal its value. */
+    secret?: boolean;
+  }>;
 }> = [
   {
     id: 'datadog',
@@ -71,12 +84,23 @@ const PROVIDERS: Array<{
   },
 ];
 
-/** Settings for native dependency-free observability API tools. */
+/**
+ * Renders settings for native dependency-free observability API tools.
+ *
+ * @param props - Current configuration and change callback.
+ * @returns The observability settings panel.
+ */
 export function ObservabilitySettings({
   config = {},
   onChange,
 }: ObservabilitySettingsProps): React.ReactElement {
   const { t } = useTranslation();
+  /**
+   * Translates a provider field label.
+   *
+   * @param label - Canonical English label.
+   * @returns The localized label.
+   */
   const translateFieldLabel = (label: string): string => {
     switch (label) {
       case 'API Key':
@@ -102,6 +126,14 @@ export function ObservabilitySettings({
     }
   };
 
+  /**
+   * Updates one provider setting without discarding sibling settings.
+   *
+   * @param provider - Provider configuration key.
+   * @param key - Provider setting to update.
+   * @param value - New field value.
+   * @returns No value.
+   */
   const update = (
     provider: keyof ObservabilityConfig,
     key: keyof ObservabilityProviderConfig,

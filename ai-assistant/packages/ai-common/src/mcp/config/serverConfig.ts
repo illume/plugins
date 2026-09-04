@@ -233,12 +233,26 @@ export function hasClusterDependentServers(mcpSettings: MCPSettings | null): boo
 }
 
 /**
- * settingsChanges returns a list of human-readable descriptions of changes
- * between the current MCP settings and next MCP settings.
+ * Formats a remote endpoint for display without exposing userinfo or query values.
+ *
+ * @param value - Remote endpoint URL.
+ * @returns A sanitized origin/path summary, or a safe fallback for missing or invalid input.
+ */
+function summarizeRemoteUrl(value: string | undefined): string {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    return `${url.protocol}//${url.host}${url.pathname}${url.search ? '?…' : ''}`;
+  } catch {
+    return '[invalid URL]';
+  }
+}
+
+/**
+ * Returns human-readable descriptions of changes between two MCP settings values.
  *
  * @param currentSettings - The current MCP settings, or null if none exist.
- * @param nextSettings - The next MCP settings to compare against.
- *
+ * @param nextSettings - The next MCP settings, or null if none exist.
  * @returns An array of strings describing the changes.
  */
 export function settingsChanges(
@@ -259,20 +273,13 @@ export function settingsChanges(
 
   const currentServerNames = new Set(currentServers.map(s => s.name));
   const nextServerNames = new Set(nextServers.map(s => s.name));
-  const safeUrl = (value: string | undefined): string => {
-    if (!value) return '';
-    try {
-      const url = new URL(value);
-      return `${url.protocol}//${url.host}${url.pathname}${url.search ? '?…' : ''}`;
-    } catch {
-      return '[invalid URL]';
-    }
-  };
 
   for (const server of nextServers) {
     if (!currentServerNames.has(server.name)) {
       const location =
-        server.transport && server.transport !== 'stdio' ? safeUrl(server.url) : server.command;
+        server.transport && server.transport !== 'stdio'
+          ? summarizeRemoteUrl(server.url)
+          : server.command;
       changes.push(`• ADD server: "${server.name}" (${location})`);
     }
   }
@@ -304,7 +311,9 @@ export function settingsChanges(
       }
       if (currentServer.url !== nextServer.url) {
         serverChanges.push(
-          `change URL: "${safeUrl(currentServer.url)}" → "${safeUrl(nextServer.url)}"`
+          `change URL: "${summarizeRemoteUrl(currentServer.url)}" → "${summarizeRemoteUrl(
+            nextServer.url
+          )}"`
         );
       }
 

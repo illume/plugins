@@ -50,8 +50,35 @@ describe('native observability tools', () => {
 
     await expect(
       tool.handler({ action: 'search', query: 'search index=main | outputlookup results.csv' })
-    ).rejects.toThrow('non-read-only');
+    ).rejects.toThrow('read-only allowlist');
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(['outputcsv results.csv', 'sendalert email', 'runshellscript notify'])(
+    'blocks non-allowlisted Splunk command %s',
+    async command => {
+      const fetch = jsonFetch();
+      const tool = new SplunkTool();
+      tool.setContext({ config, fetch });
+
+      await expect(
+        tool.handler({ action: 'search', query: `search index=main | ${command}` })
+      ).rejects.toThrow('read-only allowlist');
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  );
+
+  it('allows read-only Splunk pipelines and pipes inside quoted values', async () => {
+    const fetch = jsonFetch();
+    const tool = new SplunkTool();
+    tool.setContext({ config, fetch });
+
+    await tool.handler({
+      action: 'search',
+      query: 'search index=main message="left|right" | stats count | head 10',
+    });
+
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('runs bounded Splunk searches and uses Splunk token authentication', async () => {
@@ -89,6 +116,39 @@ describe('native observability tools', () => {
     const [url, init] = fetch.mock.calls[0];
     expect(String(url)).toBe('https://prometheus.example/api/v1/query?query=up');
     expect(new Headers(init?.headers).get('X-Scope-OrgID')).toBe('tenant-a');
+  });
+
+  it('encodes Unicode Splunk basic-auth credentials as UTF-8', async () => {
+    const fetch = jsonFetch();
+    const tool = new SplunkTool();
+    tool.setContext({
+      config: { splunk: { baseUrl: 'https://splunk.example', username: 'josé', password: '密碼' } },
+      fetch,
+    });
+
+    await tool.handler({ action: 'indexes' });
+
+    const headers = new Headers(fetch.mock.calls[0][1]?.headers);
+    expect(headers.get('Authorization')).toBe(
+      `Basic ${Buffer.from('josé:密碼', 'utf8').toString('base64')}`
+    );
+  });
+
+  it('converts ISO Datadog metric times to POSIX seconds', async () => {
+    const fetch = jsonFetch();
+    const tool = new DatadogTool();
+    tool.setContext({ config, fetch });
+
+    await tool.handler({
+      action: 'metrics',
+      query: 'avg:system.cpu.user{*}',
+      from: '2026-01-01T00:00:00Z',
+      to: '2026-01-01T01:00:00Z',
+    });
+
+    const url = new URL(String(fetch.mock.calls[0][0]));
+    expect(url.searchParams.get('from')).toBe('1767225600');
+    expect(url.searchParams.get('to')).toBe('1767229200');
   });
 
   it('rejects Prometheus range queries longer than 24 hours', async () => {

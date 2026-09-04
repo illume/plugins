@@ -35,7 +35,7 @@ const PROVIDERS: Array<{
   {
     id: 'datadog',
     name: 'Datadog',
-    defaultUrl: 'https://api.datadoghq.com',
+    defaultUrl: '',
     fields: [
       { key: 'apiKey', label: 'API Key', secret: true },
       { key: 'applicationKey', label: 'Application Key', secret: true },

@@ -143,8 +143,8 @@ Once servers are configured, the assistant automatically discovers the tools the
 
 The AI Assistant includes native tools for Datadog, Splunk, Grafana, and Prometheus. Configure
 them under **Observability Data Sources** and enable the corresponding tool under **AI Tools**.
-They use the browser's built-in `fetch` API and connect directly to provider HTTP APIs, so no MCP
-server, executable, container, Node.js package, or Python package is required.
+They use the browser's built-in `fetch` API and connect to provider-compatible HTTP endpoints, so
+no MCP server, executable, container, Node.js package, or Python package is required.
 
 Use dedicated least-privilege credentials. Tool results are sent to the selected model provider.
 Self-hosted APIs must be reachable from Headlamp and allow its origin through CORS. Every native
@@ -153,17 +153,19 @@ create, update, or delete action.
 
 #### Datadog
 
-Set the API base URL for your
-[Datadog site](https://docs.datadoghq.com/getting_started/site/) and provide a scoped API key and
-application key. `datadog_read` searches logs, queries metrics, and lists monitors through the
-Datadog v1/v2 APIs. Log searches default to the last hour.
+Provide a scoped API key and application key. Because Datadog SaaS does not allow arbitrary browser
+origins, browser deployments must set the base URL to a trusted, CORS-enabled reverse proxy for the
+[Datadog site API](https://docs.datadoghq.com/getting_started/site/). The proxy must restrict its
+upstream to Datadog and must not log credentials. `datadog_read` searches logs, queries metrics, and
+lists monitors through the Datadog v1/v2 APIs. Log searches default to the last hour.
 
 #### Splunk
 
 Set the Splunk management API URL (normally `https://HOST:8089`) and provide either a Splunk token
 or username and password for a search-only role. `splunk_read` runs one-shot searches and lists
 indexes or saved searches. Searches default to the last 24 hours, return at most 100 results, and
-reject SPL commands that write data or execute external actions.
+accept only an allowlist of built-in read-only SPL commands. A search-only role remains required to
+enforce the security boundary against custom commands and server-side permission changes.
 
 #### Grafana
 

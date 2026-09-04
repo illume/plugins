@@ -259,11 +259,20 @@ export function settingsChanges(
 
   const currentServerNames = new Set(currentServers.map(s => s.name));
   const nextServerNames = new Set(nextServers.map(s => s.name));
+  const safeUrl = (value: string | undefined): string => {
+    if (!value) return '';
+    try {
+      const url = new URL(value);
+      return `${url.origin}${url.pathname}${url.search ? '?…' : ''}`;
+    } catch {
+      return '[invalid URL]';
+    }
+  };
 
   for (const server of nextServers) {
     if (!currentServerNames.has(server.name)) {
       const location =
-        server.transport && server.transport !== 'stdio' ? server.url ?? '' : server.command;
+        server.transport && server.transport !== 'stdio' ? safeUrl(server.url) : server.command;
       changes.push(`• ADD server: "${server.name}" (${location})`);
     }
   }
@@ -294,7 +303,9 @@ export function settingsChanges(
         );
       }
       if (currentServer.url !== nextServer.url) {
-        serverChanges.push(`change URL: "${currentServer.url ?? ''}" → "${nextServer.url ?? ''}"`);
+        serverChanges.push(
+          `change URL: "${safeUrl(currentServer.url)}" → "${safeUrl(nextServer.url)}"`
+        );
       }
 
       const currentArgs = JSON.stringify(currentServer.args || []);

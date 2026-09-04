@@ -127,7 +127,9 @@ function appendPath(base: URL, path: string): URL {
 }
 
 function basicAuth(username: string, password: string): string {
-  return `Basic ${globalThis.btoa(`${username}:${password}`)}`;
+  const bytes = new TextEncoder().encode(`${username}:${password}`);
+  const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+  return `Basic ${globalThis.btoa(binary)}`;
 }
 
 function providerHeaders(provider: Provider, config: ObservabilityProviderConfig): Headers {
@@ -250,12 +252,14 @@ export class DatadogTool extends ObservabilityTool {
       const now = Math.floor(Date.now() / 1000);
       const from = typeof args.from === 'string' ? args.from : String(now - 3600);
       const to = typeof args.to === 'string' ? args.to : String(now);
-      assertMaximumRange(parseDatadogTime(from, true), parseDatadogTime(to, true), 'Datadog');
+      const fromMs = parseDatadogTime(from, true);
+      const toMs = parseDatadogTime(to, true);
+      assertMaximumRange(fromMs, toMs, 'Datadog');
       return toolResult(
         await requestJson(context, 'datadog', '/api/v1/query', undefined, {
           query: args.query as string,
-          from,
-          to,
+          from: String(Math.floor(fromMs / 1000)),
+          to: String(Math.floor(toMs / 1000)),
         })
       );
     }
@@ -267,7 +271,71 @@ export class DatadogTool extends ObservabilityTool {
   };
 }
 
-const UNSAFE_SPL = /\|\s*(delete|collect|outputlookup|sendemail|script|external|map|webhook)\b/i;
+const SAFE_SPLUNK_COMMANDS = new Set([
+  'append',
+  'appendcols',
+  'bin',
+  'bucket',
+  'chart',
+  'dedup',
+  'eval',
+  'eventstats',
+  'fields',
+  'fillnull',
+  'head',
+  'inputlookup',
+  'join',
+  'lookup',
+  'multisearch',
+  'rare',
+  'regex',
+  'rename',
+  'rex',
+  'search',
+  'sort',
+  'spath',
+  'stats',
+  'streamstats',
+  'table',
+  'tail',
+  'timechart',
+  'top',
+  'transaction',
+  'where',
+]);
+
+function assertReadOnlySpl(query: string): void {
+  let quote = '';
+  let escaped = false;
+  let segment = '';
+  const segments: string[] = [];
+  for (const character of query) {
+    if (escaped) {
+      escaped = false;
+      segment += character;
+    } else if (character === '\\') {
+      escaped = true;
+      segment += character;
+    } else if (quote) {
+      if (character === quote) quote = '';
+      segment += character;
+    } else if (character === '"' || character === "'") {
+      quote = character;
+      segment += character;
+    } else if (character === '|') {
+      segments.push(segment);
+      segment = '';
+    } else {
+      segment += character;
+    }
+  }
+  segments.push(segment);
+
+  const commands = segments.map(item => item.trim().split(/\s+/, 1)[0].toLowerCase());
+  if (commands[0] !== 'search' || commands.some(command => !SAFE_SPLUNK_COMMANDS.has(command))) {
+    throw new Error('SPL query contains a command outside the read-only allowlist');
+  }
+}
 
 /** Read-only Splunk searches and metadata discovery. */
 export class SplunkTool extends ObservabilityTool {
@@ -291,8 +359,7 @@ export class SplunkTool extends ObservabilityTool {
     const limit = capLimit(args.limit);
     if (action === 'search') {
       if (typeof args.query !== 'string' || !args.query) throw new Error('SPL query is required');
-      if (UNSAFE_SPL.test(args.query))
-        throw new Error('SPL query contains a non-read-only command');
+      assertReadOnlySpl(args.query);
       const earliestTime = typeof args.earliestTime === 'string' ? args.earliestTime : '-24h';
       const latestTime = typeof args.latestTime === 'string' ? args.latestTime : 'now';
       validateSplunkTimeRange(earliestTime, latestTime);

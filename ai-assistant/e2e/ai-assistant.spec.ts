@@ -13,8 +13,8 @@ test.describe.serial('AI Assistant on KWOK', () => {
 
   test('configures and executes native read-only observability tools', async ({ page }) => {
     const api = await startMockObservabilityApi();
-    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
     try {
+      await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
       for (const provider of ['Datadog', 'Splunk', 'Grafana', 'Prometheus']) {
         await page.getByRole('textbox', { name: `${provider} URL` }).fill(api.url);
       }

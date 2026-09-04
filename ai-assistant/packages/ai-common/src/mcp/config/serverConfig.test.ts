@@ -324,6 +324,34 @@ describe('settingsChanges', () => {
     expect(result.join(' ')).not.toContain('new-secret');
   });
 
+  it('redacts credentials and query values from remote URL summaries', () => {
+    const signedUrl = new URL('https://example.com/mcp');
+    signedUrl.username = 'alice';
+    signedUrl.password = 'credential';
+    signedUrl.searchParams.set('token', 'private-value');
+    signedUrl.searchParams.set('region', 'eu');
+    const next: MCPSettings = {
+      enabled: true,
+      servers: [
+        {
+          name: 'signed',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: signedUrl.toString(),
+          enabled: true,
+        },
+      ],
+    };
+
+    const result = settingsChanges(null, next).join(' ');
+
+    expect(result).toContain('https://example.com/mcp?…');
+    expect(result).not.toContain('alice');
+    expect(result).not.toContain('credential');
+    expect(result).not.toContain('private-value');
+  });
+
   it('does not report undefined for a remote server without a URL', () => {
     const next: MCPSettings = {
       enabled: true,

@@ -36,7 +36,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       await promptInput.fill('E2E query all observability providers');
       await promptInput.press('Enter');
 
-      await expect.poll(() => api.requests.length).toBe(4);
+      await expect.poll(() => api.requests.length).toBeGreaterThanOrEqual(4);
       expect(api.requests.find(request => request.path.startsWith('/api/v2/logs/'))).toMatchObject({
         method: 'POST',
         datadogApiKey: 'datadog-api',

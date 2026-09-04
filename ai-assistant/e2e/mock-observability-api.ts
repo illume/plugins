@@ -1,5 +1,8 @@
 import { createServer } from 'node:http';
 
+const GRAFANA_E2E_ORIGIN = 'http://127.0.0.1:13000';
+const PROMETHEUS_E2E_ORIGIN = 'http://127.0.0.1:19090';
+
 export interface ObservabilityApiRequest {
   /** Provider whose API received the request. */
   provider: 'datadog' | 'splunk' | 'grafana' | 'prometheus';
@@ -42,6 +45,12 @@ export interface ObservabilityApiOptions {
 export async function startMockObservabilityApi(
   options: ObservabilityApiOptions
 ): Promise<MockObservabilityApi> {
+  if (
+    options.grafanaUrl !== GRAFANA_E2E_ORIGIN ||
+    options.prometheusUrl !== PROMETHEUS_E2E_ORIGIN
+  ) {
+    throw new Error('Observability E2E services must use the runner-managed origins');
+  }
   const requests: ObservabilityApiRequest[] = [];
   const servers = (['datadog', 'splunk', 'grafana', 'prometheus'] as const).map(provider =>
     createServer(async (request, response) => {
@@ -70,17 +79,14 @@ export async function startMockObservabilityApi(
         datadogApplicationKey: request.headers['dd-application-key'] as string | undefined,
         body,
       });
-      const upstream =
+      const upstreamUrl =
         provider === 'grafana'
-          ? options.grafanaUrl
+          ? `${GRAFANA_E2E_ORIGIN}/api/search?type=dash-db&query=&limit=100`
           : provider === 'prometheus'
-          ? options.prometheusUrl
+          ? `${PROMETHEUS_E2E_ORIGIN}/api/v1/query?query=up`
           : undefined;
-      if (upstream) {
-        const upstreamResponse = await fetch(new URL(`${url.pathname}${url.search}`, upstream), {
-          method: request.method,
-          body: request.method === 'GET' || request.method === 'HEAD' ? undefined : body,
-        });
+      if (upstreamUrl) {
+        const upstreamResponse = await fetch(upstreamUrl);
         response.writeHead(upstreamResponse.status, {
           'content-type': upstreamResponse.headers.get('content-type') ?? 'application/json',
           'access-control-allow-origin': '*',

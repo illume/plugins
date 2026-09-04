@@ -1,6 +1,15 @@
 import { createServer } from 'node:http';
 import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-services.ts';
 
+const OBSERVABILITY_UPSTREAMS = {
+  grafana: {
+    '/api/search?type=dash-db&query=&limit=100': `${E2E_GRAFANA_ORIGIN}/api/search?type=dash-db&query=&limit=100`,
+  },
+  prometheus: {
+    '/api/v1/query?query=up': `${E2E_PROMETHEUS_ORIGIN}/api/v1/query?query=up`,
+  },
+} as const;
+
 export interface ObservabilityApiRequest {
   /** Provider whose API received the request. */
   provider: 'datadog' | 'splunk' | 'grafana' | 'prometheus';
@@ -77,12 +86,14 @@ export async function startMockObservabilityApi(
         datadogApplicationKey: request.headers['dd-application-key'] as string | undefined,
         body,
       });
-      const upstreamUrl =
+      const requestPath = `${url.pathname}${url.search}`;
+      const upstreams =
         provider === 'grafana'
-          ? `${E2E_GRAFANA_ORIGIN}/api/search?type=dash-db&query=&limit=100`
+          ? OBSERVABILITY_UPSTREAMS.grafana
           : provider === 'prometheus'
-          ? `${E2E_PROMETHEUS_ORIGIN}/api/v1/query?query=up`
+          ? OBSERVABILITY_UPSTREAMS.prometheus
           : undefined;
+      const upstreamUrl = upstreams?.[requestPath as keyof typeof upstreams];
       if (upstreamUrl) {
         const upstreamResponse = await fetch(upstreamUrl);
         response.writeHead(upstreamResponse.status, {
@@ -90,6 +101,14 @@ export async function startMockObservabilityApi(
           'access-control-allow-origin': '*',
         });
         response.end(await upstreamResponse.text());
+        return;
+      }
+      if (upstreams) {
+        response.writeHead(404, {
+          'content-type': 'application/json',
+          'access-control-allow-origin': '*',
+        });
+        response.end(JSON.stringify({ error: 'Unexpected observability E2E request' }));
         return;
       }
       response.writeHead(200, {

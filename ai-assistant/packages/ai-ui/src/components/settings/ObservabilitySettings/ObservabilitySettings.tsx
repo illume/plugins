@@ -95,36 +95,6 @@ export function ObservabilitySettings({
   onChange,
 }: ObservabilitySettingsProps): React.ReactElement {
   const { t } = useTranslation();
-  /**
-   * Translates a provider field label.
-   *
-   * @param label - Canonical English label.
-   * @returns The localized label.
-   */
-  const translateFieldLabel = (label: string): string => {
-    switch (label) {
-      case 'API Key':
-        return t('API Key');
-      case 'Application Key':
-        return t('Application Key');
-      case 'Access Token':
-        return t('Access Token');
-      case 'Username':
-        return t('Username');
-      case 'Password':
-        return t('Password');
-      case 'Service Account Token':
-        return t('Service Account Token');
-      case 'Organization ID':
-        return t('Organization ID');
-      case 'HTTP Token':
-        return t('HTTP Token');
-      case 'Tenant / Organization ID':
-        return t('Tenant / Organization ID');
-      default:
-        return label;
-    }
-  };
 
   /**
    * Updates one provider setting without discarding sibling settings.
@@ -185,7 +155,7 @@ export function ObservabilitySettings({
                 {provider.fields.map(field => (
                   <TextField
                     key={field.key}
-                    label={translateFieldLabel(field.label)}
+                    label={t(field.label)}
                     type={field.secret ? 'password' : 'text'}
                     value={providerConfig[field.key] ?? ''}
                     onChange={event => update(provider.id, field.key, event.target.value)}

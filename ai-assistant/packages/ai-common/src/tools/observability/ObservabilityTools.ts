@@ -58,6 +58,7 @@ export interface ObservabilityToolContext {
 }
 
 type Provider = keyof ObservabilityConfig;
+const MAX_RESPONSE_BYTES = 200_000;
 
 /**
  * Recursively caps arrays in provider responses to the documented item limit.
@@ -276,7 +277,32 @@ async function requestJson(
     headers,
     signal: AbortSignal.timeout(30_000),
   });
-  const text = await response.text();
+  const declaredLength = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
+    throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
+  }
+  const reader = response.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > MAX_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
+      }
+      chunks.push(value);
+    }
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const text = reader ? new TextDecoder().decode(bytes) : await response.text();
   if (!response.ok) {
     throw new Error(`${provider} request failed (${response.status}): ${text.slice(0, 500)}`);
   }
@@ -447,7 +473,10 @@ function assertReadOnlySpl(query: string): void {
   }
   segments.push(segment);
 
-  const commands = segments.map(item => item.trim().split(/\s+/, 1)[0].toLowerCase());
+  const commands = segments
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => item.split(/\s+/, 1)[0].toLowerCase());
   if (commands[0] !== 'search' || commands.some(command => !SAFE_SPLUNK_COMMANDS.has(command))) {
     throw new Error('SPL query contains a command outside the read-only allowlist');
   }

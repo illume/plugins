@@ -180,26 +180,6 @@ describe('native observability tools', () => {
     );
   });
 
-  it('bounds arrays and prevents oversized structured data from bypassing truncation', async () => {
-    const fetch: typeof globalThis.fetch = async () =>
-      new Response(
-        JSON.stringify({
-          data: Array.from({ length: 150 }, (_, index) => ({
-            index,
-            value: index === 0 ? 'x'.repeat(210_000) : 'small',
-          })),
-        })
-      );
-    const tool = new PrometheusTool();
-    tool.setContext({ config, fetch });
-
-    const result = await tool.handler({ action: 'metadata' });
-
-    expect(result.content.length).toBeLessThan(200_100);
-    expect(result.content).toContain('[response truncated]');
-    expect(result.data).toBeUndefined();
-  });
-
   it('retains bounded structured data when the response fits the payload limit', async () => {
     const fetch: typeof globalThis.fetch = async () =>
       new Response(JSON.stringify({ data: Array.from({ length: 150 }, (_, index) => index) }));
@@ -209,5 +189,18 @@ describe('native observability tools', () => {
     const result = await tool.handler({ action: 'metadata' });
 
     expect((result.data as { data: number[] }).data).toHaveLength(100);
+  });
+
+  it('rejects oversized responses while reading the response stream', async () => {
+    const fetch: typeof globalThis.fetch = async () =>
+      new Response(new Uint8Array(200_001), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(tool.handler({ action: 'metadata' })).rejects.toThrow(
+      'response exceeded 200000 bytes'
+    );
   });
 });

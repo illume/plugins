@@ -112,7 +112,11 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
       };
     }
     serverNames.add(normalizedName.toLowerCase());
-    if (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string')) {
+    if (
+      (transport === 'stdio' && !Array.isArray(server.args)) ||
+      (server.args !== undefined &&
+        (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string')))
+    ) {
       return {
         valid: false,
         error: t('Server {{number}}: args must be an array of strings', { number }),
@@ -148,17 +152,21 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
       };
     }
 
-    const normalizedServer: MCPServer = {
-      name: normalizedName,
-      command: typeof server.command === 'string' ? server.command.trim() : '',
-      args: server.args,
-      enabled: server.enabled,
-    };
-    if (transport !== 'stdio') {
-      normalizedServer.transport = transport as 'http' | 'sse';
-      normalizedServer.url = server.url as string;
-    }
-    if (isStringRecord(headers)) normalizedServer.headers = headers;
+    const normalizedServer: MCPServer =
+      transport === 'stdio'
+        ? {
+            name: normalizedName,
+            command: (server.command as string).trim(),
+            args: server.args as string[],
+            enabled: server.enabled,
+          }
+        : {
+            name: normalizedName,
+            transport: transport as 'http' | 'sse',
+            url: server.url as string,
+            ...(isStringRecord(headers) ? { headers } : {}),
+            enabled: server.enabled,
+          };
     if (isStringRecord(env)) normalizedServer.env = env;
     if (typeof autoApprove === 'boolean') normalizedServer.autoApprove = autoApprove;
     servers.push(normalizedServer);

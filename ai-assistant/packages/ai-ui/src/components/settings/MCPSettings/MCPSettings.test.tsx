@@ -273,8 +273,6 @@ it('uses the empty config for a malformed remote server URL', async () => {
       servers: [
         {
           name: 'remote',
-          command: '',
-          args: [],
           enabled: true,
           transport: 'http',
           url: 'https://',

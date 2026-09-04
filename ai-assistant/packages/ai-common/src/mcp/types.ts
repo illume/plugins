@@ -28,22 +28,10 @@ export interface MCPSettings {
   servers: MCPServer[];
 }
 
-/**
- * Describes a single MCP server process.
- */
-export interface MCPServer {
+/** Fields shared by every MCP server transport. */
+interface MCPServerBase {
   /** Unique server name used in tool prefixes and settings. */
   name: string;
-  /** Transport type. Missing values retain the legacy stdio behavior. */
-  transport?: 'stdio' | 'http' | 'sse';
-  /** Executable used to start a stdio MCP server. */
-  command: string;
-  /** Arguments passed to a stdio MCP server command. */
-  args: string[];
-  /** Endpoint used by an HTTP or SSE MCP server. */
-  url?: string;
-  /** Optional request headers used by an HTTP or SSE MCP server. */
-  headers?: Record<string, string>;
   /** Whether this server should be started by the client. */
   enabled: boolean;
   /** Whether tools from this server may run without prompting. */
@@ -51,6 +39,37 @@ export interface MCPServer {
   /** Optional environment variables added to the server process. */
   env?: Record<string, string>;
 }
+
+/** MCP server launched as a local stdio process. */
+export interface MCPStdioServer extends MCPServerBase {
+  /** Stdio transport; omission retains legacy stdio behavior. */
+  transport?: 'stdio';
+  /** Executable used to start the server. */
+  command: string;
+  /** Arguments passed to the server command. */
+  args: string[];
+  /** Remote endpoints do not apply to stdio servers. */
+  url?: never;
+  /** Request headers do not apply to stdio servers. */
+  headers?: never;
+}
+
+/** MCP server reached through a remote HTTP transport. */
+export interface MCPRemoteServer extends MCPServerBase {
+  /** Remote MCP transport. */
+  transport: 'http' | 'sse';
+  /** Remote MCP endpoint. */
+  url: string;
+  /** Optional request headers sent to the endpoint. */
+  headers?: Record<string, string>;
+  /** Unused legacy command accepted when normalizing older settings. */
+  command?: string;
+  /** Unused legacy arguments accepted when normalizing older settings. */
+  args?: string[];
+}
+
+/** MCP server configuration discriminated by transport. */
+export type MCPServer = MCPStdioServer | MCPRemoteServer;
 
 /**
  * Tracks persisted state for a single MCP tool.

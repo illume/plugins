@@ -122,8 +122,6 @@ it('normalizes and saves a dependency-free HTTP server', () => {
         {
           name: 'remote',
           transport: 'http',
-          command: '',
-          args: [],
           url: 'https://example.com/mcp',
           headers: { Authorization: 'token' },
           enabled: true,
@@ -139,8 +137,6 @@ it('normalizes and saves a dependency-free HTTP server', () => {
       {
         name: 'remote',
         transport: 'http',
-        command: '',
-        args: [],
         url: 'https://example.com/mcp',
         headers: { Authorization: 'token' },
         enabled: true,

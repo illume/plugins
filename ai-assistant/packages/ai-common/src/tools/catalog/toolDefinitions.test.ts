@@ -83,6 +83,8 @@ describe('toolDefinitions', () => {
     expect(isSensitiveBuiltInToolCall('github__search', { url: '/secrets' })).toBe(false);
     expect(isSensitiveBuiltInToolCall('kubernetes_api_request', {})).toBe(false);
     expect(isSensitiveBuiltInToolCall('kubernetes_api_request', null)).toBe(false);
+    expect(isSensitiveBuiltInToolCall('prometheus_read', { query: 'up' })).toBe(true);
+    expect(isSensitiveBuiltInToolCall('grafana_read', { action: 'datasources' })).toBe(true);
   });
 
   it('normalizes encoded and fragmented Kubernetes Secret URLs', () => {

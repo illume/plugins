@@ -12,11 +12,22 @@ test.describe.serial('AI Assistant on KWOK', () => {
   });
 
   test('configures and executes native read-only observability tools', async ({ page }) => {
-    const api = await startMockObservabilityApi();
+    const grafanaUrl = process.env.E2E_GRAFANA_URL;
+    const prometheusUrl = process.env.E2E_PROMETHEUS_URL;
+    expect(grafanaUrl, 'E2E_GRAFANA_URL must point to the test Grafana service').toBeTruthy();
+    expect(
+      prometheusUrl,
+      'E2E_PROMETHEUS_URL must point to the test Prometheus service'
+    ).toBeTruthy();
+    const api = await startMockObservabilityApi({
+      grafanaUrl: grafanaUrl!,
+      prometheusUrl: prometheusUrl!,
+    });
     try {
       await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
-      for (const provider of ['Datadog', 'Splunk', 'Grafana', 'Prometheus']) {
-        await page.getByRole('textbox', { name: `${provider} URL` }).fill(api.url);
+      for (const [provider, url] of Object.entries(api.urls)) {
+        const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+        await page.getByRole('textbox', { name: `${name} URL` }).fill(url);
       }
       await page.getByRole('group', { name: 'Datadog' }).getByLabel('API Key').fill('datadog-api');
       await page
@@ -47,13 +58,22 @@ test.describe.serial('AI Assistant on KWOK', () => {
         await expect(toolToggle).toBeChecked();
       }
       await expect
-        .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-        .toContain(
-          '"enabledTools":{"kubernetes_api_request":true,"datadog_read":true,"splunk_read":true,"grafana_read":true,"prometheus_read":true}'
-        );
+        .poll(() =>
+          page.evaluate(() => {
+            const configs = JSON.parse(localStorage.getItem('pluginConfigs') ?? '{}');
+            return configs['@headlamp-k8s/ai-assistant']?.enabledTools;
+          })
+        )
+        .toEqual([
+          'kubernetes_api_request',
+          'datadog_read',
+          'splunk_read',
+          'grafana_read',
+          'prometheus_read',
+        ]);
       await expect
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-        .toContain(api.url);
+        .toContain(api.urls.prometheus);
 
       await page.getByText('Developer Options', { exact: true }).click();
       await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
@@ -63,24 +83,23 @@ test.describe.serial('AI Assistant on KWOK', () => {
       const promptInput = page.locator('#deployment-ai-prompt');
       await promptInput.fill('E2E query all observability providers');
       await promptInput.press('Enter');
+      await page.getByRole('button', { name: 'Execute 4 Tools' }).click();
 
       await expect.poll(() => api.requests.length).toBeGreaterThanOrEqual(4);
-      expect(api.requests.find(request => request.path.startsWith('/api/v2/logs/'))).toMatchObject({
+      expect(api.requests.find(request => request.provider === 'datadog')).toMatchObject({
         method: 'POST',
         datadogApiKey: 'datadog-api',
         datadogApplicationKey: 'datadog-app',
       });
-      expect(
-        api.requests.find(request => request.path.startsWith('/services/search/'))
-      ).toMatchObject({
+      expect(api.requests.find(request => request.provider === 'splunk')).toMatchObject({
         method: 'POST',
         authorization: 'Splunk splunk-token',
       });
-      expect(api.requests.find(request => request.path.startsWith('/api/search'))).toMatchObject({
+      expect(api.requests.find(request => request.provider === 'grafana')).toMatchObject({
         method: 'GET',
         authorization: ['Bearer', 'grafana-token'].join(' '),
       });
-      expect(api.requests.find(request => request.path.startsWith('/api/v1/query'))).toMatchObject({
+      expect(api.requests.find(request => request.provider === 'prometheus')).toMatchObject({
         method: 'GET',
         path: '/api/v1/query?query=up',
         authorization: ['Bearer', 'prometheus-token'].join(' '),

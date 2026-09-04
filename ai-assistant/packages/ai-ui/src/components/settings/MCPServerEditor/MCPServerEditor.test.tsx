@@ -155,8 +155,6 @@ it('saves a remote HTTP server without a local command', () => {
   expect(onSave).toHaveBeenCalledWith({
     name: 'remote',
     transport: 'http',
-    command: '',
-    args: [],
     url: 'https://example.com/mcp',
     enabled: true,
     autoApprove: false,

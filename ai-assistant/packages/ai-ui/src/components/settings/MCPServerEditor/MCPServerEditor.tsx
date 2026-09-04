@@ -68,7 +68,7 @@ export default function MCPServerEditor({
       if (server) {
         setName(server.name);
         setTransport(server.transport ?? 'stdio');
-        setCommand(server.command);
+        setCommand(server.command ?? '');
         setArgs(JSON.stringify(server.args ?? []));
         setUrl(server.url ?? '');
         setHeaders(JSON.stringify(server.headers ?? {}, null, 2));
@@ -213,33 +213,35 @@ export default function MCPServerEditor({
       return;
     }
 
-    const mcpServer: MCPServer = {
-      name: name.trim(),
-      command: '',
-      args: [],
-      enabled,
-      autoApprove,
-    };
-
     if (transport === 'stdio') {
       const parsedArgs = parseArgs();
       if (!parsedArgs.args) return;
-      mcpServer.command = command.trim();
-      mcpServer.args = parsedArgs.args;
+      const mcpServer: MCPServer = {
+        name: name.trim(),
+        command: command.trim(),
+        args: parsedArgs.args,
+        enabled,
+        autoApprove,
+      };
       if (env.length > 0) {
         mcpServer.env = Object.fromEntries(env.map(item => [item.key.trim(), item.value]));
       }
+      onSave(mcpServer);
     } else {
       const parsedHeaders = parseHeaders();
       if (!parsedHeaders.headers) return;
-      mcpServer.transport = transport;
-      mcpServer.url = url.trim();
-      if (Object.keys(parsedHeaders.headers).length > 0) {
-        mcpServer.headers = parsedHeaders.headers;
-      }
+      onSave({
+        name: name.trim(),
+        transport,
+        url: url.trim(),
+        ...(Object.keys(parsedHeaders.headers).length > 0
+          ? { headers: parsedHeaders.headers }
+          : {}),
+        enabled,
+        autoApprove,
+      });
     }
 
-    onSave(mcpServer);
     onClose();
   };
 

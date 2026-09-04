@@ -18,7 +18,7 @@ import type {
   ObservabilityConfig,
   ObservabilityProviderConfig,
 } from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
-import { Box, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export interface ObservabilitySettingsProps {
@@ -76,7 +76,7 @@ const PROVIDERS: Array<{
   {
     id: 'prometheus',
     name: 'Prometheus',
-    defaultUrl: '',
+    defaultUrl: 'http://localhost:9090',
     fields: [
       { key: 'token', label: 'HTTP Token', secret: true },
       { key: 'organizationId', label: 'Tenant / Organization ID' },
@@ -174,6 +174,14 @@ export function ObservabilitySettings({
                   placeholder={provider.defaultUrl || `https://${provider.id}.example.com`}
                   fullWidth
                 />
+                {provider.defaultUrl && !providerConfig.baseUrl && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => update(provider.id, 'baseUrl', provider.defaultUrl)}
+                  >
+                    {t('Use')} {provider.defaultUrl}
+                  </Button>
+                )}
                 {provider.fields.map(field => (
                   <TextField
                     key={field.key}

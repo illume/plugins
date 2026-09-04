@@ -34,20 +34,33 @@ function isFixtureMCPConfig(value: unknown): value is MCPConfig {
   ) {
     return false;
   }
-  return value.servers.every(
-    server =>
-      typeof server === 'object' &&
-      server !== null &&
-      'name' in server &&
-      typeof server.name === 'string' &&
-      'command' in server &&
-      typeof server.command === 'string' &&
-      'args' in server &&
-      Array.isArray(server.args) &&
-      server.args.every((argument: unknown) => typeof argument === 'string') &&
-      'enabled' in server &&
-      typeof server.enabled === 'boolean'
-  );
+  return value.servers.every(server => {
+    if (
+      typeof server !== 'object' ||
+      server === null ||
+      !('name' in server) ||
+      typeof server.name !== 'string' ||
+      !('enabled' in server) ||
+      typeof server.enabled !== 'boolean'
+    ) {
+      return false;
+    }
+    const transport = 'transport' in server ? server.transport : 'stdio';
+    if (transport === 'stdio') {
+      return (
+        'command' in server &&
+        typeof server.command === 'string' &&
+        'args' in server &&
+        Array.isArray(server.args) &&
+        server.args.every((argument: unknown) => typeof argument === 'string')
+      );
+    }
+    return (
+      (transport === 'http' || transport === 'sse') &&
+      'url' in server &&
+      typeof server.url === 'string'
+    );
+  });
 }
 
 /** Creates a mutable in-memory plugin configuration store. */

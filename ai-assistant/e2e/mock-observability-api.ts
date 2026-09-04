@@ -1,6 +1,8 @@
 import { createServer } from 'node:http';
 
 export interface ObservabilityApiRequest {
+  /** Provider whose API received the request. */
+  provider: 'datadog' | 'splunk' | 'grafana' | 'prometheus';
   /** HTTP method received by the fixture. */
   method: string;
   /** Request pathname and query string. */
@@ -16,64 +18,115 @@ export interface ObservabilityApiRequest {
 }
 
 export interface MockObservabilityApi {
-  /** Origin of the running fixture server. */
-  url: string;
+  /** Browser-accessible API origins for each provider. */
+  urls: Record<ObservabilityApiRequest['provider'], string>;
   /** Non-preflight requests received by the fixture. */
   requests: ObservabilityApiRequest[];
   /** Stops the fixture server. */
   close: () => Promise<void>;
 }
 
+export interface ObservabilityApiOptions {
+  /** Real Grafana API origin proxied by the fixture. */
+  grafanaUrl: string;
+  /** Real Prometheus API origin proxied by the fixture. */
+  prometheusUrl: string;
+}
+
 /**
  * Starts a dependency-free JSON API fixture used by native tool E2E tests.
  *
+ * @param options - Origins of the real services proxied by the fixture.
  * @returns The running fixture URL, captured requests, and an asynchronous close function.
  */
-export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
+export async function startMockObservabilityApi(
+  options: ObservabilityApiOptions
+): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
-  const server = createServer(async (request, response) => {
-    if (request.method === 'OPTIONS') {
-      response.writeHead(204, {
-        'access-control-allow-origin': '*',
-        'access-control-allow-headers':
-          'authorization, content-type, dd-api-key, dd-application-key, x-grafana-org-id, x-scope-orgid',
-        'access-control-allow-methods': 'GET, POST, OPTIONS',
+  const servers = (['datadog', 'splunk', 'grafana', 'prometheus'] as const).map(provider =>
+    createServer(async (request, response) => {
+      if (request.method === 'OPTIONS') {
+        response.writeHead(204, {
+          'access-control-allow-origin': '*',
+          'access-control-allow-headers':
+            'authorization, content-type, dd-api-key, dd-application-key, x-grafana-org-id, x-scope-orgid',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+        });
+        response.end();
+        return;
+      }
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const url = new URL(request.url ?? '/', 'http://localhost');
+      const body = Buffer.concat(chunks).toString('utf8');
+      requests.push({
+        provider,
+        method: request.method ?? '',
+        path: `${url.pathname}${url.search}`,
+        authorization: request.headers.authorization,
+        datadogApiKey: request.headers['dd-api-key'] as string | undefined,
+        datadogApplicationKey: request.headers['dd-application-key'] as string | undefined,
+        body,
       });
-      response.end();
-      return;
-    }
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-    const url = new URL(request.url ?? '/', 'http://localhost');
-    const body = Buffer.concat(chunks).toString('utf8');
-    requests.push({
-      method: request.method ?? '',
-      path: `${url.pathname}${url.search}`,
-      authorization: request.headers.authorization,
-      datadogApiKey: request.headers['dd-api-key'] as string | undefined,
-      datadogApplicationKey: request.headers['dd-application-key'] as string | undefined,
-      body,
-    });
-    response.writeHead(200, {
-      'content-type': 'application/json',
-      'access-control-allow-origin': '*',
-    });
-    response.end(JSON.stringify({ status: 'success', data: [{ source: url.pathname }] }));
-  });
-  await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', resolve);
-  });
-  const address = server.address();
-  if (!address || typeof address === 'string') throw new Error('Mock API failed to bind');
+      const upstream =
+        provider === 'grafana'
+          ? options.grafanaUrl
+          : provider === 'prometheus'
+          ? options.prometheusUrl
+          : undefined;
+      if (upstream) {
+        const upstreamResponse = await fetch(new URL(`${url.pathname}${url.search}`, upstream), {
+          method: request.method,
+          body: request.method === 'GET' || request.method === 'HEAD' ? undefined : body,
+        });
+        response.writeHead(upstreamResponse.status, {
+          'content-type': upstreamResponse.headers.get('content-type') ?? 'application/json',
+          'access-control-allow-origin': '*',
+        });
+        response.end(await upstreamResponse.text());
+        return;
+      }
+      response.writeHead(200, {
+        'content-type': 'application/json',
+        'access-control-allow-origin': '*',
+      });
+      response.end(
+        provider === 'splunk'
+          ? JSON.stringify({ results: [{ host: 'e2e-splunk', _raw: 'fixture event' }] })
+          : JSON.stringify({ data: [{ id: 'e2e-datadog-log', type: 'log' }] })
+      );
+    })
+  );
+  await Promise.all(
+    servers.map(
+      server =>
+        new Promise<void>((resolve, reject) => {
+          server.once('error', reject);
+          server.listen(0, '127.0.0.1', resolve);
+        })
+    )
+  );
+  const urls = Object.fromEntries(
+    servers.map((server, index) => {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('Mock API failed to bind');
+      const provider = (['datadog', 'splunk', 'grafana', 'prometheus'] as const)[index];
+      return [provider, `http://127.0.0.1:${address.port}`];
+    })
+  ) as MockObservabilityApi['urls'];
   return {
-    url: `http://127.0.0.1:${address.port}`,
+    urls,
     requests,
     close: () =>
-      new Promise<void>((resolve, reject) =>
-        server.close(error => (error ? reject(error) : resolve()))
-      ),
+      Promise.all(
+        servers.map(
+          server =>
+            new Promise<void>((resolve, reject) =>
+              server.close(error => (error ? reject(error) : resolve()))
+            )
+        )
+      ).then(() => undefined),
   };
 }

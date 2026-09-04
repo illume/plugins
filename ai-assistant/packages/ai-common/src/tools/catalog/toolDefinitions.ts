@@ -93,6 +93,9 @@ export function isBuiltInTool(toolName: string): boolean {
  * @returns Whether the call should require explicit approval.
  */
 export function isSensitiveBuiltInToolCall(toolName: string, args: unknown): boolean {
+  if (['datadog_read', 'splunk_read', 'grafana_read', 'prometheus_read'].includes(toolName)) {
+    return true;
+  }
   if (toolName !== 'kubernetes_api_request') {
     return false;
   }

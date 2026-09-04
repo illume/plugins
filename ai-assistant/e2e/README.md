@@ -21,6 +21,11 @@ npm ci
 npm run e2e
 ```
 
-The cross-platform TypeScript runner builds the plugin and Headlamp image, creates the KWOK cluster, runs Headlamp and Chromium, and deletes the cluster afterward. Set `KEEP_E2E_CLUSTER=true` to retain it for debugging. Each run writes local, untracked screenshots to `e2e/screenshots`.
+The cross-platform TypeScript runner builds the plugin and Headlamp image, creates the KWOK cluster,
+starts real Prometheus and Grafana containers, runs Headlamp and Chromium, and removes all containers
+and the cluster afterward. Datadog and Splunk use provider-specific local API fixtures because their
+hosted/licensed products cannot run as portable local test dependencies. Set `KEEP_E2E_CLUSTER=true`
+to retain the KWOK cluster for debugging. Each run writes local, untracked screenshots to
+`e2e/screenshots`.
 
 `npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create a cluster. Set `HEADLAMP_URL` if Headlamp is not available at `http://127.0.0.1:4466`.

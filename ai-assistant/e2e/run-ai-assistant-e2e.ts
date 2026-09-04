@@ -16,6 +16,10 @@ const clusterName = process.env.E2E_CLUSTER_NAME || 'ai-assistant-e2e';
 const headlampUrl = process.env.HEADLAMP_URL || 'http://127.0.0.1:4466';
 const headlampPort = new URL(headlampUrl).port || '4466';
 const headlampContainerName = `${clusterName}-headlamp`;
+const prometheusContainerName = `${clusterName}-prometheus`;
+const grafanaContainerName = `${clusterName}-grafana`;
+const prometheusPort = '19090';
+const grafanaPort = '13000';
 const kubeconfigPath = path.join(tmpdir(), `${clusterName}-kubeconfig`);
 const headlampKubeconfigPath = path.join(tmpdir(), `${clusterName}-headlamp-kubeconfig`);
 const commandSuffix = process.platform === 'win32' ? '.cmd' : '';
@@ -66,8 +70,20 @@ function deleteHeadlampContainer(): void {
   spawnSync('docker', ['rm', '--force', headlampContainerName], { stdio: 'ignore' });
 }
 
+/**
+ * Removes observability service containers created by the E2E runner.
+ *
+ * @returns No value.
+ */
+function deleteObservabilityContainers(): void {
+  for (const name of [prometheusContainerName, grafanaContainerName]) {
+    spawnSync('docker', ['rm', '--force', name], { stdio: 'ignore' });
+  }
+}
+
 function cleanup(): void {
   deleteHeadlampContainer();
+  deleteObservabilityContainers();
   if (process.env.KEEP_E2E_CLUSTER !== 'true') {
     deleteCluster();
   }
@@ -90,11 +106,68 @@ async function waitForHeadlamp(): Promise<void> {
   throw new Error(`Headlamp did not become ready at ${headlampUrl}`);
 }
 
+/**
+ * Waits for an HTTP service to return a successful response.
+ *
+ * @param url - Health endpoint to poll.
+ * @param service - Service name used in errors.
+ * @returns No value after the service becomes ready.
+ */
+async function waitForService(url: string, service: string): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    try {
+      if ((await fetch(url)).ok) return;
+    } catch {
+      // The container may still be starting.
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  throw new Error(`${service} did not become ready at ${url}`);
+}
+
+/**
+ * Starts the real Prometheus and Grafana services exercised by Playwright.
+ *
+ * @returns No value after both services become ready.
+ */
+async function startObservabilityServices(): Promise<void> {
+  deleteObservabilityContainers();
+  run('docker', [
+    'run',
+    '--detach',
+    '--name',
+    prometheusContainerName,
+    '--publish',
+    `127.0.0.1:${prometheusPort}:9090`,
+    'prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996',
+  ]);
+  run('docker', [
+    'run',
+    '--detach',
+    '--name',
+    grafanaContainerName,
+    '--publish',
+    `127.0.0.1:${grafanaPort}:3000`,
+    '--env',
+    'GF_AUTH_ANONYMOUS_ENABLED=true',
+    '--env',
+    'GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer',
+    '--env',
+    'GF_AUTH_DISABLE_LOGIN_FORM=true',
+    'grafana/grafana:12.1.0@sha256:6ac590e7cabc2fbe8d7b8fc1ce9c9f0582177b334e0df9c927ebd9670469440f',
+  ]);
+  await Promise.all([
+    waitForService(`http://127.0.0.1:${prometheusPort}/-/ready`, 'Prometheus'),
+    waitForService(`http://127.0.0.1:${grafanaPort}/api/health`, 'Grafana'),
+  ]);
+}
+
 async function main(): Promise<void> {
   ensureCommands();
 
   run('npm', ['run', 'build']);
   run('npx', ['playwright', 'install', 'chromium']);
+  await startObservabilityServices();
 
   deleteHeadlampContainer();
   deleteCluster();
@@ -172,7 +245,13 @@ async function main(): Promise<void> {
 
   const result = spawnSync(executable('npm'), ['run', 'e2e:playwright'], {
     cwd: rootDir,
-    env: { ...process.env, HEADLAMP_URL: headlampUrl, HEADLAMP_TOKEN: headlampToken },
+    env: {
+      ...process.env,
+      HEADLAMP_URL: headlampUrl,
+      HEADLAMP_TOKEN: headlampToken,
+      E2E_PROMETHEUS_URL: `http://127.0.0.1:${prometheusPort}`,
+      E2E_GRAFANA_URL: `http://127.0.0.1:${grafanaPort}`,
+    },
     stdio: 'inherit',
   });
   if (result.error) {

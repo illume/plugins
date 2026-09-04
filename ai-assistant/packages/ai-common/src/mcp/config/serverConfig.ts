@@ -279,7 +279,7 @@ export function settingsChanges(
       const location =
         server.transport && server.transport !== 'stdio'
           ? summarizeRemoteUrl(server.url)
-          : server.command;
+          : server.command ?? '';
       changes.push(`• ADD server: "${server.name}" (${location})`);
     }
   }

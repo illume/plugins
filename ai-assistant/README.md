@@ -176,6 +176,13 @@ sources using only Grafana `GET` endpoints.
 
 #### Prometheus
 
-Set the Prometheus-compatible API URL and optional HTTP token. For Thanos or Mimir, set the tenant
-ID sent as `X-Scope-OrgID`. `prometheus_read` supports instant and range PromQL queries, metric
-metadata, and active target discovery. Range queries are limited to 24 hours.
+Set the Prometheus-compatible API URL and optional HTTP token. For a local Prometheus, click
+**Use http://localhost:9090**. A common Kubernetes installation can be made browser-accessible with:
+
+```sh
+kubectl -n monitoring port-forward svc/prometheus-operated 9090:9090
+```
+
+For Thanos or Mimir, replace the suggested URL and set the tenant ID sent as `X-Scope-OrgID`.
+`prometheus_read` supports instant and range PromQL queries, metric metadata, and active target
+discovery. Range queries are limited to 24 hours.

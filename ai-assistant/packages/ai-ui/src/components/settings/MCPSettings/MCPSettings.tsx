@@ -56,9 +56,6 @@ function isMCPConfig(value: unknown): value is MCPConfig {
     if (
       !isRecord(server) ||
       typeof server.name !== 'string' ||
-      typeof server.command !== 'string' ||
-      !Array.isArray(server.args) ||
-      !server.args.every(arg => typeof arg === 'string') ||
       typeof server.enabled !== 'boolean'
     ) {
       return false;
@@ -66,7 +63,21 @@ function isMCPConfig(value: unknown): value is MCPConfig {
     const transport = server.transport ?? 'stdio';
     if (typeof transport !== 'string' || !['stdio', 'http', 'sse'].includes(transport))
       return false;
-    if (transport === 'stdio' && !server.command.trim()) return false;
+    if (
+      transport === 'stdio' &&
+      (typeof server.command !== 'string' ||
+        !server.command.trim() ||
+        !Array.isArray(server.args) ||
+        !server.args.every(arg => typeof arg === 'string'))
+    ) {
+      return false;
+    }
+    if (
+      server.args !== undefined &&
+      (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string'))
+    ) {
+      return false;
+    }
     if (transport !== 'stdio') {
       try {
         const url = new URL(typeof server.url === 'string' ? server.url : '');

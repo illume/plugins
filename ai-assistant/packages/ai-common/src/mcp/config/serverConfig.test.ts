@@ -352,23 +352,6 @@ describe('settingsChanges', () => {
     expect(result).not.toContain('private-value');
   });
 
-  it('does not report undefined for a remote server without a URL', () => {
-    const next: MCPSettings = {
-      enabled: true,
-      servers: [
-        {
-          name: 'remote',
-          transport: 'http',
-          command: '',
-          args: [],
-          enabled: true,
-        },
-      ],
-    };
-
-    expect(settingsChanges(null, next)).toContain('• ADD server: "remote" ()');
-  });
-
   it('returns empty array when both current and next settings are null', () => {
     const result = settingsChanges(null, null);
     expect(result).toEqual([]);

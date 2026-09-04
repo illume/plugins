@@ -34,6 +34,7 @@ import {
 import type { SkillSource as SkillSourceEntry } from '@headlamp-k8s/ai-common/skills/SkillLoader';
 import { Icon } from '@iconify/react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -571,6 +572,11 @@ export function SkillSettings({
                 'Skills are markdown files that provide domain-specific knowledge and runbooks to the AI assistant. Configure GitHub repositories to share troubleshooting procedures.'
               )}
         </Typography>
+        <Alert severity="warning">
+          {t(
+            'Runbooks are untrusted reference content and may be outdated or unsafe. Review sources, pin approved versions, never include secrets, and verify commands and target clusters before approving tools.'
+          )}
+        </Alert>
       </Box>
 
       {/* Well-Known Paths Section — only shown in app mode (local paths not accessible in browser) */}

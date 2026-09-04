@@ -467,6 +467,7 @@
   "Skills and Runbooks": "",
   "Skills are markdown files that provide domain-specific knowledge and runbooks to the AI assistant. Configure filesystem paths and GitHub repositories to share troubleshooting procedures.": "",
   "Skills are markdown files that provide domain-specific knowledge and runbooks to the AI assistant. Configure GitHub repositories to share troubleshooting procedures.": "",
+  "Runbooks are untrusted reference content and may be outdated or unsafe. Review sources, pin approved versions, never include secrets, and verify commands and target clusters before approving tools.": "",
   "Detected Skill Directories": "",
   "Well-known skill directories from Claude, GitHub Copilot, and other tools. Detected directories can be enabled to load skills from.": "",
   "Directory": "",

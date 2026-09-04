@@ -58,6 +58,7 @@ export interface ObservabilityToolContext {
 }
 
 type Provider = keyof ObservabilityConfig;
+/** Maximum provider response size read into memory or returned as model-facing content. */
 const MAX_RESPONSE_BYTES = 200_000;
 
 /**

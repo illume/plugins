@@ -79,12 +79,20 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
           : undefined;
       const upstreamUrl = upstreams?.[requestPath as keyof typeof upstreams];
       if (upstreamUrl) {
-        const upstreamResponse = await fetch(upstreamUrl);
-        response.writeHead(upstreamResponse.status, {
-          'content-type': upstreamResponse.headers.get('content-type') ?? 'application/json',
-          'access-control-allow-origin': '*',
-        });
-        response.end(await upstreamResponse.text());
+        try {
+          const upstreamResponse = await fetch(upstreamUrl);
+          response.writeHead(upstreamResponse.status, {
+            'content-type': upstreamResponse.headers.get('content-type') ?? 'application/json',
+            'access-control-allow-origin': '*',
+          });
+          response.end(await upstreamResponse.text());
+        } catch {
+          response.writeHead(502, {
+            'content-type': 'application/json',
+            'access-control-allow-origin': '*',
+          });
+          response.end(JSON.stringify({ error: 'Observability E2E upstream is unavailable' }));
+        }
         return;
       }
       if (upstreams) {

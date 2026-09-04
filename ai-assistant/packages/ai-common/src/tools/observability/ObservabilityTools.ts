@@ -59,7 +59,6 @@ export interface ObservabilityToolContext {
 
 type Provider = keyof ObservabilityConfig;
 const MAX_RESPONSE_BYTES = 200_000;
-const MAX_TOOL_CONTENT_CHARACTERS = MAX_RESPONSE_BYTES;
 
 /**
  * Recursively caps arrays in provider responses to the documented item limit.
@@ -89,9 +88,9 @@ function boundArrays(value: unknown): unknown {
 function toolResult(data: unknown): ToolExecutionResult {
   const boundedData = boundArrays(data);
   const serialized = JSON.stringify(boundedData);
-  const truncated = serialized.length > MAX_TOOL_CONTENT_CHARACTERS;
+  const truncated = serialized.length > MAX_RESPONSE_BYTES;
   const content = truncated
-    ? `${serialized.slice(0, MAX_TOOL_CONTENT_CHARACTERS)}… [response truncated]`
+    ? `${serialized.slice(0, MAX_RESPONSE_BYTES)}… [response truncated]`
     : serialized;
   return {
     content,
@@ -163,7 +162,7 @@ function parseDatadogTime(value: string, seconds: boolean): number {
 }
 
 /**
- * Validates Splunk absolute or supported relative search times.
+ * Validates Splunk absolute search times or a relative earliest time paired with `now`.
  *
  * @param earliest - Earliest search time.
  * @param latest - Latest search time.
@@ -480,7 +479,10 @@ function assertReadOnlySpl(query: string): void {
     .map(item => item.trim())
     .filter(Boolean)
     .map(item => item.split(/\s+/, 1)[0].toLowerCase());
-  if (commands[0] !== 'search' || commands.some(command => !SAFE_SPLUNK_COMMANDS.has(command))) {
+  if (commands[0] !== 'search') {
+    throw new Error('SPL queries must begin with search');
+  }
+  if (commands.some(command => !SAFE_SPLUNK_COMMANDS.has(command))) {
     throw new Error('SPL query contains a command outside the read-only allowlist');
   }
 }
@@ -573,6 +575,13 @@ export class GrafanaTool extends ObservabilityTool {
   };
 }
 
+/**
+ * Converts a Prometheus range timestamp to milliseconds.
+ *
+ * @param value - RFC3339 timestamp or Unix timestamp expressed in seconds.
+ * @returns The timestamp in milliseconds.
+ * @throws When the timestamp is invalid.
+ */
 function rangeMilliseconds(value: string): number {
   const numeric = Number(value);
   if (Number.isFinite(numeric)) return numeric * 1000;

@@ -9,8 +9,9 @@ and routine maintenance.
 The AI Assistant supports organization-level runbooks through **Skills**. Add a shared
 GitHub repository under **Settings > AI Assistant > Skills and Runbooks**, optionally
 selecting a path and a tag or commit. Each enabled runbook is supplied to the assistant
-as reference material when relevant; it does not bypass tool approvals or other safety
-instructions.
+as reference material. By default, all enabled runbooks are included when there are five
+or fewer; larger sets are routed to select runbooks relevant to the query. Runbooks do
+not bypass tool approvals or other safety instructions.
 
 > [!WARNING]
 > Treat every runbook as untrusted reference content, including content from repositories
@@ -33,10 +34,11 @@ instructions.
 
 A plain `.md` file can also be loaded when it has the same required `name` and
 `description` front matter as `SKILL.md`. `README.md` and `CONTRIBUTING.md` are ignored.
-Individual skills default to a 50 KB limit and all loaded skill content to 200 KB, so
-split large manuals into focused procedures. Remote sources currently support canonical
-HTTPS GitHub repository URLs only; other Git hosts require a mirror or an approved local
-checkout.
+Individual skills default to a 50 KB limit, and skill content formatted into a prompt
+defaults to a combined 200 KB budget. The combined budget does not limit how much content
+can be loaded or cached. Split large manuals into focused procedures. Remote sources
+currently support canonical HTTPS GitHub repository URLs only; other Git hosts require a
+mirror or an approved local checkout.
 
 ## What teams are doing
 

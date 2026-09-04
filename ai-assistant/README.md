@@ -16,10 +16,97 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 - **Conversational Kubernetes Management**: Interact with your cluster using natural language. Ask questions, get explanations, and issue commands.
 - **Context-Aware Assistance**: The AI has access to cluster information, making its responses relevant to your current setup.
+- **Organization Runbooks**: Make shared troubleshooting procedures available to the assistant as Git-backed skills.
 - **Multi-Provider Support**: Choose from a wide range of AI providers.
 - **Configurable Tools**: Fine-tune the AI's capabilities by enabling or disabling specific tools, like direct Kubernetes API access.
 - **Resource Generation**: Ask the AI to generate Kubernetes YAML manifests for deployments, services, and more.
 - **In-depth Analysis**: Get help diagnosing issues, understanding resource configurations, and interpreting logs.
+
+## Organization runbooks
+
+Organizations commonly keep runbooks beside services in Git, in a central operations
+repository, or in an internal documentation portal. Git is a good source for the AI
+Assistant because owners can review changes, retain history, and pin a tested version.
+Teams typically use runbooks for incident triage, diagnosis, remediation, escalation,
+and routine maintenance.
+
+The AI Assistant supports organization-level runbooks through **Skills**. Add a shared
+GitHub repository under **Settings > AI Assistant > Skills and Runbooks**, optionally
+selecting a path and a tag or commit. Each enabled runbook is supplied to the assistant
+as reference material when relevant; it does not bypass tool approvals or other safety
+instructions.
+
+### Format report
+
+| Common format | Typical use | AI Assistant support |
+|---|---|---|
+| [`SKILL.md`](https://agentskills.io/specification) | Portable Markdown procedure with a name and description | Recommended; loaded directly |
+| [GitHub Copilot `.instructions.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot) | Repository or service instructions | Loaded directly |
+| Markdown in wikis or docs-as-code systems such as [Backstage TechDocs](https://backstage.io/docs/features/techdocs/) | Human-facing operational documentation | Move or generate the relevant procedure in a supported skill file |
+| [Jupyter notebooks](https://nbconvert.readthedocs.io/en/latest/usage.html#convert-markdown) | Executable investigation and data-analysis steps | Export the operational guidance to a skill; notebooks are not executed or loaded directly |
+| YAML/JSON automation, shell scripts, and [Ansible playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html) | Machine-executable remediation | Keep automation separately reviewed and expose safe execution through approved tools; these files are not runbooks loaded by Skills |
+| Incident-management platform runbooks, including [executable notebook runbooks](https://docs.gitlab.com/user/project/clusters/runbooks/) | Guided response, ownership, and escalation | Keep the platform as the system of record and mirror stable troubleshooting guidance into a skill |
+
+A plain `.md` file can also be loaded when it has the same required `name` and
+`description` front matter as `SKILL.md`. `README.md` and `CONTRIBUTING.md` are ignored.
+Individual skills default to a 50 KB limit and all loaded skill content to 200 KB, so
+split large manuals into focused procedures. Remote sources currently support canonical
+HTTPS GitHub repository URLs only; other Git hosts require a mirror or an approved local
+checkout.
+
+### Recommended repository layout
+
+```text
+operations-runbooks/
+└── skills/
+    ├── pod-crashloop/
+    │   └── SKILL.md
+    └── api-latency/
+        └── SKILL.md
+```
+
+```markdown
+---
+name: api-latency
+description: Diagnose elevated API latency in the production Kubernetes cluster
+author: platform-team
+tags: [kubernetes, incident-response]
+---
+
+# API latency
+
+## Preconditions
+
+- Confirm the affected cluster, namespace, and service.
+- Do not make changes until the incident lead approves remediation.
+
+## Diagnose
+
+1. Inspect deployment health, recent events, and pod logs.
+2. Compare request rate, errors, and latency with the service baseline.
+3. Escalate to the service owner if the cause is not identified.
+```
+
+For organization use:
+
+1. Keep one procedure per skill with clear triggers, prerequisites, verification,
+   rollback, ownership, and escalation steps.
+2. Review runbook changes like code, test instructions during exercises and incidents,
+   and record the owner and review cadence in the content.
+3. Put broadly applicable runbooks in a central repository; keep service-specific
+   runbooks with the service when that makes ownership and updates clearer.
+4. Configure the repository URL and `skills` path for users. Pin a release tag or
+   commit, and optionally configure the expected SHA-256 content hash, when
+   reproducibility is required.
+5. Do not put credentials or sensitive incident data in skills. Browser-based GitHub
+   sources are fetched without authentication, so use repositories whose contents are
+   safe to retrieve that way. Desktop installations can instead use an approved local
+   directory for private material.
+
+This approach provides shared organization guidance today without a separate runbook
+format or execution engine. Converting non-Markdown systems into Skills, access control
+for private GitHub repositories, synchronization, compliance reporting, and runbook
+execution remain responsibilities of the source system or organization.
 
 ## Supported Providers
 

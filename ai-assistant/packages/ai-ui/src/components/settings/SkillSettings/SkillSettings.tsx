@@ -560,15 +560,15 @@ export function SkillSettings({
   });
 
   return (
-    <SectionWrapper title={t('Skills')}>
+    <SectionWrapper title={t('Skills and Runbooks')}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
           {filesystemSkillsEnabled && projectRoot
             ? t(
-                'Skills are markdown files that provide domain-specific knowledge to the AI assistant. Configure filesystem paths and GitHub repositories to load skills from.'
+                'Skills are markdown files that provide domain-specific knowledge and runbooks to the AI assistant. Configure filesystem paths and GitHub repositories to share troubleshooting procedures.'
               )
             : t(
-                'Skills are markdown files that provide domain-specific knowledge to the AI assistant. Configure GitHub repositories to load skills from.'
+                'Skills are markdown files that provide domain-specific knowledge and runbooks to the AI assistant. Configure GitHub repositories to share troubleshooting procedures.'
               )}
         </Typography>
       </Box>

@@ -40,8 +40,6 @@ export interface ParsedArgs {
   mockSkills: boolean;
   /** When true, inject a MockToolManager with canned Kubernetes fixture data. */
   mockTools: boolean;
-  /** @deprecated The createAgent-backed session is now the default. */
-  experimentalAgentHarness: boolean;
   /** When true, use the legacy session implementation. */
   legacySession: boolean;
 }
@@ -61,7 +59,6 @@ export function parseArgs(argv: string[]): ParsedArgs {
       process.env.HEADLAMP_AI_MOCK_SKILLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
     mockTools:
       process.env.HEADLAMP_AI_MOCK_TOOLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
-    experimentalAgentHarness: true,
     legacySession: process.env.HEADLAMP_AI_LEGACY_SESSION === '1',
   };
   const args = argv.slice(2);
@@ -101,9 +98,6 @@ export function parseArgs(argv: string[]): ParsedArgs {
         break;
       case '--mock-tools':
         result.mockTools = true;
-        break;
-      case '--experimental-agent-harness':
-        result.experimentalAgentHarness = true;
         break;
       case '--legacy-session':
         result.legacySession = true;
@@ -156,8 +150,6 @@ Options:
   --skill-source <url>  Git repo URL to load skills from (repeatable, e.g. https://github.com/microsoft/azure-skills)
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1
   --mock-tools          Inject mock Kubernetes tool results (no cluster). Env: HEADLAMP_AI_MOCK_TOOLS=1
-  --experimental-agent-harness
-                        Deprecated; the createAgent harness is now the default
   --legacy-session      Use the previous session implementation. Env: HEADLAMP_AI_LEGACY_SESSION=1
   --allow-mutations     Allow mutating kubectl operations (POST, PUT, DELETE, PATCH). Default: read-only
   --auto-approve        Auto-approve all tool calls without prompting. Env: HEADLAMP_AI_AUTO_APPROVE=1

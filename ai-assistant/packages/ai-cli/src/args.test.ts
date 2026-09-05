@@ -26,7 +26,6 @@ describe('parseArgs', () => {
     expect(result.interactive).toBe(false);
     expect(result.autoDetect).toBe(false);
     expect(result.allowMutations).toBe(false);
-    expect(result.experimentalAgentHarness).toBe(true);
     expect(result.legacySession).toBe(false);
     expect(result.help).toBe(false);
     expect(result.skillSources).toEqual([]);
@@ -60,12 +59,6 @@ describe('parseArgs', () => {
 
   it('parses --allow-mutations', () => {
     expect(parseArgs([...base, '--allow-mutations']).allowMutations).toBe(true);
-  });
-
-  it('parses --experimental-agent-harness', () => {
-    expect(parseArgs([...base, '--experimental-agent-harness']).experimentalAgentHarness).toBe(
-      true
-    );
   });
 
   it('parses --legacy-session', () => {

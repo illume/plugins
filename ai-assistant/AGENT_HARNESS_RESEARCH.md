@@ -338,11 +338,10 @@ model and verifies that tool discovery completes before graph construction.
 The plugin remains on its production session, while the CLI now uses
 `AgentHarnessSession` by default for headless evaluation. The previous session
 remains available through `--legacy-session` (or
-`HEADLAMP_AI_LEGACY_SESSION=1`). The deprecated
-`--experimental-agent-harness` flag is retained for compatibility. The
-adapter preserves runtime tool-call IDs, pending mutation prompts, structured
-history policy, approvals, redaction, Skills, MCP tools, and host-provided CLI
-tools. Plugin adoption remains gated on the criteria below.
+`HEADLAMP_AI_LEGACY_SESSION=1`). The adapter preserves runtime tool-call IDs,
+pending mutation prompts, structured history policy, approvals, redaction,
+Skills, MCP tools, and host-provided CLI tools. Plugin adoption remains gated
+on the criteria below.
 
 Before production use:
 

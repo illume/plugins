@@ -43,7 +43,6 @@ export async function createManager(
     skillSources?: string[];
     mockSkills?: boolean;
     mockTools?: boolean;
-    experimentalAgentHarness?: boolean;
     legacySession?: boolean;
   } = {}
 ): Promise<LangChainAssistantSession> {

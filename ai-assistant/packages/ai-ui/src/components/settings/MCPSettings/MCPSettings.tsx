@@ -74,6 +74,7 @@ function isMCPConfig(value: unknown): value is MCPConfig {
       return false;
     }
     if (
+      transport !== 'stdio' &&
       server.args !== undefined &&
       (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string'))
     ) {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ObservabilitySettings } from './ObservabilitySettings';
 
@@ -19,6 +19,7 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   fireEvent.change(screen.getByRole('textbox', { name: 'Grafana URL' }), {
     target: { value: 'https://grafana.example' },
   });
+
   expect(onChange).toHaveBeenCalledWith({
     grafana: { baseUrl: 'https://grafana.example' },
   });
@@ -29,4 +30,36 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   });
   expect(screen.getByLabelText('Service Account Token')).toHaveProperty('type', 'password');
   expect(screen.getByText(/require no MCP server/)).toBeTruthy();
+});
+
+it('discovers Azure endpoints and only applies the selected result', async () => {
+  const onChange = vi.fn();
+  const commandRunner = vi
+    .fn()
+    .mockResolvedValueOnce({ stdout: '{}', exitCode: 0 })
+    .mockResolvedValueOnce({
+      stdout: JSON.stringify([
+        {
+          name: 'dashboards',
+          resourceGroup: 'operations',
+          properties: { endpoint: 'https://dashboards.example.azure.com' },
+        },
+      ]),
+      exitCode: 0,
+    })
+    .mockResolvedValueOnce({ stdout: '[]', exitCode: 0 });
+  render(<ObservabilitySettings config={{}} onChange={onChange} commandRunner={commandRunner} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Discover from Azure CLI' }));
+  const result = await screen.findByRole('button', {
+    name: 'Use dashboards (operations) for Grafana',
+  });
+  expect(onChange).not.toHaveBeenCalled();
+
+  fireEvent.click(result);
+  await waitFor(() =>
+    expect(onChange).toHaveBeenCalledWith({
+      grafana: { baseUrl: 'https://dashboards.example.azure.com' },
+    })
+  );
 });

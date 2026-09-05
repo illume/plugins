@@ -23,6 +23,7 @@
     "./tools/langchain/ToolPlanner": "./src/tools/langchain/ToolPlanner.ts",
     "./tools/kubernetes/langchain/KubernetesTool": "./src/tools/kubernetes/langchain/KubernetesTool.ts",
     "./tools/observability/ObservabilityTools": "./src/tools/observability/ObservabilityTools.ts",
+    "./tools/observability/AzureObservabilityDiscovery": "./src/tools/observability/AzureObservabilityDiscovery.ts",
     "./mcp/client/ToolClient": "./src/mcp/client/ToolClient.ts",
     "./mcp/langchain/MCPClient": "./src/mcp/langchain/MCPClient.ts",
     "./mcp/langchain/formatToolOutput": "./src/mcp/langchain/formatToolOutput.ts",

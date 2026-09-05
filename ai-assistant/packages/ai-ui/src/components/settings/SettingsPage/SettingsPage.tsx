@@ -496,6 +496,7 @@ export function SettingsPage({
           <ObservabilitySettings
             config={observabilityConfig}
             onChange={onObservabilityConfigChange}
+            commandRunner={cliDetectionEnabled ? commandRunner ?? undefined : undefined}
           />
         </>
       )}

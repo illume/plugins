@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
+import type { CommandRunner } from '@headlamp-k8s/ai-common/providers/detectProvider';
+import {
+  type AzureObservabilityEndpoint,
+  discoverAzureObservabilityEndpoints,
+} from '@headlamp-k8s/ai-common/tools/observability/AzureObservabilityDiscovery';
 import type {
   ObservabilityConfig,
   ObservabilityProviderConfig,
 } from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export interface ObservabilitySettingsProps {
@@ -26,6 +32,8 @@ export interface ObservabilitySettingsProps {
   config?: ObservabilityConfig;
   /** Called with the complete configuration after an edit. */
   onChange: (config: ObservabilityConfig) => void;
+  /** Optional desktop command runner used to discover managed Azure endpoints. */
+  commandRunner?: CommandRunner;
 }
 
 const PROVIDERS: Array<{
@@ -93,8 +101,12 @@ const PROVIDERS: Array<{
 export function ObservabilitySettings({
   config = {},
   onChange,
+  commandRunner,
 }: ObservabilitySettingsProps): React.ReactElement {
   const { t } = useTranslation();
+  const [discovering, setDiscovering] = useState(false);
+  const [discovered, setDiscovered] = useState<AzureObservabilityEndpoint[]>([]);
+  const [discoveryMessage, setDiscoveryMessage] = useState<string>();
 
   /**
    * Updates one provider setting without discarding sibling settings.
@@ -120,6 +132,29 @@ export function ObservabilitySettings({
     });
   };
 
+  /**
+   * Queries the active Azure CLI subscription for managed observability resources.
+   *
+   * @returns A promise that settles after discovery state is updated.
+   */
+  const discoverFromAzure = async (): Promise<void> => {
+    if (!commandRunner) return;
+    setDiscovering(true);
+    setDiscoveryMessage(undefined);
+    try {
+      const endpoints = await discoverAzureObservabilityEndpoints(commandRunner);
+      setDiscovered(endpoints);
+      if (endpoints.length === 0) {
+        setDiscoveryMessage(t('No managed Grafana or Prometheus resources were found.'));
+      }
+    } catch (error) {
+      setDiscovered([]);
+      setDiscoveryMessage(error instanceof Error ? error.message : t('Azure discovery failed.'));
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
   return (
     <Box>
       <Typography variant="h6">{t('Observability Data Sources')}</Typography>
@@ -128,6 +163,51 @@ export function ObservabilitySettings({
           'Configure native read-only tools. They connect directly to provider HTTP APIs and require no MCP server or local executable.'
         )}
       </Typography>
+      {commandRunner && (
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="outlined"
+            onClick={discoverFromAzure}
+            disabled={discovering}
+            startIcon={discovering ? <CircularProgress size={16} /> : undefined}
+          >
+            {t('Discover from Azure CLI')}
+          </Button>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            {t(
+              'Uses the active az login and subscription to find URLs. Choose a result to apply it; credentials are never imported.'
+            )}
+          </Typography>
+          {discoveryMessage && (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              {discoveryMessage}
+            </Alert>
+          )}
+          {discovered.length > 0 && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="flex-start"
+              gap={1}
+              sx={{ mt: 1 }}
+            >
+              {discovered.map(endpoint => (
+                <Button
+                  key={`${endpoint.provider}:${endpoint.resourceGroup}:${endpoint.name}`}
+                  size="small"
+                  onClick={() => update(endpoint.provider, 'baseUrl', endpoint.url)}
+                >
+                  {t('Use {{name}} ({{resourceGroup}}) for {{provider}}', {
+                    name: endpoint.name,
+                    resourceGroup: endpoint.resourceGroup,
+                    provider: endpoint.provider === 'grafana' ? 'Grafana' : 'Prometheus',
+                  })}
+                </Button>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
       <Box display="flex" flexDirection="column" gap={3}>
         {PROVIDERS.map(provider => {
           const providerConfig = config[provider.id] ?? {};

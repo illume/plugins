@@ -151,6 +151,12 @@ Self-hosted APIs must be reachable from Headlamp and allow its origin through CO
 tool is read-only, caps result counts at 100, uses a 30-second request timeout, and exposes no
 create, update, or delete action.
 
+In the Headlamp desktop app, **Discover from Azure CLI** can fill the URL from Managed Grafana and
+Azure Monitor workspace resources in the active `az` subscription. Sign in with `az login`, select
+the intended subscription with `az account set`, run discovery, then explicitly choose a result.
+Discovery only reads resource metadata; it never imports credentials. Configure an appropriately
+scoped Grafana service-account token or HTTP bearer token separately.
+
 #### Datadog
 
 Provide a scoped API key and application key. Because Datadog SaaS does not allow arbitrary browser

@@ -48,6 +48,7 @@ export interface AgentToolAdapterOptions {
  */
 export class AgentToolAdapter {
   private approvalTail: Promise<void> = Promise.resolve();
+  private readonly descriptions = new Map<string, string>();
 
   constructor(
     private readonly runtime: AgentToolRuntime,
@@ -61,6 +62,12 @@ export class AgentToolAdapter {
     const extraTools = (this.options.extraTools ?? []).filter(
       extraTool => !runtimeToolNames.has(extraTool.name)
     );
+    for (const availableTool of [...runtimeTools, ...extraTools]) {
+      this.descriptions.set(
+        availableTool.name,
+        availableTool.description ?? `Execute ${availableTool.name}`
+      );
+    }
 
     return [
       ...runtimeTools.map(runtimeTool => this.wrapRuntimeTool(runtimeTool)),
@@ -163,10 +170,7 @@ export class AgentToolAdapter {
   }
 
   private findDescription(toolName: string): string {
-    const source = [...this.runtime.getLangChainTools(), ...(this.options.extraTools ?? [])].find(
-      candidate => candidate.name === toolName
-    );
-    return source?.description ?? `Execute ${toolName}`;
+    return this.descriptions.get(toolName) ?? `Execute ${toolName}`;
   }
 
   private deniedResult(toolName: string): string {

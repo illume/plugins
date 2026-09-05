@@ -87,7 +87,9 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         { signal: this.currentAbortController.signal }
       );
 
-      this.appendAgentMessages((result.messages as BaseMessage[]).slice(inputMessages.length));
+      this.appendAgentMessages(
+        this.getGeneratedMessages(result.messages as BaseMessage[], inputMessages)
+      );
       this.currentAbortController = null;
       return this.lastAssistantMessage();
     } catch (error) {
@@ -156,6 +158,33 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         });
       }
     }
+  }
+
+  private getGeneratedMessages(
+    resultMessages: BaseMessage[],
+    inputMessages: BaseMessage[]
+  ): BaseMessage[] {
+    if (inputMessages.length === 0) {
+      return resultMessages;
+    }
+
+    let inputIndex = 0;
+    for (let resultIndex = 0; resultIndex < resultMessages.length; resultIndex++) {
+      const resultMessage = resultMessages[resultIndex];
+      const inputMessage = inputMessages[inputIndex];
+      if (
+        resultMessage === inputMessage ||
+        (resultMessage.getType() === inputMessage.getType() &&
+          JSON.stringify(resultMessage.content) === JSON.stringify(inputMessage.content))
+      ) {
+        inputIndex++;
+        if (inputIndex === inputMessages.length) {
+          return resultMessages.slice(resultIndex + 1);
+        }
+      }
+    }
+
+    throw new Error('Agent result did not preserve the input conversation history.');
   }
 
   private lastAssistantMessage(): ConversationMessage {

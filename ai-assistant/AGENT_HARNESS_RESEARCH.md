@@ -136,6 +136,81 @@ evaluation layers:
 Report results per incident class and model, not only as one aggregate. A strong
 average must not hide zero safety or partial-access performance in one class.
 
+## Expected improvements
+
+“Better” should not mean that the agent sounds more capable. The recommended
+path is intended to improve measurable **incident outcomes** and the process
+used to reach them:
+
+1. **Diagnostic quality:** correct root cause, complete relevant evidence, fewer
+   unsupported claims, and calibrated uncertainty.
+2. **Reliability:** the same incident succeeds consistently across repeated runs,
+   providers, long conversations, partial access, and transient failures.
+3. **Safety and privacy:** fewer over-broad requests, no unapproved mutations,
+   correct cluster/namespace scope, and no secret leakage through model input,
+   streams, traces, or checkpoints.
+4. **Efficiency:** fewer irrelevant calls and tokens, bounded latency/cost, and
+   less operator time spent gathering evidence.
+5. **Operator usefulness:** visible progress and provenance, actionable next
+   checks, resumable approvals, and answers that distinguish facts from
+   hypotheses.
+6. **Engineering velocity:** reproducible failures, faster regression diagnosis,
+   and evidence for deciding whether prompts, tools, middleware, or a graph need
+   to change.
+
+These dimensions can conflict. More verification may improve grounding while
+adding latency; strict budgets improve predictability but can stop difficult
+investigations; additional agents can improve parallel search while increasing
+cost and coordination failures. Report the dimensions separately rather than
+combining them into one “agent quality” score.
+
+### Expected effect of each recommended change
+
+| Change | Primary expected improvement | What to measure | Evidence and confidence |
+| --- | --- | --- | --- |
+| Compatibility layer (`AgentHarnessSession`, stream adapter, direct `ToolRuntime` adapter) | **Parity before improvement:** retain all built-in/MCP tools, Skills, Kubernetes context, approvals, cancellation, metadata, and UI history while changing the loop | Compatibility tests, tool-call correlation, stream/cancel behavior, provider parity, zero lost Skills/MCP calls | **High confidence from repository contracts.** This work should prevent migration regressions; it is not expected to improve diagnosis by itself |
+| Kubernetes incident evaluations and trajectory traces | Faster, safer iteration; failures become reproducible and architecture choices become evidence-based | Per-scenario outcome and trajectory scores, repeated-run consistency, regression escape rate, time to identify a failing step | **Strong rationale, no isolated effect size.** LangChain reports a fixed-model coding agent rising from 52.8% to 66.5% on Terminal-Bench 2.0 after a *bundle* of eval-guided prompt, tool, verification, and middleware changes. That 13.7-point result demonstrates harness headroom, not the effect of evaluations alone or a forecast for Kubernetes |
+| Better tool schemas and execution semantics | More correct tool selection/arguments, fewer malformed or orphaned calls, and trustworthy evidence/history | Valid-argument rate, correct-tool rate, tool errors, repeated/irrelevant calls, result-to-call alignment | **High directional confidence; unknown K8s effect size.** Function-calling benchmarks establish that name/schema/argument correctness is a major failure surface, but no transferable percentage for this adapter was found |
+| Dynamic trusted context plus routed Skills | Better scoping and runbook use without exposing credentials or filling history with static context | Wrong-cluster/namespace calls, relevant-Skill recall, stale-context errors, prompt tokens, diagnosis quality with/without routing | **Strong design guidance; effect must be measured here.** Anthropic and agent SDK guidance favors minimal, just-in-time context. It does not provide a K8s-specific accuracy delta |
+| Context editing, evidence retention, and summarization | Longer incidents remain coherent; fewer failures caused by buried evidence or oversized log/YAML payloads | Context tokens, truncations, evidence retained after compaction, long-session accuracy, latency/cost | **Moderate empirical support, unknown product delta.** Long-context studies show performance often degrades as irrelevant input grows; they do not justify a universal compaction percentage. Short incidents may see no gain and bad summaries can remove evidence |
+| Typed evidence and a bounded verification pass | Fewer unsupported diagnoses, clearer uncertainty, and more auditable root-cause claims | Required-evidence recall, unsupported-claim rate, contradiction detection, root-cause F1, verifier false accepts/rejects | **Most directly relevant research signal, but benchmark-limited.** A 2026 Kubernetes graph-guided RCA preprint reports root-cause-entity F1 increasing from 0.6087 to 0.9130 over an earlier version on 23 ITBench scenarios; removing scenario-specific hints produced 0.6958 on a 19-scenario subset. The authors explicitly limit generalization and make no production MTTR claim |
+| Call/deadline budgets, loop detection, normalized errors, and bounded read retries | More predictable latency/cost, fewer stuck loops, and better recovery from transient read failures | Budget compliance, p50/p95 calls/tokens/latency, repeated-action rate, transient-recovery rate, premature-stop rate | **High operational confidence, low accuracy-effect confidence.** Bounds guarantee a ceiling rather than an accuracy gain. Retries can recover transient failures but can also waste budget or repeat unsafe actions; writes must not be blindly retried |
+| Least privilege, redaction, and approval/resume | Prevent unapproved or mis-scoped changes while allowing consequential workflows to continue after review | Unapproved mutation rate, scope violations, approval/rejection/resume success, sensitive-data findings, time awaiting approval | **High safety confidence by construction.** The target is zero unapproved mutations, not a percentage improvement in diagnosis. Approval may increase elapsed time and must complement, not replace, Kubernetes authorization |
+| Checkpointed state | Higher completion for interrupted, long-running, or approval-gated investigations; less repeated collection | Resume success, duplicate calls after resume, lost approvals, completion after refresh/restart, checkpoint size/redaction | **Framework capability, not quantified research evidence.** It should have little benefit for short uninterrupted chats and adds persistence/privacy obligations |
+| Outer `StateGraph` evidence phases | Better collection order, read-before-write enforcement, and post-action verification only in scenario classes where the simple agent misses those steps | Gate deltas for affected scenarios, extra calls/latency, invalid transitions, premature completion | **Plausible and supported by a K8s preprint, not established generally.** Adopt only when the simpler agent's traces identify sequencing as the cause of failure |
+| Tool selection, model fallback, and later specialist agents | Lower tool confusion with very large inventories, graceful provider failure, or broader parallel investigation | Accuracy/cost by tool-count tier, fallback recovery, duplicated evidence, fan-out, specialist routing errors | **Conditional.** Anthropic reports a 90.2% gain for multi-agent over single-agent on its internal breadth-first research evaluation, but that is not a K8s forecast. Sequential causal diagnosis may become slower and less reliable; defer until local evaluations show a need |
+| Optional incident-experience memory | Faster recognition of recurring failures and improvement from resolved incidents | Seen/unseen-incident accuracy, retrieval precision, stale-memory harm, time/calls to diagnosis | **Promising later research path.** MetaKube reports Qwen3-8B increasing from 50.9 to 90.5 on its 1,873-scenario evaluation after a combined framework and domain post-training, with 15.3 points attributed to episodic memory. This is a preprint, a different system, and not evidence that adding memory alone will reproduce the result |
+
+### Overall improvement to expect
+
+There is no defensible single percentage to promise before this repository has a
+baseline. Published numbers use different models, tools, datasets, prompts, and
+often bundles of changes. Adding them together would double-count interacting
+effects. The realistic expectation is:
+
+- **First milestone — compatibility and control:** no regression in tools, MCP,
+  Skills, providers, streaming, or approvals; 100% budget compliance and zero
+  unapproved mutations in the evaluation set.
+- **Second milestone — diagnosis quality:** reach the root-cause, evidence,
+  unsupported-claim, and partial-access gates above. Measure the absolute
+  percentage-point change from `LangChainAssistantSession` for every incident
+  class and supported model.
+- **Third milestone — operational efficiency:** at equal or better quality,
+  reduce irrelevant calls, context tokens, tail latency, and operator evidence
+  gathering. Do not trade safety or evidence recall for a lower average cost.
+- **Later milestone — operational outcomes:** after controlled rollout, measure
+  time to a supported diagnosis, operator acceptance/correction, escalation
+  rate, and—only where the assistant materially participates—MTTA and MTTR.
+  Production MTTR cannot be inferred from agent benchmarks because deployment,
+  permissions, telemetry coverage, and human response dominate it.
+
+The best near-term outcome may therefore be **better-known quality**, not an
+immediately larger headline score: the evaluation and observability work reveals
+where the current agent is already strong, where the new harness helps, and
+which expensive features should not be built. Promote the new path only when it
+shows a statistically credible improvement or equal quality with a meaningful
+efficiency/operability gain, while passing every compatibility and safety gate.
+
 ## Proposed component boundary
 
 Avoid replacing the production session in one change. Introduce a harness
@@ -374,3 +449,10 @@ context isolation.
 - [LangGraph streaming](https://docs.langchain.com/oss/javascript/langgraph/streaming)
 - [LangChain.js agent middleware source](https://github.com/langchain-ai/langchainjs/tree/main/libs/langchain/src/agents/middleware)
 - [LangGraph.js source](https://github.com/langchain-ai/langgraphjs/tree/main/libs/langgraph/src)
+- [LangChain: Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering)
+- [Anthropic: Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- [Anthropic: How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system)
+- [ITBench: Evaluating AI Agents across Diverse Real-World IT Automation Tasks](https://arxiv.org/abs/2502.05352)
+- [Auditable Graph-Guided Root Cause Analysis for Kubernetes Incidents](https://arxiv.org/abs/2606.08590)
+- [MetaKube: An Experience-Aware LLM Framework for Kubernetes Failure Diagnosis](https://arxiv.org/abs/2603.23580)
+- [τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains](https://arxiv.org/abs/2406.12045)

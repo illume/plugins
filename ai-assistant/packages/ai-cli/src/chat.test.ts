@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import { describe, expect, it } from 'vitest';
 import { createManager, query } from './chat.js';
 
 describe('chat', () => {

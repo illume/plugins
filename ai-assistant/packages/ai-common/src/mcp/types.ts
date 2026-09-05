@@ -36,8 +36,6 @@ interface MCPServerBase {
   enabled: boolean;
   /** Whether tools from this server may run without prompting. */
   autoApprove?: boolean;
-  /** Optional environment variables added to the server process. */
-  env?: Record<string, string>;
 }
 
 /** MCP server launched as a local stdio process. */
@@ -48,6 +46,8 @@ export interface MCPStdioServer extends MCPServerBase {
   command: string;
   /** Arguments passed to the server command. */
   args: string[];
+  /** Optional environment variables added to the server process. */
+  env?: Record<string, string>;
   /** Remote endpoints do not apply to stdio servers. */
   url?: never;
   /** Request headers do not apply to stdio servers. */
@@ -66,6 +66,8 @@ export interface MCPRemoteServer extends MCPServerBase {
   command?: string;
   /** Unused legacy arguments accepted when normalizing older settings. */
   args?: string[];
+  /** Process environment variables do not apply to remote servers. */
+  env?: never;
 }
 
 /** MCP server configuration discriminated by transport. */

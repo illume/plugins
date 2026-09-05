@@ -147,12 +147,34 @@ it('saves a remote HTTP server without a local command', () => {
   fireEvent.change(screen.getByRole('textbox', { name: /Server Name/ }), {
     target: { value: 'remote' },
   });
+
   fireEvent.change(screen.getByRole('combobox', { name: 'Transport' }), {
     target: { value: 'http' },
   });
   fireEvent.change(screen.getByRole('textbox', { name: 'Server URL' }), {
     target: { value: 'https://example.com/mcp' },
   });
+
+  save();
+
+  expect(onSave).toHaveBeenCalledWith({
+    name: 'remote',
+    transport: 'http',
+    url: 'https://example.com/mcp',
+    enabled: true,
+    autoApprove: false,
+  });
+});
+
+it('ignores hidden environment rows after switching from stdio to HTTP', () => {
+  const onSave = vi.fn();
+  render(<MCPServerEditor {...addServerArgs} onSave={onSave} />);
+  changeField('Server Name', 'remote');
+  fireEvent.click(screen.getByRole('button', { name: 'Add Variable' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Transport' }), {
+    target: { value: 'http' },
+  });
+  changeField('Server URL', 'https://example.com/mcp');
 
   save();
 

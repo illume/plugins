@@ -123,8 +123,8 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
         error: t('Server {{number}}: args must be an array of strings', { number }),
       };
     }
-    const env = server.env;
-    if (env !== undefined && !isStringRecord(env)) {
+    const env = transport === 'stdio' ? server.env : undefined;
+    if (transport === 'stdio' && env !== undefined && !isStringRecord(env)) {
       return {
         valid: false,
         error: t('Server {{number}}: env must contain only string key-value pairs', { number }),
@@ -168,7 +168,7 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
             ...(isValidHttpHeaders(headers) ? { headers } : {}),
             enabled: server.enabled,
           };
-    if (isStringRecord(env)) normalizedServer.env = env;
+    if (transport === 'stdio' && isStringRecord(env)) normalizedServer.env = env;
     if (typeof autoApprove === 'boolean') normalizedServer.autoApprove = autoApprove;
     servers.push(normalizedServer);
   }

@@ -68,6 +68,20 @@ describe('native observability tools', () => {
     }
   );
 
+  it.each(['search index=main `unsafe_macro`', 'search index=main [ | outputlookup results.csv ]'])(
+    'blocks unquoted Splunk macro or subsearch syntax in %s',
+    async query => {
+      const fetch = jsonFetch();
+      const tool = new SplunkTool();
+      tool.setContext({ config, fetch });
+
+      await expect(tool.handler({ action: 'search', query })).rejects.toThrow(
+        'cannot contain macros or subsearches'
+      );
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  );
+
   it('allows read-only Splunk pipelines and pipes inside quoted values', async () => {
     const fetch = jsonFetch();
     const tool = new SplunkTool();
@@ -75,7 +89,7 @@ describe('native observability tools', () => {
 
     await tool.handler({
       action: 'search',
-      query: 'search index=main message="left|right" | stats count | head 10',
+      query: 'search index=main message="left|right [literal] `literal`" | stats count | head 10',
     });
 
     expect(fetch).toHaveBeenCalledOnce();

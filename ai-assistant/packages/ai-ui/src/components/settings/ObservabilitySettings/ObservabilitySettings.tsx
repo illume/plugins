@@ -24,6 +24,7 @@ import type {
   ObservabilityProviderConfig,
 } from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
 import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -91,6 +92,38 @@ const PROVIDERS: Array<{
     ],
   },
 ];
+
+/**
+ * Translates a provider field label while keeping every dynamic key extractable.
+ *
+ * @param t - Active i18next translation function.
+ * @param label - Provider field label configured above.
+ * @returns Translated field label.
+ */
+function translateFieldLabel(t: TFunction, label: string): string {
+  switch (label) {
+    case 'API Key':
+      return t('API Key');
+    case 'Application Key':
+      return t('Application Key');
+    case 'Access Token':
+      return t('Access Token');
+    case 'Username':
+      return t('Username');
+    case 'Password':
+      return t('Password');
+    case 'Service Account Token':
+      return t('Service Account Token');
+    case 'Organization ID':
+      return t('Organization ID');
+    case 'HTTP Token':
+      return t('HTTP Token');
+    case 'Tenant / Organization ID':
+      return t('Tenant / Organization ID');
+    default:
+      return label;
+  }
+}
 
 /**
  * Renders settings for native dependency-free observability API tools.
@@ -202,13 +235,14 @@ export function ObservabilitySettings({
             >
               {discovered.map(endpoint => (
                 <Button
-                  key={`${endpoint.provider}:${endpoint.resourceGroup}:${endpoint.name}`}
+                  key={`${endpoint.provider}:${endpoint.subscriptionId}:${endpoint.resourceGroup}:${endpoint.name}`}
                   size="small"
                   onClick={() => update(endpoint.provider, 'baseUrl', endpoint.url)}
                 >
-                  {t('Use {{name}} ({{resourceGroup}}) for {{provider}}', {
+                  {t('Use {{name}} ({{resourceGroup}}, {{subscriptionId}}) for {{provider}}', {
                     name: endpoint.name,
                     resourceGroup: endpoint.resourceGroup,
+                    subscriptionId: endpoint.subscriptionId,
                     provider: endpoint.provider === 'grafana' ? 'Grafana' : 'Prometheus',
                   })}
                 </Button>
@@ -244,7 +278,7 @@ export function ObservabilitySettings({
                 {provider.fields.map(field => (
                   <TextField
                     key={field.key}
-                    label={t(field.label)}
+                    label={translateFieldLabel(t, field.label)}
                     type={field.secret ? 'password' : 'text'}
                     value={providerConfig[field.key] ?? ''}
                     onChange={event => update(provider.id, field.key, event.target.value)}

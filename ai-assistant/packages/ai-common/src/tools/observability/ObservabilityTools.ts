@@ -476,6 +476,8 @@ function assertReadOnlySpl(query: string): void {
     } else if (character === '"' || character === "'") {
       quote = character;
       segment += character;
+    } else if (character === '`' || character === '[' || character === ']') {
+      throw new Error('SPL query cannot contain macros or subsearches');
     } else if (character === '|') {
       segments.push(segment);
       segment = '';

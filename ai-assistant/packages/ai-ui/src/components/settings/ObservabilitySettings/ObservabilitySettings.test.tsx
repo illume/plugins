@@ -53,6 +53,7 @@ it('discovers Azure endpoints and only applies the selected result', async () =>
               provider: 'grafana',
               name: 'dashboards',
               resourceGroup: 'operations',
+              subscriptionId: 'subscription',
               url: 'https://dashboards.example.azure.com',
             },
           ],
@@ -66,7 +67,7 @@ it('discovers Azure endpoints and only applies the selected result', async () =>
 
     fireEvent.click(screen.getByRole('button', { name: 'Discover from Azure CLI' }));
     const result = await screen.findByRole('button', {
-      name: 'Use dashboards (operations) for Grafana',
+      name: 'Use dashboards (operations, subscription) for Grafana',
     });
     expect(onChange).not.toHaveBeenCalled();
 

@@ -64,12 +64,14 @@ describe('discoverAzureObservabilityEndpoints', () => {
           provider: 'grafana',
           name: 'dashboards',
           resourceGroup: 'operations',
+          subscriptionId: 'first',
           url: 'https://dashboards.example.azure.com',
         },
         {
           provider: 'prometheus',
           name: 'metrics',
           resourceGroup: 'operations',
+          subscriptionId: 'second',
           url: 'https://metrics.example.azure.com',
         },
       ]);

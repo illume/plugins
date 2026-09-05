@@ -249,6 +249,39 @@ it('rejects duplicate server names case-insensitively', () => {
   expect(onSave).not.toHaveBeenCalled();
 });
 
+it('drops process environment fields from remote server JSON', () => {
+  const onSave = vi.fn();
+  render(<MCPConfigEditorDialog {...openMCPConfigEditorArgs} onSave={onSave} />);
+  setEditorContent(
+    JSON.stringify({
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          env: { UNUSED: 'value' },
+          enabled: true,
+        },
+      ],
+    })
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+
+  expect(onSave).toHaveBeenCalledWith({
+    enabled: true,
+    servers: [
+      {
+        name: 'remote',
+        transport: 'http',
+        url: 'https://example.com/mcp',
+        enabled: true,
+      },
+    ],
+  });
+});
+
 it('shows translated invalid JSON and clears validation when editing resumes', () => {
   render(<MCPConfigEditorDialog {...openMCPConfigEditorArgs} />);
   setEditorContent('{');

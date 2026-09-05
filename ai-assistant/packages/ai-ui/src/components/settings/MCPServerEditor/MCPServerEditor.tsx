@@ -190,17 +190,15 @@ export default function MCPServerEditor({
     if (transport === 'stdio') {
       const parsedArgs = parseArgs();
       if (parsedArgs.error) return parsedArgs.error;
-    }
-
-    // Validate env variables
-    const seenKeys = new Set<string>();
-    for (const envVar of env) {
-      const key = envVar.key.trim();
-      if (!key) {
-        return t('Environment variable keys cannot be empty');
+      const seenKeys = new Set<string>();
+      for (const envVar of env) {
+        const key = envVar.key.trim();
+        if (!key) {
+          return t('Environment variable keys cannot be empty');
+        }
+        if (seenKeys.has(key)) return t('Environment variable keys must be unique');
+        seenKeys.add(key);
       }
-      if (seenKeys.has(key)) return t('Environment variable keys must be unique');
-      seenKeys.add(key);
     }
 
     return null;

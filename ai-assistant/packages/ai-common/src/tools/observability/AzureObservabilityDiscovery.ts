@@ -24,7 +24,7 @@ import {
 /** Azure observability service supported by endpoint discovery. */
 export type AzureObservabilityProvider = 'grafana' | 'prometheus';
 
-/** A managed observability endpoint discovered from the active Azure subscription. */
+/** A managed observability endpoint discovered from an accessible Azure subscription. */
 export interface AzureObservabilityEndpoint {
   /** Service that can use the endpoint. */
   provider: AzureObservabilityProvider;
@@ -32,6 +32,8 @@ export interface AzureObservabilityEndpoint {
   name: string;
   /** Azure resource group containing the resource. */
   resourceGroup: string;
+  /** Azure subscription containing the resource. */
+  subscriptionId: string;
   /** HTTP API endpoint to save in observability settings. */
   url: string;
 }
@@ -158,6 +160,7 @@ function parseResource(resource: AzureResourceGraphRow): AzureObservabilityEndpo
     (resource.provider !== 'grafana' && resource.provider !== 'prometheus') ||
     typeof resource.name !== 'string' ||
     typeof resource.resourceGroup !== 'string' ||
+    typeof resource.subscriptionId !== 'string' ||
     typeof resource.url !== 'string' ||
     !isHttpUrl(resource.url)
   ) {
@@ -168,6 +171,7 @@ function parseResource(resource: AzureResourceGraphRow): AzureObservabilityEndpo
       provider: resource.provider,
       name: resource.name,
       resourceGroup: resource.resourceGroup,
+      subscriptionId: resource.subscriptionId,
       url: resource.url.replace(/\/+$/, ''),
     },
   ];

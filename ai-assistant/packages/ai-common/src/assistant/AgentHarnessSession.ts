@@ -250,8 +250,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         error:
           message.status === 'error' ||
           runtimeResult?.isError === true ||
-          runtimeResult?.error === true ||
-          typeof runtimeResult?.error === 'string',
+          Boolean(runtimeResult?.error),
       });
     }
   }

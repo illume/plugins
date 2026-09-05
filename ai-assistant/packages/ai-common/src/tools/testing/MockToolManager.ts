@@ -190,7 +190,7 @@ export class MockToolManager implements LangChainToolRuntime {
   /**
    * Returns no MCP tool metadata.
    *
-   * @returns One model-facing definition for each enabled tool.
+   * @returns Always an empty array.
    */
   getMCPTools(): Array<{
     /** MCP tool name. */
@@ -205,7 +205,7 @@ export class MockToolManager implements LangChainToolRuntime {
    * Returns model-facing definitions for enabled mock tools. The adapter
    * invokes `executeTool`, so these definitions never access a real cluster.
    *
-   * @returns Always an empty array.
+   * @returns One model-facing definition for each enabled tool.
    */
   getLangChainTools(): StructuredToolInterface[] {
     return this.enabledNames.map(toolName =>

@@ -87,10 +87,11 @@ describe('AgentHarnessSession', () => {
       }) as unknown as SkillManager,
       DEFAULT_SKILLS_CONFIG
     );
+    const createSystemPrompt = vi.spyOn(session as any, 'createSystemPrompt');
 
-    const response = await session.userSend('debug my pod');
+    await session.userSend('debug my pod');
 
-    expect(response.content).toContain('Skill: pod-debug');
+    expect(createSystemPrompt).toHaveReturnedWith(expect.stringContaining('Skill: pod-debug'));
   });
 
   it('discovers and approves MCP tools before runtime execution', async () => {

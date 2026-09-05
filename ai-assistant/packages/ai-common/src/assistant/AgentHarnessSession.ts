@@ -105,9 +105,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     message: string
   ): AsyncGenerator<string, ConversationMessage, undefined> {
     const result = await this.userSend(message);
-    if (result.content) {
-      yield result.content;
-    }
+    yield result.content;
     return result;
   }
 
@@ -168,23 +166,30 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       return resultMessages;
     }
 
-    let inputIndex = 0;
-    for (let resultIndex = 0; resultIndex < resultMessages.length; resultIndex++) {
+    const lastInputMessage = inputMessages[inputMessages.length - 1];
+    for (let resultIndex = resultMessages.length - 1; resultIndex >= 0; resultIndex--) {
       const resultMessage = resultMessages[resultIndex];
-      const inputMessage = inputMessages[inputIndex];
       if (
-        resultMessage === inputMessage ||
-        (resultMessage.getType() === inputMessage.getType() &&
-          JSON.stringify(resultMessage.content) === JSON.stringify(inputMessage.content))
+        resultMessage === lastInputMessage ||
+        (resultMessage.getType() === lastInputMessage.getType() &&
+          JSON.stringify(resultMessage.content) === JSON.stringify(lastInputMessage.content))
       ) {
-        inputIndex++;
-        if (inputIndex === inputMessages.length) {
-          return resultMessages.slice(resultIndex + 1);
-        }
+        return resultMessages.slice(resultIndex + 1);
       }
     }
 
-    throw new Error('Agent result did not preserve the input conversation history.');
+    let latestHumanIndex = -1;
+    for (let index = resultMessages.length - 1; index >= 0; index--) {
+      if (HumanMessage.isInstance(resultMessages[index])) {
+        latestHumanIndex = index;
+        break;
+      }
+    }
+    return latestHumanIndex >= 0
+      ? resultMessages.slice(latestHumanIndex + 1)
+      : resultMessages.filter(
+          message => AIMessage.isInstance(message) || ToolMessage.isInstance(message)
+        );
   }
 
   private lastAssistantMessage(): ConversationMessage {

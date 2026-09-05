@@ -47,6 +47,7 @@ export interface AgentToolAdapterOptions {
  * tools are invoked directly with the same call metadata.
  */
 export class AgentToolAdapter {
+  private static fallbackToolCallId = 0;
   private approvalTail: Promise<void> = Promise.resolve();
   private readonly descriptions = new Map<string, string>();
 
@@ -126,7 +127,7 @@ export class AgentToolAdapter {
   }
 
   private getToolCallId(toolName: string, config?: ToolRunnableConfig): string {
-    return config?.toolCall?.id ?? `agent-${toolName}-${Date.now()}`;
+    return config?.toolCall?.id ?? `agent-${toolName}-${++AgentToolAdapter.fallbackToolCallId}`;
   }
 
   private async requestApproval(

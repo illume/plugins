@@ -157,6 +157,36 @@ describe('AgentHarnessSession', () => {
         toolCall: expect.objectContaining({ id: 'cli-call-1', name: 'kubectl' }),
       })
     );
+    expect(session.history.find(message => message.role === 'tool')?.content).toBe(
+      'kubectl output'
+    );
+  });
+
+  it('marks denied tool results as errors', async () => {
+    const invoked = vi.fn(async () => 'must not execute');
+    const externalTool = tool(invoked, {
+      name: 'external_tool',
+      description: 'Requires approval',
+      schema: z.object({}),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'denied-call', name: 'external_tool', args: {} }], []],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
+    await session.enableDirectToolCalling([externalTool]);
+
+    await session.userSend('Use the external tool');
+
+    expect(invoked).not.toHaveBeenCalled();
+    expect(session.history.find(message => message.role === 'tool')).toEqual(
+      expect.objectContaining({
+        toolCallId: 'denied-call',
+        error: true,
+      })
+    );
   });
 
   it('preserves the streaming API', async () => {

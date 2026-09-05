@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import { ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface, ToolRunnableConfig } from '@langchain/core/tools';
 import { tool } from '@langchain/core/tools';
+import { extractTextContent } from '../../conversation/content';
 import type { ConversationMessage } from '../../conversation/types';
 import { redactSecrets } from '../../security/redactSecrets';
 import type { ApprovalManagerContext } from '../../tools/approval/InlineToolApprovalManager';
@@ -87,7 +89,7 @@ export class AgentToolAdapter {
         const toolCallId = this.getToolCallId(source.name, config);
         const approved = await this.requestApproval(source.name, normalizedArgs, toolCallId);
         if (!approved) {
-          return this.deniedResult(source.name);
+          return this.deniedResult(source.name, toolCallId);
         }
 
         const result = await this.runtime.executeTool(
@@ -114,14 +116,19 @@ export class AgentToolAdapter {
         const toolCallId = this.getToolCallId(source.name, config);
         const approved = await this.requestApproval(source.name, normalizedArgs, toolCallId);
         if (!approved) {
-          return this.deniedResult(source.name);
+          return this.deniedResult(source.name, toolCallId);
         }
 
         const result = await source.invoke(normalizedArgs, {
           ...config,
           toolCall: { id: toolCallId, name: source.name, args: normalizedArgs, type: 'tool_call' },
         });
-        return redactSecrets(typeof result === 'string' ? result : JSON.stringify(result));
+        const content = ToolMessage.isInstance(result)
+          ? extractTextContent(result.content)
+          : typeof result === 'string'
+          ? result
+          : JSON.stringify(result);
+        return redactSecrets(content);
       },
       {
         name: source.name,
@@ -200,11 +207,16 @@ export class AgentToolAdapter {
     return this.descriptions.get(toolName) ?? `Execute ${toolName}`;
   }
 
-  private deniedResult(toolName: string): string {
-    return JSON.stringify({
-      error: true,
-      message: 'Tool execution denied by user',
-      userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
+  private deniedResult(toolName: string, toolCallId: string): ToolMessage {
+    return new ToolMessage({
+      status: 'error',
+      tool_call_id: toolCallId,
+      name: toolName,
+      content: JSON.stringify({
+        error: true,
+        message: 'Tool execution denied by user',
+        userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
+      }),
     });
   }
 }

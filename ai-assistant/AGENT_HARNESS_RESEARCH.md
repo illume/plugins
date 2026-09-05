@@ -335,13 +335,14 @@ small adapter that:
 The focused test executes a real model → tool → model graph with a deterministic
 model and verifies that tool discovery completes before graph construction.
 
-The bounded prototype remains disconnected from production plugin and CLI
-defaults. The CLI exposes `AgentHarnessSession` only through
-`--experimental-agent-harness` (or its matching environment variable) as a
-headless comparison path. Its adapter preserves runtime tool-call IDs, pending
-mutation prompts, structured history policy, approvals, redaction, Skills, MCP
-tools, and host-provided CLI tools. Production adoption remains gated on the
-criteria below.
+The plugin remains on its production session, while the CLI now uses
+`AgentHarnessSession` by default for headless evaluation. The previous session
+remains available through `--legacy-session` (or
+`HEADLAMP_AI_LEGACY_SESSION=1`). The deprecated
+`--experimental-agent-harness` flag is retained for compatibility. The
+adapter preserves runtime tool-call IDs, pending mutation prompts, structured
+history policy, approvals, redaction, Skills, MCP tools, and host-provided CLI
+tools. Plugin adoption remains gated on the criteria below.
 
 Before production use:
 

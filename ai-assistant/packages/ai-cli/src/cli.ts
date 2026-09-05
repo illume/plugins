@@ -177,13 +177,13 @@ async function main() {
     console.error('Auto-approving all tool calls (--auto-approve).');
   }
 
-  // Create a LangChainManager — same code path as the Headlamp UI.
+  // Use the createAgent-backed harness by default; retain an explicit legacy escape hatch.
   const manager = await createManager(config.provider, resolvedConfig, {
     allowMutations: parsed.allowMutations,
     skillSources: parsed.skillSources,
     mockSkills: parsed.mockSkills,
     mockTools: parsed.mockTools,
-    experimentalAgentHarness: parsed.experimentalAgentHarness,
+    legacySession: parsed.legacySession,
   });
 
   if (parsed.interactive) {

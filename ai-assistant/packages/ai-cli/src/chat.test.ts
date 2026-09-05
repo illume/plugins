@@ -24,15 +24,18 @@ describe('chat', () => {
     expect(typeof query).toBe('function');
   });
 
-  it('uses the production session unless the experimental harness is requested', async () => {
-    const production = await createManager('mock-testing-model', {}, { mockTools: true });
-    const experimental = await createManager('mock-testing-model', {}, {
-      mockTools: true,
-      experimentalAgentHarness: true,
-    });
+  it('uses the agent harness by default and supports the legacy session explicitly', async () => {
+    const harness = await createManager('mock-testing-model', {}, { mockTools: true });
+    const legacy = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        mockTools: true,
+        legacySession: true,
+      }
+    );
 
-    expect(production).toBeInstanceOf(LangChainAssistantSession);
-    expect(production).not.toBeInstanceOf(AgentHarnessSession);
-    expect(experimental).toBeInstanceOf(AgentHarnessSession);
+    expect(harness).toBeInstanceOf(AgentHarnessSession);
+    expect(legacy).toBeInstanceOf(LangChainAssistantSession);
   });
 });

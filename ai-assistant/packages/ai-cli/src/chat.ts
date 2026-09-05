@@ -44,18 +44,12 @@ export async function createManager(
     mockSkills?: boolean;
     mockTools?: boolean;
     experimentalAgentHarness?: boolean;
+    legacySession?: boolean;
   } = {}
 ): Promise<LangChainAssistantSession> {
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const Session = options.experimentalAgentHarness
-    ? AgentHarnessSession
-    : LangChainAssistantSession;
-  const manager = new Session(
-    providerId,
-    config,
-    [],
-    toolManager ? { toolManager } : undefined
-  );
+  const Session = options.legacySession ? LangChainAssistantSession : AgentHarnessSession;
+  const manager = new Session(providerId, config, [], toolManager ? { toolManager } : undefined);
   const kubectlTool = createKubectlTool({ readOnly: !options.allowMutations });
   await manager.enableDirectToolCalling([kubectlTool]);
 

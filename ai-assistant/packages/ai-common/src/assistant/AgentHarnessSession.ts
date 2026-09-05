@@ -125,14 +125,6 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     }
   }
 
-  /**
-   * External tool results, such as a confirmed mutation or UI retry, start a
-   * follow-up model call through the established compatibility implementation.
-   */
-  override async processToolResponses(): Promise<ConversationMessage> {
-    return super.processToolResponses();
-  }
-
   private appendAgentMessages(
     messages: BaseMessage[],
     runtimeResults: Map<string, ToolExecutionResult>,

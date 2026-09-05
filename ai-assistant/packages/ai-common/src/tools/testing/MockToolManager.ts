@@ -190,7 +190,7 @@ export class MockToolManager implements LangChainToolRuntime {
   /**
    * Returns no MCP tool metadata.
    *
-   * @returns Always an empty array.
+   * @returns One model-facing definition for each enabled tool.
    */
   getMCPTools(): Array<{
     /** MCP tool name. */

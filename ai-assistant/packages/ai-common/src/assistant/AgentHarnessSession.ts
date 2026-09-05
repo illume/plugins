@@ -217,6 +217,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           historyMessage.role === 'tool' && historyMessage.toolCallId === message.tool_call_id
       );
       if (existingResult) {
+        // Runtime-owned history is captured before graph reconciliation and may
+        // contain raw secret data from the host tool implementation.
         this.history.push({
           ...existingResult,
           content: redactSecrets(existingResult.content),

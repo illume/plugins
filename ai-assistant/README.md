@@ -152,9 +152,10 @@ tool is read-only, caps result counts at 100, uses a 30-second request timeout, 
 create, update, or delete action.
 
 In the Headlamp desktop app, **Discover from Azure CLI** can fill the URL from Managed Grafana and
-Azure Monitor workspace resources in the active `az` subscription. Sign in with `az login`, select
-the intended subscription with `az account set`, run discovery, then explicitly choose a result.
-Discovery only reads resource metadata; it never imports credentials. Configure an appropriately
+Azure Monitor workspace resources across subscriptions accessible to the active `az` identity.
+Sign in with `az login`, run discovery, then explicitly choose a result. The plugin uses `az` only
+to obtain an Azure Resource Manager token; subscription and endpoint discovery use Azure REST APIs.
+Discovery never persists the ARM token or imports service credentials. Configure an appropriately
 scoped Grafana service-account token or HTTP bearer token separately.
 
 #### Datadog

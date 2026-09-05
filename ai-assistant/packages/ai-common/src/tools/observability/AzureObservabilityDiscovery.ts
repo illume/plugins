@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import type { CommandRunner } from '../../providers/detectProvider';
+import {
+  type CommandRunner,
+  fetchAzureApi,
+  getAzureManagementToken,
+  listAzureSubscriptionsWithApi,
+} from '../../providers/detectProvider';
 
 /** Azure observability service supported by endpoint discovery. */
 export type AzureObservabilityProvider = 'grafana' | 'prometheus';
@@ -31,109 +36,141 @@ export interface AzureObservabilityEndpoint {
   url: string;
 }
 
-interface AzureResource {
+interface AzureResourceGraphRow {
   name?: unknown;
   resourceGroup?: unknown;
-  properties?: {
-    endpoint?: unknown;
-    prometheusQueryEndpoint?: unknown;
-    metrics?: {
-      prometheusQueryEndpoint?: unknown;
-    };
-  };
+  provider?: unknown;
+  subscriptionId?: unknown;
+  url?: unknown;
+}
+
+interface AzureResourceGraphResponse {
+  /** Resources returned in the current page. */
+  data?: AzureResourceGraphRow[];
+  /** Opaque continuation token for the next page. */
+  $skipToken?: string;
 }
 
 /**
- * Discovers managed Grafana and Azure Monitor workspace endpoints with Azure CLI.
+ * Discovers managed Grafana and Azure Monitor workspace endpoints through Azure APIs.
  *
- * The active `az` account and subscription are used. Discovery only reads resource
- * metadata; it does not request, return, or persist service access tokens.
+ * Azure CLI is used only to obtain an ARM token. All accessible enabled subscriptions
+ * are queried through Azure Resource Manager and Resource Graph. Discovery only reads
+ * resource metadata; it does not return or persist access tokens.
  *
  * @param runCommand - Host-provided command runner capable of executing `az`.
- * @returns Managed endpoints in the active subscription.
- * @throws When Azure CLI is unavailable, unauthenticated, or returns malformed output.
+ * @param signal - Optional cancellation signal.
+ * @returns Managed endpoints across accessible subscriptions.
+ * @throws When authentication or Azure resource discovery fails.
  */
 export async function discoverAzureObservabilityEndpoints(
-  runCommand: CommandRunner
+  runCommand: CommandRunner,
+  signal?: AbortSignal
 ): Promise<AzureObservabilityEndpoint[]> {
-  const account = await runCommand('az', ['account', 'show', '--output', 'json']);
-  if (account.exitCode !== 0) {
+  const token = await getAzureManagementToken(runCommand, signal);
+  if (!token) {
     throw new Error('Azure CLI is not signed in. Run az login, then try again.');
   }
-
-  const [grafanaResult, prometheusResult] = await Promise.all([
-    runCommand('az', [
-      'resource',
-      'list',
-      '--resource-type',
-      'Microsoft.Dashboard/grafana',
-      '--output',
-      'json',
-    ]),
-    runCommand('az', [
-      'resource',
-      'list',
-      '--resource-type',
-      'Microsoft.Monitor/accounts',
-      '--output',
-      'json',
-    ]),
-  ]);
-  if (grafanaResult.exitCode !== 0 || prometheusResult.exitCode !== 0) {
-    throw new Error('Azure CLI could not list managed observability resources.');
+  const subscriptions = await listAzureSubscriptionsWithApi(token, signal);
+  if (!subscriptions) {
+    throw new Error('Azure API could not list accessible subscriptions.');
   }
+  const subscriptionIds = subscriptions.flatMap(subscription =>
+    subscription.state === 'Enabled' && subscription.subscriptionId
+      ? [subscription.subscriptionId]
+      : []
+  );
+  if (subscriptionIds.length === 0) return [];
 
-  return [
-    ...parseResources(grafanaResult.stdout, 'grafana'),
-    ...parseResources(prometheusResult.stdout, 'prometheus'),
-  ];
+  return queryAzureObservabilityResources(token, subscriptionIds, signal);
 }
 
 /**
- * Converts an Azure resource-list response into usable observability endpoints.
+ * Queries Azure Resource Graph for managed observability resources.
  *
- * @param stdout - JSON emitted by `az resource list`.
- * @param provider - Provider whose endpoint property should be selected.
- * @returns Resources that contain a valid HTTP(S) endpoint.
+ * @param token - ARM bearer token.
+ * @param subscriptions - Subscription IDs included in the query.
+ * @param signal - Optional cancellation signal.
+ * @returns Resources containing a valid HTTP(S) endpoint.
  */
-function parseResources(
-  stdout: string,
-  provider: AzureObservabilityProvider
-): AzureObservabilityEndpoint[] {
-  let resources: AzureResource[];
-  try {
-    const parsed: unknown = JSON.parse(stdout);
-    if (!Array.isArray(parsed)) {
-      throw new Error('response is not an array');
-    }
-    resources = parsed;
-  } catch {
-    throw new Error(`Azure CLI returned invalid ${provider} resource data.`);
-  }
+async function queryAzureObservabilityResources(
+  token: string,
+  subscriptions: string[],
+  signal?: AbortSignal
+): Promise<AzureObservabilityEndpoint[]> {
+  const query = [
+    'Resources',
+    "| where type in~ ('microsoft.dashboard/grafana', 'microsoft.monitor/accounts')",
+    "| extend provider=iff(type =~ 'microsoft.dashboard/grafana', 'grafana', 'prometheus')",
+    "| extend url=iff(provider == 'grafana', tostring(properties.endpoint), tostring(properties.metrics.prometheusQueryEndpoint))",
+    '| where isnotempty(url)',
+    '| project name, resourceGroup, subscriptionId, provider, url',
+    '| order by provider asc, name asc',
+  ].join(' ');
+  const endpoints: AzureObservabilityEndpoint[] = [];
+  let skipToken: string | undefined;
 
-  return resources.flatMap(resource => {
-    const endpoint =
-      provider === 'grafana'
-        ? resource.properties?.endpoint
-        : resource.properties?.metrics?.prometheusQueryEndpoint ??
-          resource.properties?.prometheusQueryEndpoint;
-    if (
-      typeof resource.name !== 'string' ||
-      typeof resource.resourceGroup !== 'string' ||
-      typeof endpoint !== 'string' ||
-      !isHttpUrl(endpoint)
-    ) {
-      return [];
-    }
-    return [
+  do {
+    const response = await fetchAzureApi(
+      'https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2022-10-01',
       {
-        provider,
-        name: resource.name,
-        resourceGroup: resource.resourceGroup,
-        url: endpoint.replace(/\/+$/, ''),
+        method: 'POST',
+        headers: {
+          Authorization: ['Bearer', token].join(' '),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subscriptions,
+          query,
+          options: {
+            resultFormat: 'objectArray',
+            $top: 1000,
+            ...(skipToken ? { $skipToken: skipToken } : {}),
+          },
+        }),
       },
-    ];
-  });
+      signal
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Azure API could not discover managed observability resources (${response.status}).`
+      );
+    }
+    const page: AzureResourceGraphResponse = await response.json();
+    if (!Array.isArray(page.data)) {
+      throw new Error('Azure API returned invalid observability resource data.');
+    }
+    endpoints.push(...page.data.flatMap(parseResource));
+    skipToken = page.$skipToken;
+  } while (skipToken);
+
+  return endpoints;
+}
+
+/**
+ * Converts one Resource Graph row into an observability endpoint.
+ *
+ * @param resource - Projected Resource Graph row.
+ * @returns A single validated endpoint, or an empty array for malformed rows.
+ */
+function parseResource(resource: AzureResourceGraphRow): AzureObservabilityEndpoint[] {
+  if (
+    (resource.provider !== 'grafana' && resource.provider !== 'prometheus') ||
+    typeof resource.name !== 'string' ||
+    typeof resource.resourceGroup !== 'string' ||
+    typeof resource.url !== 'string' ||
+    !isHttpUrl(resource.url)
+  ) {
+    return [];
+  }
+  return [
+    {
+      provider: resource.provider,
+      name: resource.name,
+      resourceGroup: resource.resourceGroup,
+      url: resource.url.replace(/\/+$/, ''),
+    },
+  ];
 }
 
 /**

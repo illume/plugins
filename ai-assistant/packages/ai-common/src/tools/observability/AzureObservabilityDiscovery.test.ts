@@ -18,49 +18,81 @@ import { describe, expect, it, vi } from 'vitest';
 import { discoverAzureObservabilityEndpoints } from './AzureObservabilityDiscovery';
 
 describe('discoverAzureObservabilityEndpoints', () => {
-  it('discovers managed Grafana and Prometheus endpoints', async () => {
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({ stdout: '{"id":"subscription"}', exitCode: 0 })
-      .mockResolvedValueOnce({
-        stdout: JSON.stringify([
-          {
-            name: 'dashboards',
-            resourceGroup: 'operations',
-            properties: { endpoint: 'https://dashboards.example.azure.com/' },
-          },
-        ]),
-        exitCode: 0,
-      })
-      .mockResolvedValueOnce({
-        stdout: JSON.stringify([
-          {
-            name: 'metrics',
-            resourceGroup: 'operations',
-            properties: {
-              metrics: {
-                prometheusQueryEndpoint: 'https://metrics.example.azure.com/',
+  it('uses one CLI token call then discovers endpoints across subscriptions with APIs', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token\n', exitCode: 0 });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            value: [
+              { subscriptionId: 'first', state: 'Enabled' },
+              { subscriptionId: 'second', state: 'Enabled' },
+              { subscriptionId: 'disabled', state: 'Disabled' },
+            ],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                provider: 'grafana',
+                name: 'dashboards',
+                resourceGroup: 'operations',
+                subscriptionId: 'first',
+                url: 'https://dashboards.example.azure.com/',
               },
-            },
-          },
-        ]),
-        exitCode: 0,
-      });
+              {
+                provider: 'prometheus',
+                name: 'metrics',
+                resourceGroup: 'operations',
+                subscriptionId: 'second',
+                url: 'https://metrics.example.azure.com/',
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      );
 
-    await expect(discoverAzureObservabilityEndpoints(runCommand)).resolves.toEqual([
-      {
-        provider: 'grafana',
-        name: 'dashboards',
-        resourceGroup: 'operations',
-        url: 'https://dashboards.example.azure.com',
-      },
-      {
-        provider: 'prometheus',
-        name: 'metrics',
-        resourceGroup: 'operations',
-        url: 'https://metrics.example.azure.com',
-      },
-    ]);
+    try {
+      await expect(discoverAzureObservabilityEndpoints(runCommand)).resolves.toEqual([
+        {
+          provider: 'grafana',
+          name: 'dashboards',
+          resourceGroup: 'operations',
+          url: 'https://dashboards.example.azure.com',
+        },
+        {
+          provider: 'prometheus',
+          name: 'metrics',
+          resourceGroup: 'operations',
+          url: 'https://metrics.example.azure.com',
+        },
+      ]);
+      expect(runCommand).toHaveBeenCalledOnce();
+      expect(runCommand).toHaveBeenCalledWith(
+        'az',
+        [
+          'account',
+          'get-access-token',
+          '--resource',
+          'https://management.azure.com/',
+          '--query',
+          'accessToken',
+          '-o',
+          'tsv',
+        ],
+        expect.any(AbortSignal)
+      );
+      const graphRequest = fetchSpy.mock.calls[1];
+      expect(JSON.parse(String(graphRequest[1]?.body)).subscriptions).toEqual(['first', 'second']);
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it('reports when Azure CLI is not signed in', async () => {
@@ -72,24 +104,23 @@ describe('discoverAzureObservabilityEndpoints', () => {
     expect(runCommand).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects malformed resource data and ignores invalid endpoints', async () => {
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({ stdout: '{}', exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: 'not-json', exitCode: 0 })
-      .mockResolvedValueOnce({
-        stdout: JSON.stringify([
-          {
-            name: 'metrics',
-            resourceGroup: 'operations',
-            properties: { metrics: { prometheusQueryEndpoint: 'file:///tmp/data' } },
-          },
-        ]),
-        exitCode: 0,
-      });
+  it('rejects malformed Resource Graph data', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value: [{ subscriptionId: 'first', state: 'Enabled' }] }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: {} }), { status: 200 }));
 
-    await expect(discoverAzureObservabilityEndpoints(runCommand)).rejects.toThrow(
-      'invalid grafana resource data'
-    );
+    try {
+      await expect(discoverAzureObservabilityEndpoints(runCommand)).rejects.toThrow(
+        'invalid observability resource data'
+      );
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 });

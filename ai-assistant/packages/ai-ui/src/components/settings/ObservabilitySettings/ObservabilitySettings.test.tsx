@@ -34,32 +34,49 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
 
 it('discovers Azure endpoints and only applies the selected result', async () => {
   const onChange = vi.fn();
-  const commandRunner = vi
-    .fn()
-    .mockResolvedValueOnce({ stdout: '{}', exitCode: 0 })
-    .mockResolvedValueOnce({
-      stdout: JSON.stringify([
-        {
-          name: 'dashboards',
-          resourceGroup: 'operations',
-          properties: { endpoint: 'https://dashboards.example.azure.com' },
-        },
-      ]),
-      exitCode: 0,
-    })
-    .mockResolvedValueOnce({ stdout: '[]', exitCode: 0 });
-  render(<ObservabilitySettings config={{}} onChange={onChange} commandRunner={commandRunner} />);
+  const commandRunner = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+  const fetchSpy = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          value: [{ subscriptionId: 'subscription', state: 'Enabled' }],
+        }),
+        { status: 200 }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              provider: 'grafana',
+              name: 'dashboards',
+              resourceGroup: 'operations',
+              url: 'https://dashboards.example.azure.com',
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
 
-  fireEvent.click(screen.getByRole('button', { name: 'Discover from Azure CLI' }));
-  const result = await screen.findByRole('button', {
-    name: 'Use dashboards (operations) for Grafana',
-  });
-  expect(onChange).not.toHaveBeenCalled();
+  try {
+    render(<ObservabilitySettings config={{}} onChange={onChange} commandRunner={commandRunner} />);
 
-  fireEvent.click(result);
-  await waitFor(() =>
-    expect(onChange).toHaveBeenCalledWith({
-      grafana: { baseUrl: 'https://dashboards.example.azure.com' },
-    })
-  );
+    fireEvent.click(screen.getByRole('button', { name: 'Discover from Azure CLI' }));
+    const result = await screen.findByRole('button', {
+      name: 'Use dashboards (operations) for Grafana',
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.click(result);
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        grafana: { baseUrl: 'https://dashboards.example.azure.com' },
+      })
+    );
+  } finally {
+    fetchSpy.mockRestore();
+  }
 });

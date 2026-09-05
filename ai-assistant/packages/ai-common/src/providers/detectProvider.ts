@@ -452,7 +452,7 @@ type DiscoverableAzureOpenAIAccount = AzureOpenAIAccount & {
 };
 
 /** Azure subscription returned by Azure Resource Manager. */
-interface AzureSubscription {
+export interface AzureSubscription {
   /** Subscription resource path. */
   id?: string;
   /** Subscription GUID used by Azure Resource Graph. */
@@ -521,7 +521,7 @@ interface AzureOpenAIDeployment {
  * @param signal - Optional parent cancellation signal.
  * @returns Azure API response.
  */
-async function fetchAzureApi(
+export async function fetchAzureApi(
   input: RequestInfo | URL,
   init: RequestInit = {},
   signal?: AbortSignal
@@ -571,9 +571,10 @@ function isChatDeployment(deployment: AzureOpenAIDeployment): boolean {
  * Obtains an Azure Resource Manager token from the authenticated Azure CLI session.
  *
  * @param commandRunner - Host-provided command executor.
+ * @param signal - Optional cancellation signal.
  * @returns ARM bearer token, or `null` when authentication is unavailable.
  */
-async function getAzureManagementToken(
+export async function getAzureManagementToken(
   commandRunner: CommandRunner,
   signal?: AbortSignal
 ): Promise<string | null> {
@@ -611,9 +612,10 @@ function logAzureApiFailure(operation: string, cause: unknown): void {
  * Lists subscriptions available to the authenticated Azure identity.
  *
  * @param token - ARM bearer token.
+ * @param signal - Optional cancellation signal.
  * @returns Accessible subscriptions, or `null` when the API is unavailable.
  */
-async function listAzureSubscriptionsWithApi(
+export async function listAzureSubscriptionsWithApi(
   token: string,
   signal?: AbortSignal
 ): Promise<AzureSubscription[] | null> {

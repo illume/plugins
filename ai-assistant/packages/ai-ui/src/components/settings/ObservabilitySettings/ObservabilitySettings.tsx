@@ -184,7 +184,7 @@ export function ObservabilitySettings({
           </Button>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
             {t(
-              'Uses the active az login and subscription to find URLs. Choose a result to apply it; credentials are never imported.'
+              'Uses the active az login to find URLs across accessible subscriptions. Choose a result to apply it; credentials are never imported.'
             )}
           </Typography>
           {discoveryNotice && (

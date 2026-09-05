@@ -16,9 +16,9 @@
 
 import type { StructuredToolInterface, ToolRunnableConfig } from '@langchain/core/tools';
 import { tool } from '@langchain/core/tools';
+import { redactSecrets } from '../../security/redactSecrets';
 import type { ApprovalManagerContext } from '../../tools/approval/InlineToolApprovalManager';
 import { inlineToolApprovalManager } from '../../tools/approval/InlineToolApprovalManager';
-import { redactSecrets } from '../../security/redactSecrets';
 import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../../tools/catalog/toolDefinitions';
 import type { ToolRuntime } from '../../tools/ToolRuntime';
 import type { ToolCall } from '../../tools/types';

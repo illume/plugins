@@ -114,10 +114,7 @@ describe('AgentHarnessSession', () => {
       }),
     ]);
     const model = new FakeToolCallingModel({
-      toolCalls: [
-        [{ id: 'mcp-call-1', name: 'metrics__query', args: { query: 'up' } }],
-        [],
-      ],
+      toolCalls: [[{ id: 'mcp-call-1', name: 'metrics__query', args: { query: 'up' } }], []],
     });
     const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
       model,

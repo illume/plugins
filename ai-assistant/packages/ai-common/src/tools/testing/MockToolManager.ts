@@ -22,7 +22,8 @@
  * It provides the runtime surface used by `LangChainAssistantSession`:
  * - `executeTool` — returns a configurable canned `ToolExecutionResult`
  * - `getToolNames` — returns configured names
- * - `getMCPTools` / `getLangChainTools` — return empty lists
+ * - `getMCPTools` — returns an empty list
+ * - `getLangChainTools` — returns model-facing definitions for enabled tools
  * - `bindToModelAsync` / `waitForMCPToolsInitialization` — resolve immediately
  *
  * ### Usage
@@ -201,7 +202,8 @@ export class MockToolManager implements LangChainToolRuntime {
   }
 
   /**
-   * Returns no LangChain tool adapters.
+   * Returns model-facing definitions for enabled mock tools. The adapter
+   * invokes `executeTool`, so these definitions never access a real cluster.
    *
    * @returns Always an empty array.
    */

@@ -16,11 +16,13 @@
 
 import type { StructuredToolInterface, ToolRunnableConfig } from '@langchain/core/tools';
 import { tool } from '@langchain/core/tools';
+import type { ConversationMessage } from '../../conversation/types';
 import { redactSecrets } from '../../security/redactSecrets';
 import type { ApprovalManagerContext } from '../../tools/approval/InlineToolApprovalManager';
 import { inlineToolApprovalManager } from '../../tools/approval/InlineToolApprovalManager';
 import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../../tools/catalog/toolDefinitions';
 import type { ToolRuntime } from '../../tools/ToolRuntime';
+import type { ToolExecutionResult } from '../../tools/ToolRuntime';
 import type { ToolCall } from '../../tools/types';
 
 /** Runtime surface needed to expose existing tools through `createAgent`. */
@@ -37,6 +39,8 @@ export interface AgentToolAdapterOptions {
   extraTools?: StructuredToolInterface[];
   /** Clears the inline approval placeholder after a call has settled. */
   clearToolConfirmation?: () => void;
+  /** Records runtime result policy for session-history reconciliation. */
+  onRuntimeResult?: (toolCallId: string, result: ToolExecutionResult) => void;
 }
 
 /**
@@ -90,8 +94,9 @@ export class AgentToolAdapter {
           source.name,
           normalizedArgs,
           toolCallId,
-          undefined
+          this.createPendingPrompt(source.name, normalizedArgs, toolCallId)
         );
+        this.options.onRuntimeResult?.(toolCallId, result);
         return redactSecrets(result.content);
       },
       {
@@ -128,6 +133,27 @@ export class AgentToolAdapter {
 
   private getToolCallId(toolName: string, config?: ToolRunnableConfig): string {
     return config?.toolCall?.id ?? `agent-${toolName}-${++AgentToolAdapter.fallbackToolCallId}`;
+  }
+
+  private createPendingPrompt(
+    toolName: string,
+    args: Record<string, unknown>,
+    toolCallId: string
+  ): ConversationMessage {
+    return {
+      role: 'assistant',
+      content: '',
+      toolCalls: [
+        {
+          type: 'function',
+          id: toolCallId,
+          function: {
+            name: toolName,
+            arguments: JSON.stringify(args),
+          },
+        },
+      ],
+    };
   }
 
   private async requestApproval(

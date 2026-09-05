@@ -25,6 +25,7 @@ import { createMockSkillManager } from '../skills/testing/MockSkillManager';
 import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
 import { createMockApprovalManager } from '../tools/approval/testing/MockApprovalManager';
 import { createMockToolManager } from '../tools/testing/MockToolManager';
+import type { ToolExecutionResult } from '../tools/ToolRuntime';
 import AgentHarnessSession from './AgentHarnessSession';
 
 describe('AgentHarnessSession', () => {
@@ -172,5 +173,156 @@ describe('AgentHarnessSession', () => {
     expect(chunks.join('')).toContain('Hello');
     session.abort();
     expect(session.history.at(-1)?.role).toBe('assistant');
+  });
+
+  it('preserves runtime-owned tool history without duplicating or reordering it', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['kubernetes_api_request'],
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'kubernetes_api_request',
+        description: 'Read Kubernetes resources',
+        schema: z.object({ method: z.string(), url: z.string() }),
+      }),
+    ]);
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          {
+            id: 'get-call',
+            name: 'kubernetes_api_request',
+            args: { method: 'GET', url: '/api/v1/pods' },
+          },
+        ],
+        [],
+      ],
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager,
+    });
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => {
+        session.history.push({
+          role: 'tool',
+          content: '{"items":[]}',
+          toolCallId,
+          name: 'kubernetes_api_request',
+        });
+        return {
+          content: '{"items":[]}',
+          shouldAddToHistory: false,
+          shouldProcessFollowUp: true,
+        };
+      }
+    );
+
+    await session.userSend('List pods');
+
+    expect(session.history.filter(message => message.role === 'tool')).toHaveLength(1);
+    expect(session.history.map(message => message.role)).toEqual([
+      'user',
+      'assistant',
+      'tool',
+      'assistant',
+    ]);
+    expect(validateToolCallAlignment(session.history).aligned).toBe(true);
+  });
+
+  it('suspends mutation follow-up and retains the initiating prompt for confirmation', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['kubernetes_api_request'],
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'kubernetes_api_request',
+        description: 'Mutate Kubernetes resources',
+        schema: z.object({ method: z.string(), url: z.string() }),
+      }),
+    ]);
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          {
+            id: 'delete-call',
+            name: 'kubernetes_api_request',
+            args: { method: 'DELETE', url: '/api/v1/pods/api-0' },
+          },
+        ],
+        [],
+      ],
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager,
+    });
+    const executeTool = vi
+      .spyOn(toolManager, 'executeTool')
+      .mockResolvedValue({
+        content: '{"status":"pending_confirmation"}',
+        shouldAddToHistory: false,
+        shouldProcessFollowUp: false,
+        metadata: { requiresConfirmation: true, method: 'DELETE' },
+      });
+
+    const response = await session.userSend('Delete pod api-0');
+
+    expect(executeTool).toHaveBeenCalledWith(
+      'kubernetes_api_request',
+      { method: 'DELETE', url: '/api/v1/pods/api-0' },
+      'delete-call',
+      expect.objectContaining({
+        role: 'assistant',
+        toolCalls: [
+          expect.objectContaining({
+            id: 'delete-call',
+            function: expect.objectContaining({ name: 'kubernetes_api_request' }),
+          }),
+        ],
+      })
+    );
+    expect(response.toolCalls?.[0]?.id).toBe('delete-call');
+    expect(session.history.at(-1)).toEqual(
+      expect.objectContaining({
+        role: 'tool',
+        toolCallId: 'delete-call',
+        isDisplayOnly: true,
+      })
+    );
+    expect(validateToolCallAlignment(session.history).aligned).toBe(true);
+  });
+
+  it('processes tool results appended after the graph invocation', async () => {
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel(),
+      toolManager: createMockToolManager(),
+    });
+    const firstResponse = await session.userSend('Initial request');
+    session.history.push(
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          {
+            type: 'function',
+            id: 'retry-call',
+            function: { name: 'retry_tool', arguments: '{}' },
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        content: '{"result":"retry succeeded"}',
+        toolCallId: 'retry-call',
+        name: 'retry_tool',
+      }
+    );
+
+    const retryResponse = await session.processToolResponses();
+
+    expect(retryResponse).not.toBe(firstResponse);
+    expect(retryResponse.role).toBe('assistant');
+    expect(session.history.at(-1)).toBe(retryResponse);
   });
 });

@@ -335,11 +335,12 @@ small adapter that:
 The focused test executes a real model → tool → model graph with a deterministic
 model and verifies that tool discovery completes before graph construction.
 
-The prototype is standalone and is not called by the plugin, CLI, or production
-session. Its current tool boundary is also insufficient for Kubernetes:
-`AgentHarnessToolRuntime` has no context-configuration operation, while
-`LangChainTool.createLangChainTool()` discards `toolCallId` and `pendingPrompt`.
-Those values currently correlate Kubernetes history and approval state.
+The bounded prototype remains disconnected from the production plugin. The CLI
+uses `AgentHarnessSession` as a headless compatibility evaluation path, with an
+adapter that preserves runtime tool-call IDs, pending mutation prompts,
+structured history policy, approvals, redaction, Skills, MCP tools, and
+host-provided CLI tools. Production plugin adoption remains gated on the
+criteria below.
 
 Before production use:
 

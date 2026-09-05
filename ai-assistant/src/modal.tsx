@@ -16,7 +16,6 @@
 
 import { getHolmesProxyBaseUrl, HolmesAgent } from '@headlamp-k8s/ai-common/agents/holmes/client';
 import { MockHolmesAgent } from '@headlamp-k8s/ai-common/agents/holmes/MockHolmesAgent';
-import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import AssistantSession from '@headlamp-k8s/ai-common/assistant/AssistantSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { ConversationMessage } from '@headlamp-k8s/ai-common/conversation/types';
@@ -585,7 +584,7 @@ export default function AIPrompt(props: {
 
         if (!isCurrent) return;
 
-        const newManager = new AgentHarnessSession(
+        const newManager = new LangChainAssistantSession(
           activeConfig!.providerId,
           configWithModel,
           enabledTools,
@@ -669,7 +668,7 @@ export default function AIPrompt(props: {
             throw new Error('Diagnosis provider configuration changed during credential refresh.');
           }
           // Create an isolated manager instance for this single diagnosis
-          const isolatedManager = new AgentHarnessSession(
+          const isolatedManager = new LangChainAssistantSession(
             activeConfig.providerId,
             configWithModel,
             enabledTools,

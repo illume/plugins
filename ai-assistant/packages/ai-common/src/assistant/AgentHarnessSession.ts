@@ -23,6 +23,8 @@ import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
 import type { ProviderSettings } from '../providers/savedConfigs';
 import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
+import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse';
+import type { ToolExecutionResult } from '../tools/ToolRuntime';
 import type { LangChainToolRuntime } from './langchain/LangChainToolBinding';
 import LangChainAssistantSession from './LangChainAssistantSession';
 
@@ -67,10 +69,12 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       await this.toolManager.waitForMCPToolsInitialization();
       this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
 
+      const runtimeResults = new Map<string, ToolExecutionResult>();
       const toolAdapter = new AgentToolAdapter(this.toolManager, {
         approvalContext: this,
         extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
         clearToolConfirmation: () => this.clearToolConfirmation(),
+        onRuntimeResult: (toolCallId, result) => runtimeResults.set(toolCallId, result),
       });
       const adaptedTools = toolAdapter.createTools();
       const agent = await createAgentHarness({
@@ -82,13 +86,17 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         systemPrompt: this.createSystemPrompt(),
       });
       const inputMessages = this.prepareChatHistory();
+      const historyLengthBeforeInvoke = this.history.length;
       const result = await agent.invoke(
         { messages: inputMessages },
         { signal: this.currentAbortController.signal }
       );
 
+      const runtimeHistory = this.history.splice(historyLengthBeforeInvoke);
       this.appendAgentMessages(
-        this.getGeneratedMessages(result.messages as BaseMessage[], inputMessages)
+        this.getGeneratedMessages(result.messages as BaseMessage[], inputMessages),
+        runtimeResults,
+        runtimeHistory
       );
       this.currentAbortController = null;
       return this.lastAssistantMessage();
@@ -118,14 +126,21 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
   }
 
   /**
-   * Agent tool results are consumed within the same invocation, so callers that
-   * explicitly request follow-up processing receive the latest assistant answer.
+   * External tool results, such as a confirmed mutation or UI retry, start a
+   * follow-up model call through the established compatibility implementation.
    */
   override async processToolResponses(): Promise<ConversationMessage> {
-    return this.lastAssistantMessage();
+    return super.processToolResponses();
   }
 
-  private appendAgentMessages(messages: BaseMessage[]): void {
+  private appendAgentMessages(
+    messages: BaseMessage[],
+    runtimeResults: Map<string, ToolExecutionResult>,
+    runtimeHistory: ConversationMessage[]
+  ): void {
+    let pendingToolCallIds = new Set<string>();
+    let suspendAfterPendingResults = false;
+
     for (const message of messages) {
       if (AIMessage.isInstance(message)) {
         const toolCalls = message.tool_calls?.map(toolCall => ({
@@ -141,14 +156,49 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           content: this.extractTextContent(message.content),
           toolCalls: toolCalls?.length ? toolCalls : undefined,
         });
+        pendingToolCallIds = new Set(toolCalls?.map(toolCall => toolCall.id) ?? []);
       } else if (ToolMessage.isInstance(message)) {
-        this.history.push({
-          role: 'tool',
-          content: this.extractTextContent(message.content),
-          toolCallId: message.tool_call_id,
-          name: message.name,
-          error: message.status === 'error',
-        });
+        const runtimeResult = runtimeResults.get(message.tool_call_id);
+        if (runtimeResult?.shouldAddToHistory === false) {
+          const existingResult = runtimeHistory.find(
+            historyMessage =>
+              historyMessage.role === 'tool' &&
+              historyMessage.toolCallId === message.tool_call_id
+          );
+          if (existingResult) {
+            this.history.push(existingResult);
+          } else {
+            this.history.push({
+              role: 'tool',
+              content: runtimeResult.metadata?.requiresConfirmation
+                ? buildConfirmationPlaceholderJson(
+                    typeof runtimeResult.metadata.method === 'string'
+                      ? runtimeResult.metadata.method
+                      : undefined
+                  )
+                : JSON.stringify({
+                    status: 'completed',
+                    shouldProcessFollowUp: runtimeResult.shouldProcessFollowUp,
+                  }),
+              toolCallId: message.tool_call_id,
+              name: message.name,
+              isDisplayOnly: true,
+            });
+          }
+        } else {
+          this.history.push({
+            role: 'tool',
+            content: this.extractTextContent(message.content),
+            toolCallId: message.tool_call_id,
+            name: message.name,
+            error: message.status === 'error',
+          });
+        }
+        pendingToolCallIds.delete(message.tool_call_id);
+        suspendAfterPendingResults ||= runtimeResult?.shouldProcessFollowUp === false;
+        if (suspendAfterPendingResults && pendingToolCallIds.size === 0) {
+          break;
+        }
       } else if (HumanMessage.isInstance(message)) {
         this.history.push({
           role: 'user',

@@ -324,6 +324,30 @@ describe('settingsChanges', () => {
     expect(result.join(' ')).not.toContain('new-secret');
   });
 
+  it('does not report an undefined command when changing from stdio to remote', () => {
+    const current: MCPSettings = {
+      enabled: true,
+      servers: [{ name: 'server', command: 'server-command', args: [], enabled: true }],
+    };
+    const next: MCPSettings = {
+      enabled: true,
+      servers: [
+        {
+          name: 'server',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          enabled: true,
+        },
+      ],
+    };
+
+    const result = settingsChanges(current, next).join(' ');
+
+    expect(result).toContain('change transport');
+    expect(result).not.toContain('change command');
+    expect(result).not.toContain('undefined');
+  });
+
   it('redacts credentials and query values from remote URL summaries', () => {
     const signedUrl = new URL('https://example.com/mcp');
     signedUrl.username = 'alice';

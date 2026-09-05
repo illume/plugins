@@ -299,7 +299,11 @@ export function settingsChanges(
         serverChanges.push(`${nextServer.enabled ? 'enable' : 'disable'}`);
       }
 
-      if (currentServer.command !== nextServer.command) {
+      if (
+        (currentServer.transport ?? 'stdio') === 'stdio' &&
+        (nextServer.transport ?? 'stdio') === 'stdio' &&
+        currentServer.command !== nextServer.command
+      ) {
         serverChanges.push(`change command: "${currentServer.command}" → "${nextServer.command}"`);
       }
       if ((currentServer.transport ?? 'stdio') !== (nextServer.transport ?? 'stdio')) {

@@ -106,7 +106,10 @@ export function ObservabilitySettings({
   const { t } = useTranslation();
   const [discovering, setDiscovering] = useState(false);
   const [discovered, setDiscovered] = useState<AzureObservabilityEndpoint[]>([]);
-  const [discoveryMessage, setDiscoveryMessage] = useState<string>();
+  const [discoveryNotice, setDiscoveryNotice] = useState<{
+    message: string;
+    severity: 'info' | 'error';
+  }>();
 
   /**
    * Updates one provider setting without discarding sibling settings.
@@ -140,16 +143,22 @@ export function ObservabilitySettings({
   const discoverFromAzure = async (): Promise<void> => {
     if (!commandRunner) return;
     setDiscovering(true);
-    setDiscoveryMessage(undefined);
+    setDiscoveryNotice(undefined);
     try {
       const endpoints = await discoverAzureObservabilityEndpoints(commandRunner);
       setDiscovered(endpoints);
       if (endpoints.length === 0) {
-        setDiscoveryMessage(t('No managed Grafana or Prometheus resources were found.'));
+        setDiscoveryNotice({
+          message: t('No managed Grafana or Prometheus resources were found.'),
+          severity: 'info',
+        });
       }
     } catch (error) {
       setDiscovered([]);
-      setDiscoveryMessage(error instanceof Error ? error.message : t('Azure discovery failed.'));
+      setDiscoveryNotice({
+        message: error instanceof Error ? error.message : t('Azure discovery failed.'),
+        severity: 'error',
+      });
     } finally {
       setDiscovering(false);
     }
@@ -178,9 +187,9 @@ export function ObservabilitySettings({
               'Uses the active az login and subscription to find URLs. Choose a result to apply it; credentials are never imported.'
             )}
           </Typography>
-          {discoveryMessage && (
-            <Alert severity="info" sx={{ mt: 1 }}>
-              {discoveryMessage}
+          {discoveryNotice && (
+            <Alert severity={discoveryNotice.severity} sx={{ mt: 1 }}>
+              {discoveryNotice.message}
             </Alert>
           )}
           {discovered.length > 0 && (

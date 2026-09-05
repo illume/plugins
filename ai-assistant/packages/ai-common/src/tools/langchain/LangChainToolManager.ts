@@ -131,7 +131,10 @@ export class LangChainToolManager {
     // Initialize built-in tools first
     for (const ToolClass of AVAILABLE_TOOLS) {
       const tempTool = new ToolClass();
-      if (tempTool instanceof ObservabilityTool && observabilityContext) {
+      if (tempTool instanceof ObservabilityTool) {
+        if (!observabilityContext) {
+          continue;
+        }
         tempTool.setContext(observabilityContext);
       }
       if (enabledToolIds && !enabledToolIds.includes(tempTool.config.name)) {

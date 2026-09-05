@@ -97,6 +97,12 @@ describe('ToolManager with injected MCPClientAdapter', () => {
     expect(mgr.getMCPClient().isAvailable()).toBe(false);
   });
 
+  it('skips observability tools when no provider context is configured', () => {
+    const mgr = new LangChainToolManager({ enabledToolIds: ['grafana_read'] });
+
+    expect(privateManager(mgr).tools.map(tool => tool.config.name)).not.toContain('grafana_read');
+  });
+
   it('accepts a custom MCPClientAdapter', async () => {
     let wasCalled = false;
     const customAdapter: MCPClientAdapter = {

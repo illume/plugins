@@ -64,12 +64,15 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     const userPrompt: ConversationMessage = { role: 'user', content: message };
     this.history.push(userPrompt);
     this.currentAbortController = new AbortController();
+    const runtimeResults = new Map<string, ToolExecutionResult>();
+    let inputMessages: BaseMessage[] = [];
+    let historyLengthBeforeRun = this.history.length;
+    let latestMessages: BaseMessage[] = [];
 
     try {
       await this.toolManager.waitForMCPToolsInitialization();
       this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
 
-      const runtimeResults = new Map<string, ToolExecutionResult>();
       const toolAdapter = new AgentToolAdapter(this.toolManager, {
         approvalContext: this,
         extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
@@ -85,22 +88,21 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         },
         systemPrompt: this.createSystemPrompt(),
       });
-      const inputMessages = this.prepareChatHistory();
-      const historyLengthBeforeInvoke = this.history.length;
-      const result = await agent.invoke(
+      inputMessages = this.prepareChatHistory();
+      historyLengthBeforeRun = this.history.length;
+      const stream = await agent.stream(
         { messages: inputMessages },
-        { signal: this.currentAbortController.signal }
+        { signal: this.currentAbortController.signal, streamMode: 'values' }
       );
+      for await (const state of stream) {
+        latestMessages = state.messages as BaseMessage[];
+      }
 
-      const runtimeHistory = this.history.splice(historyLengthBeforeInvoke);
-      this.appendAgentMessages(
-        this.getGeneratedMessages(result.messages as BaseMessage[], inputMessages),
-        runtimeResults,
-        runtimeHistory
-      );
+      this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       this.currentAbortController = null;
       return this.lastAssistantMessage();
     } catch (error) {
+      this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       return this.handleUserSendError(error);
     }
   }
@@ -125,6 +127,24 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     }
   }
 
+  private appendRunMessages(
+    resultMessages: BaseMessage[],
+    inputMessages: BaseMessage[],
+    runtimeResults: Map<string, ToolExecutionResult>,
+    historyLengthBeforeRun: number
+  ): void {
+    const runtimeHistory = this.history.splice(historyLengthBeforeRun);
+    if (resultMessages.length === 0) {
+      this.history.push(...runtimeHistory);
+      return;
+    }
+    this.appendAgentMessages(
+      this.getGeneratedMessages(resultMessages, inputMessages),
+      runtimeResults,
+      runtimeHistory
+    );
+  }
+
   private appendAgentMessages(
     messages: BaseMessage[],
     runtimeResults: Map<string, ToolExecutionResult>,
@@ -132,6 +152,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
   ): void {
     let pendingToolCallIds = new Set<string>();
     let suspendAfterPendingResults = false;
+    const toolNames = new Map<string, string>();
+    const recordedToolCallIds = new Set<string>();
 
     for (const message of messages) {
       if (AIMessage.isInstance(message)) {
@@ -149,43 +171,13 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           toolCalls: toolCalls?.length ? toolCalls : undefined,
         });
         pendingToolCallIds = new Set(toolCalls?.map(toolCall => toolCall.id) ?? []);
+        for (const toolCall of toolCalls ?? []) {
+          toolNames.set(toolCall.id, toolCall.function.name);
+        }
       } else if (ToolMessage.isInstance(message)) {
         const runtimeResult = runtimeResults.get(message.tool_call_id);
-        if (runtimeResult?.shouldAddToHistory === false) {
-          const existingResult = runtimeHistory.find(
-            historyMessage =>
-              historyMessage.role === 'tool' &&
-              historyMessage.toolCallId === message.tool_call_id
-          );
-          if (existingResult) {
-            this.history.push(existingResult);
-          } else {
-            this.history.push({
-              role: 'tool',
-              content: runtimeResult.metadata?.requiresConfirmation
-                ? buildConfirmationPlaceholderJson(
-                    typeof runtimeResult.metadata.method === 'string'
-                      ? runtimeResult.metadata.method
-                      : undefined
-                  )
-                : JSON.stringify({
-                    status: 'completed',
-                    shouldProcessFollowUp: runtimeResult.shouldProcessFollowUp,
-                  }),
-              toolCallId: message.tool_call_id,
-              name: message.name,
-              isDisplayOnly: true,
-            });
-          }
-        } else {
-          this.history.push({
-            role: 'tool',
-            content: this.extractTextContent(message.content),
-            toolCallId: message.tool_call_id,
-            name: message.name,
-            error: message.status === 'error',
-          });
-        }
+        this.appendToolMessage(message, runtimeResult, runtimeHistory);
+        recordedToolCallIds.add(message.tool_call_id);
         pendingToolCallIds.delete(message.tool_call_id);
         suspendAfterPendingResults ||= runtimeResult?.shouldProcessFollowUp === false;
         if (suspendAfterPendingResults && pendingToolCallIds.size === 0) {
@@ -197,6 +189,60 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           content: this.extractTextContent(message.content),
         });
       }
+    }
+
+    for (const [toolCallId, runtimeResult] of runtimeResults) {
+      if (recordedToolCallIds.has(toolCallId)) continue;
+      this.appendToolMessage(
+        new ToolMessage({
+          content: runtimeResult.content,
+          tool_call_id: toolCallId,
+          name: toolNames.get(toolCallId),
+        }),
+        runtimeResult,
+        runtimeHistory
+      );
+    }
+  }
+
+  private appendToolMessage(
+    message: ToolMessage,
+    runtimeResult: ToolExecutionResult | undefined,
+    runtimeHistory: ConversationMessage[]
+  ): void {
+    if (runtimeResult?.shouldAddToHistory === false) {
+      const existingResult = runtimeHistory.find(
+        historyMessage =>
+          historyMessage.role === 'tool' && historyMessage.toolCallId === message.tool_call_id
+      );
+      if (existingResult) {
+        this.history.push(existingResult);
+      } else {
+        this.history.push({
+          role: 'tool',
+          content: runtimeResult.metadata?.requiresConfirmation
+            ? buildConfirmationPlaceholderJson(
+                typeof runtimeResult.metadata.method === 'string'
+                  ? runtimeResult.metadata.method
+                  : undefined
+              )
+            : JSON.stringify({
+                status: 'completed',
+                shouldProcessFollowUp: runtimeResult.shouldProcessFollowUp,
+              }),
+          toolCallId: message.tool_call_id,
+          name: message.name,
+          isDisplayOnly: true,
+        });
+      }
+    } else {
+      this.history.push({
+        role: 'tool',
+        content: this.extractTextContent(message.content),
+        toolCallId: message.tool_call_id,
+        name: message.name,
+        error: message.status === 'error',
+      });
     }
   }
 

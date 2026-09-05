@@ -355,4 +355,54 @@ describe('AgentHarnessSession', () => {
     expect(retryResponse.role).toBe('assistant');
     expect(session.history.at(-1)).toBe(retryResponse);
   });
+
+  it('retains completed tool actions when the remaining run is aborted', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['kubernetes_api_request'],
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'kubernetes_api_request',
+        description: 'Read Kubernetes resources',
+        schema: z.object({ method: z.string(), url: z.string() }),
+      }),
+    ]);
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            {
+              id: 'completed-call',
+              name: 'kubernetes_api_request',
+              args: { method: 'GET', url: '/api/v1/pods' },
+            },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(async () => {
+      session.abort();
+      return {
+        content: '{"items":[]}',
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: true,
+      };
+    });
+
+    const response = await session.userSend('List pods');
+
+    expect(response.error).toBe(true);
+    expect(session.history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'tool',
+          toolCallId: 'completed-call',
+          content: '{"items":[]}',
+        }),
+      ])
+    );
+    expect(validateToolCallAlignment(session.history).aligned).toBe(true);
+  });
 });

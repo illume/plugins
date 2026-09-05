@@ -15,6 +15,7 @@
  */
 
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
@@ -42,10 +43,14 @@ export async function createManager(
     skillSources?: string[];
     mockSkills?: boolean;
     mockTools?: boolean;
+    experimentalAgentHarness?: boolean;
   } = {}
-): Promise<AgentHarnessSession> {
+): Promise<LangChainAssistantSession> {
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const manager = new AgentHarnessSession(
+  const Session = options.experimentalAgentHarness
+    ? AgentHarnessSession
+    : LangChainAssistantSession;
+  const manager = new Session(
     providerId,
     config,
     [],
@@ -85,13 +90,13 @@ export async function createManager(
 }
 
 /** Send one message through the assistant session and return the text. */
-export async function query(manager: AgentHarnessSession, message: string): Promise<string> {
+export async function query(manager: LangChainAssistantSession, message: string): Promise<string> {
   const result = await manager.userSend(message);
   return result.content;
 }
 
 /** Run an interactive REPL session using the assistant session. */
-export async function interactiveMode(manager: AgentHarnessSession): Promise<void> {
+export async function interactiveMode(manager: LangChainAssistantSession): Promise<void> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
   console.log('Headlamp AI Assistant (interactive mode)');

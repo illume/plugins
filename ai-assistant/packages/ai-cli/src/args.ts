@@ -40,6 +40,8 @@ export interface ParsedArgs {
   mockSkills: boolean;
   /** When true, inject a MockToolManager with canned Kubernetes fixture data. */
   mockTools: boolean;
+  /** When true, use the experimental createAgent-backed session. */
+  experimentalAgentHarness: boolean;
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
@@ -54,6 +56,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     skillSources: [],
     mockSkills: process.env.HEADLAMP_AI_MOCK_SKILLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
     mockTools: process.env.HEADLAMP_AI_MOCK_TOOLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
+    experimentalAgentHarness: process.env.HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS === '1',
   };
   const args = argv.slice(2);
   const queryParts: string[] = [];
@@ -92,6 +95,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
         break;
       case '--mock-tools':
         result.mockTools = true;
+        break;
+      case '--experimental-agent-harness':
+        result.experimentalAgentHarness = true;
         break;
       case '--interactive':
       case '-i':
@@ -141,6 +147,8 @@ Options:
   --skill-source <url>  Git repo URL to load skills from (repeatable, e.g. https://github.com/microsoft/azure-skills)
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1
   --mock-tools          Inject mock Kubernetes tool results (no cluster). Env: HEADLAMP_AI_MOCK_TOOLS=1
+  --experimental-agent-harness
+                        Use the experimental createAgent harness. Env: HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS=1
   --allow-mutations     Allow mutating kubectl operations (POST, PUT, DELETE, PATCH). Default: read-only
   --auto-approve        Auto-approve all tool calls without prompting. Env: HEADLAMP_AI_AUTO_APPROVE=1
   --auto-detect         Detect available AI providers (Copilot, Azure, Ollama)
@@ -162,6 +170,8 @@ Environment variables:
   HEADLAMP_AI_AUTO_APPROVE    Set to 1 to auto-approve all tool calls
   HEADLAMP_AI_MOCK_SKILLS     Set to 1 to inject the built-in mock skill set
   HEADLAMP_AI_MOCK_TOOLS      Set to 1 to inject mock Kubernetes tool results
+  HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS
+                              Set to 1 to use the experimental createAgent harness
   HEADLAMP_AI_MOCK_ALL        Set to 1 to enable full offline/demo mode:
                               mock model + mock skills + mock tools + auto-approve
 

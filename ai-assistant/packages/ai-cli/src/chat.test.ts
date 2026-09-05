@@ -15,10 +15,24 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { query } from './chat.js';
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import { createManager, query } from './chat.js';
 
 describe('chat', () => {
   it('exports a query function', () => {
     expect(typeof query).toBe('function');
+  });
+
+  it('uses the production session unless the experimental harness is requested', async () => {
+    const production = await createManager('mock-testing-model', {}, { mockTools: true });
+    const experimental = await createManager('mock-testing-model', {}, {
+      mockTools: true,
+      experimentalAgentHarness: true,
+    });
+
+    expect(production).toBeInstanceOf(LangChainAssistantSession);
+    expect(production).not.toBeInstanceOf(AgentHarnessSession);
+    expect(experimental).toBeInstanceOf(AgentHarnessSession);
   });
 });

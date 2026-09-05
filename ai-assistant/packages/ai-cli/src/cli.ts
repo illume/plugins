@@ -183,6 +183,7 @@ async function main() {
     skillSources: parsed.skillSources,
     mockSkills: parsed.mockSkills,
     mockTools: parsed.mockTools,
+    experimentalAgentHarness: parsed.experimentalAgentHarness,
   });
 
   if (parsed.interactive) {

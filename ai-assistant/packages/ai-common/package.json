@@ -12,6 +12,7 @@
     "./agents/scripted/fixtures": "./src/agents/scripted/fixtures.ts",
     "./agents/scripted/types": "./src/agents/scripted/types.ts",
     "./assistant/AssistantSession": "./src/assistant/AssistantSession.ts",
+    "./assistant/AgentHarnessSession": "./src/assistant/AgentHarnessSession.ts",
     "./assistant/LangChainAssistantSession": "./src/assistant/LangChainAssistantSession.ts",
     "./conversation/content": "./src/conversation/content.ts",
     "./conversation/context": "./src/conversation/context.ts",

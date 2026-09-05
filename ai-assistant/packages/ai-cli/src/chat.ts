@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
-import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
@@ -37,10 +37,15 @@ import { loadSkillsFromUrls } from './skills.js';
 export async function createManager(
   providerId: string,
   config: Record<string, any>,
-  options: { allowMutations?: boolean; skillSources?: string[]; mockSkills?: boolean; mockTools?: boolean } = {}
-): Promise<LangChainAssistantSession> {
+  options: {
+    allowMutations?: boolean;
+    skillSources?: string[];
+    mockSkills?: boolean;
+    mockTools?: boolean;
+  } = {}
+): Promise<AgentHarnessSession> {
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const manager = new LangChainAssistantSession(
+  const manager = new AgentHarnessSession(
     providerId,
     config,
     [],
@@ -80,13 +85,13 @@ export async function createManager(
 }
 
 /** Send one message through the assistant session and return the text. */
-export async function query(manager: LangChainAssistantSession, message: string): Promise<string> {
+export async function query(manager: AgentHarnessSession, message: string): Promise<string> {
   const result = await manager.userSend(message);
   return result.content;
 }
 
 /** Run an interactive REPL session using the assistant session. */
-export async function interactiveMode(manager: LangChainAssistantSession): Promise<void> {
+export async function interactiveMode(manager: AgentHarnessSession): Promise<void> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
   console.log('Headlamp AI Assistant (interactive mode)');

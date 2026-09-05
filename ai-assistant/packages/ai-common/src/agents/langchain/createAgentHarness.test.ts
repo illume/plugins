@@ -61,4 +61,61 @@ describe('createAgentHarness', () => {
     );
     expect(result.messages.some(message => ToolMessage.isInstance(message))).toBe(true);
   });
+
+  it('stops when the model-call limit is exceeded', async () => {
+    const model = new FakeToolCallingModel({
+      toolCalls: [[{ id: 'call-1', name: 'inspect_pods', args: { namespace: 'default' } }], []],
+    });
+    const inspectPods = vi.fn(async () => 'ok');
+    const agent = await createAgentHarness({
+      model,
+      toolRuntime: {
+        waitForMCPToolsInitialization: async () => undefined,
+        getLangChainTools: () => [
+          tool(inspectPods, {
+            name: 'inspect_pods',
+            description: 'Inspect Kubernetes pods',
+            schema: z.object({ namespace: z.string() }),
+          }),
+        ],
+      },
+      modelCallLimit: 0,
+    });
+
+    await expect(
+      agent.invoke({ messages: [{ role: 'user', content: 'Inspect pods' }] })
+    ).rejects.toThrow();
+    expect(inspectPods).not.toHaveBeenCalled();
+  });
+
+  it('stops when the tool-call limit is exceeded', async () => {
+    const inspectPods = vi.fn(async () => 'ok');
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          { id: 'call-1', name: 'inspect_pods', args: { namespace: 'default' } },
+          { id: 'call-2', name: 'inspect_pods', args: { namespace: 'kube-system' } },
+        ],
+      ],
+    });
+    const agent = await createAgentHarness({
+      model,
+      toolRuntime: {
+        waitForMCPToolsInitialization: async () => undefined,
+        getLangChainTools: () => [
+          tool(inspectPods, {
+            name: 'inspect_pods',
+            description: 'Inspect Kubernetes pods',
+            schema: z.object({ namespace: z.string() }),
+          }),
+        ],
+      },
+      toolCallLimit: 0,
+    });
+
+    await expect(
+      agent.invoke({ messages: [{ role: 'user', content: 'Inspect pods' }] })
+    ).rejects.toThrow();
+    expect(inspectPods).not.toHaveBeenCalled();
+  });
 });

@@ -98,7 +98,11 @@ export class AgentToolAdapter {
           this.createPendingPrompt(source.name, normalizedArgs, toolCallId)
         );
         this.options.onRuntimeResult?.(toolCallId, result);
-        return redactSecrets(result.content);
+        const content = redactSecrets(result.content);
+        if (result.shouldProcessFollowUp === false) {
+          throw new AgentToolExecutionHalt();
+        }
+        return content;
       },
       {
         name: source.name,
@@ -217,5 +221,13 @@ export class AgentToolAdapter {
         userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
       }),
     });
+  }
+}
+
+/** Stops the graph before a deferred runtime result reaches another model turn. */
+export class AgentToolExecutionHalt extends Error {
+  constructor() {
+    super('Tool execution requested that the agent stop before follow-up.');
+    this.name = 'AgentToolExecutionHalt';
   }
 }

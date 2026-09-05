@@ -345,8 +345,9 @@ on the criteria below.
 
 Before production use:
 
-1. wrap the existing `ToolRuntime.executeTool()` so graph calls retain call IDs,
-   structured metadata, history policy, redaction, and approval policy;
+1. keep the existing `ToolRuntime.executeTool()` boundary so graph calls retain
+   call IDs, structured metadata, history policy, redaction, and approval policy,
+   and interrupt the graph when a result defers follow-up;
 2. add host-owned typed Kubernetes context and reject model attempts to change
    cluster, namespace, identity, or credentials;
 3. adapt `ReactAgent.stream()` messages and updates to `AssistantSession` UI
@@ -363,7 +364,7 @@ Before production use:
 | Priority | Gap today | Why it matters | Research-backed improvement |
 | --- | --- | --- | --- |
 | P0 | No graph-to-`AssistantSession` stream adapter | Blocks use in the real UI and hides model/tool/state progress | Map agent message/update events to current text, tool progress, approval, cancellation, and final-history events |
-| P0 | Harness tool adapter loses execution context | The wrapper discards call IDs and pending prompts and cannot configure Kubernetes context, breaking history/approval semantics | Adapt `ToolRuntime.executeTool()` directly and pass host-owned typed scope outside model arguments |
+| P0 | Deferred tool results do not interrupt the graph | A pending confirmation or other result with `shouldProcessFollowUp: false` must stop before another model/tool turn while preserving host-owned scope | Interrupt at the tool-result boundary, then reconcile the stopped trajectory with runtime history and typed Kubernetes scope |
 | P0 | No evaluation harness for Kubernetes diagnoses | Architecture changes cannot be shown to improve correctness or safety | Build a versioned incident set covering CrashLoop, OOM, Pending, rollout, DNS/network, storage, RBAC, partial access, stale data, and unsafe remediation; score evidence, cause, calls, latency, and policy |
 | P1 | Prototype has no checkpointed approval/resume | Current approval is outside graph state and only one request can be pending | Add stable thread IDs and a checkpointer, then adapt graph-native approve/edit/reject while preserving current auto-approval policy |
 | P1 | No evidence schema or verification phase | A fluent answer can be unsupported or based on stale/partial results | Add typed findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty |

@@ -230,6 +230,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       toolManager?: LangChainToolRuntime;
       /** Host MCP bridge used to discover and execute MCP tools. */
       mcpClient?: ToolClient;
+      /** Optional model supplied by an embedded host or deterministic test. */
+      model?: BaseChatModel;
     }
   ) {
     super();
@@ -242,7 +244,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.toolManager =
       options?.toolManager ??
       new LangChainToolManager({ enabledToolIds, mcpClient: options?.mcpClient });
-    this.model = this.createModel(providerId, config);
+    this.model = options?.model ?? this.createModel(providerId, config);
 
     // Initialize prompt template and output parser
     this.promptTemplate = this.createPromptTemplate();

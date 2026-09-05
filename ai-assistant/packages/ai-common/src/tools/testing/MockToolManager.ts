@@ -50,6 +50,8 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';
 import type { LangChainToolRuntime } from '../../assistant/langchain/LangChainToolBinding';
 import type { ConversationMessage as Prompt } from '../../conversation/types';
 import type { ToolExecutionResult } from '../ToolRuntime';
@@ -204,7 +206,17 @@ export class MockToolManager implements LangChainToolRuntime {
    * @returns Always an empty array.
    */
   getLangChainTools(): StructuredToolInterface[] {
-    return [];
+    return this.enabledNames.map(toolName =>
+      tool(async () => '', {
+        name: toolName,
+        description: `Mock ${toolName} tool`,
+        schema: z.object({
+          url: z.string().optional(),
+          method: z.string().optional(),
+          body: z.string().optional(),
+        }),
+      })
+    );
   }
 
   /**

@@ -22,6 +22,7 @@ import { createAgentHarness } from '../agents/langchain/createAgentHarness';
 import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
 import type { ProviderSettings } from '../providers/savedConfigs';
+import { redactSecrets } from '../security/redactSecrets';
 import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
 import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse';
 import type { ToolExecutionResult } from '../tools/ToolRuntime';
@@ -52,9 +53,6 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     options?: AgentHarnessSessionOptions
   ) {
     super(providerId, config, enabledTools, options);
-    if (options?.model) {
-      this.model = options.model;
-    }
   }
 
   /** Runs one complete createAgent model/tool loop. */
@@ -63,7 +61,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
 
     const userPrompt: ConversationMessage = { role: 'user', content: message };
     this.history.push(userPrompt);
-    this.currentAbortController = new AbortController();
+    const abortController = new AbortController();
+    this.currentAbortController = abortController;
     const runtimeResults = new Map<string, ToolExecutionResult>();
     let inputMessages: BaseMessage[] = [];
     let historyLengthBeforeRun = this.history.length;
@@ -92,7 +91,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       historyLengthBeforeRun = this.history.length;
       const stream = await agent.stream(
         { messages: inputMessages },
-        { signal: this.currentAbortController.signal, streamMode: 'values' }
+        { signal: abortController.signal, streamMode: 'values' }
       );
       for await (const state of stream) {
         latestMessages = state.messages as BaseMessage[];
@@ -170,7 +169,9 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           content: this.extractTextContent(message.content),
           toolCalls: toolCalls?.length ? toolCalls : undefined,
         });
-        pendingToolCallIds = new Set(toolCalls?.map(toolCall => toolCall.id) ?? []);
+        pendingToolCallIds = new Set(
+          toolCalls?.map(toolCall => toolCall.id).filter((id): id is string => Boolean(id)) ?? []
+        );
         for (const toolCall of toolCalls ?? []) {
           toolNames.set(toolCall.id, toolCall.function.name);
         }
@@ -216,7 +217,10 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           historyMessage.role === 'tool' && historyMessage.toolCallId === message.tool_call_id
       );
       if (existingResult) {
-        this.history.push(existingResult);
+        this.history.push({
+          ...existingResult,
+          content: redactSecrets(existingResult.content),
+        });
       } else {
         this.history.push({
           role: 'tool',
@@ -241,7 +245,11 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         content: this.extractTextContent(message.content),
         toolCallId: message.tool_call_id,
         name: message.name,
-        error: message.status === 'error',
+        error:
+          message.status === 'error' ||
+          runtimeResult?.isError === true ||
+          runtimeResult?.error === true ||
+          typeof runtimeResult?.error === 'string',
       });
     }
   }

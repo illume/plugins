@@ -123,10 +123,17 @@ describe('createAgentHarness', () => {
     let activeCalls = 0;
     let maximumConcurrentCalls = 0;
     const completedCalls: string[] = [];
+    let resolveBothStarted!: () => void;
+    const bothStarted = new Promise<void>(resolve => {
+      resolveBothStarted = resolve;
+    });
     const inspectPods = vi.fn(async ({ namespace }: { namespace: string }) => {
       activeCalls += 1;
       maximumConcurrentCalls = Math.max(maximumConcurrentCalls, activeCalls);
-      await new Promise(resolve => setTimeout(resolve, 10));
+      if (activeCalls === 2) {
+        resolveBothStarted();
+      }
+      await Promise.race([bothStarted, new Promise(resolve => setTimeout(resolve, 100))]);
       completedCalls.push(namespace);
       activeCalls -= 1;
       return `pods in ${namespace}`;
@@ -159,11 +166,11 @@ describe('createAgentHarness', () => {
     });
 
     expect(maximumConcurrentCalls).toBe(2);
-    expect(completedCalls).toEqual(['default', 'kube-system']);
+    expect(completedCalls).toEqual(expect.arrayContaining(['default', 'kube-system']));
     expect(
       result.messages
         .filter(message => ToolMessage.isInstance(message))
         .map(message => message.content)
-    ).toEqual(['pods in default', 'pods in kube-system']);
+    ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
   });
 });

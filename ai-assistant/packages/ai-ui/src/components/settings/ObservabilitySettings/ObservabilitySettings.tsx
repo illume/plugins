@@ -23,7 +23,17 @@ import type {
   ObservabilityConfig,
   ObservabilityProviderConfig,
 } from '@headlamp-k8s/ai-common/tools/observability/ObservabilityTools';
-import { Alert, Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  FormControlLabel,
+  Link,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +45,10 @@ export interface ObservabilitySettingsProps {
   onChange: (config: ObservabilityConfig) => void;
   /** Optional desktop command runner used to discover managed Azure endpoints. */
   commandRunner?: CommandRunner;
+  /** Whether observability calls remain approved until this setting is disabled. */
+  autoApprovalEnabled?: boolean;
+  /** Called when persistent observability approval is enabled or disabled. */
+  onAutoApprovalChange?: (enabled: boolean) => void;
 }
 
 const PROVIDERS: Array<{
@@ -148,6 +162,8 @@ export function ObservabilitySettings({
   config = {},
   onChange,
   commandRunner,
+  autoApprovalEnabled = false,
+  onAutoApprovalChange,
 }: ObservabilitySettingsProps): React.ReactElement {
   const { t } = useTranslation();
   const [discovering, setDiscovering] = useState(false);
@@ -216,6 +232,57 @@ export function ObservabilitySettings({
           'Configure native read-only tools. They connect directly to provider HTTP APIs and require no MCP server or local executable.'
         )}
       </Typography>
+      <Box component="ol" sx={{ mt: 0, mb: 2, pl: 3 }}>
+        <Typography component="li" variant="body2">
+          {t('Choose a provider and enter its API URL. Azure CLI discovery can fill managed URLs.')}
+        </Typography>
+        <Typography component="li" variant="body2">
+          {t('Create read-only, least-privilege credentials scoped to only the required data.')}
+        </Typography>
+        <Typography component="li" variant="body2">
+          {t('Enable the matching tools, then test them from a chat before proactive diagnosis.')}
+        </Typography>
+        <Typography component="li" variant="body2">
+          {t('Review the risks below before granting persistent approval.')}
+        </Typography>
+      </Box>
+      <Alert severity="warning" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          {t(
+            'Read-only does not mean risk-free. These tools can expose sensitive logs, topology, security findings, costs, and identities to the selected model provider, and queries may incur provider cost.'
+          )}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          {t(
+            'Use trusted HTTPS endpoints and least-privilege credentials. Tool output is bounded and redacted, but provider-specific sensitive values may remain.'
+          )}{' '}
+          <Link
+            href="https://github.com/illume/plugins/blob/main/ai-assistant/docs/observability-threat-model.md"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t('Read the observability threat model')}
+          </Link>
+        </Typography>
+      </Alert>
+      {onAutoApprovalChange && (
+        <Box sx={{ mb: 3 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={autoApprovalEnabled}
+                onChange={event => onAutoApprovalChange(event.target.checked)}
+              />
+            }
+            label={t('Allow observability reads until disabled')}
+          />
+          <Typography variant="caption" color="text.secondary" display="block">
+            {t(
+              'When enabled, chats and proactive diagnosis may run enabled observability tools without asking again for each call. Disable this setting to restore per-call approval. Kubernetes Secret access and MCP tools are not included.'
+            )}
+          </Typography>
+        </Box>
+      )}
       {commandRunner && (
         <Box sx={{ mb: 3 }}>
           <Button

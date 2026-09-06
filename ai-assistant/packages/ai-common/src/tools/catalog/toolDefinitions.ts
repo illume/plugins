@@ -120,6 +120,23 @@ const AVAILABLE_TOOLS: readonly ToolInfo[] = [
   },
 ];
 
+const OBSERVABILITY_TOOL_IDS = new Set([
+  'datadog_read',
+  'splunk_read',
+  'grafana_read',
+  'prometheus_read',
+  'azure_monitor_traces_read',
+  'azure_metrics_read',
+  'azure_resource_health_read',
+  'azure_application_insights_read',
+  'azure_diagnostics_read',
+  'azure_control_plane_logs_read',
+  'azure_network_config_read',
+  'azure_cost_capacity_read',
+  'azure_security_posture_read',
+  'azure_deployment_changes_read',
+]);
+
 /**
  * Returns a copy of the built-in tool catalog.
  *
@@ -140,6 +157,16 @@ export function isBuiltInTool(toolName: string): boolean {
 }
 
 /**
+ * Checks whether a tool is one of the native read-only observability tools.
+ *
+ * @param toolName - Tool identifier to check.
+ * @returns Whether the tool is in the observability catalog.
+ */
+export function isObservabilityBuiltInTool(toolName: string): boolean {
+  return OBSERVABILITY_TOOL_IDS.has(toolName);
+}
+
+/**
  * Determines whether a built-in tool call touches sensitive resources and must
  * not be silently auto-approved.
  *
@@ -153,24 +180,7 @@ export function isBuiltInTool(toolName: string): boolean {
  * @returns Whether the call should require explicit approval.
  */
 export function isSensitiveBuiltInToolCall(toolName: string, args: unknown): boolean {
-  if (
-    [
-      'datadog_read',
-      'splunk_read',
-      'grafana_read',
-      'prometheus_read',
-      'azure_monitor_traces_read',
-      'azure_metrics_read',
-      'azure_resource_health_read',
-      'azure_application_insights_read',
-      'azure_diagnostics_read',
-      'azure_control_plane_logs_read',
-      'azure_network_config_read',
-      'azure_cost_capacity_read',
-      'azure_security_posture_read',
-      'azure_deployment_changes_read',
-    ].includes(toolName)
-  ) {
+  if (isObservabilityBuiltInTool(toolName)) {
     return true;
   }
   if (toolName !== 'kubernetes_api_request') {

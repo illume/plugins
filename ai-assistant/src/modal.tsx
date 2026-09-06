@@ -596,6 +596,7 @@ export default function AIPrompt(props: {
                   config: pluginSettings?.observability ?? {},
                   commandRunner: commandRunnerRef.current ?? undefined,
                 },
+                autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
               }
         );
         setAiManager(newManager);
@@ -618,6 +619,7 @@ export default function AIPrompt(props: {
     selectedModel,
     mcpConfigKey,
     pluginSettings?.observability,
+    pluginSettings?.observabilityAutoApproval,
     pluginSettings?.devOptions?.enableMockTools,
   ]);
 
@@ -687,6 +689,7 @@ export default function AIPrompt(props: {
                     config: pluginSettings?.observability ?? {},
                     commandRunner: commandRunnerRef.current ?? undefined,
                   },
+                  autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
                 }
           );
           // LangChain doesn't stream intermediate events, so just report start/end

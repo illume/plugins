@@ -1,6 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
 import { ObservabilitySettings } from './ObservabilitySettings';
+
+afterEach(cleanup);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -34,6 +36,45 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   expect(screen.getByLabelText('Logs Access Token')).toHaveProperty('type', 'password');
   expect(screen.getByLabelText('Resource Manager Token')).toHaveProperty('type', 'password');
   expect(screen.getByText(/require no MCP server/)).toBeTruthy();
+  expect(screen.getByText(/Read-only does not mean risk-free/)).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Read the observability threat model' })).toHaveProperty(
+    'rel',
+    'noopener noreferrer'
+  );
+});
+
+it('guides setup and explicitly toggles persistent observability approval', () => {
+  const onAutoApprovalChange = vi.fn();
+  const { rerender } = render(
+    <ObservabilitySettings
+      config={{}}
+      onChange={vi.fn()}
+      autoApprovalEnabled={false}
+      onAutoApprovalChange={onAutoApprovalChange}
+    />
+  );
+
+  expect(screen.getByText(/Create read-only, least-privilege credentials/)).toBeTruthy();
+  expect(screen.getByText(/proactive diagnosis may run enabled observability tools/)).toBeTruthy();
+  const toggle = screen.getByRole('checkbox', {
+    name: 'Allow observability reads until disabled',
+  });
+  expect(toggle).toHaveProperty('checked', false);
+
+  fireEvent.click(toggle);
+  expect(onAutoApprovalChange).toHaveBeenCalledWith(true);
+
+  rerender(
+    <ObservabilitySettings
+      config={{}}
+      onChange={vi.fn()}
+      autoApprovalEnabled
+      onAutoApprovalChange={onAutoApprovalChange}
+    />
+  );
+  expect(
+    screen.getByRole('checkbox', { name: 'Allow observability reads until disabled' })
+  ).toHaveProperty('checked', true);
 });
 
 it('discovers Azure endpoints and only applies the selected result', async () => {

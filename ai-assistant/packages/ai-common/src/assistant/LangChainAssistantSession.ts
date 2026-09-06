@@ -64,7 +64,11 @@ import {
   shouldProcessToolFollowUp,
 } from '../tools/calls/processToolCalls';
 import { getToolDescription } from '../tools/catalog/getToolDescription';
-import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../tools/catalog/toolDefinitions';
+import {
+  isBuiltInTool,
+  isObservabilityBuiltInTool,
+  isSensitiveBuiltInToolCall,
+} from '../tools/catalog/toolDefinitions';
 import type { KubernetesToolContext } from '../tools/kubernetes/context';
 import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion';
 import { LangChainToolManager } from '../tools/langchain/LangChainToolManager';
@@ -180,6 +184,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   private boundModel: InvokableChatModel | null = null;
   private providerId: string;
   private toolManager: LangChainToolRuntime;
+  private autoApproveObservabilityTools: boolean;
   private kubernetesContext: KubernetesToolContext | undefined;
   private currentAbortController: AbortController | null = null;
   private promptTemplate: ChatPromptTemplate;
@@ -233,10 +238,13 @@ export default class LangChainAssistantSession extends AssistantSession {
       mcpClient?: ToolClient;
       /** Connection settings for native read-only observability tools. */
       observabilityContext?: ObservabilityToolContext;
+      /** Skip per-call prompts for observability tools until the persisted setting is disabled. */
+      autoApproveObservabilityTools?: boolean;
     }
   ) {
     super();
     this.providerId = providerId;
+    this.autoApproveObservabilityTools = options?.autoApproveObservabilityTools === true;
     const enabledToolIds = enabledTools ?? [];
     console.debug(
       'AI Assistant: Initializing with enabled tools:',
@@ -257,6 +265,23 @@ export default class LangChainAssistantSession extends AssistantSession {
 
     // Set up event listeners for inline tool confirmations
     this.setupToolConfirmationListeners();
+  }
+
+  /**
+   * Determines whether a sensitive built-in call still needs interactive approval.
+   *
+   * Persistent approval applies only to the fixed read-only observability catalog.
+   * Other sensitive calls, including Kubernetes Secret reads, remain gated.
+   *
+   * @param toolName - Built-in tool identifier.
+   * @param args - Model-supplied tool arguments.
+   * @returns Whether the call must be sent to the approval manager.
+   */
+  private requiresBuiltInToolApproval(toolName: string, args: unknown): boolean {
+    return (
+      isSensitiveBuiltInToolCall(toolName, args) &&
+      !(this.autoApproveObservabilityTools && isObservabilityBuiltInTool(toolName))
+    );
   }
 
   /**
@@ -1243,10 +1268,10 @@ export default class LangChainAssistantSession extends AssistantSession {
       // that touch sensitive resources (e.g. Secrets), which are routed through
       // the approval gate as defense-in-depth.
       const autoApprovedBuiltIns = builtInToolsForApproval.filter(
-        tool => !isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        tool => !this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       const sensitiveBuiltIns = builtInToolsForApproval.filter(tool =>
-        isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       approvedToolIds.push(...autoApprovedBuiltIns.map(tool => tool.id));
 
@@ -1582,10 +1607,10 @@ Please analyze this data and provide a specific, detailed response that directly
       // Auto-approve built-in tools, except sensitive ones (e.g. Secret access),
       // which are routed through the approval gate as defense-in-depth.
       const autoApprovedBuiltIns = builtInTools.filter(
-        tool => !isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        tool => !this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       const sensitiveBuiltIns = builtInTools.filter(tool =>
-        isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       approvedToolIds.push(...autoApprovedBuiltIns.map(tool => tool.id));
 
@@ -1737,10 +1762,10 @@ Please analyze this data and provide a specific, detailed response that directly
       // Auto-approve built-in tools, except sensitive ones (e.g. Secret access),
       // which are routed through the approval gate as defense-in-depth.
       const autoApprovedBuiltIns = builtInTools.filter(
-        tool => !isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        tool => !this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       const sensitiveBuiltIns = builtInTools.filter(tool =>
-        isSensitiveBuiltInToolCall(tool.name, tool.arguments)
+        this.requiresBuiltInToolApproval(tool.name, tool.arguments)
       );
       approvedToolIds.push(...autoApprovedBuiltIns.map(tool => tool.id));
 

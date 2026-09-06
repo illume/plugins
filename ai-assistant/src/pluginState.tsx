@@ -267,6 +267,8 @@ export interface PluginConfig extends SavedConfigurations {
   devOptions?: DeveloperOptionsConfig;
   /** Native read-only observability API connections. */
   observability?: ObservabilityConfig;
+  /** Persistently approve native read-only observability calls until explicitly disabled. */
+  observabilityAutoApproval?: boolean;
 }
 
 export const pluginStore = new ConfigStore<PluginConfig>(PLUGIN_NAME);

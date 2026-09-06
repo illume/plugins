@@ -15,7 +15,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { getAllAvailableTools, isBuiltInTool, isSensitiveBuiltInToolCall } from './toolDefinitions';
+import {
+  getAllAvailableTools,
+  isBuiltInTool,
+  isObservabilityBuiltInTool,
+  isSensitiveBuiltInToolCall,
+} from './toolDefinitions';
 
 describe('toolDefinitions', () => {
   it('returns the built-in tools', () => {
@@ -120,6 +125,13 @@ describe('toolDefinitions', () => {
     expect(isBuiltInTool('azure_monitor_traces_read')).toBe(true);
     expect(isBuiltInTool('azure_metrics_read')).toBe(true);
     expect(isBuiltInTool('github__search')).toBe(false);
+  });
+
+  it('identifies only native observability tools for persistent approval', () => {
+    expect(isObservabilityBuiltInTool('prometheus_read')).toBe(true);
+    expect(isObservabilityBuiltInTool('azure_security_posture_read')).toBe(true);
+    expect(isObservabilityBuiltInTool('kubernetes_api_request')).toBe(false);
+    expect(isObservabilityBuiltInTool('github__search')).toBe(false);
   });
 
   it('flags Kubernetes Secret access as sensitive, other reads as not', () => {

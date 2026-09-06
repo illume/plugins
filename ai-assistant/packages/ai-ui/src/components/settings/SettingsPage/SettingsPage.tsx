@@ -97,6 +97,10 @@ export interface SettingsPageProps {
   observabilityConfig?: ObservabilitySettingsProps['config'];
   /** Persists native observability API settings. */
   onObservabilityConfigChange?: ObservabilitySettingsProps['onChange'];
+  /** Whether observability calls stay approved until explicitly disabled. */
+  observabilityAutoApproval?: ObservabilitySettingsProps['autoApprovalEnabled'];
+  /** Persists the observability approval preference. */
+  onObservabilityAutoApprovalChange?: ObservabilitySettingsProps['onAutoApprovalChange'];
 
   // --- MCP ---
 
@@ -212,6 +216,8 @@ export function SettingsPage({
   onToolToggle,
   observabilityConfig,
   onObservabilityConfigChange,
+  observabilityAutoApproval,
+  onObservabilityAutoApprovalChange,
   isRunningAsApp = false,
   configStore,
   checkPathExists,
@@ -496,6 +502,8 @@ export function SettingsPage({
           <ObservabilitySettings
             config={observabilityConfig}
             onChange={onObservabilityConfigChange}
+            autoApprovalEnabled={observabilityAutoApproval}
+            onAutoApprovalChange={onObservabilityAutoApprovalChange}
             commandRunner={cliDetectionEnabled ? commandRunner ?? undefined : undefined}
           />
         </>

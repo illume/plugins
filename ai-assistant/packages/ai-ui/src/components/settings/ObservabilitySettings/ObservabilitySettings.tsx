@@ -91,6 +91,12 @@ const PROVIDERS: Array<{
       { key: 'organizationId', label: 'Tenant / Organization ID' },
     ],
   },
+  {
+    id: 'azureMonitor',
+    name: 'Azure Monitor Traces',
+    defaultUrl: '',
+    fields: [{ key: 'token', label: 'Access Token', secret: true }],
+  },
 ];
 
 /**
@@ -157,11 +163,9 @@ export function ObservabilitySettings({
     key: keyof ObservabilityProviderConfig,
     value: string
   ): void => {
-    const defaultUrl = PROVIDERS.find(item => item.id === provider)?.defaultUrl;
     onChange({
       ...config,
       [provider]: {
-        ...(defaultUrl && !config[provider]?.baseUrl ? { baseUrl: defaultUrl } : {}),
         ...config[provider],
         [key]: value,
       },
@@ -182,7 +186,7 @@ export function ObservabilitySettings({
       setDiscovered(endpoints);
       if (endpoints.length === 0) {
         setDiscoveryNotice({
-          message: t('No managed Grafana or Prometheus resources were found.'),
+          message: t('No managed Grafana, Prometheus, or Log Analytics resources were found.'),
           severity: 'info',
         });
       }
@@ -243,7 +247,12 @@ export function ObservabilitySettings({
                     name: endpoint.name,
                     resourceGroup: endpoint.resourceGroup,
                     subscriptionId: endpoint.subscriptionId,
-                    provider: endpoint.provider === 'grafana' ? 'Grafana' : 'Prometheus',
+                    provider:
+                      endpoint.provider === 'grafana'
+                        ? 'Grafana'
+                        : endpoint.provider === 'prometheus'
+                        ? 'Prometheus'
+                        : 'Azure Monitor Traces',
                   })}
                 </Button>
               ))}

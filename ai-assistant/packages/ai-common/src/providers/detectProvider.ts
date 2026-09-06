@@ -568,6 +568,30 @@ function isChatDeployment(deployment: AzureOpenAIDeployment): boolean {
 }
 
 /**
+ * Obtains an Azure access token for one resource from the authenticated CLI session.
+ *
+ * @param commandRunner - Host-provided command executor.
+ * @param resource - OAuth resource/audience requested from Azure CLI.
+ * @param signal - Optional cancellation signal.
+ * @returns The access token, or `null` when authentication is unavailable.
+ */
+export async function getAzureAccessToken(
+  commandRunner: CommandRunner,
+  resource: string,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const { stdout, exitCode } = await runDetectCommand(
+    'az',
+    ['account', 'get-access-token', '--resource', resource, '--query', 'accessToken', '-o', 'tsv'],
+    commandRunner,
+    signal
+  );
+  if (exitCode !== 0) return null;
+  const token = stdout.trim();
+  return token || null;
+}
+
+/**
  * Obtains an Azure Resource Manager token from the authenticated Azure CLI session.
  *
  * @param commandRunner - Host-provided command executor.
@@ -578,24 +602,7 @@ export async function getAzureManagementToken(
   commandRunner: CommandRunner,
   signal?: AbortSignal
 ): Promise<string | null> {
-  const { stdout, exitCode } = await runDetectCommand(
-    'az',
-    [
-      'account',
-      'get-access-token',
-      '--resource',
-      'https://management.azure.com/',
-      '--query',
-      'accessToken',
-      '-o',
-      'tsv',
-    ],
-    commandRunner,
-    signal
-  );
-  if (exitCode !== 0) return null;
-  const token = stdout.trim();
-  return token || null;
+  return getAzureAccessToken(commandRunner, 'https://management.azure.com/', signal);
 }
 
 /**

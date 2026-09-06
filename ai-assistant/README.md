@@ -141,10 +141,11 @@ Once servers are configured, the assistant automatically discovers the tools the
 
 ### Read-only observability data sources
 
-The AI Assistant includes native tools for Datadog, Splunk, Grafana, and Prometheus. Configure
-them under **Observability Data Sources** and enable the corresponding tool under **AI Tools**.
-They use the browser's built-in `fetch` API and connect to provider-compatible HTTP endpoints, so
-no MCP server, executable, container, Node.js package, or Python package is required.
+The AI Assistant includes native tools for Datadog, Splunk, Grafana, Prometheus, and Azure Monitor
+traces. Configure them under **Observability Data Sources** and enable the corresponding tool under
+**AI Tools**. They use the built-in `fetch` API and connect to provider-compatible HTTP endpoints,
+so no MCP server, container, Node.js package, or Python package is required. Azure Monitor can
+optionally use the desktop app's Azure CLI integration to obtain a short-lived access token.
 
 Use dedicated least-privilege credentials. Tool results are sent to the selected model provider.
 Self-hosted APIs must be reachable from Headlamp and allow its origin through CORS. Every native
@@ -193,3 +194,15 @@ kubectl -n monitoring port-forward svc/prometheus-operated 9090:9090
 For Thanos or Mimir, replace the suggested URL and set the tenant ID sent as `X-Scope-OrgID`.
 `prometheus_read` supports instant and range PromQL queries, metric metadata, and active target
 discovery. Range queries are limited to 24 hours.
+
+#### Azure Monitor traces for AKS
+
+Enable Application Insights or OpenTelemetry trace export for the AKS workloads and send the data
+to a Log Analytics workspace. In the desktop app, use **Discover from Azure CLI** and select that
+workspace; otherwise enter
+`https://api.loganalytics.azure.com/v1/workspaces/WORKSPACE_ID` and a Logs API access token.
+
+`azure_monitor_traces_read` queries the `AppRequests`, `AppDependencies`, and `AppTraces` tables by
+default. Queries are limited to a 24-hour window and 100 rows. The desktop app obtains a short-lived
+token with `az account get-access-token`; discovery and trace queries themselves use Azure REST
+APIs. The browser app cannot run Azure CLI, so it requires a manually configured access token.

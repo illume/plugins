@@ -18,7 +18,13 @@ import { describe, expect, it } from 'vitest';
 import { getEnabledToolIds, isToolEnabled, setEnabledTools, toggleTool } from './enabledTools';
 
 const toolId = 'kubernetes_api_request';
-const observabilityToolIds = ['datadog_read', 'splunk_read', 'grafana_read', 'prometheus_read'];
+const observabilityToolIds = [
+  'datadog_read',
+  'splunk_read',
+  'grafana_read',
+  'prometheus_read',
+  'azure_monitor_traces_read',
+];
 const disabledObservabilityTools = Object.fromEntries(observabilityToolIds.map(id => [id, false]));
 
 describe('isToolEnabled', () => {

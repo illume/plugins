@@ -52,6 +52,13 @@ describe('discoverAzureObservabilityEndpoints', () => {
                 subscriptionId: 'second',
                 url: 'https://metrics.example.azure.com/',
               },
+              {
+                provider: 'azureMonitor',
+                name: 'aks-logs',
+                resourceGroup: 'operations',
+                subscriptionId: 'first',
+                url: 'https://api.loganalytics.azure.com/v1/workspaces/workspace-id',
+              },
             ],
           }),
           { status: 200 }
@@ -73,6 +80,13 @@ describe('discoverAzureObservabilityEndpoints', () => {
           resourceGroup: 'operations',
           subscriptionId: 'second',
           url: 'https://metrics.example.azure.com',
+        },
+        {
+          provider: 'azureMonitor',
+          name: 'aks-logs',
+          resourceGroup: 'operations',
+          subscriptionId: 'first',
+          url: 'https://api.loganalytics.azure.com/v1/workspaces/workspace-id',
         },
       ]);
       expect(runCommand).toHaveBeenCalledOnce();

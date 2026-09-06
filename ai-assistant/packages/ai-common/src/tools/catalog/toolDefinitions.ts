@@ -58,6 +58,12 @@ const AVAILABLE_TOOLS: readonly ToolInfo[] = [
     description: 'Query Prometheus metrics, metadata, and active targets.',
     source: 'built-in',
   },
+  {
+    id: 'azure_monitor_traces_read',
+    name: 'Azure Monitor Traces Read',
+    description: 'Query bounded AKS and application traces from Azure Monitor Logs.',
+    source: 'built-in',
+  },
 ];
 
 /**
@@ -93,7 +99,15 @@ export function isBuiltInTool(toolName: string): boolean {
  * @returns Whether the call should require explicit approval.
  */
 export function isSensitiveBuiltInToolCall(toolName: string, args: unknown): boolean {
-  if (['datadog_read', 'splunk_read', 'grafana_read', 'prometheus_read'].includes(toolName)) {
+  if (
+    [
+      'datadog_read',
+      'splunk_read',
+      'grafana_read',
+      'prometheus_read',
+      'azure_monitor_traces_read',
+    ].includes(toolName)
+  ) {
     return true;
   }
   if (toolName !== 'kubernetes_api_request') {

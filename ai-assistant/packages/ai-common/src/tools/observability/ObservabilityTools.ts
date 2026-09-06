@@ -15,6 +15,7 @@
  */
 
 import { z } from 'zod';
+import { type CommandRunner, getAzureAccessToken } from '../../providers/detectProvider';
 import type { ToolConfig, ToolHandler } from '../langchain/LangChainTool';
 import { LangChainTool } from '../langchain/LangChainTool';
 import type { ToolExecutionResult } from '../ToolRuntime';
@@ -47,6 +48,8 @@ export interface ObservabilityConfig {
   grafana?: ObservabilityProviderConfig;
   /** Prometheus-compatible connection settings. */
   prometheus?: ObservabilityProviderConfig;
+  /** Azure Monitor Logs connection settings for AKS and application traces. */
+  azureMonitor?: ObservabilityProviderConfig;
 }
 
 /** Runtime dependencies supplied to native observability tools. */
@@ -55,6 +58,8 @@ export interface ObservabilityToolContext {
   config: ObservabilityConfig;
   /** Optional request implementation, primarily for tests. */
   fetch?: typeof fetch;
+  /** Optional desktop command runner used to obtain short-lived Azure API tokens. */
+  commandRunner?: CommandRunner;
 }
 
 type Provider = keyof ObservabilityConfig;
@@ -662,6 +667,80 @@ export class PrometheusTool extends ObservabilityTool {
     }
     return toolResult(
       await requestJson(context, 'prometheus', '/api/v1/targets', undefined, { state: 'active' })
+    );
+  };
+}
+
+/**
+ * Parses an optional trace-query timestamp and applies a bounded default.
+ *
+ * @param value - Optional RFC3339 timestamp.
+ * @param fallback - Timestamp used when the value is omitted.
+ * @returns Validated timestamp in milliseconds.
+ */
+function traceTime(value: unknown, fallback: number): number {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'string') throw new Error('Trace times must be valid timestamps');
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) throw new Error('Trace times must be valid timestamps');
+  return parsed;
+}
+
+/** Read-only Azure Monitor Logs queries for AKS and application traces. */
+export class AzureMonitorTracesTool extends ObservabilityTool {
+  readonly config: ToolConfig = {
+    name: 'azure_monitor_traces_read',
+    shortDescription: 'Query AKS traces in Azure Monitor',
+    description:
+      'Run bounded, read-only KQL queries against an Azure Monitor Log Analytics workspace. Defaults to recent Application Insights request, dependency, and trace telemetry.',
+    schema: z.object({
+      query: z.string().optional(),
+      start: z.string().optional(),
+      end: z.string().optional(),
+    }),
+  };
+
+  handler: ToolHandler = async args => {
+    const context = this.getContext();
+    const configured = context.config.azureMonitor ?? {};
+    const end = traceTime(args.end, Date.now());
+    const start = traceTime(args.start, end - 60 * 60 * 1000);
+    assertMaximumRange(start, end, 'Azure Monitor');
+
+    let token = configured.token;
+    if (!token && context.commandRunner) {
+      token =
+        (await getAzureAccessToken(context.commandRunner, 'https://api.loganalytics.io')) ??
+        undefined;
+    }
+    if (!token) {
+      throw new Error('Azure Monitor requires an access token or an authenticated Azure CLI');
+    }
+    const query =
+      typeof args.query === 'string' && args.query.trim()
+        ? args.query
+        : 'union isfuzzy=true AppRequests, AppDependencies, AppTraces | top 100 by TimeGenerated desc';
+
+    return toolResult(
+      await requestJson(
+        {
+          ...context,
+          config: {
+            ...context.config,
+            azureMonitor: { ...configured, token },
+          },
+        },
+        'azureMonitor',
+        '/query',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `${query}\n| take 100`,
+            timespan: `${new Date(start).toISOString()}/${new Date(end).toISOString()}`,
+          }),
+        }
+      )
     );
   };
 }

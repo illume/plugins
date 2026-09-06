@@ -22,7 +22,7 @@ import {
 } from '../../providers/detectProvider';
 
 /** Azure observability service supported by endpoint discovery. */
-export type AzureObservabilityProvider = 'grafana' | 'prometheus';
+export type AzureObservabilityProvider = 'grafana' | 'prometheus' | 'azureMonitor';
 
 /** A managed observability endpoint discovered from an accessible Azure subscription. */
 export interface AzureObservabilityEndpoint {
@@ -54,7 +54,7 @@ interface AzureResourceGraphResponse {
 }
 
 /**
- * Discovers managed Grafana and Azure Monitor workspace endpoints through Azure APIs.
+ * Discovers managed Grafana, Prometheus, and Log Analytics endpoints through Azure APIs.
  *
  * Azure CLI is used only to obtain an ARM token. All accessible enabled subscriptions
  * are queried through Azure Resource Manager and Resource Graph. Discovery only reads
@@ -102,9 +102,9 @@ async function queryAzureObservabilityResources(
 ): Promise<AzureObservabilityEndpoint[]> {
   const query = [
     'Resources',
-    "| where type in~ ('microsoft.dashboard/grafana', 'microsoft.monitor/accounts')",
-    "| extend provider=iff(type =~ 'microsoft.dashboard/grafana', 'grafana', 'prometheus')",
-    "| extend url=iff(provider == 'grafana', tostring(properties.endpoint), tostring(properties.metrics.prometheusQueryEndpoint))",
+    "| where type in~ ('microsoft.dashboard/grafana', 'microsoft.monitor/accounts', 'microsoft.operationalinsights/workspaces')",
+    "| extend provider=case(type =~ 'microsoft.dashboard/grafana', 'grafana', type =~ 'microsoft.monitor/accounts', 'prometheus', 'azureMonitor')",
+    "| extend url=case(provider == 'grafana', tostring(properties.endpoint), provider == 'prometheus', tostring(properties.metrics.prometheusQueryEndpoint), strcat('https://api.loganalytics.azure.com/v1/workspaces/', tostring(properties.customerId)))",
     '| where isnotempty(url)',
     '| project name, resourceGroup, subscriptionId, provider, url',
     '| order by provider asc, name asc',
@@ -157,7 +157,9 @@ async function queryAzureObservabilityResources(
  */
 function parseResource(resource: AzureResourceGraphRow): AzureObservabilityEndpoint[] {
   if (
-    (resource.provider !== 'grafana' && resource.provider !== 'prometheus') ||
+    (resource.provider !== 'grafana' &&
+      resource.provider !== 'prometheus' &&
+      resource.provider !== 'azureMonitor') ||
     typeof resource.name !== 'string' ||
     typeof resource.resourceGroup !== 'string' ||
     typeof resource.subscriptionId !== 'string' ||

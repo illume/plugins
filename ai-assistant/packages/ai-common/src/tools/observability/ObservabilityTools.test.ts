@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  AzureMonitorTracesTool,
   DatadogTool,
   GrafanaTool,
   type ObservabilityConfig,
@@ -20,6 +21,9 @@ const config: ObservabilityConfig = {
     token: 'prometheus-token',
     organizationId: 'tenant-a',
   },
+  azureMonitor: {
+    baseUrl: 'https://api.loganalytics.azure.com/v1/workspaces/workspace-id',
+  },
 };
 
 function jsonFetch() {
@@ -29,6 +33,79 @@ function jsonFetch() {
 }
 
 describe('native observability tools', () => {
+  it('queries bounded Azure Monitor traces using a short-lived CLI token', async () => {
+    const fetch = jsonFetch();
+    const commandRunner = vi.fn().mockResolvedValue({ stdout: 'logs-token\n', exitCode: 0 });
+    const tool = new AzureMonitorTracesTool();
+    tool.setContext({ config, fetch, commandRunner });
+
+    await tool.handler({
+      query: 'AppRequests | where AppRoleName == "store"',
+      start: '2026-09-05T00:00:00Z',
+      end: '2026-09-05T01:00:00Z',
+    });
+
+    expect(commandRunner).toHaveBeenCalledWith(
+      'az',
+      [
+        'account',
+        'get-access-token',
+        '--resource',
+        'https://api.loganalytics.io',
+        '--query',
+        'accessToken',
+        '-o',
+        'tsv',
+      ],
+      expect.any(AbortSignal)
+    );
+    const [url, init] = fetch.mock.calls[0];
+    expect(String(url)).toBe('https://api.loganalytics.azure.com/v1/workspaces/workspace-id/query');
+    expect(new Headers(init?.headers).get('Authorization')).toBe(
+      ['Bearer', 'logs-token'].join(' ')
+    );
+    expect(JSON.parse(String(init?.body))).toEqual({
+      query: 'AppRequests | where AppRoleName == "store"\n| take 100',
+      timespan: '2026-09-05T00:00:00.000Z/2026-09-05T01:00:00.000Z',
+    });
+  });
+
+  it('rejects Azure Monitor trace ranges longer than 24 hours', async () => {
+    const fetch = jsonFetch();
+    const tool = new AzureMonitorTracesTool();
+    tool.setContext({
+      config: { ...config, azureMonitor: { ...config.azureMonitor, token: 'x' } },
+      fetch,
+    });
+
+    await expect(
+      tool.handler({
+        start: '2026-09-01T00:00:00Z',
+        end: '2026-09-03T00:00:00Z',
+      })
+    ).rejects.toThrow('at most 24 hours');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('defaults Azure Monitor traces to the latest hour of application telemetry', async () => {
+    const fetch = jsonFetch();
+    const tool = new AzureMonitorTracesTool();
+    tool.setContext({
+      config: { ...config, azureMonitor: { ...config.azureMonitor, token: 'logs-token' } },
+      fetch,
+    });
+
+    await tool.handler({});
+
+    const [, init] = fetch.mock.calls[0];
+    const body = JSON.parse(String(init?.body));
+    expect(body.query).toBe(
+      'union isfuzzy=true AppRequests, AppDependencies, AppTraces | top 100 by TimeGenerated desc\n| take 100'
+    );
+    const [start, end] = body.timespan.split('/').map(Date.parse);
+    expect(end - start).toBe(60 * 60 * 1000);
+  });
+
   it('queries Datadog logs with scoped headers and bounded results', async () => {
     const fetch = jsonFetch();
     const tool = new DatadogTool();

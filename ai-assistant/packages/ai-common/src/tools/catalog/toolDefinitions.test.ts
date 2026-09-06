@@ -51,12 +51,19 @@ describe('toolDefinitions', () => {
         description: 'Query Prometheus metrics, metadata, and active targets.',
         source: 'built-in',
       },
+      {
+        id: 'azure_monitor_traces_read',
+        name: 'Azure Monitor Traces Read',
+        description: 'Query bounded AKS and application traces from Azure Monitor Logs.',
+        source: 'built-in',
+      },
     ]);
   });
 
   it('identifies tools in the built-in registry', () => {
     expect(isBuiltInTool('kubernetes_api_request')).toBe(true);
     expect(isBuiltInTool('prometheus_read')).toBe(true);
+    expect(isBuiltInTool('azure_monitor_traces_read')).toBe(true);
     expect(isBuiltInTool('github__search')).toBe(false);
   });
 
@@ -85,6 +92,7 @@ describe('toolDefinitions', () => {
     expect(isSensitiveBuiltInToolCall('kubernetes_api_request', null)).toBe(false);
     expect(isSensitiveBuiltInToolCall('prometheus_read', { query: 'up' })).toBe(true);
     expect(isSensitiveBuiltInToolCall('grafana_read', { action: 'datasources' })).toBe(true);
+    expect(isSensitiveBuiltInToolCall('azure_monitor_traces_read', {})).toBe(true);
   });
 
   it('normalizes encoded and fragmented Kubernetes Secret URLs', () => {

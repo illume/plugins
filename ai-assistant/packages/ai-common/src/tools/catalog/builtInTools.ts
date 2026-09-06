@@ -17,6 +17,7 @@
 import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
 import type { LangChainTool } from '../langchain/LangChainTool';
 import {
+  AzureMonitorTracesTool,
   DatadogTool,
   GrafanaTool,
   PrometheusTool,
@@ -30,6 +31,7 @@ export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [
   SplunkTool,
   GrafanaTool,
   PrometheusTool,
+  AzureMonitorTracesTool,
 ];
 
 /**

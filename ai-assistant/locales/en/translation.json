@@ -444,7 +444,7 @@
   "Organization ID": "Organization ID",
   "HTTP Token": "HTTP Token",
   "Tenant / Organization ID": "Tenant / Organization ID",
-  "No managed Grafana or Prometheus resources were found.": "No managed Grafana or Prometheus resources were found.",
+  "No managed Grafana, Prometheus, or Log Analytics resources were found.": "No managed Grafana, Prometheus, or Log Analytics resources were found.",
   "Azure discovery failed.": "Azure discovery failed.",
   "Observability Data Sources": "Observability Data Sources",
   "Configure native read-only tools. They connect directly to provider HTTP APIs and require no MCP server or local executable.": "Configure native read-only tools. They connect directly to provider HTTP APIs and require no MCP server or local executable.",

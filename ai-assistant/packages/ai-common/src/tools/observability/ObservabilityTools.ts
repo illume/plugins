@@ -26,6 +26,8 @@ export interface ObservabilityProviderConfig {
   baseUrl?: string;
   /** Bearer-style access token. */
   token?: string;
+  /** Azure Resource Manager access token for browser-only Azure tools. */
+  managementToken?: string;
   /** Datadog API key. */
   apiKey?: string;
   /** Datadog application key. */
@@ -90,7 +92,7 @@ function boundArrays(value: unknown): unknown {
  * @param data - Parsed provider response.
  * @returns A successful result with bounded structured data and model-facing content.
  */
-function toolResult(data: unknown): ToolExecutionResult {
+export function toolResult(data: unknown): ToolExecutionResult {
   const boundedData = boundArrays(data);
   const serialized = JSON.stringify(boundedData);
   const truncated = serialized.length > MAX_RESPONSE_BYTES;
@@ -144,7 +146,7 @@ function capLimit(value: unknown, fallback = 100): number {
  * @returns No value when the range is valid.
  * @throws When the range is invalid or exceeds 24 hours.
  */
-function assertMaximumRange(start: number, end: number, provider: string): void {
+export function assertMaximumRange(start: number, end: number, provider: string): void {
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
     throw new Error(`${provider} time range is invalid`);
   }
@@ -678,7 +680,7 @@ export class PrometheusTool extends ObservabilityTool {
  * @param fallback - Timestamp used when the value is omitted.
  * @returns Validated timestamp in milliseconds.
  */
-function traceTime(value: unknown, fallback: number): number {
+export function traceTime(value: unknown, fallback: number): number {
   if (value === undefined) return fallback;
   if (typeof value !== 'string') throw new Error('Trace times must be valid timestamps');
   const parsed = Date.parse(value);

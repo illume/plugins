@@ -24,6 +24,15 @@ const observabilityToolIds = [
   'grafana_read',
   'prometheus_read',
   'azure_monitor_traces_read',
+  'azure_metrics_read',
+  'azure_resource_health_read',
+  'azure_application_insights_read',
+  'azure_diagnostics_read',
+  'azure_control_plane_logs_read',
+  'azure_network_config_read',
+  'azure_cost_capacity_read',
+  'azure_security_posture_read',
+  'azure_deployment_changes_read',
 ];
 const disabledObservabilityTools = Object.fromEntries(observabilityToolIds.map(id => [id, false]));
 

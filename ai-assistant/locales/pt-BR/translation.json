@@ -454,6 +454,8 @@
   "API Key": "",
   "Application Key": "",
   "Access Token": "",
+  "Logs Access Token": "",
+  "Resource Manager Token": "",
   "Username": "",
   "Password": "",
   "Service Account Token": "",

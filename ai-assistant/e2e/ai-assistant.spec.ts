@@ -19,12 +19,29 @@ test.describe.serial('AI Assistant on KWOK', () => {
       'The observability scenario requires runner-managed Grafana and Prometheus services'
     );
     const api = await startMockObservabilityApi();
+    const azureRequests: string[] = [];
     try {
+      await page.route('https://management.azure.com/**', route => {
+        azureRequests.push(route.request().url());
+        return route.fulfill({
+          status: route.request().method() === 'OPTIONS' ? 204 : 200,
+          contentType: 'application/json',
+          headers: {
+            'access-control-allow-origin': '*',
+            'access-control-allow-headers': 'authorization, content-type',
+            'access-control-allow-methods': 'GET, POST, OPTIONS',
+          },
+          body:
+            route.request().method() === 'OPTIONS'
+              ? undefined
+              : JSON.stringify({ value: [], changes: [] }),
+        });
+      });
       await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
       for (const [provider, url] of Object.entries(api.urls)) {
         const name =
           provider === 'azureMonitor'
-            ? 'Azure Monitor Traces'
+            ? 'Azure Monitor and AKS'
             : provider.charAt(0).toUpperCase() + provider.slice(1);
         await page.getByRole('textbox', { name: `${name} URL` }).fill(url);
       }
@@ -46,9 +63,13 @@ test.describe.serial('AI Assistant on KWOK', () => {
         .getByLabel('HTTP Token')
         .fill('prometheus-token');
       await page
-        .getByRole('group', { name: 'Azure Monitor Traces' })
-        .getByLabel('Access Token')
+        .getByRole('group', { name: 'Azure Monitor and AKS' })
+        .getByLabel('Logs Access Token')
         .fill('azure-monitor-token');
+      await page
+        .getByRole('group', { name: 'Azure Monitor and AKS' })
+        .getByLabel('Resource Manager Token')
+        .fill('azure-management-token');
 
       for (const toolName of [
         'Datadog Read',
@@ -80,6 +101,15 @@ test.describe.serial('AI Assistant on KWOK', () => {
           'grafana_read',
           'prometheus_read',
           'azure_monitor_traces_read',
+          'azure_metrics_read',
+          'azure_resource_health_read',
+          'azure_application_insights_read',
+          'azure_diagnostics_read',
+          'azure_control_plane_logs_read',
+          'azure_network_config_read',
+          'azure_cost_capacity_read',
+          'azure_security_posture_read',
+          'azure_deployment_changes_read',
         ]);
       await expect
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
@@ -125,6 +155,29 @@ test.describe.serial('AI Assistant on KWOK', () => {
         query: expect.stringContaining('AppRequests'),
       });
       expect(api.successfulUpstreams).toEqual(expect.arrayContaining(['grafana', 'prometheus']));
+
+      await promptInput.fill('E2E query Azure AKS troubleshooting sources');
+      await promptInput.press('Enter');
+      await page.getByRole('button', { name: 'Execute 9 Tools' }).click();
+
+      await expect.poll(() => azureRequests.length).toBeGreaterThanOrEqual(7);
+      await expect
+        .poll(
+          () =>
+            api.requests.filter(request => request.provider === 'azureMonitor').length
+        )
+        .toBeGreaterThanOrEqual(3);
+      expect(azureRequests).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('/providers/microsoft.insights/metrics'),
+          expect.stringContaining('/providers/Microsoft.ResourceHealth/availabilityStatuses/current'),
+          expect.stringContaining('/providers/microsoft.insights/diagnosticSettings'),
+          expect.stringContaining('/effectiveRouteTable'),
+          expect.stringContaining('/agentPools'),
+          expect.stringContaining('/providers/Microsoft.Security/assessments'),
+          expect.stringContaining('/providers/Microsoft.ResourceGraph/resourceChanges'),
+        ])
+      );
     } finally {
       await api.close();
     }
@@ -243,7 +296,7 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
       .toContain(
-        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read","azure_monitor_traces_read"]'
+        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read","azure_monitor_traces_read","azure_metrics_read","azure_resource_health_read","azure_application_insights_read","azure_diagnostics_read","azure_control_plane_logs_read","azure_network_config_read","azure_cost_capacity_read","azure_security_posture_read","azure_deployment_changes_read"]'
       );
     await page.reload();
     await expect(kubernetesTool).not.toBeChecked();

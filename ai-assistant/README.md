@@ -206,3 +206,31 @@ workspace; otherwise enter
 default. Queries are limited to a 24-hour window and 100 rows. The desktop app obtains a short-lived
 token with `az account get-access-token`; discovery and trace queries themselves use Azure REST
 APIs. The browser app cannot run Azure CLI, so it requires a manually configured access token.
+
+#### Azure and AKS troubleshooting
+
+The following additional tools use fixed Azure REST endpoints or bounded Azure Monitor Logs
+queries. They never create, update, or delete Azure resources:
+
+| Tool | Read-only data |
+| --- | --- |
+| `azure_metrics_read` | Azure Monitor metric values for one resource |
+| `azure_resource_health_read` | Current and historical Resource Health availability |
+| `azure_application_insights_read` | Bounded Application Insights KQL |
+| `azure_diagnostics_read` | AKS diagnostic settings and supported categories |
+| `azure_control_plane_logs_read` | `AKSControlPlane`, `AKSAudit`, and `AKSAuditAdmin` logs |
+| `azure_network_config_read` | Network profile, related NSGs/routes/load balancers/NAT/private endpoints/private DNS, and effective NIC rules |
+| `azure_cost_capacity_read` | Node pools, autoscaler settings, compute quotas, utilization, and scoped cost totals |
+| `azure_security_posture_read` | Defender for Cloud assessments and noncompliant Azure Policy states |
+| `azure_deployment_changes_read` | Azure Resource Graph change history |
+
+All result sets are bounded to 100 entries and 200,000 bytes. Time-series, log, cost, and change
+queries are limited to 24 hours. User-supplied KQL cannot use cross-cluster, cross-database,
+`externaldata`, HTTP, or `evaluate` operators. Effective route and NSG inspection use Azure's
+read-only POST actions and only poll Azure Resource Manager URLs.
+
+The desktop app uses `az` only for `account get-access-token`; every discovery and troubleshooting
+operation is an HTTP API call. Browser deployments can instead provide separate short-lived **Logs
+Access Token** and **Resource Manager Token** values. Assign only the permissions needed for the
+enabled tools, such as Reader, Monitoring Reader, Security Reader, Policy Reader, and Cost
+Management Reader.

@@ -17,6 +17,17 @@
 import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
 import type { LangChainTool } from '../langchain/LangChainTool';
 import {
+  AzureApplicationInsightsTool,
+  AzureControlPlaneLogsTool,
+  AzureCostCapacityTool,
+  AzureDeploymentChangesTool,
+  AzureDiagnosticsTool,
+  AzureMetricsTool,
+  AzureNetworkConfigTool,
+  AzureResourceHealthTool,
+  AzureSecurityPostureTool,
+} from '../observability/AzureAksTools';
+import {
   AzureMonitorTracesTool,
   DatadogTool,
   GrafanaTool,
@@ -32,6 +43,15 @@ export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [
   GrafanaTool,
   PrometheusTool,
   AzureMonitorTracesTool,
+  AzureMetricsTool,
+  AzureResourceHealthTool,
+  AzureApplicationInsightsTool,
+  AzureDiagnosticsTool,
+  AzureControlPlaneLogsTool,
+  AzureNetworkConfigTool,
+  AzureCostCapacityTool,
+  AzureSecurityPostureTool,
+  AzureDeploymentChangesTool,
 ];
 
 /**

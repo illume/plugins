@@ -38,6 +38,79 @@ export const GENERAL_FIXTURES: FixtureEntry[] = [
     ],
   },
   {
+    prompt: 'E2E query Azure AKS troubleshooting sources',
+    response: 'Querying the configured read-only Azure and AKS troubleshooting sources.',
+    toolCalls: [
+      {
+        name: 'azure_metrics_read',
+        args: {
+          resourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+          metricNames: ['node_cpu_usage_percentage'],
+        },
+      },
+      {
+        name: 'azure_resource_health_read',
+        args: {
+          resourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+          action: 'current',
+        },
+      },
+      {
+        name: 'azure_application_insights_read',
+        args: { query: 'AppExceptions | order by TimeGenerated desc' },
+      },
+      {
+        name: 'azure_diagnostics_read',
+        args: {
+          clusterResourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+          action: 'settings',
+        },
+      },
+      {
+        name: 'azure_control_plane_logs_read',
+        args: {
+          clusterResourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+          category: 'kube-apiserver',
+        },
+      },
+      {
+        name: 'azure_network_config_read',
+        args: {
+          action: 'effective_routes',
+          resourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/MC_aks-rg_demo_westeurope/providers/Microsoft.Network/networkInterfaces/node-nic',
+        },
+      },
+      {
+        name: 'azure_cost_capacity_read',
+        args: {
+          action: 'node_pools',
+          clusterResourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+        },
+      },
+      {
+        name: 'azure_security_posture_read',
+        args: {
+          action: 'defender',
+          clusterResourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+        },
+      },
+      {
+        name: 'azure_deployment_changes_read',
+        args: {
+          resourceId:
+            '/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/aks-rg/providers/Microsoft.ContainerService/managedClusters/demo',
+        },
+      },
+    ],
+  },
+  {
     prompt: 'Hello',
     response:
       "Hello! I'm the Headlamp AI assistant. I can help you explore and manage your Kubernetes cluster. What would you like to know?",

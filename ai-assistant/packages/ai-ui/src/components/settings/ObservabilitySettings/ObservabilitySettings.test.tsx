@@ -31,6 +31,8 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
     prometheus: { baseUrl: 'http://localhost:9090' },
   });
   expect(screen.getByLabelText('Service Account Token')).toHaveProperty('type', 'password');
+  expect(screen.getByLabelText('Logs Access Token')).toHaveProperty('type', 'password');
+  expect(screen.getByLabelText('Resource Manager Token')).toHaveProperty('type', 'password');
   expect(screen.getByText(/require no MCP server/)).toBeTruthy();
 });
 
@@ -79,7 +81,7 @@ it('discovers Azure endpoints and only applies the selected result', async () =>
       name: 'Use dashboards (operations, subscription) for Grafana',
     });
     const traces = screen.getByRole('button', {
-      name: 'Use aks-logs (operations, subscription) for Azure Monitor Traces',
+      name: 'Use aks-logs (operations, subscription) for Azure Monitor and AKS',
     });
     expect(onChange).not.toHaveBeenCalled();
 

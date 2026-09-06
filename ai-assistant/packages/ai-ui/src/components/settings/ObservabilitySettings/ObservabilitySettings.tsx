@@ -93,9 +93,12 @@ const PROVIDERS: Array<{
   },
   {
     id: 'azureMonitor',
-    name: 'Azure Monitor Traces',
+    name: 'Azure Monitor and AKS',
     defaultUrl: '',
-    fields: [{ key: 'token', label: 'Access Token', secret: true }],
+    fields: [
+      { key: 'token', label: 'Logs Access Token', secret: true },
+      { key: 'managementToken', label: 'Resource Manager Token', secret: true },
+    ],
   },
 ];
 
@@ -114,6 +117,10 @@ function translateFieldLabel(t: TFunction, label: string): string {
       return t('Application Key');
     case 'Access Token':
       return t('Access Token');
+    case 'Logs Access Token':
+      return t('Logs Access Token');
+    case 'Resource Manager Token':
+      return t('Resource Manager Token');
     case 'Username':
       return t('Username');
     case 'Password':
@@ -252,7 +259,7 @@ export function ObservabilitySettings({
                         ? 'Grafana'
                         : endpoint.provider === 'prometheus'
                         ? 'Prometheus'
-                        : 'Azure Monitor Traces',
+                        : 'Azure Monitor and AKS',
                   })}
                 </Button>
               ))}

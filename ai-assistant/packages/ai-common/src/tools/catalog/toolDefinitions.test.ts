@@ -57,6 +57,60 @@ describe('toolDefinitions', () => {
         description: 'Query bounded AKS and application traces from Azure Monitor Logs.',
         source: 'built-in',
       },
+      {
+        id: 'azure_metrics_read',
+        name: 'Azure Metrics Read',
+        description: 'Read bounded Azure Monitor metric values for Azure resources.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_resource_health_read',
+        name: 'Azure Resource Health Read',
+        description: 'Inspect current and historical Azure resource availability.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_application_insights_read',
+        name: 'Azure Application Insights Read',
+        description: 'Run bounded KQL over Application Insights telemetry.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_diagnostics_read',
+        name: 'Azure Diagnostics Read',
+        description: 'Inspect AKS diagnostic settings and supported categories.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_control_plane_logs_read',
+        name: 'Azure Control Plane Logs Read',
+        description: 'Query bounded AKS control-plane and audit logs.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_network_config_read',
+        name: 'Azure Network Config Read',
+        description: 'Inspect AKS network topology, effective routes, and effective NSGs.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_cost_capacity_read',
+        name: 'Azure Cost Capacity Read',
+        description: 'Inspect AKS node capacity, quotas, autoscaler state, and utilization.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_security_posture_read',
+        name: 'Azure Security Posture Read',
+        description: 'Inspect Defender recommendations and Azure Policy compliance.',
+        source: 'built-in',
+      },
+      {
+        id: 'azure_deployment_changes_read',
+        name: 'Azure Deployment Changes Read',
+        description: 'Inspect bounded Azure Resource Graph change history.',
+        source: 'built-in',
+      },
     ]);
   });
 
@@ -64,6 +118,7 @@ describe('toolDefinitions', () => {
     expect(isBuiltInTool('kubernetes_api_request')).toBe(true);
     expect(isBuiltInTool('prometheus_read')).toBe(true);
     expect(isBuiltInTool('azure_monitor_traces_read')).toBe(true);
+    expect(isBuiltInTool('azure_metrics_read')).toBe(true);
     expect(isBuiltInTool('github__search')).toBe(false);
   });
 
@@ -93,6 +148,7 @@ describe('toolDefinitions', () => {
     expect(isSensitiveBuiltInToolCall('prometheus_read', { query: 'up' })).toBe(true);
     expect(isSensitiveBuiltInToolCall('grafana_read', { action: 'datasources' })).toBe(true);
     expect(isSensitiveBuiltInToolCall('azure_monitor_traces_read', {})).toBe(true);
+    expect(isSensitiveBuiltInToolCall('azure_security_posture_read', {})).toBe(true);
   });
 
   it('normalizes encoded and fragmented Kubernetes Secret URLs', () => {

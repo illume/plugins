@@ -438,6 +438,8 @@
   "API Key": "API Key",
   "Application Key": "Application Key",
   "Access Token": "Access Token",
+  "Logs Access Token": "Logs Access Token",
+  "Resource Manager Token": "Resource Manager Token",
   "Username": "Username",
   "Password": "Password",
   "Service Account Token": "Service Account Token",

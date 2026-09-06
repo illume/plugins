@@ -262,7 +262,23 @@ export class AgentToolAdapter {
     // Once the first deferred result requests a halt, sibling callbacks skip
     // waiting here and settle their own execution promises for the leader.
     if (siblings.length > 0) {
-      await Promise.allSettled(siblings);
+      const drain = Promise.allSettled(siblings);
+      const signal = this.options.signal;
+      if (!signal) {
+        await drain;
+        return;
+      }
+      if (signal.aborted) return;
+      let onAbort!: () => void;
+      const aborted = new Promise<void>(resolve => {
+        onAbort = resolve;
+        signal.addEventListener('abort', onAbort, { once: true });
+      });
+      try {
+        await Promise.race([drain, aborted]);
+      } finally {
+        signal.removeEventListener('abort', onAbort);
+      }
     }
   }
 

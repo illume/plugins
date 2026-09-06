@@ -208,4 +208,50 @@ describe('createAgentHarness', () => {
         .map(message => message.content)
     ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
   }, 2000);
+
+  it('handles high fan-out parallel calls with staggered completion', async () => {
+    const namespaces = Array.from({ length: 8 }, (_, index) => `namespace-${index}`);
+    let activeCalls = 0;
+    let maximumConcurrentCalls = 0;
+    const completedCalls: string[] = [];
+    const inspectPods = vi.fn(async ({ namespace }: { namespace: string }) => {
+      activeCalls += 1;
+      maximumConcurrentCalls = Math.max(maximumConcurrentCalls, activeCalls);
+      await new Promise(resolve => setTimeout(resolve, (8 - Number(namespace.at(-1))) * 3));
+      completedCalls.push(namespace);
+      activeCalls -= 1;
+      return `pods in ${namespace}`;
+    });
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        namespaces.map((namespace, index) => ({
+          id: `call-${index}`,
+          name: 'inspect_pods',
+          args: { namespace },
+        })),
+        [],
+      ],
+    });
+    const agent = await createAgentHarness({
+      model,
+      toolRuntime: {
+        waitForMCPToolsInitialization: async () => undefined,
+        getLangChainTools: () => [
+          tool(inspectPods, {
+            name: 'inspect_pods',
+            description: 'Inspect Kubernetes pods',
+            schema: z.object({ namespace: z.string() }),
+          }),
+        ],
+      },
+    });
+
+    const result = await agent.invoke({
+      messages: [{ role: 'user', content: 'Compare all namespaces' }],
+    });
+
+    expect(maximumConcurrentCalls).toBe(8);
+    expect(completedCalls).toHaveLength(8);
+    expect(result.messages.filter(message => ToolMessage.isInstance(message))).toHaveLength(8);
+  });
 });

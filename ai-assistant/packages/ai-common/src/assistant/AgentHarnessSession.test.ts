@@ -261,6 +261,64 @@ describe('AgentHarnessSession', () => {
     );
   });
 
+  it('releases a strict-false run when a parallel sibling stalls and the run is aborted', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['metrics__query'],
+    });
+    let started = 0;
+    let releaseStarted!: () => void;
+    const bothStarted = new Promise<void>(resolve => {
+      releaseStarted = resolve;
+    });
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => {
+        started += 1;
+        if (started === 2) releaseStarted();
+        if (toolCallId === 'strict-false-call') {
+          return {
+            content: '{"value":3}',
+            shouldAddToHistory: true,
+            shouldProcessFollowUp: false,
+          };
+        }
+        await bothStarted;
+        await new Promise(() => undefined);
+        return {
+          content: '{"value":4}',
+          shouldAddToHistory: true,
+          shouldProcessFollowUp: true,
+        };
+      }
+    );
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            { id: 'strict-false-call', name: 'metrics__query', args: { query: 'up' } },
+            { id: 'stalled-call', name: 'metrics__query', args: { query: 'down' } },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+
+    const run = session.userSend('Query metrics');
+    await vi.waitFor(() => expect(started).toBe(2));
+    session.abort();
+    await run;
+  }, 2000);
+
   it('marks denied tool results as errors', async () => {
     const invoked = vi.fn(async () => 'must not execute');
     const externalTool = tool(invoked, {

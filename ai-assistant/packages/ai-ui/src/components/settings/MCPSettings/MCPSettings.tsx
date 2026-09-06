@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPServer, MCPSettings as MCPConfig } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import {
@@ -81,12 +82,7 @@ function isMCPConfig(value: unknown): value is MCPConfig {
       return false;
     }
     if (transport !== 'stdio') {
-      try {
-        const url = new URL(typeof server.url === 'string' ? server.url : '');
-        if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
-      } catch {
-        return false;
-      }
+      if (!isSafeRemoteMcpUrl(server.url)) return false;
     }
     if (server.headers !== undefined && !isValidHttpHeaders(server.headers)) return false;
     const normalizedName = server.name.trim().toLowerCase();

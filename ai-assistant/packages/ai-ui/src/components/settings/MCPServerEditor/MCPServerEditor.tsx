@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import {
@@ -171,10 +172,7 @@ export default function MCPServerEditor({
       return t('Command is required');
     }
     if (transport !== 'stdio') {
-      try {
-        const endpoint = new URL(url);
-        if (!['http:', 'https:'].includes(endpoint.protocol)) throw new Error();
-      } catch {
+      if (!isSafeRemoteMcpUrl(url)) {
         return t('A valid HTTP server URL is required');
       }
       const parsedHeaders = parseHeaders();

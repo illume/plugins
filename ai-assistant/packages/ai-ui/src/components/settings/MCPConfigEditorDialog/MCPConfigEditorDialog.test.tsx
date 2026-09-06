@@ -180,6 +180,34 @@ it.each([
         {
           name: 's',
           transport: 'http',
+          url: 'http://remote.example/mcp',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          url: Object.assign(new URL('https://example.com/mcp'), { username: 'user' }).toString(),
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
           command: '',
           args: [],
           url: 'https://',

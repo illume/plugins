@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPServer, MCPSettings } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import Editor from '@monaco-editor/react';
@@ -92,12 +93,7 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
     }
     let remoteUrlIsValid = true;
     if (transport !== 'stdio') {
-      try {
-        const url = new URL(typeof server.url === 'string' ? server.url : '');
-        remoteUrlIsValid = url.protocol === 'http:' || url.protocol === 'https:';
-      } catch {
-        remoteUrlIsValid = false;
-      }
+      remoteUrlIsValid = isSafeRemoteMcpUrl(server.url);
     }
     if (!remoteUrlIsValid) {
       return {

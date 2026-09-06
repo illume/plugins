@@ -212,17 +212,17 @@ APIs. The browser app cannot run Azure CLI, so it requires a manually configured
 The following additional tools use fixed Azure REST endpoints or bounded Azure Monitor Logs
 queries. They never create, update, or delete Azure resources:
 
-| Tool | Read-only data |
-| --- | --- |
-| `azure_metrics_read` | Azure Monitor metric values for one resource |
-| `azure_resource_health_read` | Current and historical Resource Health availability |
-| `azure_application_insights_read` | Bounded Application Insights KQL |
-| `azure_diagnostics_read` | AKS diagnostic settings and supported categories |
-| `azure_control_plane_logs_read` | `AKSControlPlane`, `AKSAudit`, and `AKSAuditAdmin` logs |
-| `azure_network_config_read` | Network profile, related NSGs/routes/load balancers/NAT/private endpoints/private DNS, and effective NIC rules |
-| `azure_cost_capacity_read` | Node pools, autoscaler settings, compute quotas, utilization, and node resource-group infrastructure costs |
-| `azure_security_posture_read` | Defender for Cloud assessments and noncompliant Azure Policy states |
-| `azure_deployment_changes_read` | Azure Resource Graph change history |
+| Tool                              | Read-only data                                                                                                 |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `azure_metrics_read`              | Azure Monitor metric values for one resource                                                                   |
+| `azure_resource_health_read`      | Current and historical Resource Health availability                                                            |
+| `azure_application_insights_read` | Bounded Application Insights KQL                                                                               |
+| `azure_diagnostics_read`          | AKS diagnostic settings and supported categories                                                               |
+| `azure_control_plane_logs_read`   | `AKSControlPlane`, `AKSAudit`, and `AKSAuditAdmin` logs                                                        |
+| `azure_network_config_read`       | Network profile, related NSGs/routes/load balancers/NAT/private endpoints/private DNS, and effective NIC rules |
+| `azure_cost_capacity_read`        | Node pools, autoscaler settings, compute quotas, utilization, and node resource-group infrastructure costs     |
+| `azure_security_posture_read`     | Defender for Cloud assessments and noncompliant Azure Policy states                                            |
+| `azure_deployment_changes_read`   | Azure Resource Graph change history                                                                            |
 
 All result sets are bounded to 100 entries and 200,000 bytes. Time-series, log, cost, and change
 queries are limited to 24 hours. User-supplied KQL cannot use cross-cluster, cross-database,
@@ -237,3 +237,99 @@ operation is an HTTP API call. Browser deployments can instead provide separate 
 Access Token** and **Resource Manager Token** values. Assign only the permissions needed for the
 enabled tools, such as Reader, Monitoring Reader, Security Reader, Policy Reader, and Cost
 Management Reader.
+
+#### Manual integration testing
+
+Use a non-production Headlamp profile and dedicated test credentials. Enable only the tool being
+tested, leave per-call approval enabled, and begin with a narrow query. Local services must be
+reachable from the Headlamp process; browser deployments also require CORS headers.
+
+##### Splunk in Docker
+
+Start a single-node Splunk Enterprise instance (review the image license before accepting it):
+
+```sh
+export SPLUNK_PASSWORD='choose-a-local-test-password'
+docker run --rm --name ai-splunk \
+  -p 8000:8000 -p 8089:8089 \
+  -e SPLUNK_START_ARGS=--accept-license \
+  -e SPLUNK_PASSWORD \
+  splunk/splunk:latest
+```
+
+Wait for `https://localhost:8000` to become ready, sign in as `admin`, and create an authentication
+token for a role restricted to searching the test indexes. Configure **Splunk URL** as
+`https://localhost:8089` and use the token, or the local admin credentials only for disposable
+testing. Splunk's development certificate must be trusted by the Headlamp runtime. For browser
+Headlamp, configure Splunk's allowed origins or use a trusted loopback reverse proxy that adds CORS
+headers without logging credentials. Verify with a bounded query such as
+`search index=_internal | head 5`, then remove the container with `docker stop ai-splunk`.
+
+##### Prometheus and Grafana in Docker
+
+Create a minimal Prometheus configuration and start both services:
+
+```sh
+mkdir -p /tmp/ai-observability
+cat >/tmp/ai-observability/prometheus.yml <<'EOF'
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+EOF
+docker run --rm -d --name ai-prometheus -p 9090:9090 \
+  -v /tmp/ai-observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+  prom/prometheus:latest
+docker run --rm -d --name ai-grafana -p 3000:3000 \
+  -e GF_SECURITY_ADMIN_PASSWORD='choose-a-local-test-password' \
+  grafana/grafana:latest
+```
+
+Configure Prometheus as `http://localhost:9090` with no token and test `up`. For Grafana, open
+`http://localhost:3000`, sign in as `admin`, create a service account with the Viewer role, create a
+token, and configure that URL and token in Headlamp. Create a test dashboard, then ask the assistant
+to search for it. Stop both containers when finished:
+
+```sh
+docker stop ai-prometheus ai-grafana
+```
+
+##### Azure CLI
+
+Use the desktop app so the plugin can invoke `az`, and select a non-production subscription:
+
+```sh
+az login
+az account set --subscription SUBSCRIPTION_ID
+az account show --query '{name:name,id:id,user:user.name}' -o table
+```
+
+Open **Observability Data Sources**, choose **Discover from Azure CLI**, and explicitly select the
+Grafana, Prometheus, or Log Analytics result to apply. Enable one Azure read tool at a time and test
+it against a known resource ID. The signed-in identity should have only the corresponding read role,
+such as Reader, Monitoring Reader, Security Reader, Policy Reader, or Cost Management Reader. Use
+`az logout` after testing on a shared workstation.
+
+##### Datadog developer trial
+
+Create a Datadog trial organization, select its site (for example `datadoghq.com` or
+`datadoghq.eu`), and create a dedicated API key plus an application key restricted to the read
+permissions needed for logs, metrics, and monitors. Keep keys in environment variables while
+checking access:
+
+```sh
+export DD_SITE='datadoghq.com'
+export DD_API_KEY='your-test-api-key'
+export DD_APP_KEY='your-test-application-key'
+curl --fail --silent --show-error \
+  -H "DD-API-KEY: $DD_API_KEY" \
+  -H "DD-APPLICATION-KEY: $DD_APP_KEY" \
+  "https://api.$DD_SITE/api/v1/validate"
+```
+
+Datadog SaaS does not permit direct requests from arbitrary browser origins. Configure Headlamp with
+the HTTPS URL of a trusted CORS-enabled proxy pinned to `https://api.$DD_SITE`; do not put keys in
+the URL or proxy logs. Run a narrow metric query such as `avg:system.load.1{*}` or list monitors,
+confirm the result, then revoke both trial keys after testing.

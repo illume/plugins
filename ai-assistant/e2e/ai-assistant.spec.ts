@@ -91,26 +91,28 @@ test.describe.serial('AI Assistant on KWOK', () => {
         .poll(() =>
           page.evaluate(() => {
             const configs = JSON.parse(localStorage.getItem('pluginConfigs') ?? '{}');
-            return configs['@headlamp-k8s/ai-assistant']?.enabledTools;
+            return configs['@headlamp-k8s/ai-assistant']?.enabledTools?.sort();
           })
         )
-        .toEqual([
-          'kubernetes_api_request',
-          'datadog_read',
-          'splunk_read',
-          'grafana_read',
-          'prometheus_read',
-          'azure_monitor_traces_read',
-          'azure_metrics_read',
-          'azure_resource_health_read',
-          'azure_application_insights_read',
-          'azure_diagnostics_read',
-          'azure_control_plane_logs_read',
-          'azure_network_config_read',
-          'azure_cost_capacity_read',
-          'azure_security_posture_read',
-          'azure_deployment_changes_read',
-        ]);
+        .toEqual(
+          [
+            'kubernetes_api_request',
+            'datadog_read',
+            'splunk_read',
+            'grafana_read',
+            'prometheus_read',
+            'azure_monitor_traces_read',
+            'azure_metrics_read',
+            'azure_resource_health_read',
+            'azure_application_insights_read',
+            'azure_diagnostics_read',
+            'azure_control_plane_logs_read',
+            'azure_network_config_read',
+            'azure_cost_capacity_read',
+            'azure_security_posture_read',
+            'azure_deployment_changes_read',
+          ].sort()
+        );
       await expect
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
         .toContain(api.urls.prometheus);
@@ -162,15 +164,14 @@ test.describe.serial('AI Assistant on KWOK', () => {
 
       await expect.poll(() => azureRequests.length).toBeGreaterThanOrEqual(7);
       await expect
-        .poll(
-          () =>
-            api.requests.filter(request => request.provider === 'azureMonitor').length
-        )
+        .poll(() => api.requests.filter(request => request.provider === 'azureMonitor').length)
         .toBeGreaterThanOrEqual(3);
       expect(azureRequests).toEqual(
         expect.arrayContaining([
           expect.stringContaining('/providers/microsoft.insights/metrics'),
-          expect.stringContaining('/providers/Microsoft.ResourceHealth/availabilityStatuses/current'),
+          expect.stringContaining(
+            '/providers/Microsoft.ResourceHealth/availabilityStatuses/current'
+          ),
           expect.stringContaining('/providers/microsoft.insights/diagnosticSettings'),
           expect.stringContaining('/effectiveRouteTable'),
           expect.stringContaining('/agentPools'),

@@ -388,7 +388,7 @@ describe('native observability tools', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('bounds arrays without silently dropping named response fields', async () => {
+  it('bounds arrays and map-shaped provider result sets', async () => {
     const fetch: typeof globalThis.fetch = async () =>
       new Response(
         JSON.stringify({
@@ -405,7 +405,7 @@ describe('native observability tools', () => {
 
     const data = result.data as { data: number[]; metadata: Record<string, unknown> };
     expect(data.data).toHaveLength(100);
-    expect(Object.keys(data.metadata)).toHaveLength(150);
+    expect(Object.keys(data.metadata)).toHaveLength(100);
   });
 
   it('rejects oversized responses while reading the response stream', async () => {

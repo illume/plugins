@@ -166,6 +166,27 @@ it('saves a remote HTTP server without a local command', () => {
   });
 });
 
+const userinfoUrl = new URL('https://example.com/mcp');
+userinfoUrl.username = 'user';
+
+it.each(['http://remote.example/mcp', userinfoUrl.toString()])(
+  'rejects unsafe remote server URL %s',
+  url => {
+    const onSave = vi.fn();
+    render(<MCPServerEditor {...addServerArgs} onSave={onSave} />);
+    changeField('Server Name', 'remote');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Transport' }), {
+      target: { value: 'http' },
+    });
+    changeField('Server URL', url);
+
+    save();
+
+    expect(screen.getByRole('alert').textContent).toBe('A valid HTTP server URL is required');
+    expect(onSave).not.toHaveBeenCalled();
+  }
+);
+
 it('ignores hidden environment rows after switching from stdio to HTTP', () => {
   const onSave = vi.fn();
   render(<MCPServerEditor {...addServerArgs} onSave={onSave} />);

@@ -642,7 +642,15 @@ export async function listAzureSubscriptionsWithApi(
       const page: AzureManagementListResponse<AzureSubscription> = await response.json();
       if (!Array.isArray(page.value)) return null;
       subscriptions.push(...page.value);
-      url = page.nextLink;
+      if (page.nextLink) {
+        const nextUrl = new URL(page.nextLink);
+        if (nextUrl.origin !== 'https://management.azure.com') {
+          throw new Error('Azure subscription pagination returned an untrusted URL');
+        }
+        url = nextUrl.toString();
+      } else {
+        url = undefined;
+      }
     }
     return subscriptions;
   } catch (e) {

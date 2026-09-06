@@ -623,13 +623,7 @@ export default function AIPrompt(props: {
     return () => {
       isCurrent = false;
     };
-  }, [
-    enabledTools,
-    activeConfig,
-    selectedModel,
-    mcpConfigKey,
-    createSessionOptions,
-  ]);
+  }, [enabledTools, activeConfig, selectedModel, mcpConfigKey, createSessionOptions]);
 
   // ─── Wire up SkillManager for prompt skill injection ──────────────────────
   // Creates a SkillManager with browser-compatible adapters (fetch + JSZip).

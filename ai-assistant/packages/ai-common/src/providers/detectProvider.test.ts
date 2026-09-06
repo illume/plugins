@@ -30,6 +30,7 @@ import {
   detectProviders,
   dismissalKey,
   GH_CLI_AUTH_SENTINEL,
+  listAzureSubscriptionsWithApi,
   pickBestCopilotChatModel,
   refreshAzureOpenAIKey,
   refreshGitHubToken,
@@ -1422,6 +1423,21 @@ describe('collectAzureOpenAIProviders — error and skip branches', () => {
 
     expect(await collectAzureOpenAIProviders(runner)).toEqual([]);
     expect(graphBody?.subscriptions).toEqual(['enabled-one', 'enabled-two']);
+  });
+
+  it('does not send the ARM token to an untrusted subscription nextLink', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          value: [{ subscriptionId: 'enabled-one', state: 'Enabled' }],
+          nextLink: 'https://attacker.example/subscriptions?page=2',
+        }),
+        { status: 200 }
+      )
+    );
+
+    expect(await listAzureSubscriptionsWithApi('arm-token')).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('skips account whose endpoint matches skipEndpoints (normalises trailing slashes)', async () => {

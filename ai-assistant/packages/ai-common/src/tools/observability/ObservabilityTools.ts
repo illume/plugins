@@ -74,20 +74,20 @@ export function isLoopbackHostname(hostname: string): boolean {
 }
 
 /**
- * Recursively caps arrays in provider responses to the documented item limit.
+ * Recursively caps arrays and map-shaped collections in provider responses.
  *
  * @param value - Parsed provider response value.
- * @returns A response copy whose arrays contain no more than 100 entries.
+ * @returns A response copy whose collections contain no more than 100 entries.
  */
-function boundArrays(value: unknown, depth = 0): unknown {
+function boundCollections(value: unknown, depth = 0): unknown {
   if (depth >= 100) return '[nested value omitted]';
-  if (Array.isArray(value)) return value.slice(0, 100).map(item => boundArrays(item, depth + 1));
+  if (Array.isArray(value))
+    return value.slice(0, 100).map(item => boundCollections(item, depth + 1));
   if (value && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
-        key,
-        boundArrays(item, depth + 1),
-      ])
+      Object.entries(value as Record<string, unknown>)
+        .slice(0, 100)
+        .map(([key, item]) => [key, boundCollections(item, depth + 1)])
     );
   }
   return value;
@@ -100,7 +100,7 @@ function boundArrays(value: unknown, depth = 0): unknown {
  * @returns A successful result with bounded structured data and model-facing content.
  */
 export function toolResult(data: unknown): ToolExecutionResult {
-  const boundedData = boundArrays(data);
+  const boundedData = boundCollections(data);
   const serialized = JSON.stringify(boundedData);
   const truncated = serialized.length > MAX_RESPONSE_BYTES;
   const content = truncated

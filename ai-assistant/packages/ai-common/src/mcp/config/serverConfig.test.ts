@@ -19,6 +19,7 @@ import type { MCPSettings } from '../types';
 import {
   expandEnvAndResolvePaths,
   hasClusterDependentServers,
+  isSafeRemoteMcpUrl,
   makeMcpServers,
   settingsChanges,
   summarizeMcpToolStateChanges,
@@ -226,6 +227,30 @@ describe('makeMcpServers', () => {
       reconnect: { enabled: true, maxAttempts: 3, delayMs: 2000 },
     });
   });
+
+  const userinfoUrl = new URL('https://example.com/mcp');
+  userinfoUrl.username = 'user';
+
+  it.each(['http://remote.example/mcp', userinfoUrl.toString(), 'https://'])(
+    'rejects unsafe remote MCP URL %s at runtime',
+    url => {
+      const result = makeMcpServers(
+        {
+          enabled: true,
+          servers: [{ name: 'remote', transport: 'http', url, enabled: true }],
+        },
+        []
+      );
+
+      expect(result).toEqual({});
+      expect(isSafeRemoteMcpUrl(url)).toBe(false);
+    }
+  );
+
+  it.each(['http://localhost:3000/mcp', 'http://127.0.0.1:3000/mcp', 'http://[::1]:3000/mcp'])(
+    'allows loopback HTTP MCP URL %s',
+    url => expect(isSafeRemoteMcpUrl(url)).toBe(true)
+  );
 });
 
 describe('hasClusterDependentServers', () => {

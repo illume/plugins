@@ -59,6 +59,30 @@ type RemoteMCPServerConfig = {
 type MCPServerConfig = StdioMCPServerConfig | RemoteMCPServerConfig;
 
 /**
+ * Validates a remote MCP URL at both configuration and runtime boundaries.
+ *
+ * Credentials must be supplied in headers. Plain HTTP is limited to loopback
+ * endpoints for local development.
+ *
+ * @param value - Candidate remote MCP endpoint.
+ * @returns Whether the endpoint is safe to pass to the HTTP transport.
+ */
+export function isSafeRemoteMcpUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) return false;
+    if (url.protocol === 'https:') return true;
+    return (
+      url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Expand environment variables and resolve paths in arguments.
  *
  * @param args - The array of argument strings to expand.
@@ -170,7 +194,7 @@ export function makeMcpServers(
 
     const transport = server.transport ?? 'stdio';
     if (transport !== 'stdio') {
-      if (!server.url) continue;
+      if (!isSafeRemoteMcpUrl(server.url)) continue;
       mcpServers[server.name] = {
         transport,
         url: server.url,

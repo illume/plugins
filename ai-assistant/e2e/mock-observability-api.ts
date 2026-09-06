@@ -3,7 +3,7 @@ import { E2E_GRAFANA_ORIGIN, E2E_PROMETHEUS_ORIGIN } from './observability-servi
 
 const OBSERVABILITY_UPSTREAMS = {
   grafana: {
-    '/api/search?type=dash-db&query=&limit=100': `${E2E_GRAFANA_ORIGIN}/api/search?type=dash-db&query=&limit=100`,
+    '/api/search?type=dash-db&query=Kubernetes&limit=100': `${E2E_GRAFANA_ORIGIN}/api/search?type=dash-db&query=Kubernetes&limit=100`,
   },
   prometheus: {
     '/api/v1/query?query=up': `${E2E_PROMETHEUS_ORIGIN}/api/v1/query?query=up`,
@@ -32,6 +32,8 @@ export interface MockObservabilityApi {
   urls: Record<ObservabilityApiRequest['provider'], string>;
   /** Non-preflight requests received by the fixture. */
   requests: ObservabilityApiRequest[];
+  /** Providers whose requests received successful responses from real upstream services. */
+  successfulUpstreams: Array<'grafana' | 'prometheus'>;
   /** Stops the fixture server. */
   close: () => Promise<void>;
 }
@@ -43,6 +45,7 @@ export interface MockObservabilityApi {
  */
 export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
+  const successfulUpstreams: MockObservabilityApi['successfulUpstreams'] = [];
   const servers = (['datadog', 'splunk', 'grafana', 'prometheus'] as const).map(provider =>
     createServer(async (request, response) => {
       if (request.method === 'OPTIONS') {
@@ -81,6 +84,7 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
       if (upstreamUrl) {
         try {
           const upstreamResponse = await fetch(upstreamUrl);
+          if (upstreamResponse.ok) successfulUpstreams.push(provider);
           response.writeHead(upstreamResponse.status, {
             'content-type': upstreamResponse.headers.get('content-type') ?? 'application/json',
             'access-control-allow-origin': '*',
@@ -134,6 +138,7 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
   return {
     urls,
     requests,
+    successfulUpstreams,
     close: () =>
       Promise.all(
         servers.map(

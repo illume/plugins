@@ -262,7 +262,7 @@ export function ObservabilitySettings({
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={2}>
                 <TextField
                   label={t('{{provider}} URL', { provider: provider.name })}
-                  value={providerConfig.baseUrl ?? provider.defaultUrl}
+                  value={providerConfig.baseUrl ?? ''}
                   onChange={event => update(provider.id, 'baseUrl', event.target.value)}
                   placeholder={provider.defaultUrl || `https://${provider.id}.example.com`}
                   fullWidth

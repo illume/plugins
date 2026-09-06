@@ -93,6 +93,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
       });
       expect(api.requests.find(request => request.provider === 'grafana')).toMatchObject({
         method: 'GET',
+        path: '/api/search?type=dash-db&query=Kubernetes&limit=100',
         authorization: ['Bearer', 'grafana-token'].join(' '),
       });
       expect(api.requests.find(request => request.provider === 'prometheus')).toMatchObject({
@@ -100,6 +101,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
         path: '/api/v1/query?query=up',
         authorization: ['Bearer', 'prometheus-token'].join(' '),
       });
+      expect(api.successfulUpstreams).toEqual(expect.arrayContaining(['grafana', 'prometheus']));
     } finally {
       await api.close();
     }

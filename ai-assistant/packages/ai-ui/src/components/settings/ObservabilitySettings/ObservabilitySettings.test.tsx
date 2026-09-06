@@ -16,6 +16,8 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   const onChange = vi.fn();
   render(<ObservabilitySettings config={{}} onChange={onChange} />);
 
+  expect(screen.getByRole('textbox', { name: 'Prometheus URL' })).toHaveProperty('value', '');
+  expect(screen.getByPlaceholderText('http://localhost:9090')).toBeTruthy();
   fireEvent.change(screen.getByRole('textbox', { name: 'Grafana URL' }), {
     target: { value: 'https://grafana.example' },
   });

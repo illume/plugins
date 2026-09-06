@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import { describe, expect, it } from 'vitest';
-import { query } from './chat.js';
+import { createManager, query } from './chat.js';
 
 describe('chat', () => {
   it('exports a query function', () => {
     expect(typeof query).toBe('function');
+  });
+
+  it('uses the agent harness by default and supports the legacy session explicitly', async () => {
+    const harness = await createManager('mock-testing-model', {}, { mockTools: true });
+    const legacy = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        mockTools: true,
+        legacySession: true,
+      }
+    );
+
+    expect(harness).toBeInstanceOf(AgentHarnessSession);
+    expect(legacy).toBeInstanceOf(LangChainAssistantSession);
   });
 });

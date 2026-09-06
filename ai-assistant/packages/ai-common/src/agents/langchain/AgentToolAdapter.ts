@@ -96,7 +96,7 @@ export class AgentToolAdapter {
           normalizedArgs,
           toolCallId,
           config?.signal ?? this.options.signal,
-          false
+          true
         );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
@@ -150,7 +150,7 @@ export class AgentToolAdapter {
           normalizedArgs,
           toolCallId,
           config?.signal ?? this.options.signal,
-          true
+          false
         );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
@@ -217,14 +217,13 @@ export class AgentToolAdapter {
     args: Record<string, unknown>,
     toolCallId: string,
     signal?: AbortSignal,
-    allowAutoApproval = true
+    isRuntimeTool = false
   ): Promise<boolean> {
     if (signal?.aborted) return false;
     if (
-      (allowAutoApproval &&
-        ((isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) ||
-          (toolName === 'kubectl' && args.method === 'GET'))) ||
-      (!allowAutoApproval && isBuiltInTool(toolName) && args.method === 'GET')
+      (!isRuntimeTool && isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) ||
+      (!isRuntimeTool && toolName === 'kubectl' && args.method === 'GET') ||
+      (isRuntimeTool && isBuiltInTool(toolName) && args.method === 'GET')
     ) {
       return true;
     }

@@ -191,4 +191,74 @@ describe('discoverAzureObservabilityEndpoints', () => {
       fetchSpy.mockRestore();
     }
   });
+
+  it('paginates through multiple Resource Graph pages using skipTokens', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value: [{ subscriptionId: 'sub1', state: 'Enabled' }] }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                provider: 'grafana',
+                name: 'dash1',
+                resourceGroup: 'rg1',
+                subscriptionId: 'sub1',
+                url: 'https://dash1.example.azure.com/',
+              },
+            ],
+            $skipToken: 'page2-token',
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                provider: 'prometheus',
+                name: 'prom1',
+                resourceGroup: 'rg1',
+                subscriptionId: 'sub1',
+                url: 'https://prom1.example.azure.com/',
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      );
+
+    try {
+      const endpoints = await discoverAzureObservabilityEndpoints(runCommand);
+      expect(endpoints).toEqual([
+        {
+          provider: 'grafana',
+          name: 'dash1',
+          resourceGroup: 'rg1',
+          subscriptionId: 'sub1',
+          url: 'https://dash1.example.azure.com',
+        },
+        {
+          provider: 'prometheus',
+          name: 'prom1',
+          resourceGroup: 'rg1',
+          subscriptionId: 'sub1',
+          url: 'https://prom1.example.azure.com',
+        },
+      ]);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+      const secondPageBody = JSON.parse(String(fetchSpy.mock.calls[2][1]?.body));
+      expect(secondPageBody.options.$skipToken).toBe('page2-token');
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });

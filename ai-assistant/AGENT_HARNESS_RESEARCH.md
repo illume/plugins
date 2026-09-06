@@ -233,6 +233,24 @@ for verification and an operational UI.
 
 ## Modern agent harness feature list
 
+### Implemented in this prototype
+
+The current `createAgent` base now provides:
+
+- LangGraph-backed model/tool orchestration using the existing AI Assistant and MCP tool inventory.
+- Synchronized asynchronous MCP discovery before agent construction.
+- Explicit prompt guidance to issue independent tool calls in parallel, with regression coverage proving concurrent execution and complete results.
+- Configurable model-call and tool-call budgets with deterministic error exits.
+- Custom or default system-prompt support.
+- An adapter for the existing session contract, including streaming, cancellation, approval handling, confirmation suspension, history alignment, redaction, and runtime error metadata.
+- Deterministic mock-tool support that preserves arbitrary model arguments for offline tests.
+
+These capabilities are covered by focused deterministic tests for normal model-tool-model loops,
+parallel calls, discovery failures, call limits, aborts, approval cancellation, confirmation
+resumption, retries, history behavior, and error propagation. Checkpointed graph resume,
+graph-native human approval, richer streaming, retry/fallback middleware, and production
+evaluation/observability remain rollout gaps.
+
 | Area | Modern harness capability | First-party implementation option |
 | --- | --- | --- |
 | Core loop | Tool-capable model loop, parallel calls, deterministic stop conditions, recursion/call budgets | `createAgent`, `modelCallLimitMiddleware`, `toolCallLimitMiddleware` |

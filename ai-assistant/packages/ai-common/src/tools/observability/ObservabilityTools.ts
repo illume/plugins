@@ -136,6 +136,8 @@ function safeBaseUrl(value: string | undefined, provider: Provider): URL {
     throw new Error(`${provider} URL must not contain credentials`);
   }
   url.pathname = url.pathname.replace(/\/+$/, '');
+  url.search = '';
+  url.hash = '';
   return url;
 }
 

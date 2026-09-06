@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { Meta, StoryObj } from '@storybook/react';
 import type { DesktopApi } from '../../../types/electron';
 import {
@@ -58,7 +59,7 @@ function isFixtureMCPConfig(value: unknown): value is MCPConfig {
     return (
       (transport === 'http' || transport === 'sse') &&
       'url' in server &&
-      typeof server.url === 'string'
+      isSafeRemoteMcpUrl(server.url)
     );
   });
 }

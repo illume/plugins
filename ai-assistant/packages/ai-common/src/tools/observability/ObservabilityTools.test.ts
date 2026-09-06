@@ -374,6 +374,19 @@ describe('native observability tools', () => {
     );
   });
 
+  it('removes query parameters and fragments from provider base URLs', async () => {
+    const fetch = jsonFetch();
+    const tool = new GrafanaTool();
+    tool.setContext({
+      config: { grafana: { baseUrl: 'https://grafana.example/root?token=value#fragment' } },
+      fetch,
+    });
+
+    await tool.handler({ action: 'datasources' });
+
+    expect(String(fetch.mock.calls[0][0])).toBe('https://grafana.example/root/api/datasources');
+  });
+
   it('does not send provider credentials over remote plain HTTP', async () => {
     const fetch = jsonFetch();
     const tool = new GrafanaTool();

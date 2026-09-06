@@ -66,7 +66,7 @@ export interface ObservabilityToolContext {
 
 type Provider = keyof ObservabilityConfig;
 /** Maximum provider response size read into memory or returned as model-facing content. */
-const MAX_RESPONSE_BYTES = 200_000;
+export const MAX_RESPONSE_BYTES = 200_000;
 
 /**
  * Recursively caps arrays and records in provider responses to the documented item limit.
@@ -78,9 +78,10 @@ function boundArrays(value: unknown): unknown {
   if (Array.isArray(value)) return value.slice(0, 100).map(boundArrays);
   if (value && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .slice(0, 100)
-        .map(([key, item]) => [key, boundArrays(item)])
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+        key,
+        boundArrays(item),
+      ])
     );
   }
   return value;
@@ -121,6 +122,16 @@ function safeBaseUrl(value: string | undefined, provider: Provider): URL {
   const url = new URL(value);
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error(`${provider} URL must use HTTP or HTTPS`);
+  }
+  if (
+    provider === 'azureMonitor' &&
+    url.protocol === 'http:' &&
+    !['localhost', '127.0.0.1'].includes(url.hostname)
+  ) {
+    throw new Error('Azure Monitor URL must use HTTPS, or HTTP for localhost');
+  }
+  if (url.username || url.password) {
+    throw new Error(`${provider} URL must not contain credentials`);
   }
   url.pathname = url.pathname.replace(/\/+$/, '');
   return url;
@@ -287,11 +298,23 @@ async function requestJson(
   const response = await (context.fetch ?? fetch)(url, {
     ...init,
     headers,
+    redirect: 'error',
     signal: AbortSignal.timeout(30_000),
   });
+  return readBoundedJson(response, provider);
+}
+
+/**
+ * Reads and parses a JSON response without buffering more than the shared response limit.
+ *
+ * @param response - Provider response.
+ * @param label - Provider name used in errors.
+ * @returns Parsed JSON.
+ */
+export async function readBoundedJson(response: Response, label: string): Promise<unknown> {
   const declaredLength = Number(response.headers.get('content-length'));
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
-    throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
+    throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
   }
   let text: string;
   if (response.body) {
@@ -308,7 +331,7 @@ async function requestJson(
         } catch {
           // Preserve the response-size error if stream cancellation fails.
         }
-        throw new Error(`${provider} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
+        throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
       }
       chunks.push(value);
     }
@@ -323,12 +346,12 @@ async function requestJson(
     text = await response.text();
   }
   if (!response.ok) {
-    throw new Error(`${provider} request failed (${response.status}): ${text.slice(0, 500)}`);
+    throw new Error(`${label} request failed (${response.status}): ${text.slice(0, 500)}`);
   }
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`${provider} returned an invalid JSON response`);
+    throw new Error(`${label} returned an invalid JSON response`);
   }
 }
 
@@ -366,11 +389,15 @@ export class DatadogTool extends ObservabilityTool {
     description:
       'Read Datadog logs, metrics, or monitors. Results are capped at 100 items and this tool never changes Datadog data.',
     schema: z.object({
-      action: z.enum(['logs', 'metrics', 'monitors']),
-      query: z.string().optional(),
-      from: z.string().optional(),
-      to: z.string().optional(),
-      limit: z.number().int().positive().max(100).optional(),
+      action: z.enum(['logs', 'metrics', 'monitors']).describe('Read-only Datadog operation'),
+      query: z
+        .string()
+        .max(4096)
+        .optional()
+        .describe('Log search query or required metric query; logs default to *'),
+      from: z.string().optional().describe('ISO timestamp, or Unix seconds for metrics'),
+      to: z.string().optional().describe('ISO timestamp, or Unix seconds for metrics'),
+      limit: z.number().int().min(1).max(100).optional().describe('Maximum returned items'),
     }),
   };
 
@@ -514,11 +541,21 @@ export class SplunkTool extends ObservabilityTool {
     description:
       'Run bounded read-only SPL searches or list indexes and saved searches. Searches must begin with the explicit search command and may use only allowlisted read-only commands.',
     schema: z.object({
-      action: z.enum(['search', 'indexes', 'saved_searches']),
-      query: z.string().optional(),
-      earliestTime: z.string().optional(),
-      latestTime: z.string().optional(),
-      limit: z.number().int().positive().max(100).optional(),
+      action: z
+        .enum(['search', 'indexes', 'saved_searches'])
+        .describe('Read-only Splunk operation'),
+      query: z
+        .string()
+        .min(1)
+        .max(10_000)
+        .optional()
+        .describe('Required for search: read-only SPL beginning with search'),
+      earliestTime: z
+        .string()
+        .optional()
+        .describe('Search start timestamp or relative value such as -1h; defaults to -24h'),
+      latestTime: z.string().optional().describe('Search end timestamp or now; defaults to now'),
+      limit: z.number().int().min(1).max(100).optional().describe('Maximum returned items'),
     }),
   };
 
@@ -565,10 +602,17 @@ export class GrafanaTool extends ObservabilityTool {
     description:
       'Search or retrieve Grafana dashboards and list datasources using read-only Grafana HTTP API endpoints.',
     schema: z.object({
-      action: z.enum(['search_dashboards', 'get_dashboard', 'datasources']),
-      query: z.string().optional(),
-      uid: z.string().optional(),
-      limit: z.number().int().positive().max(100).optional(),
+      action: z
+        .enum(['search_dashboards', 'get_dashboard', 'datasources'])
+        .describe('Read-only Grafana operation'),
+      query: z.string().max(4096).optional().describe('Dashboard title search text'),
+      uid: z
+        .string()
+        .min(1)
+        .max(256)
+        .optional()
+        .describe('Required for get_dashboard: exact dashboard UID'),
+      limit: z.number().int().min(1).max(100).optional().describe('Maximum dashboards'),
     }),
   };
 
@@ -617,13 +661,25 @@ export class PrometheusTool extends ObservabilityTool {
     description:
       'Run instant or maximum 24-hour range PromQL queries, inspect metric metadata, or list active scrape targets.',
     schema: z.object({
-      action: z.enum(['query', 'query_range', 'metadata', 'targets']),
-      query: z.string().optional(),
-      time: z.string().optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
-      step: z.string().optional(),
-      metric: z.string().optional(),
+      action: z
+        .enum(['query', 'query_range', 'metadata', 'targets'])
+        .describe('Read-only Prometheus operation'),
+      query: z
+        .string()
+        .min(1)
+        .max(10_000)
+        .optional()
+        .describe('Required for query and query_range: PromQL expression'),
+      time: z.string().optional().describe('Instant query RFC3339 or Unix-seconds time'),
+      start: z.string().optional().describe('Required range-query start'),
+      end: z.string().optional().describe('Required range-query end, at most 24 hours later'),
+      step: z
+        .string()
+        .min(1)
+        .max(64)
+        .optional()
+        .describe('Required range-query duration or seconds between points'),
+      metric: z.string().max(1024).optional().describe('Optional exact metadata metric name'),
     }),
   };
 
@@ -688,6 +744,87 @@ export function traceTime(value: unknown, fallback: number): number {
   return parsed;
 }
 
+/**
+ * Restricts model-supplied KQL to the configured workspace.
+ *
+ * @param value - Candidate KQL query.
+ * @returns The trimmed query.
+ * @throws When the query is empty, oversized, or can access external data sources.
+ */
+export function validateWorkspaceKql(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim() || value.length > 10_000) {
+    throw new Error('A KQL query of at most 10000 characters is required');
+  }
+  let code = '';
+  let quote = '';
+  let lineComment = false;
+  let blockComment = false;
+  for (let index = 0; index < value.length; index++) {
+    const character = value[index];
+    const next = value[index + 1];
+    if (lineComment) {
+      if (character === '\n') {
+        lineComment = false;
+        code += character;
+      } else {
+        code += ' ';
+      }
+      continue;
+    }
+    if (blockComment) {
+      if (character === '*' && next === '/') {
+        blockComment = false;
+        code += '  ';
+        index++;
+      } else {
+        code += character === '\n' ? '\n' : ' ';
+      }
+      continue;
+    }
+    if (quote) {
+      if (character === '\\') {
+        code += ' ';
+        if (next !== undefined) {
+          code += ' ';
+          index++;
+        }
+      } else if (character === quote && next === quote) {
+        code += '  ';
+        index++;
+      } else if (character === quote) {
+        quote = '';
+        code += ' ';
+      } else {
+        code += character === '\n' ? '\n' : ' ';
+      }
+      continue;
+    }
+    if (character === '/' && next === '/') {
+      lineComment = true;
+      code += '  ';
+      index++;
+    } else if (character === '/' && next === '*') {
+      blockComment = true;
+      code += '  ';
+      index++;
+    } else if (character === "'" || character === '"') {
+      quote = character;
+      code += ' ';
+    } else {
+      code += character;
+    }
+  }
+  if (
+    /^\s*\./.test(code) ||
+    /\b(?:externaldata|evaluate|cluster|database|workspace|app|resource|adx|arg|http_request|http_request_post)\s*(?:\(|\[|\b)/i.test(
+      code
+    )
+  ) {
+    throw new Error('KQL query contains a disallowed cross-service or external-data operator');
+  }
+  return value.trim();
+}
+
 /** Read-only Azure Monitor Logs queries for AKS and application traces. */
 export class AzureMonitorTracesTool extends ObservabilityTool {
   readonly config: ToolConfig = {
@@ -696,23 +833,33 @@ export class AzureMonitorTracesTool extends ObservabilityTool {
     description:
       'Run read-only KQL queries against an Azure Monitor Log Analytics workspace. A final take 100 limit is always applied. Defaults to recent Application Insights request, dependency, and trace telemetry.',
     schema: z.object({
-      query: z.string().optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
+      query: z
+        .string()
+        .max(10_000)
+        .optional()
+        .describe('Workspace-local KQL; defaults to recent requests, dependencies, and traces'),
+      start: z.string().optional().describe('Timestamp; defaults to one hour before end'),
+      end: z.string().optional().describe('Timestamp; defaults to now, maximum range 24 hours'),
     }),
   };
 
   handler: ToolHandler = async args => {
     const context = this.getContext();
     const configured = context.config.azureMonitor ?? {};
+    const baseUrl = safeBaseUrl(configured.baseUrl, 'azureMonitor');
     const end = traceTime(args.end, Date.now());
     const start = traceTime(args.start, end - 60 * 60 * 1000);
     assertMaximumRange(start, end, 'Azure Monitor');
 
     let token = configured.token;
     if (!token && context.commandRunner) {
+      if (baseUrl.hostname !== 'api.loganalytics.azure.com') {
+        throw new Error(
+          'Azure CLI tokens can only be sent to api.loganalytics.azure.com; configure a token explicitly for a trusted proxy'
+        );
+      }
       token =
-        (await getAzureAccessToken(context.commandRunner, 'https://api.loganalytics.io')) ??
+        (await getAzureAccessToken(context.commandRunner, 'https://api.loganalytics.azure.com')) ??
         undefined;
     }
     if (!token) {
@@ -720,7 +867,7 @@ export class AzureMonitorTracesTool extends ObservabilityTool {
     }
     const query =
       typeof args.query === 'string' && args.query.trim()
-        ? args.query
+        ? validateWorkspaceKql(args.query)
         : 'union isfuzzy=true AppRequests, AppDependencies, AppTraces | top 100 by TimeGenerated desc';
 
     return toolResult(

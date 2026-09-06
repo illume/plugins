@@ -82,12 +82,32 @@ describe('safe Azure and AKS troubleshooting tools', () => {
       query: 'AppExceptions | order by TimeGenerated desc\n| take 100',
       timespan: '2026-09-05T00:00:00.000Z/2026-09-05T01:00:00.000Z',
     });
+
     await expect(
       tool.handler({ query: 'externaldata(value:string)["https://example.invalid/data"]' })
     ).rejects.toThrow('disallowed');
     await expect(
       tool.handler({ query: 'externaldata/* bypass */(value:string)["https://example.invalid"]' })
     ).rejects.toThrow('disallowed');
+  });
+
+  it('does not send an automatically acquired Logs token to a custom endpoint', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => response());
+    const commandRunner = vi.fn().mockResolvedValue({ stdout: 'logs-token', exitCode: 0 });
+    const tool = new AzureApplicationInsightsTool();
+    tool.setContext({
+      config: {
+        azureMonitor: { baseUrl: 'https://proxy.example/v1/workspaces/workspace-id' },
+      },
+      fetch,
+      commandRunner,
+    });
+
+    await expect(tool.handler({ query: 'AppRequests' })).rejects.toThrow(
+      'Azure CLI tokens can only be sent to api.loganalytics.azure.com'
+    );
+    expect(commandRunner).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('lists AKS diagnostic settings without accepting arbitrary paths', async () => {
@@ -226,7 +246,7 @@ describe('safe Azure and AKS troubleshooting tools', () => {
       'https://management.azure.com/providers/Microsoft.ResourceGraph/resourceChanges?api-version=2024-04-01'
     );
     expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({
-      resourceId: clusterId,
+      resourceIds: [clusterId],
       interval: {
         start: '2026-09-05T00:00:00.000Z',
         end: '2026-09-05T01:00:00.000Z',

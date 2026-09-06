@@ -6,6 +6,7 @@ import {
   type ObservabilityConfig,
   PrometheusTool,
   SplunkTool,
+  validateWorkspaceKql,
 } from './ObservabilityTools';
 
 const config: ObservabilityConfig = {
@@ -51,7 +52,7 @@ describe('native observability tools', () => {
         'account',
         'get-access-token',
         '--resource',
-        'https://api.loganalytics.io',
+        'https://api.loganalytics.azure.com',
         '--query',
         'accessToken',
         '-o',
@@ -85,6 +86,46 @@ describe('native observability tools', () => {
       })
     ).rejects.toThrow('at most 24 hours');
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('keeps CLI tokens on the official Logs API and rejects external KQL', async () => {
+    const fetch = jsonFetch();
+    const commandRunner = vi.fn().mockResolvedValue({ stdout: 'logs-token\n', exitCode: 0 });
+    const proxyTool = new AzureMonitorTracesTool();
+    proxyTool.setContext({
+      config: {
+        ...config,
+        azureMonitor: { baseUrl: 'https://proxy.example/v1/workspaces/workspace-id' },
+      },
+      fetch,
+      commandRunner,
+    });
+
+    await expect(proxyTool.handler({})).rejects.toThrow(
+      'Azure CLI tokens can only be sent to api.loganalytics.azure.com'
+    );
+    expect(commandRunner).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+
+    const queryTool = new AzureMonitorTracesTool();
+    queryTool.setContext({
+      config: { ...config, azureMonitor: { ...config.azureMonitor, token: 'logs-token' } },
+      fetch,
+    });
+    await expect(
+      queryTool.handler({ query: 'externaldata(value:string)["https://example.invalid"]' })
+    ).rejects.toThrow('disallowed');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('parses KQL comments and strings before blocking cross-resource access', () => {
+    expect(() =>
+      validateWorkspaceKql('let url = "https://example.invalid"; externaldata(value:string)[url]')
+    ).toThrow('disallowed');
+    expect(() => validateWorkspaceKql('workspace("other") | take 1')).toThrow('disallowed');
+    expect(validateWorkspaceKql('print value = "externaldata( is text"')).toBe(
+      'print value = "externaldata( is text"'
+    );
   });
 
   it('defaults Azure Monitor traces to the latest hour of application telemetry', async () => {
@@ -304,7 +345,19 @@ describe('native observability tools', () => {
     );
   });
 
-  it('bounds array and map-shaped structured data', async () => {
+  it('rejects credentials embedded in provider URLs', async () => {
+    const tool = new GrafanaTool();
+    tool.setContext({
+      config: { grafana: { baseUrl: 'https://user@grafana.example' } },
+      fetch: jsonFetch(),
+    });
+
+    await expect(tool.handler({ action: 'datasources' })).rejects.toThrow(
+      'URL must not contain credentials'
+    );
+  });
+
+  it('bounds arrays without silently dropping named response fields', async () => {
     const fetch: typeof globalThis.fetch = async () =>
       new Response(
         JSON.stringify({
@@ -321,7 +374,7 @@ describe('native observability tools', () => {
 
     const data = result.data as { data: number[]; metadata: Record<string, unknown> };
     expect(data.data).toHaveLength(100);
-    expect(Object.keys(data.metadata)).toHaveLength(100);
+    expect(Object.keys(data.metadata)).toHaveLength(150);
   });
 
   it('rejects oversized responses while reading the response stream', async () => {

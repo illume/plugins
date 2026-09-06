@@ -21,14 +21,15 @@ import {
   assertMaximumRange,
   ObservabilityTool,
   type ObservabilityToolContext,
+  readBoundedJson,
   toolResult,
   traceTime,
+  validateWorkspaceKql,
 } from './ObservabilityTools';
 
 const ARM_AUDIENCE = 'https://management.azure.com/';
-const LOGS_AUDIENCE = 'https://api.loganalytics.io';
+const LOGS_AUDIENCE = 'https://api.loganalytics.azure.com';
 const ARM_ORIGIN = 'https://management.azure.com';
-const MAX_RESPONSE_BYTES = 200_000;
 const HOUR = 60 * 60 * 1000;
 
 type AzureAudience = 'arm' | 'logs';
@@ -74,22 +75,6 @@ function escapeKql(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-function validateKql(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim() || value.length > 10_000) {
-    throw new Error('A KQL query of at most 10000 characters is required');
-  }
-  const withoutComments = value.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  if (
-    /^\s*\./.test(withoutComments) ||
-    /\b(?:externaldata|evaluate|cluster|database|http_request|http_request_post)\s*(?:\(|\[|\b)/i.test(
-      withoutComments
-    )
-  ) {
-    throw new Error('KQL query contains a disallowed cross-service or external-data operator');
-  }
-  return value.trim();
-}
-
 async function azureToken(
   context: ObservabilityToolContext,
   audience: AzureAudience
@@ -111,49 +96,13 @@ async function azureToken(
   );
 }
 
-async function readBoundedJson(response: Response, label: string): Promise<unknown> {
-  const declaredLength = Number(response.headers.get('content-length'));
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
-    throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
-  }
-  const reader = response.body?.getReader();
-  let text = '';
-  if (reader) {
-    const decoder = new TextDecoder();
-    let received = 0;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      received += value.byteLength;
-      if (received > MAX_RESPONSE_BYTES) {
-        await reader.cancel().catch(() => undefined);
-        throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
-      }
-      text += decoder.decode(value, { stream: true });
-    }
-    text += decoder.decode();
-  } else {
-    text = await response.text();
-    if (new TextEncoder().encode(text).byteLength > MAX_RESPONSE_BYTES) {
-      throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
-    }
-  }
-  if (!response.ok) {
-    throw new Error(`${label} request failed (${response.status}): ${text.slice(0, 500)}`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`${label} returned an invalid JSON response`);
-  }
-}
-
 async function azureRequest(
   context: ObservabilityToolContext,
   audience: AzureAudience,
   url: URL,
   init?: RequestInit
 ): Promise<unknown> {
+  const deadline = Date.now() + 30_000;
   const method = init?.method?.toUpperCase() ?? 'GET';
   if (method !== 'GET' && method !== 'POST') {
     throw new Error('Azure troubleshooting tools only allow GET and read-only POST operations');
@@ -166,13 +115,23 @@ async function azureRequest(
   ) {
     throw new Error('Azure request URL is not allowed');
   }
+  if (
+    audience === 'logs' &&
+    !context.config.azureMonitor?.token &&
+    url.hostname !== 'api.loganalytics.azure.com'
+  ) {
+    throw new Error(
+      'Azure CLI tokens can only be sent to api.loganalytics.azure.com; configure a token explicitly for a trusted proxy'
+    );
+  }
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
   headers.set('Authorization', ['Bearer', await azureToken(context, audience)].join(' '));
   let response = await (context.fetch ?? fetch)(url, {
     ...init,
     headers,
-    signal: AbortSignal.timeout(30_000),
+    redirect: 'error',
+    signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
   });
   for (let poll = 0; response.status === 202 && poll < 6; poll++) {
     const location =
@@ -180,11 +139,16 @@ async function azureRequest(
     if (!location) break;
     const pollUrl = new URL(location);
     if (pollUrl.origin !== ARM_ORIGIN) throw new Error('Azure polling URL is not allowed');
-    const retryAfter = Math.min(Number(response.headers.get('retry-after')) || 1, 5);
-    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+    const retryAfterValue = Number(response.headers.get('retry-after'));
+    const retryAfter = Math.min(Number.isFinite(retryAfterValue) ? retryAfterValue : 1, 5);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    const wait = Math.min(retryAfter * 1000, remaining);
+    if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
     response = await (context.fetch ?? fetch)(pollUrl, {
       headers,
-      signal: AbortSignal.timeout(30_000),
+      redirect: 'error',
+      signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     });
   }
   if (response.status === 202) throw new Error('Azure read operation did not complete in time');
@@ -258,18 +222,23 @@ export class AzureMetricsTool extends ObservabilityTool {
     shortDescription: 'Read Azure resource metrics',
     description: 'List bounded Azure Monitor metric values for one resource over at most 24 hours.',
     schema: z.object({
-      resourceId: z.string(),
+      resourceId: z.string().describe('Full Azure resource ID'),
       metricNames: z
         .array(z.string().regex(/^[A-Za-z0-9_.-]+$/))
         .min(1)
-        .max(20),
-      aggregation: z.enum(['Average', 'Minimum', 'Maximum', 'Total', 'Count']).optional(),
+        .max(20)
+        .describe('One to twenty Azure Monitor metric names'),
+      aggregation: z
+        .enum(['Average', 'Minimum', 'Maximum', 'Total', 'Count'])
+        .optional()
+        .describe('Aggregation; defaults to Average'),
       interval: z
         .string()
         .regex(/^PT(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+S)?$/)
+        .describe('ISO 8601 time grain such as PT5M')
         .optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
+      start: z.string().optional().describe('Timestamp; defaults to one hour before end'),
+      end: z.string().optional().describe('Timestamp; defaults to now, maximum range 24 hours'),
     }),
   };
 
@@ -296,8 +265,11 @@ export class AzureResourceHealthTool extends ObservabilityTool {
     shortDescription: 'Read Azure resource health',
     description: 'Retrieve current or historical Azure Resource Health availability statuses.',
     schema: z.object({
-      resourceId: z.string(),
-      action: z.enum(['current', 'history']).optional(),
+      resourceId: z.string().describe('Full Azure resource ID'),
+      action: z
+        .enum(['current', 'history'])
+        .optional()
+        .describe('Current status or availability history; defaults to current'),
     }),
   };
 
@@ -320,15 +292,17 @@ export class AzureApplicationInsightsTool extends ObservabilityTool {
     description:
       'Run bounded KQL against Application Insights request, dependency, exception, and trace telemetry.',
     schema: z.object({
-      query: z.string(),
-      start: z.string().optional(),
-      end: z.string().optional(),
+      query: z.string().min(1).max(10_000).describe('Workspace-local Application Insights KQL'),
+      start: z.string().optional().describe('Timestamp; defaults to one hour before end'),
+      end: z.string().optional().describe('Timestamp; defaults to now, maximum range 24 hours'),
     }),
   };
 
   handler: ToolHandler = async args => {
     const [start, end] = queryWindow(args, 'Application Insights');
-    return toolResult(await logsQuery(this.getContext(), validateKql(args.query), start, end));
+    return toolResult(
+      await logsQuery(this.getContext(), validateWorkspaceKql(args.query), start, end)
+    );
   };
 }
 
@@ -340,8 +314,11 @@ export class AzureDiagnosticsTool extends ObservabilityTool {
     description:
       'List configured AKS diagnostic settings or the supported diagnostic categories without changing them.',
     schema: z.object({
-      clusterResourceId: z.string(),
-      action: z.enum(['settings', 'categories']).optional(),
+      clusterResourceId: z.string().describe('Full AKS managed cluster resource ID'),
+      action: z
+        .enum(['settings', 'categories'])
+        .optional()
+        .describe('Configured settings or supported categories; defaults to settings'),
     }),
   };
 
@@ -376,10 +353,12 @@ export class AzureControlPlaneLogsTool extends ObservabilityTool {
     shortDescription: 'Query AKS control-plane logs',
     description: 'Query a bounded AKS control-plane or audit log category over at most 24 hours.',
     schema: z.object({
-      clusterResourceId: z.string(),
-      category: z.enum([...CONTROL_PLANE_CATEGORIES, 'kube-audit', 'kube-audit-admin']),
-      start: z.string().optional(),
-      end: z.string().optional(),
+      clusterResourceId: z.string().describe('Full AKS managed cluster resource ID'),
+      category: z
+        .enum([...CONTROL_PLANE_CATEGORIES, 'kube-audit', 'kube-audit-admin'])
+        .describe('Exact AKS diagnostic log category'),
+      start: z.string().optional().describe('Timestamp; defaults to one hour before end'),
+      end: z.string().optional().describe('Timestamp; defaults to now, maximum range 24 hours'),
     }),
   };
 
@@ -425,8 +404,12 @@ export class AzureNetworkConfigTool extends ObservabilityTool {
     description:
       'Read AKS network topology or effective routes and security groups for a network interface.',
     schema: z.object({
-      action: z.enum(['topology', 'effective_routes', 'effective_nsgs']),
-      resourceId: z.string(),
+      action: z
+        .enum(['topology', 'effective_routes', 'effective_nsgs'])
+        .describe('Read-only network operation'),
+      resourceId: z
+        .string()
+        .describe('Full AKS cluster ID for topology, or network interface ID for effective data'),
     }),
   };
 
@@ -481,19 +464,23 @@ export class AzureCostCapacityTool extends ObservabilityTool {
     description:
       'Read AKS cluster and node-pool capacity, autoscaler configuration, regional compute quotas, utilization metrics, or scoped costs.',
     schema: z.object({
-      action: z.enum(['cluster', 'node_pools', 'quotas', 'utilization', 'costs']),
-      clusterResourceId: z.string(),
+      action: z
+        .enum(['cluster', 'node_pools', 'quotas', 'utilization', 'costs'])
+        .describe('Read-only capacity or cost operation'),
+      clusterResourceId: z.string().describe('Full AKS managed cluster resource ID'),
       location: z
         .string()
         .regex(/^[A-Za-z0-9-]+$/)
-        .optional(),
+        .optional()
+        .describe('Required for quotas: Azure cluster region'),
       metricNames: z
         .array(z.string().regex(/^[A-Za-z0-9_.-]+$/))
         .min(1)
         .max(20)
-        .optional(),
-      start: z.string().optional(),
-      end: z.string().optional(),
+        .optional()
+        .describe('Optional utilization metrics; defaults to node CPU and memory usage'),
+      start: z.string().optional().describe('Utilization or cost start timestamp'),
+      end: z.string().optional().describe('Utilization or cost end; maximum range 24 hours'),
     }),
   };
 
@@ -581,8 +568,8 @@ export class AzureSecurityPostureTool extends ObservabilityTool {
     description:
       'Read bounded Defender for Cloud recommendations or Azure Policy compliance records.',
     schema: z.object({
-      action: z.enum(['defender', 'policy']),
-      clusterResourceId: z.string(),
+      action: z.enum(['defender', 'policy']).describe('Security posture source'),
+      clusterResourceId: z.string().describe('Full AKS managed cluster resource ID'),
     }),
   };
 
@@ -622,9 +609,9 @@ export class AzureDeploymentChangesTool extends ObservabilityTool {
     description:
       'Read bounded Azure Resource Graph change history for one resource over at most 24 hours.',
     schema: z.object({
-      resourceId: z.string(),
-      start: z.string().optional(),
-      end: z.string().optional(),
+      resourceId: z.string().describe('Full Azure resource ID'),
+      start: z.string().optional().describe('Timestamp; defaults to one hour before end'),
+      end: z.string().optional().describe('Timestamp; defaults to now, maximum range 24 hours'),
     }),
   };
 
@@ -639,7 +626,7 @@ export class AzureDeploymentChangesTool extends ObservabilityTool {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resourceId,
+          resourceIds: [resourceId],
           interval: {
             start: new Date(start).toISOString(),
             end: new Date(end).toISOString(),

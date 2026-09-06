@@ -255,8 +255,8 @@ describe('discoverAzureObservabilityEndpoints', () => {
       ]);
       expect(fetchSpy).toHaveBeenCalledTimes(3);
 
-      const secondPageBody = JSON.parse(String(fetchSpy.mock.calls[2][1]?.body));
-      expect(secondPageBody.options.$skipToken).toBe('page2-token');
+      const secondResourceGraphRequestBody = JSON.parse(String(fetchSpy.mock.calls[2][1]?.body));
+      expect(secondResourceGraphRequestBody.options.$skipToken).toBe('page2-token');
     } finally {
       fetchSpy.mockRestore();
     }

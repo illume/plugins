@@ -105,7 +105,13 @@ describe('discoverAzureObservabilityEndpoints', () => {
         expect.any(AbortSignal)
       );
       const graphRequest = fetchSpy.mock.calls[1];
-      expect(JSON.parse(String(graphRequest[1]?.body)).subscriptions).toEqual(['first', 'second']);
+      expect(JSON.parse(String(graphRequest[1]?.body))).toMatchObject({
+        subscriptions: ['first', 'second'],
+        options: {
+          resultFormat: 'objectArray',
+          $top: 100,
+        },
+      });
     } finally {
       fetchSpy.mockRestore();
     }

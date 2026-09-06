@@ -22,6 +22,8 @@ import {
 } from '../../providers/detectProvider';
 import { readBoundedJson } from './ObservabilityTools';
 
+const RESOURCE_GRAPH_PAGE_SIZE = 100;
+
 /** Azure observability service supported by endpoint discovery. */
 export type AzureObservabilityProvider = 'grafana' | 'prometheus' | 'azureMonitor';
 
@@ -132,7 +134,7 @@ async function queryAzureObservabilityResources(
           query,
           options: {
             resultFormat: 'objectArray',
-            $top: 1000,
+            $top: RESOURCE_GRAPH_PAGE_SIZE,
             ...(skipToken ? { $skipToken: skipToken } : {}),
           },
         }),

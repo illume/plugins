@@ -204,9 +204,8 @@ export class AgentToolAdapter {
     this.approvalTail = new Promise<void>(resolve => {
       releaseApproval = resolve;
     });
-    await this.waitForApprovalOrAbort(predecessor, signal);
-
     try {
+      await this.waitForApprovalOrAbort(predecessor, signal);
       const approval = inlineToolApprovalManager.requestApproval(
         [call],
         this.options.approvalContext

@@ -222,9 +222,9 @@ export class AgentToolAdapter {
     if (signal?.aborted) return false;
     if (
       (allowAutoApproval &&
-        isBuiltInTool(toolName) &&
-        !isSensitiveBuiltInToolCall(toolName, args)) ||
-      (!allowAutoApproval && args.method === 'GET')
+        ((isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) ||
+          (toolName === 'kubectl' && args.method === 'GET'))) ||
+      (!allowAutoApproval && isBuiltInTool(toolName) && args.method === 'GET')
     ) {
       return true;
     }

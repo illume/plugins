@@ -220,7 +220,7 @@ queries. They never create, update, or delete Azure resources:
 | `azure_diagnostics_read` | AKS diagnostic settings and supported categories |
 | `azure_control_plane_logs_read` | `AKSControlPlane`, `AKSAudit`, and `AKSAuditAdmin` logs |
 | `azure_network_config_read` | Network profile, related NSGs/routes/load balancers/NAT/private endpoints/private DNS, and effective NIC rules |
-| `azure_cost_capacity_read` | Node pools, autoscaler settings, compute quotas, utilization, and scoped cost totals |
+| `azure_cost_capacity_read` | Node pools, autoscaler settings, compute quotas, utilization, and node resource-group infrastructure costs |
 | `azure_security_posture_read` | Defender for Cloud assessments and noncompliant Azure Policy states |
 | `azure_deployment_changes_read` | Azure Resource Graph change history |
 

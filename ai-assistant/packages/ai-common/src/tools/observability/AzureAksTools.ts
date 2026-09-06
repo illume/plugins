@@ -493,7 +493,7 @@ export class AzureCostCapacityTool extends ObservabilityTool {
     name: 'azure_cost_capacity_read',
     shortDescription: 'Inspect AKS capacity and utilization',
     description:
-      'Read AKS cluster and node-pool capacity, autoscaler configuration, regional compute quotas, utilization metrics, or scoped costs.',
+      'Read AKS cluster and node-pool capacity, autoscaler configuration, regional compute quotas, utilization metrics, or node resource-group infrastructure costs.',
     schema: z.object({
       action: z
         .enum(['cluster', 'node_pools', 'quotas', 'utilization', 'costs'])

@@ -95,7 +95,8 @@ export class AgentToolAdapter {
           source.name,
           normalizedArgs,
           toolCallId,
-          config?.signal ?? this.options.signal
+          config?.signal ?? this.options.signal,
+          false
         );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
@@ -120,7 +121,10 @@ export class AgentToolAdapter {
             result.shouldProcessFollowUp === false
           ) {
             await this.haltAfterPendingExecutions(execution);
-            throw new AgentToolExecutionHalt();
+            throw new AgentToolExecutionHalt(
+              content,
+              result.metadata?.requiresConfirmation === true
+            );
           }
           return content;
         } finally {
@@ -146,7 +150,7 @@ export class AgentToolAdapter {
           normalizedArgs,
           toolCallId,
           config?.signal ?? this.options.signal,
-          false
+          true
         );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
@@ -217,9 +221,10 @@ export class AgentToolAdapter {
   ): Promise<boolean> {
     if (signal?.aborted) return false;
     if (
-      allowAutoApproval &&
-      isBuiltInTool(toolName) &&
-      !isSensitiveBuiltInToolCall(toolName, args)
+      (allowAutoApproval &&
+        isBuiltInTool(toolName) &&
+        !isSensitiveBuiltInToolCall(toolName, args)) ||
+      (!allowAutoApproval && args.method === 'GET')
     ) {
       return true;
     }
@@ -328,7 +333,7 @@ export class AgentToolAdapter {
 
 /** Stops the graph before a deferred runtime result reaches another model turn. */
 export class AgentToolExecutionHalt extends Error {
-  constructor() {
+  constructor(readonly resultContent?: string, readonly requiresConfirmation = false) {
     super('Tool execution requested that the agent stop before follow-up.');
     this.name = 'AgentToolExecutionHalt';
   }

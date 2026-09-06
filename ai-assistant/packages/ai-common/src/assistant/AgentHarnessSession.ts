@@ -100,15 +100,42 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
 
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       this.currentAbortController = null;
+      const deferredResult = this.getDeferredResult(runtimeResults);
+      if (deferredResult) {
+        return { role: 'assistant', content: redactSecrets(deferredResult.content) };
+      }
       return this.lastAssistantMessage();
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       if (error instanceof AgentToolExecutionHalt) {
         this.currentAbortController = null;
+        if (error.resultContent && !error.requiresConfirmation) {
+          return {
+            role: 'assistant',
+            content: error.resultContent,
+          };
+        }
+        if (error.requiresConfirmation) {
+          return this.lastAssistantMessage();
+        }
+        const deferredResult = this.getDeferredResult(runtimeResults);
+        if (deferredResult) {
+          return { role: 'assistant', content: redactSecrets(deferredResult.content) };
+        }
         return this.lastAssistantMessage();
       }
+
       return this.handleUserSendError(error);
     }
+  }
+
+  private getDeferredResult(
+    runtimeResults: Map<string, ToolExecutionResult>
+  ): ToolExecutionResult | undefined {
+    return [...runtimeResults.values()].find(
+      result =>
+        result.shouldProcessFollowUp === false && result.metadata?.requiresConfirmation !== true
+    );
   }
 
   /**

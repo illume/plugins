@@ -36,7 +36,7 @@ describe('AgentHarnessSession', () => {
   it('requires approval for mutating host-provided tools', async () => {
     const invoked = vi.fn(async () => 'must not execute');
     const kubectl = tool(invoked, {
-      name: 'kubernetes_api_request',
+      name: 'kubectl',
       description: 'Run kubectl',
       schema: z.object({ method: z.string(), url: z.string() }),
     });
@@ -46,7 +46,7 @@ describe('AgentHarnessSession', () => {
           [
             {
               id: 'mutating-call',
-              name: 'kubernetes_api_request',
+              name: 'kubectl',
               args: { method: 'DELETE', url: '/x' },
             },
           ],
@@ -259,6 +259,36 @@ describe('AgentHarnessSession', () => {
     expect(session.history.map(message => message.toolCallId)).toEqual(
       expect.arrayContaining(['strict-false-call', 'sibling-call'])
     );
+  });
+
+  it('returns strict-false MCP output without a follow-up model turn', async () => {
+    const toolManager = createMockToolManager({ enabledToolNames: ['metrics__query'] });
+    vi.spyOn(toolManager, 'executeTool').mockResolvedValue({
+      content: '{"value":3}',
+      shouldAddToHistory: true,
+      shouldProcessFollowUp: false,
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'mcp-output-call', name: 'metrics__query', args: { query: 'up' } }], []],
+      }),
+      toolManager,
+    });
+
+    const response = await session.userSend('Query metrics');
+
+    expect(response.content).toBe('{"value":3}');
+    expect(session.history.find(message => message.toolCallId === 'mcp-output-call')).toBeTruthy();
   });
 
   it('releases a strict-false run when a parallel sibling stalls and the run is aborted', async () => {
@@ -510,6 +540,9 @@ describe('AgentHarnessSession', () => {
       model,
       toolManager,
     });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
     const executeTool = vi.spyOn(toolManager, 'executeTool').mockResolvedValue({
       content: '{"status":"pending_confirmation"}',
       shouldAddToHistory: false,

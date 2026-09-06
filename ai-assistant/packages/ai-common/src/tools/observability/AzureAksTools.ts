@@ -552,7 +552,9 @@ export class AzureCostCapacityTool extends ObservabilityTool {
         throw new Error('AKS node resource group is unavailable');
       }
       const url = new URL(
-        `${ARM_ORIGIN}/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-03-01`
+        `${ARM_ORIGIN}/subscriptions/${subscriptionId}/resourceGroups/${encodeURIComponent(
+          nodeResourceGroup
+        )}/providers/Microsoft.CostManagement/query?api-version=2023-03-01`
       );
       return toolResult(
         await azureRequest(context, 'arm', url, {
@@ -569,13 +571,6 @@ export class AzureCostCapacityTool extends ObservabilityTool {
               granularity: 'Daily',
               aggregation: {
                 totalCost: { name: 'PreTaxCost', function: 'Sum' },
-              },
-              filter: {
-                dimensions: {
-                  name: 'ResourceGroupName',
-                  operator: 'In',
-                  values: [nodeResourceGroup],
-                },
               },
             },
           }),

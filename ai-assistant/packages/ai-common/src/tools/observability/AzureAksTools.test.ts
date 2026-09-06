@@ -303,12 +303,11 @@ describe('safe Azure and AKS troubleshooting tools', () => {
     expect(String(fetch.mock.calls[3][0])).toBe(
       `https://management.azure.com${clusterId}?api-version=2024-07-01`
     );
+    expect(String(fetch.mock.calls[4][0])).toContain(
+      '/resourceGroups/MC_aks/providers/Microsoft.CostManagement/query'
+    );
     const costBody = JSON.parse(String(fetch.mock.calls[4][1]?.body));
-    expect(costBody.dataset.filter.dimensions).toEqual({
-      name: 'ResourceGroupName',
-      operator: 'In',
-      values: ['MC_aks'],
-    });
+    expect(costBody.dataset.filter).toBeUndefined();
   });
 
   it.each([

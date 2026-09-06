@@ -314,7 +314,8 @@ async function requestJson(
  * @returns Parsed JSON.
  */
 export async function readBoundedJson(response: Response, label: string): Promise<unknown> {
-  const declaredLength = Number(response.headers.get('content-length'));
+  const contentLength = response.headers.get('content-length');
+  const declaredLength = contentLength === null ? Number.NaN : Number(contentLength);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
     throw new Error(`${label} response exceeded ${MAX_RESPONSE_BYTES} bytes`);
   }
@@ -664,12 +665,13 @@ function prometheusStepSeconds(value: string): number {
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric > 0) return numeric;
   const units = { ms: 0.001, s: 1, m: 60, h: 3600, d: 86_400, w: 604_800, y: 31_536_000 };
-  const pattern = /(\d+(?:\.\d+)?)(ms|s|m|h|d|w|y)/g;
+  const pattern = /(\d+)(?:\.(\d+))?(ms|s|m|h|d|w|y)/g;
   let seconds = 0;
   let offset = 0;
   for (const match of value.matchAll(pattern)) {
     if (match.index !== offset) throw new Error('Prometheus step is invalid');
-    seconds += Number(match[1]) * units[match[2] as keyof typeof units];
+    const amount = Number(match[2] === undefined ? match[1] : `${match[1]}.${match[2]}`);
+    seconds += amount * units[match[3] as keyof typeof units];
     offset += match[0].length;
   }
   if (offset !== value.length || seconds <= 0) throw new Error('Prometheus step is invalid');

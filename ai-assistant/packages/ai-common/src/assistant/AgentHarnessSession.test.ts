@@ -63,6 +63,46 @@ describe('AgentHarnessSession', () => {
     expect(invoked).not.toHaveBeenCalled();
   });
 
+  it('requires approval for built-in Kubernetes Secret reads', async () => {
+    const execute = vi.fn();
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['kubernetes_api_request'],
+      toolResults: {
+        kubernetes_api_request: () => {
+          execute();
+          return { data: { password: 'should-not-run' } };
+        },
+      },
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'kubernetes_api_request',
+        description: 'Read Kubernetes resources',
+        schema: z.object({ method: z.string(), url: z.string() }),
+      }),
+    ]);
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            {
+              id: 'secret-call',
+              name: 'kubernetes_api_request',
+              args: { method: 'GET', url: '/api/v1/namespaces/default/secrets/db' },
+            },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+    inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
+
+    await session.userSend('Read the database secret');
+
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   it('preserves errors from host-provided tools', async () => {
     const kubectl = tool(async () => ({ error: true, message: 'command failed' }), {
       name: 'kubectl',

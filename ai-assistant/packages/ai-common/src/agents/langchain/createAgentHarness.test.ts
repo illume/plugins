@@ -161,7 +161,9 @@ describe('createAgentHarness', () => {
     expect(maximumConcurrentCalls).toBe(2);
     expect(completedCalls).toEqual(['default', 'kube-system']);
     expect(
-      result.messages.filter(message => ToolMessage.isInstance(message)).map(message => message.content)
+      result.messages
+        .filter(message => ToolMessage.isInstance(message))
+        .map(message => message.content)
     ).toEqual(['pods in default', 'pods in kube-system']);
   });
 });

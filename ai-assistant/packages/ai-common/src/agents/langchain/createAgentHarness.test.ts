@@ -19,9 +19,19 @@ import { tool } from '@langchain/core/tools';
 import { FakeToolCallingModel } from 'langchain';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createAgentHarness } from './createAgentHarness';
+import {
+  createAgentHarness,
+  getAgentSystemPrompt,
+  parallelToolCallInstruction,
+} from './createAgentHarness';
 
 describe('createAgentHarness', () => {
+  it('instructs the agent to parallelize independent tool calls', () => {
+    expect(getAgentSystemPrompt('Troubleshoot Kubernetes.')).toBe(
+      `Troubleshoot Kubernetes.\n\n${parallelToolCallInstruction}`
+    );
+  });
+
   it('waits for tool discovery and runs the model-tool loop', async () => {
     const inspectPods = vi.fn(async () => '{"pods":["api-0"]}');
     const tools = [
@@ -130,6 +140,8 @@ describe('createAgentHarness', () => {
       };
     });
     const inspectPods = vi.fn(async ({ namespace }: { namespace: string }) => {
+      // Tool callbacks run on the JavaScript event loop, so these synchronous
+      // counter updates happen atomically before either callback awaits.
       activeCalls += 1;
       maximumConcurrentCalls = Math.max(maximumConcurrentCalls, activeCalls);
       if (activeCalls === 2) {

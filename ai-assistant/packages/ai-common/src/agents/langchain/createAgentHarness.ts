@@ -21,6 +21,12 @@ import { basePrompt } from '../../prompts/baseAssistantPrompt';
 
 const DEFAULT_MODEL_CALL_LIMIT = 8;
 const DEFAULT_TOOL_CALL_LIMIT = 12;
+export const parallelToolCallInstruction =
+  'When multiple tool calls are independent, issue them in parallel rather than waiting for each one sequentially.';
+
+export function getAgentSystemPrompt(systemPrompt?: string): string {
+  return `${systemPrompt ?? basePrompt}\n\n${parallelToolCallInstruction}`;
+}
 
 /** Tool inventory required by the LangGraph-backed agent prototype. */
 export interface AgentHarnessToolRuntime {
@@ -59,7 +65,7 @@ export async function createAgentHarness(options: AgentHarnessOptions) {
   return createAgent({
     model: options.model,
     tools: options.toolRuntime.getLangChainTools(),
-    systemPrompt: options.systemPrompt ?? basePrompt,
+    systemPrompt: getAgentSystemPrompt(options.systemPrompt),
     middleware: [
       modelCallLimitMiddleware({
         runLimit: options.modelCallLimit ?? DEFAULT_MODEL_CALL_LIMIT,

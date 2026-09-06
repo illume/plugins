@@ -229,7 +229,7 @@ queries are limited to 24 hours. User-supplied KQL cannot use cross-cluster, cro
 `externaldata`, HTTP, or `evaluate` operators. Effective route and NSG inspection use Azure's
 read-only POST actions and only poll Azure Resource Manager URLs.
 
-See the [observability tools STRIDE threat model](OBSERVABILITY_THREAT_MODEL.md) for the trust
+See the [observability tools STRIDE threat model](docs/observability-threat-model.md) for the trust
 boundaries, per-tool threats and mitigations, and residual operational risks.
 
 The desktop app uses `az` only for `account get-access-token`; every discovery and troubleshooting

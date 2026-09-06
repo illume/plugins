@@ -665,16 +665,37 @@ function prometheusStepSeconds(value: string): number {
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric > 0) return numeric;
   const units = { ms: 0.001, s: 1, m: 60, h: 3600, d: 86_400, w: 604_800, y: 31_536_000 };
-  const pattern = /(\d+)(?:\.(\d+))?(ms|s|m|h|d|w|y)/g;
   let seconds = 0;
   let offset = 0;
-  for (const match of value.matchAll(pattern)) {
-    if (match.index !== offset) throw new Error('Prometheus step is invalid');
-    const amount = Number(match[2] === undefined ? match[1] : `${match[1]}.${match[2]}`);
-    seconds += amount * units[match[3] as keyof typeof units];
-    offset += match[0].length;
+  while (offset < value.length) {
+    const numberStart = offset;
+    while (
+      offset < value.length &&
+      value.charCodeAt(offset) >= 48 &&
+      value.charCodeAt(offset) <= 57
+    ) {
+      offset++;
+    }
+    if (offset === numberStart) throw new Error('Prometheus step is invalid');
+    if (value[offset] === '.') {
+      offset++;
+      const fractionStart = offset;
+      while (
+        offset < value.length &&
+        value.charCodeAt(offset) >= 48 &&
+        value.charCodeAt(offset) <= 57
+      ) {
+        offset++;
+      }
+      if (offset === fractionStart) throw new Error('Prometheus step is invalid');
+    }
+    const amount = Number(value.slice(numberStart, offset));
+    const unitName = value.startsWith('ms', offset) ? 'ms' : value[offset];
+    if (!(unitName in units)) throw new Error('Prometheus step is invalid');
+    seconds += amount * units[unitName as keyof typeof units];
+    offset += unitName.length;
   }
-  if (offset !== value.length || seconds <= 0) throw new Error('Prometheus step is invalid');
+  if (seconds <= 0) throw new Error('Prometheus step is invalid');
   return seconds;
 }
 

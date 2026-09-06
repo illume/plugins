@@ -731,7 +731,8 @@ export class LangChainToolManager {
     const regularTool = this.toolHandlers.get(toolName);
     if (regularTool) {
       try {
-        return await regularTool.handler(args, toolCallId, pendingPrompt);
+        const validatedArgs = regularTool.config.schema.parse(args) as Record<string, unknown>;
+        return await regularTool.handler(validatedArgs, toolCallId, pendingPrompt);
       } catch (error) {
         return {
           content: JSON.stringify({

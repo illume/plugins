@@ -21,6 +21,7 @@ import {
 } from '../../mcp/client/ToolClient';
 import type { LangChainTool } from './LangChainTool';
 import { LangChainToolManager } from './LangChainToolManager';
+import { PrometheusTool } from '../observability/ObservabilityTools';
 
 /** Private ToolManager surface exercised by focused unit tests. */
 interface ToolManagerTestHarness {
@@ -801,6 +802,18 @@ describe('ToolManager — executeTool', () => {
     expect(content.message).toContain('disabled or not available');
     expect(result.shouldAddToHistory).toBe(true);
     expect(result.shouldProcessFollowUp).toBe(false);
+  });
+
+  it('validates built-in tool arguments before invoking handlers', async () => {
+    const mgr = new LangChainToolManager();
+    privateManager(mgr).addTool(new PrometheusTool());
+
+    const result = await mgr.executeTool('prometheus_read', { action: 'delete' });
+    const content = JSON.parse(result.content);
+
+    expect(content.error).toBe(true);
+    expect(content.message).toContain('invalid_value');
+    expect(result.metadata?.isError).toBe(true);
   });
 
   it('BUG FIX: regular tool errors are now wrapped as ToolResponse instead of throwing', async () => {

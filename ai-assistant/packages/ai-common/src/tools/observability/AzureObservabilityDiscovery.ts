@@ -111,8 +111,13 @@ async function queryAzureObservabilityResources(
   ].join(' ');
   const endpoints: AzureObservabilityEndpoint[] = [];
   let skipToken: string | undefined;
+  const seenSkipTokens = new Set<string>();
+  let pageCount = 0;
 
   do {
+    if (++pageCount > 100) {
+      throw new Error('Azure API returned too many observability resource pages.');
+    }
     const response = await fetchAzureApi(
       'https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2022-10-01',
       {
@@ -144,6 +149,12 @@ async function queryAzureObservabilityResources(
     }
     endpoints.push(...page.data.flatMap(parseResource));
     skipToken = page.$skipToken;
+    if (skipToken) {
+      if (seenSkipTokens.has(skipToken)) {
+        throw new Error('Azure API repeated an observability resource continuation token.');
+      }
+      seenSkipTokens.add(skipToken);
+    }
   } while (skipToken);
 
   return endpoints;

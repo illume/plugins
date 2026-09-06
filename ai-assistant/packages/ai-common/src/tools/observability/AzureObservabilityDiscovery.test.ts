@@ -139,4 +139,28 @@ describe('discoverAzureObservabilityEndpoints', () => {
       fetchSpy.mockRestore();
     }
   });
+
+  it('stops when Resource Graph repeats a continuation token', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value: [{ subscriptionId: 'first', state: 'Enabled' }] }), {
+          status: 200,
+        })
+      )
+      .mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ data: [], $skipToken: 'repeated' }), { status: 200 })
+      );
+
+    try {
+      await expect(discoverAzureObservabilityEndpoints(runCommand)).rejects.toThrow(
+        'repeated an observability resource continuation token'
+      );
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });

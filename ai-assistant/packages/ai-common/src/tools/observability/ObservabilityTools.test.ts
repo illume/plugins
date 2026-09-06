@@ -333,6 +333,23 @@ describe('native observability tools', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('rejects Prometheus range queries that request excessive sample counts', async () => {
+    const fetch = jsonFetch();
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(
+      tool.handler({
+        action: 'query_range',
+        query: 'up',
+        start: '2026-01-01T00:00:00Z',
+        end: '2026-01-02T00:00:00Z',
+        step: '1ms',
+      })
+    ).rejects.toThrow('at most 11000 points');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('rejects non-HTTP provider URLs and redacts credentials from errors', async () => {
     const tool = new GrafanaTool();
     tool.setContext({
@@ -355,6 +372,20 @@ describe('native observability tools', () => {
     await expect(tool.handler({ action: 'datasources' })).rejects.toThrow(
       'URL must not contain credentials'
     );
+  });
+
+  it('does not send provider credentials over remote plain HTTP', async () => {
+    const fetch = jsonFetch();
+    const tool = new GrafanaTool();
+    tool.setContext({
+      config: { grafana: { baseUrl: 'http://grafana.example', token: 'never-send-me' } },
+      fetch,
+    });
+
+    await expect(tool.handler({ action: 'datasources' })).rejects.toThrow(
+      'URL must use HTTPS, or HTTP for localhost'
+    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('bounds arrays without silently dropping named response fields', async () => {
@@ -388,5 +419,17 @@ describe('native observability tools', () => {
     await expect(tool.handler({ action: 'metadata' })).rejects.toThrow(
       'response exceeded 200000 bytes'
     );
+  });
+
+  it('bounds deeply nested provider responses without overflowing the stack', async () => {
+    const nested = `${'['.repeat(12_000)}0${']'.repeat(12_000)}`;
+    const fetch: typeof globalThis.fetch = async () => new Response(nested);
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    const result = await tool.handler({ action: 'metadata' });
+
+    expect(result.success).toBe(true);
+    expect(result.content).toContain('[nested value omitted]');
   });
 });

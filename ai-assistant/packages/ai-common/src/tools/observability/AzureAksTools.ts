@@ -139,7 +139,8 @@ async function azureRequest(
     if (!location) break;
     const pollUrl = new URL(location);
     if (pollUrl.origin !== ARM_ORIGIN) throw new Error('Azure polling URL is not allowed');
-    const retryAfterValue = Number(response.headers.get('retry-after'));
+    const retryAfterHeader = response.headers.get('retry-after');
+    const retryAfterValue = retryAfterHeader === null ? Number.NaN : Number(retryAfterHeader);
     const retryAfter = Math.min(Number.isFinite(retryAfterValue) ? retryAfterValue : 1, 5);
     const remaining = deadline - Date.now();
     if (remaining <= 0) break;
@@ -150,6 +151,26 @@ async function azureRequest(
       redirect: 'error',
       signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     });
+    if (response.ok && response.status !== 202) {
+      const result = await readBoundedJson(response, 'Azure');
+      const status =
+        result && typeof result === 'object' && 'status' in result
+          ? String((result as { status: unknown }).status).toLowerCase()
+          : '';
+      if (status === 'inprogress' || status === 'running') {
+        response = new Response('', {
+          status: 202,
+          headers: {
+            location: pollUrl.toString(),
+            'retry-after': response.headers.get('retry-after') ?? '1',
+          },
+        });
+      } else if (status === 'failed' || status === 'canceled' || status === 'cancelled') {
+        throw new Error(`Azure read operation ${status}`);
+      } else {
+        return result;
+      }
+    }
   }
   if (response.status === 202) throw new Error('Azure read operation did not complete in time');
   return readBoundedJson(response, 'Azure');
@@ -275,6 +296,9 @@ export class AzureResourceHealthTool extends ObservabilityTool {
 
   handler: ToolHandler = async args => {
     const resourceId = validateResourceId(args.resourceId);
+    if (args.action !== undefined && args.action !== 'current' && args.action !== 'history') {
+      throw new Error('Unsupported Azure Resource Health action');
+    }
     const suffix =
       args.action === 'history'
         ? '/providers/Microsoft.ResourceHealth/availabilityStatuses'
@@ -327,6 +351,9 @@ export class AzureDiagnosticsTool extends ObservabilityTool {
       args.clusterResourceId,
       'Microsoft.ContainerService/managedClusters'
     );
+    if (args.action !== undefined && args.action !== 'settings' && args.action !== 'categories') {
+      throw new Error('Unsupported Azure diagnostics action');
+    }
     const suffix =
       args.action === 'categories'
         ? '/providers/microsoft.insights/diagnosticSettingsCategories'
@@ -444,6 +471,9 @@ export class AzureNetworkConfigTool extends ObservabilityTool {
         relatedResources: await resourceGraphQuery(context, [subscriptionId], query),
       });
     }
+    if (action !== 'effective_routes' && action !== 'effective_nsgs') {
+      throw new Error('Unsupported Azure network action');
+    }
     const nicId = validateResourceId(args.resourceId, 'Microsoft.Network/networkInterfaces');
     const suffix =
       action === 'effective_routes' ? '/effectiveRouteTable' : '/effectiveNetworkSecurityGroups';
@@ -500,8 +530,8 @@ export class AzureCostCapacityTool extends ObservabilityTool {
       );
     }
     if (action === 'quotas') {
-      if (typeof args.location !== 'string') {
-        throw new Error('Azure region is required for quota queries');
+      if (typeof args.location !== 'string' || !/^[A-Za-z0-9-]+$/.test(args.location)) {
+        throw new Error('A valid Azure region is required for quota queries');
       }
       const subscriptionId = subscriptionFromResourceId(clusterId);
       const url = new URL(
@@ -513,6 +543,13 @@ export class AzureCostCapacityTool extends ObservabilityTool {
     if (action === 'costs') {
       const [start, end] = queryWindow(args, 'AKS costs');
       const subscriptionId = subscriptionFromResourceId(clusterId);
+      const cluster = (await azureRequest(context, 'arm', armUrl(clusterId, '', '2024-07-01'))) as {
+        properties?: { nodeResourceGroup?: unknown };
+      };
+      const nodeResourceGroup = cluster.properties?.nodeResourceGroup;
+      if (typeof nodeResourceGroup !== 'string' || !nodeResourceGroup) {
+        throw new Error('AKS node resource group is unavailable');
+      }
       const url = new URL(
         `${ARM_ORIGIN}/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-03-01`
       );
@@ -534,9 +571,9 @@ export class AzureCostCapacityTool extends ObservabilityTool {
               },
               filter: {
                 dimensions: {
-                  name: 'ResourceId',
+                  name: 'ResourceGroupName',
                   operator: 'In',
-                  values: [clusterId],
+                  values: [nodeResourceGroup],
                 },
               },
             },
@@ -544,6 +581,7 @@ export class AzureCostCapacityTool extends ObservabilityTool {
         })
       );
     }
+    if (action !== 'utilization') throw new Error('Unsupported Azure cost or capacity action');
     const metricNames =
       Array.isArray(args.metricNames) && args.metricNames.length
         ? (args.metricNames as string[])
@@ -578,6 +616,9 @@ export class AzureSecurityPostureTool extends ObservabilityTool {
       args.clusterResourceId,
       'Microsoft.ContainerService/managedClusters'
     );
+    if (args.action !== 'defender' && args.action !== 'policy') {
+      throw new Error('Unsupported Azure security posture action');
+    }
     const url =
       args.action === 'defender'
         ? armUrl(clusterId, '/providers/Microsoft.Security/assessments', '2021-06-01')

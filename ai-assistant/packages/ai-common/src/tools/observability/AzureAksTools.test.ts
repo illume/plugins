@@ -187,8 +187,49 @@ describe('safe Azure and AKS troubleshooting tools', () => {
     expect(fetch.mock.calls[1][1]?.method).toBeUndefined();
   });
 
-  it('reads node pools, quotas, autoscaler state, utilization, and scoped costs', async () => {
+  it('continues polling while an Azure async operation remains in progress', async () => {
+    const operationUrl =
+      'https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000001/providers/Microsoft.Network/locations/westeurope/operations/read';
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        new Response('', {
+          status: 202,
+          headers: { location: operationUrl, 'retry-after': '0' },
+        })
+      )
+      .mockResolvedValueOnce(
+        response({ status: 'InProgress' }, { headers: { 'retry-after': '0' } })
+      )
+      .mockResolvedValueOnce(response({ value: [{ source: 'Default' }] }));
+    const tool = configure(new AzureNetworkConfigTool(), fetch);
+
+    const result = await tool.handler({ action: 'effective_routes', resourceId: nicId });
+
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(result.data).toEqual({ value: [{ source: 'Default' }] });
+  });
+
+  it('rejects path traversal in Azure quota locations', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => response());
+    const tool = configure(new AzureCostCapacityTool(), fetch);
+
+    await expect(
+      tool.handler({
+        action: 'quotas',
+        clusterResourceId: clusterId,
+        location: '../../providers/Microsoft.Authorization/roleAssignments',
+      })
+    ).rejects.toThrow('valid Azure region');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('reads node pools, quotas, autoscaler state, utilization, and scoped costs', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async input =>
+      String(input) === `https://management.azure.com${clusterId}?api-version=2024-07-01`
+        ? response({ properties: { nodeResourceGroup: 'MC_aks' } })
+        : response()
+    );
     const tool = configure(new AzureCostCapacityTool(), fetch);
 
     await tool.handler({ action: 'node_pools', clusterResourceId: clusterId });
@@ -212,8 +253,15 @@ describe('safe Azure and AKS troubleshooting tools', () => {
     expect(String(fetch.mock.calls[2][0])).toContain(
       'metricnames=node_cpu_usage_percentage%2Cnode_memory_usage_percentage'
     );
-    const costBody = JSON.parse(String(fetch.mock.calls[3][1]?.body));
-    expect(costBody.dataset.filter.dimensions.values).toEqual([clusterId]);
+    expect(String(fetch.mock.calls[3][0])).toBe(
+      `https://management.azure.com${clusterId}?api-version=2024-07-01`
+    );
+    const costBody = JSON.parse(String(fetch.mock.calls[4][1]?.body));
+    expect(costBody.dataset.filter.dimensions).toEqual({
+      name: 'ResourceGroupName',
+      operator: 'In',
+      values: ['MC_aks'],
+    });
   });
 
   it.each([

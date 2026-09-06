@@ -74,13 +74,14 @@ export const MAX_RESPONSE_BYTES = 200_000;
  * @param value - Parsed provider response value.
  * @returns A response copy whose arrays contain no more than 100 entries.
  */
-function boundArrays(value: unknown): unknown {
-  if (Array.isArray(value)) return value.slice(0, 100).map(boundArrays);
+function boundArrays(value: unknown, depth = 0): unknown {
+  if (depth >= 100) return '[nested value omitted]';
+  if (Array.isArray(value)) return value.slice(0, 100).map(item => boundArrays(item, depth + 1));
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, item]) => [
         key,
-        boundArrays(item),
+        boundArrays(item, depth + 1),
       ])
     );
   }
@@ -123,12 +124,8 @@ function safeBaseUrl(value: string | undefined, provider: Provider): URL {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error(`${provider} URL must use HTTP or HTTPS`);
   }
-  if (
-    provider === 'azureMonitor' &&
-    url.protocol === 'http:' &&
-    !['localhost', '127.0.0.1'].includes(url.hostname)
-  ) {
-    throw new Error('Azure Monitor URL must use HTTPS, or HTTP for localhost');
+  if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    throw new Error(`${provider} URL must use HTTPS, or HTTP for localhost`);
   }
   if (url.username || url.password) {
     throw new Error(`${provider} URL must not contain credentials`);
@@ -444,6 +441,7 @@ export class DatadogTool extends ObservabilityTool {
         })
       );
     }
+    if (action !== 'monitors') throw new Error('Unsupported Datadog action');
     return toolResult(
       await requestJson(context, 'datadog', '/api/v1/monitor', undefined, {
         page_size: String(limit),
@@ -584,6 +582,9 @@ export class SplunkTool extends ObservabilityTool {
         })
       );
     }
+    if (action !== 'indexes' && action !== 'saved_searches') {
+      throw new Error('Unsupported Splunk action');
+    }
     const path = action === 'indexes' ? '/services/data/indexes' : '/services/saved/searches';
     return toolResult(
       await requestJson(context, 'splunk', path, undefined, {
@@ -628,6 +629,7 @@ export class GrafanaTool extends ObservabilityTool {
     if (action === 'datasources') {
       return toolResult(await requestJson(context, 'grafana', '/api/datasources'));
     }
+    if (action !== 'search_dashboards') throw new Error('Unsupported Grafana action');
     return toolResult(
       await requestJson(context, 'grafana', '/api/search', undefined, {
         type: 'dash-db',
@@ -651,6 +653,22 @@ function rangeMilliseconds(value: string): number {
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) throw new Error('Range times must be RFC3339 or Unix timestamps');
   return parsed;
+}
+
+function prometheusStepSeconds(value: string): number {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+  const units = { ms: 0.001, s: 1, m: 60, h: 3600, d: 86_400, w: 604_800, y: 31_536_000 };
+  const pattern = /(\d+(?:\.\d+)?)(ms|s|m|h|d|w|y)/g;
+  let seconds = 0;
+  let offset = 0;
+  for (const match of value.matchAll(pattern)) {
+    if (match.index !== offset) throw new Error('Prometheus step is invalid');
+    seconds += Number(match[1]) * units[match[2] as keyof typeof units];
+    offset += match[0].length;
+  }
+  if (offset !== value.length || seconds <= 0) throw new Error('Prometheus step is invalid');
+  return seconds;
 }
 
 /** Read-only Prometheus queries, metadata, and target inspection. */
@@ -698,7 +716,12 @@ export class PrometheusTool extends ObservabilityTool {
       ) {
         throw new Error('Range query requires start, end, and step');
       }
-      assertMaximumRange(rangeMilliseconds(args.start), rangeMilliseconds(args.end), 'Prometheus');
+      const start = rangeMilliseconds(args.start);
+      const end = rangeMilliseconds(args.end);
+      assertMaximumRange(start, end, 'Prometheus');
+      if ((end - start) / 1000 / prometheusStepSeconds(args.step) + 1 > 11_000) {
+        throw new Error('Prometheus range query must request at most 11000 points');
+      }
       return toolResult(
         await requestJson(context, 'prometheus', '/api/v1/query_range', undefined, {
           query: args.query as string,
@@ -723,6 +746,7 @@ export class PrometheusTool extends ObservabilityTool {
         })
       );
     }
+    if (action !== 'targets') throw new Error('Unsupported Prometheus action');
     return toolResult(
       await requestJson(context, 'prometheus', '/api/v1/targets', undefined, { state: 'active' })
     );

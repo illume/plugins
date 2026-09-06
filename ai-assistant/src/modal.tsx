@@ -563,6 +563,25 @@ export default function AIPrompt(props: {
     }
   }, [pluginSettings?.mcpConfig]);
 
+  const createSessionOptions = React.useCallback(
+    () =>
+      pluginSettings?.devOptions?.enableMockTools
+        ? { toolManager: createMockKubernetesToolManager() }
+        : {
+            mcpClient: electronMCPClient,
+            observabilityContext: {
+              config: pluginSettings?.observability ?? {},
+              commandRunner: commandRunnerRef.current ?? undefined,
+            },
+            autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
+          },
+    [
+      pluginSettings?.devOptions?.enableMockTools,
+      pluginSettings?.observability,
+      pluginSettings?.observabilityAutoApproval,
+    ]
+  );
+
   React.useEffect(() => {
     // Recreate the manager whenever pluginSettings change (including tool settings)
     // or when activeConfig/selectedModel/mcpConfig changes
@@ -588,16 +607,7 @@ export default function AIPrompt(props: {
           activeConfig!.providerId,
           configWithModel,
           enabledTools,
-          pluginSettings?.devOptions?.enableMockTools
-            ? { toolManager: createMockKubernetesToolManager() }
-            : {
-                mcpClient: electronMCPClient,
-                observabilityContext: {
-                  config: pluginSettings?.observability ?? {},
-                  commandRunner: commandRunnerRef.current ?? undefined,
-                },
-                autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
-              }
+          createSessionOptions()
         );
         setAiManager(newManager);
       } catch (error: unknown) {
@@ -618,9 +628,7 @@ export default function AIPrompt(props: {
     activeConfig,
     selectedModel,
     mcpConfigKey,
-    pluginSettings?.observability,
-    pluginSettings?.observabilityAutoApproval,
-    pluginSettings?.devOptions?.enableMockTools,
+    createSessionOptions,
   ]);
 
   // ─── Wire up SkillManager for prompt skill injection ──────────────────────
@@ -681,16 +689,7 @@ export default function AIPrompt(props: {
             activeConfig.providerId,
             configWithModel,
             enabledTools,
-            pluginSettings?.devOptions?.enableMockTools
-              ? { toolManager: createMockKubernetesToolManager() }
-              : {
-                  mcpClient: electronMCPClient,
-                  observabilityContext: {
-                    config: pluginSettings?.observability ?? {},
-                    commandRunner: commandRunnerRef.current ?? undefined,
-                  },
-                  autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
-                }
+            createSessionOptions()
           );
           // LangChain doesn't stream intermediate events, so just report start/end
           onStep?.({
@@ -731,7 +730,7 @@ export default function AIPrompt(props: {
     activeConfig,
     selectedModel,
     enabledTools,
-    pluginSettings,
+    createSessionOptions,
     t,
   ]);
   // ─── End proactive diagnosis connection ─────────────────────────────

@@ -196,30 +196,16 @@ describe('createAgentHarness', () => {
       },
     });
 
-    const invocation = agent.invoke({
+    const result = await agent.invoke({
       messages: [{ role: 'user', content: 'Compare both namespaces' }],
     });
-    let timeout!: ReturnType<typeof setTimeout>;
-    try {
-      const result = await Promise.race([
-        invocation,
-        new Promise<never>((_, reject) => {
-          timeout = setTimeout(
-            () => reject(new Error('Expected tool calls to start concurrently')),
-            1000
-          );
-        }),
-      ]);
 
-      expect(maximumConcurrentCalls).toBe(2);
-      expect(completedCalls).toEqual(expect.arrayContaining(['default', 'kube-system']));
-      expect(
-        result.messages
-          .filter(message => ToolMessage.isInstance(message))
-          .map(message => message.content)
-      ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
-    } finally {
-      clearTimeout(timeout);
-    }
+    expect(maximumConcurrentCalls).toBe(2);
+    expect(completedCalls).toEqual(expect.arrayContaining(['default', 'kube-system']));
+    expect(
+      result.messages
+        .filter(message => ToolMessage.isInstance(message))
+        .map(message => message.content)
+    ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
   }, 2000);
 });

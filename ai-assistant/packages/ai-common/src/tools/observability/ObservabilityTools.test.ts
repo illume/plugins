@@ -478,6 +478,28 @@ describe('native observability tools', () => {
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 
+  it('omits raw provider response bodies from error exceptions on non-200 responses', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ secretQueryEcho: 'SELECT secret FROM tokens' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    let thrownError: Error | undefined;
+    try {
+      await tool.handler({ action: 'query', query: 'up' });
+    } catch (err) {
+      thrownError = err as Error;
+    }
+
+    expect(thrownError).toBeDefined();
+    expect(thrownError?.message).toBe('prometheus request failed (400)');
+    expect(thrownError?.message).not.toContain('secretQueryEcho');
+  });
+
   it('reports request timeouts clearly without retrying them', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()

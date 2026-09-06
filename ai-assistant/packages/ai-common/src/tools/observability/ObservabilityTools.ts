@@ -376,6 +376,10 @@ async function requestJson(
  * @returns Parsed JSON.
  */
 export async function readBoundedJson(response: Response, label: string): Promise<unknown> {
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new Error(`${label} request failed (${response.status})`);
+  }
   const contentLength = response.headers.get('content-length');
   const declaredLength = contentLength === null ? Number.NaN : Number(contentLength);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
@@ -409,9 +413,6 @@ export async function readBoundedJson(response: Response, label: string): Promis
     text = new TextDecoder().decode(bytes);
   } else {
     text = await response.text();
-  }
-  if (!response.ok) {
-    throw new Error(`${label} request failed (${response.status}): ${text.slice(0, 500)}`);
   }
   try {
     return JSON.parse(text);

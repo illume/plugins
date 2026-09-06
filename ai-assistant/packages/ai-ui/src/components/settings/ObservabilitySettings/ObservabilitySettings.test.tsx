@@ -1,0 +1,144 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import { ObservabilitySettings } from './ObservabilitySettings';
+
+afterEach(cleanup);
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: { provider?: string }) =>
+      Object.entries(values ?? {}).reduce(
+        (text, [name, value]) => text.replace(`{{${name}}}`, value),
+        key
+      ),
+  }),
+}));
+
+it('edits native provider URLs and keeps credentials in password inputs', () => {
+  const onChange = vi.fn();
+  render(<ObservabilitySettings config={{}} onChange={onChange} />);
+
+  expect(screen.getByRole('textbox', { name: 'Prometheus URL' })).toHaveProperty('value', '');
+  expect(screen.getByPlaceholderText('http://localhost:9090')).toBeTruthy();
+  fireEvent.change(screen.getByRole('textbox', { name: 'Grafana URL' }), {
+    target: { value: 'https://grafana.example' },
+  });
+
+  expect(onChange).toHaveBeenCalledWith({
+    grafana: { baseUrl: 'https://grafana.example' },
+  });
+  expect(screen.getByRole('group', { name: 'Grafana' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Use http://localhost:9090' }));
+  expect(onChange).toHaveBeenCalledWith({
+    prometheus: { baseUrl: 'http://localhost:9090' },
+  });
+  expect(screen.getByLabelText('Service Account Token')).toHaveProperty('type', 'password');
+  expect(screen.getByLabelText('Logs Access Token')).toHaveProperty('type', 'password');
+  expect(screen.getByLabelText('Resource Manager Token')).toHaveProperty('type', 'password');
+  expect(screen.getByText(/require no MCP server/)).toBeTruthy();
+  expect(screen.getByText(/Read-only does not mean risk-free/)).toBeTruthy();
+  expect(screen.queryByRole('link')).toBeNull();
+});
+
+it('guides setup and explicitly toggles persistent observability approval', () => {
+  const onAutoApprovalChange = vi.fn();
+  const { rerender } = render(
+    <ObservabilitySettings
+      config={{}}
+      onChange={vi.fn()}
+      autoApprovalEnabled={false}
+      onAutoApprovalChange={onAutoApprovalChange}
+    />
+  );
+
+  expect(screen.getByText(/Create read-only, least-privilege credentials/)).toBeTruthy();
+  expect(screen.getByText(/proactive diagnosis may run enabled observability tools/)).toBeTruthy();
+  const toggle = screen.getByRole('checkbox', {
+    name: 'Allow observability reads until disabled',
+  });
+  expect(toggle).toHaveProperty('checked', false);
+
+  fireEvent.click(toggle);
+  expect(onAutoApprovalChange).toHaveBeenCalledWith(true);
+
+  rerender(
+    <ObservabilitySettings
+      config={{}}
+      onChange={vi.fn()}
+      autoApprovalEnabled
+      onAutoApprovalChange={onAutoApprovalChange}
+    />
+  );
+  expect(
+    screen.getByRole('checkbox', { name: 'Allow observability reads until disabled' })
+  ).toHaveProperty('checked', true);
+});
+
+it('discovers Azure endpoints and only applies the selected result', async () => {
+  const onChange = vi.fn();
+  const commandRunner = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+  const fetchSpy = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          value: [{ subscriptionId: 'subscription', state: 'Enabled' }],
+        }),
+        { status: 200 }
+      )
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              provider: 'grafana',
+              name: 'dashboards',
+              resourceGroup: 'operations',
+              subscriptionId: 'subscription',
+              url: 'https://dashboards.example.azure.com',
+            },
+            {
+              provider: 'azureMonitor',
+              name: 'aks-logs',
+              resourceGroup: 'operations',
+              subscriptionId: 'subscription',
+              url: 'https://api.loganalytics.azure.com/v1/workspaces/workspace-id',
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+
+  try {
+    render(<ObservabilitySettings config={{}} onChange={onChange} commandRunner={commandRunner} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Discover from Azure CLI' }));
+    const result = await screen.findByRole('button', {
+      name: 'Use dashboards (operations, subscription) for Grafana',
+    });
+    const azureMonitorEndpoint = screen.getByRole('button', {
+      name: 'Use aks-logs (operations, subscription) for Azure Monitor and AKS',
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.click(result);
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        grafana: { baseUrl: 'https://dashboards.example.azure.com' },
+      })
+    );
+
+    fireEvent.click(azureMonitorEndpoint);
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        azureMonitor: {
+          baseUrl: 'https://api.loganalytics.azure.com/v1/workspaces/workspace-id',
+        },
+      })
+    );
+  } finally {
+    fetchSpy.mockRestore();
+  }
+});

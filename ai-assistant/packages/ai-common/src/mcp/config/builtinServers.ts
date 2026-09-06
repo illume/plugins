@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { MCPServer, MCPSettings } from '../types';
+import type { MCPServer, MCPSettings, MCPStdioServer } from '../types';
 
 /** Server name used for the Azure Kubernetes Service MCP server. */
 export const AKS_MCP_SERVER_NAME = 'aks-mcp';
@@ -47,7 +47,7 @@ const AKS_MCP_COMPONENTS = [
  *
  * @returns The default `aks-mcp` stdio server definition.
  */
-export function createAksMcpServer(): MCPServer {
+export function createAksMcpServer(): MCPStdioServer {
   return {
     name: AKS_MCP_SERVER_NAME,
     command: 'aks-mcp',
@@ -127,13 +127,26 @@ function isSameDefinition(a: BuiltinServerDefinition, b: BuiltinServerDefinition
 }
 
 /** @returns The plugin-owned parts of a server definition. */
-function toDefinition({ command, args, env }: MCPServer): BuiltinServerDefinition {
-  return env === undefined ? { command, args } : { command, args, env };
+function toDefinition({ command, args, env }: MCPStdioServer): BuiltinServerDefinition {
+  const definition = { command, args };
+  return env === undefined ? definition : { ...definition, env };
+}
+
+/** @returns Whether the server uses the local stdio transport. */
+function isStdioServer(server: MCPServer): server is MCPStdioServer {
+  return (server.transport ?? 'stdio') === 'stdio';
 }
 
 /** @returns The server with plugin-owned fields replaced, dropping an env the built-in no longer sets. */
-function applyDefinition(existing: MCPServer, definition: BuiltinServerDefinition): MCPServer {
-  const refreshed: MCPServer = { ...existing, command: definition.command, args: definition.args };
+function applyDefinition(
+  existing: MCPStdioServer,
+  definition: BuiltinServerDefinition
+): MCPStdioServer {
+  const refreshed: MCPStdioServer = {
+    ...existing,
+    command: definition.command,
+    args: definition.args,
+  };
   if (definition.env === undefined) {
     delete refreshed.env;
   } else {
@@ -165,7 +178,7 @@ function normalizeState(previous: PersistedBuiltinServerState): BuiltinServerSta
  */
 export function reconcileBuiltinServers(
   config: MCPSettings,
-  builtinServers: MCPServer[],
+  builtinServers: readonly MCPStdioServer[],
   previousState: PersistedBuiltinServerState = {}
 ): ReconcileBuiltinServersResult {
   const state = normalizeState(previousState);
@@ -195,6 +208,7 @@ export function reconcileBuiltinServers(
     if (index === -1) continue;
 
     const existing = servers[index];
+    if (!isStdioServer(existing)) continue;
     const lastWritten = state[key];
     if (lastWritten !== null && !isSameDefinition(toDefinition(existing), lastWritten)) {
       continue;

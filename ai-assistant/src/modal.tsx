@@ -563,6 +563,25 @@ export default function AIPrompt(props: {
     }
   }, [pluginSettings?.mcpConfig]);
 
+  const createSessionOptions = React.useCallback(
+    () =>
+      pluginSettings?.devOptions?.enableMockTools
+        ? { toolManager: createMockKubernetesToolManager() }
+        : {
+            mcpClient: electronMCPClient,
+            observabilityContext: {
+              config: pluginSettings?.observability ?? {},
+              commandRunner: commandRunnerRef.current ?? undefined,
+            },
+            autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
+          },
+    [
+      pluginSettings?.devOptions?.enableMockTools,
+      pluginSettings?.observability,
+      pluginSettings?.observabilityAutoApproval,
+    ]
+  );
+
   React.useEffect(() => {
     // Recreate the manager whenever pluginSettings change (including tool settings)
     // or when activeConfig/selectedModel/mcpConfig changes
@@ -588,9 +607,7 @@ export default function AIPrompt(props: {
           activeConfig!.providerId,
           configWithModel,
           enabledTools,
-          pluginSettings?.devOptions?.enableMockTools
-            ? { toolManager: createMockKubernetesToolManager() }
-            : { mcpClient: electronMCPClient }
+          createSessionOptions()
         );
         setAiManager(newManager);
       } catch (error: unknown) {
@@ -606,13 +623,7 @@ export default function AIPrompt(props: {
     return () => {
       isCurrent = false;
     };
-  }, [
-    enabledTools,
-    activeConfig,
-    selectedModel,
-    mcpConfigKey,
-    pluginSettings?.devOptions?.enableMockTools,
-  ]);
+  }, [enabledTools, activeConfig, selectedModel, mcpConfigKey, createSessionOptions]);
 
   // ─── Wire up SkillManager for prompt skill injection ──────────────────────
   // Creates a SkillManager with browser-compatible adapters (fetch + JSZip).
@@ -672,9 +683,7 @@ export default function AIPrompt(props: {
             activeConfig.providerId,
             configWithModel,
             enabledTools,
-            pluginSettings?.devOptions?.enableMockTools
-              ? { toolManager: createMockKubernetesToolManager() }
-              : { mcpClient: electronMCPClient }
+            createSessionOptions()
           );
           // LangChain doesn't stream intermediate events, so just report start/end
           onStep?.({
@@ -715,7 +724,7 @@ export default function AIPrompt(props: {
     activeConfig,
     selectedModel,
     enabledTools,
-    pluginSettings,
+    createSessionOptions,
     t,
   ]);
   // ─── End proactive diagnosis connection ─────────────────────────────

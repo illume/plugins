@@ -97,7 +97,34 @@ interface LangChainManagerTestHarness {
   handleChainBasedRequest(message: string, model: TestModel): Promise<Prompt>;
   getSkillsPromptForQuery(message: string): Promise<string>;
   extractAzureBaseUrl(endpoint: string): string;
+  requiresBuiltInToolApproval(toolName: string, args: unknown): boolean;
 }
+
+describe('persistent observability approval', () => {
+  it('bypasses approval only for observability tools when enabled', () => {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      toolManager: createMockToolManager(),
+      autoApproveObservabilityTools: true,
+    });
+
+    expect(
+      privateManager(manager).requiresBuiltInToolApproval('prometheus_read', { query: 'up' })
+    ).toBe(false);
+    expect(
+      privateManager(manager).requiresBuiltInToolApproval('kubernetes_api_request', {
+        url: '/api/v1/namespaces/default/secrets',
+      })
+    ).toBe(true);
+  });
+
+  it('keeps observability tools approval-gated by default', () => {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      toolManager: createMockToolManager(),
+    });
+
+    expect(privateManager(manager).requiresBuiltInToolApproval('datadog_read', {})).toBe(true);
+  });
+});
 
 function privateManager(manager: LangChainAssistantSession): LangChainManagerTestHarness {
   return manager as unknown as LangChainManagerTestHarness;

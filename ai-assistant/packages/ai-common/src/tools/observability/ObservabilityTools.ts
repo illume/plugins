@@ -283,9 +283,7 @@ function retryDelayMs(response: Response | undefined, retry: number): number {
   const retryAfter = response?.headers.get('retry-after');
   if (retryAfter) {
     const seconds = Number(retryAfter);
-    const delay = Number.isFinite(seconds)
-      ? seconds * 1000
-      : Date.parse(retryAfter) - Date.now();
+    const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
     if (Number.isFinite(delay)) return Math.min(Math.max(delay, 0), MAX_RETRY_DELAY_MS);
   }
   return Math.min(250 * 2 ** retry, MAX_RETRY_DELAY_MS);
@@ -342,13 +340,10 @@ async function requestJson(
         redirect: 'error',
         signal: AbortSignal.timeout(remaining),
       });
-      if (
-        RETRYABLE_STATUS_CODES.has(response.status) &&
-        attempt + 1 < MAX_REQUEST_ATTEMPTS
-      ) {
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt + 1 < MAX_REQUEST_ATTEMPTS) {
         const delay = retryDelayMs(response, attempt);
+        await response.body?.cancel().catch(() => undefined);
         if (await waitForRetry(delay, deadline)) {
-          await response.body?.cancel().catch(() => undefined);
           continue;
         }
       }

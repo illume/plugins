@@ -467,6 +467,17 @@ describe('native observability tools', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('bounds retries and reports an unavailable network', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(new TypeError('fetch failed'));
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(tool.handler({ action: 'query', query: 'up' })).rejects.toThrow(
+      'request failed because the network is unavailable'
+    );
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
   it('reports request timeouts clearly without retrying them', async () => {
     const fetch = vi
       .fn<typeof globalThis.fetch>()

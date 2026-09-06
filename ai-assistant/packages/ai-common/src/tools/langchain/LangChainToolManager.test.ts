@@ -19,9 +19,9 @@ import {
   NullToolClient as NullMCPClientAdapter,
   type ToolClient as MCPClientAdapter,
 } from '../../mcp/client/ToolClient';
+import { PrometheusTool } from '../observability/ObservabilityTools';
 import type { LangChainTool } from './LangChainTool';
 import { LangChainToolManager } from './LangChainToolManager';
-import { PrometheusTool } from '../observability/ObservabilityTools';
 
 /** Private ToolManager surface exercised by focused unit tests. */
 interface ToolManagerTestHarness {

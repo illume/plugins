@@ -110,6 +110,25 @@ describe('safe Azure and AKS troubleshooting tools', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('allows an explicitly authenticated IPv6 loopback Logs endpoint', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => response({ tables: [] }));
+    const tool = new AzureApplicationInsightsTool();
+    tool.setContext({
+      config: {
+        azureMonitor: {
+          baseUrl: 'http://[::1]:8080/v1/workspaces/workspace-id',
+          token: 'local-token',
+        },
+      },
+      fetch,
+    });
+
+    await expect(tool.handler({ query: 'AppRequests' })).resolves.toMatchObject({ success: true });
+    expect(String(fetch.mock.calls[0][0])).toBe(
+      'http://[::1]:8080/v1/workspaces/workspace-id/query'
+    );
+  });
+
   it('lists AKS diagnostic settings without accepting arbitrary paths', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => response());
     const tool = configure(new AzureDiagnosticsTool(), fetch);
@@ -208,6 +227,34 @@ describe('safe Azure and AKS troubleshooting tools', () => {
 
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(result.data).toEqual({ value: [{ source: 'Default' }] });
+  });
+
+  it('uses a one-second polling delay when Azure omits Retry-After', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetch = vi
+        .fn<typeof globalThis.fetch>()
+        .mockResolvedValueOnce(
+          new Response('', {
+            status: 202,
+            headers: {
+              location:
+                'https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000001/providers/Microsoft.Network/locations/westeurope/operations/read',
+            },
+          })
+        )
+        .mockResolvedValueOnce(response({ value: [] }));
+      const tool = configure(new AzureNetworkConfigTool(), fetch);
+
+      const resultPromise = tool.handler({ action: 'effective_routes', resourceId: nicId });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(fetch).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(resultPromise).resolves.toMatchObject({ success: true });
+      expect(fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('rejects path traversal in Azure quota locations', async () => {

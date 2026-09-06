@@ -68,6 +68,11 @@ type Provider = keyof ObservabilityConfig;
 /** Maximum provider response size read into memory or returned as model-facing content. */
 export const MAX_RESPONSE_BYTES = 200_000;
 
+/** Returns whether a URL hostname is a local loopback name or address. */
+export function isLoopbackHostname(hostname: string): boolean {
+  return ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
+}
+
 /**
  * Recursively caps arrays in provider responses to the documented item limit.
  *
@@ -124,7 +129,7 @@ function safeBaseUrl(value: string | undefined, provider: Provider): URL {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new Error(`${provider} URL must use HTTP or HTTPS`);
   }
-  if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+  if (url.protocol === 'http:' && !isLoopbackHostname(url.hostname)) {
     throw new Error(`${provider} URL must use HTTPS, or HTTP for localhost`);
   }
   if (url.username || url.password) {

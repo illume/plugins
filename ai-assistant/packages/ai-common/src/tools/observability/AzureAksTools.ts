@@ -19,6 +19,7 @@ import { getAzureAccessToken } from '../../providers/detectProvider';
 import type { ToolConfig, ToolHandler } from '../langchain/LangChainTool';
 import {
   assertMaximumRange,
+  isLoopbackHostname,
   ObservabilityTool,
   type ObservabilityToolContext,
   readBoundedJson,
@@ -111,7 +112,7 @@ async function azureRequest(
     (audience === 'arm' && url.origin !== ARM_ORIGIN) ||
     (audience === 'logs' &&
       url.protocol !== 'https:' &&
-      !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))
+      !(url.protocol === 'http:' && isLoopbackHostname(url.hostname)))
   ) {
     throw new Error('Azure request URL is not allowed');
   }
@@ -200,7 +201,7 @@ async function logsQuery(
   const url = new URL(baseUrl);
   if (
     (url.protocol !== 'https:' &&
-      !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) ||
+      !(url.protocol === 'http:' && isLoopbackHostname(url.hostname))) ||
     url.username ||
     url.password
   ) {

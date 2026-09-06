@@ -221,7 +221,9 @@ export class AgentToolAdapter {
   ): Promise<boolean> {
     if (signal?.aborted) return false;
     if (
-      (isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) ||
+      (isBuiltInTool(toolName) &&
+        !isSensitiveBuiltInToolCall(toolName, args) &&
+        (!isRuntimeTool || args.method === 'GET')) ||
       (!isRuntimeTool && toolName === 'kubectl' && args.method === 'GET')
     ) {
       return true;

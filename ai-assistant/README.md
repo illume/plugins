@@ -149,8 +149,9 @@ optionally use the desktop app's Azure CLI integration to obtain a short-lived a
 
 Use dedicated least-privilege credentials. Tool results are sent to the selected model provider.
 Self-hosted APIs must be reachable from Headlamp and allow its origin through CORS. Every native
-tool is read-only, caps result counts at 100, uses a 30-second request timeout, and exposes no
-create, update, or delete action.
+tool is read-only, caps result counts at 100, uses a 30-second overall request timeout, retries
+rate limits and transient network failures up to twice with bounded backoff, and exposes no create,
+update, or delete action.
 
 In the Headlamp desktop app, **Discover from Azure CLI** can fill the URL from Managed Grafana and
 Azure Monitor workspace resources across subscriptions accessible to the active `az` identity.

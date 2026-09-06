@@ -67,6 +67,10 @@ export interface ObservabilityToolContext {
 type Provider = keyof ObservabilityConfig;
 /** Maximum provider response size read into memory or returned as model-facing content. */
 export const MAX_RESPONSE_BYTES = 200_000;
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_REQUEST_ATTEMPTS = 3;
+const MAX_RETRY_DELAY_MS = 5_000;
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
 /** Returns whether a URL hostname is a local loopback name or address. */
 export function isLoopbackHostname(hostname: string): boolean {
@@ -274,6 +278,34 @@ function providerHeaders(provider: Provider, config: ObservabilityProviderConfig
   return headers;
 }
 
+/** Returns a bounded delay for a rate-limited or transient request retry. */
+function retryDelayMs(response: Response | undefined, retry: number): number {
+  const retryAfter = response?.headers.get('retry-after');
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    const delay = Number.isFinite(seconds)
+      ? seconds * 1000
+      : Date.parse(retryAfter) - Date.now();
+    if (Number.isFinite(delay)) return Math.min(Math.max(delay, 0), MAX_RETRY_DELAY_MS);
+  }
+  return Math.min(250 * 2 ** retry, MAX_RETRY_DELAY_MS);
+}
+
+/** Returns whether fetch failed because the network connection was unavailable or interrupted. */
+function isNetworkError(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    (error instanceof DOMException && ['NetworkError', 'NotReadableError'].includes(error.name))
+  );
+}
+
+/** Waits before retrying without extending the overall request deadline. */
+async function waitForRetry(delay: number, deadline: number): Promise<boolean> {
+  if (Date.now() + delay >= deadline) return false;
+  if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
+  return true;
+}
+
 /**
  * Executes a bounded provider HTTP request and parses its JSON response.
  *
@@ -299,13 +331,45 @@ async function requestJson(
   }
   const headers = providerHeaders(provider, config);
   for (const [name, value] of new Headers(init?.headers)) headers.set(name, value);
-  const response = await (context.fetch ?? fetch)(url, {
-    ...init,
-    headers,
-    redirect: 'error',
-    signal: AbortSignal.timeout(30_000),
-  });
-  return readBoundedJson(response, provider);
+  const deadline = Date.now() + REQUEST_TIMEOUT_MS;
+  for (let attempt = 0; attempt < MAX_REQUEST_ATTEMPTS; attempt++) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new Error(`${provider} request timed out after 30 seconds`);
+    try {
+      const response = await (context.fetch ?? fetch)(url, {
+        ...init,
+        headers,
+        redirect: 'error',
+        signal: AbortSignal.timeout(remaining),
+      });
+      if (
+        RETRYABLE_STATUS_CODES.has(response.status) &&
+        attempt + 1 < MAX_REQUEST_ATTEMPTS
+      ) {
+        const delay = retryDelayMs(response, attempt);
+        if (await waitForRetry(delay, deadline)) {
+          await response.body?.cancel().catch(() => undefined);
+          continue;
+        }
+      }
+      return await readBoundedJson(response, provider);
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        (error.name === 'AbortError' || error.name === 'TimeoutError')
+      ) {
+        throw new Error(`${provider} request timed out after 30 seconds`);
+      }
+      if (!isNetworkError(error)) throw error;
+      if (
+        attempt + 1 >= MAX_REQUEST_ATTEMPTS ||
+        !(await waitForRetry(retryDelayMs(undefined, attempt), deadline))
+      ) {
+        throw new Error(`${provider} request failed because the network is unavailable`);
+      }
+    }
+  }
+  throw new Error(`${provider} request failed because the network is unavailable`);
 }
 
 /**

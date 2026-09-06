@@ -434,6 +434,52 @@ describe('native observability tools', () => {
     );
   });
 
+  it('retries rate-limited requests using Retry-After', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'rate limited' }), {
+          status: 429,
+          headers: { 'Retry-After': '0' },
+        })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'success', data: [] })));
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(tool.handler({ action: 'query', query: 'up' })).resolves.toMatchObject({
+      success: true,
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries transient network failures', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'success', data: [] })));
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(tool.handler({ action: 'query', query: 'up' })).resolves.toMatchObject({
+      success: true,
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports request timeouts clearly without retrying them', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValue(new DOMException('The operation timed out', 'TimeoutError'));
+    const tool = new PrometheusTool();
+    tool.setContext({ config, fetch });
+
+    await expect(tool.handler({ action: 'query', query: 'up' })).rejects.toThrow(
+      'request timed out after 30 seconds'
+    );
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it('bounds deeply nested provider responses without overflowing the stack', async () => {
     const nested = `${'['.repeat(12_000)}0${']'.repeat(12_000)}`;
     const fetch: typeof globalThis.fetch = async () => new Response(nested);

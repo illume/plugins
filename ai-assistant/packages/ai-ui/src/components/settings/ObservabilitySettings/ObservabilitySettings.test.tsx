@@ -118,7 +118,7 @@ it('discovers Azure endpoints and only applies the selected result', async () =>
     const result = await screen.findByRole('button', {
       name: 'Use dashboards (operations, subscription) for Grafana',
     });
-    const traces = screen.getByRole('button', {
+    const azureMonitorEndpoint = screen.getByRole('button', {
       name: 'Use aks-logs (operations, subscription) for Azure Monitor and AKS',
     });
     expect(onChange).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ it('discovers Azure endpoints and only applies the selected result', async () =>
       })
     );
 
-    fireEvent.click(traces);
+    fireEvent.click(azureMonitorEndpoint);
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({
         azureMonitor: {

@@ -140,6 +140,28 @@ describe('discoverAzureObservabilityEndpoints', () => {
     }
   });
 
+  it('rejects oversized Resource Graph responses', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value: [{ subscriptionId: 'first', state: 'Enabled' }] }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: [], padding: 'x'.repeat(200_001) }), { status: 200 })
+      );
+
+    try {
+      await expect(discoverAzureObservabilityEndpoints(runCommand)).rejects.toThrow(
+        'Azure Resource Graph response exceeded 200000 bytes'
+      );
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
   it('stops when Resource Graph repeats a continuation token', async () => {
     const runCommand = vi.fn().mockResolvedValue({ stdout: 'arm-token', exitCode: 0 });
     const fetchSpy = vi

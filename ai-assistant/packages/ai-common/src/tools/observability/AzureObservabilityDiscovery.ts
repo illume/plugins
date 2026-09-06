@@ -20,6 +20,7 @@ import {
   getAzureManagementToken,
   listAzureSubscriptionsWithApi,
 } from '../../providers/detectProvider';
+import { readBoundedJson } from './ObservabilityTools';
 
 /** Azure observability service supported by endpoint discovery. */
 export type AzureObservabilityProvider = 'grafana' | 'prometheus' | 'azureMonitor';
@@ -143,7 +144,10 @@ async function queryAzureObservabilityResources(
         `Azure API could not discover managed observability resources (${response.status}).`
       );
     }
-    const page: AzureResourceGraphResponse = await response.json();
+    const page = (await readBoundedJson(
+      response,
+      'Azure Resource Graph'
+    )) as AzureResourceGraphResponse;
     if (!Array.isArray(page.data)) {
       throw new Error('Azure API returned invalid observability resource data.');
     }

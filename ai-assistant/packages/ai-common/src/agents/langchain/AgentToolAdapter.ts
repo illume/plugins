@@ -56,6 +56,8 @@ export interface AgentToolAdapterOptions {
  */
 export class AgentToolAdapter {
   private approvalTail: Promise<void> = Promise.resolve();
+  private readonly pendingExecutions = new Set<Promise<void>>();
+  private haltRequested = false;
   private readonly descriptions = new Map<string, string>();
 
   constructor(
@@ -98,18 +100,32 @@ export class AgentToolAdapter {
           return this.deniedResult(source.name, toolCallId);
         }
 
-        const result = await this.runtime.executeTool(
-          source.name,
-          normalizedArgs,
-          toolCallId,
-          this.createPendingPrompt(source.name, normalizedArgs, toolCallId)
-        );
-        this.options.onRuntimeResult?.(toolCallId, result);
-        const content = redactSecrets(result.content);
-        if (result.metadata?.requiresConfirmation === true) {
-          throw new AgentToolExecutionHalt();
+        let releaseExecution!: () => void;
+        const execution = new Promise<void>(resolve => {
+          releaseExecution = resolve;
+        });
+        this.pendingExecutions.add(execution);
+        try {
+          const result = await this.runtime.executeTool(
+            source.name,
+            normalizedArgs,
+            toolCallId,
+            this.createPendingPrompt(source.name, normalizedArgs, toolCallId)
+          );
+          this.options.onRuntimeResult?.(toolCallId, result);
+          const content = redactSecrets(result.content);
+          if (
+            result.metadata?.requiresConfirmation === true ||
+            result.shouldProcessFollowUp === false
+          ) {
+            await this.haltAfterPendingExecutions(execution);
+            throw new AgentToolExecutionHalt();
+          }
+          return content;
+        } finally {
+          releaseExecution();
+          this.pendingExecutions.delete(execution);
         }
-        return content;
       },
       {
         name: source.name,
@@ -128,7 +144,8 @@ export class AgentToolAdapter {
           source.name,
           normalizedArgs,
           toolCallId,
-          config?.signal ?? this.options.signal
+          config?.signal ?? this.options.signal,
+          false
         );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
@@ -143,7 +160,19 @@ export class AgentToolAdapter {
           : typeof result === 'string'
           ? result
           : JSON.stringify(result);
-        return redactSecrets(content);
+        const redactedContent = redactSecrets(content);
+        const parsedContent = this.parseObject(redactedContent);
+        const isError =
+          (ToolMessage.isInstance(result) && result.status === 'error') ||
+          (parsedContent !== undefined && parsedContent.error === true);
+        return isError
+          ? new ToolMessage({
+              status: 'error',
+              content: redactedContent,
+              tool_call_id: toolCallId,
+              name: source.name,
+            })
+          : redactedContent;
       },
       {
         name: source.name,
@@ -182,10 +211,15 @@ export class AgentToolAdapter {
     toolName: string,
     args: Record<string, unknown>,
     toolCallId: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    allowAutoApproval = true
   ): Promise<boolean> {
     if (signal?.aborted) return false;
-    if (isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) {
+    if (
+      allowAutoApproval &&
+      isBuiltInTool(toolName) &&
+      !isSensitiveBuiltInToolCall(toolName, args)
+    ) {
       return true;
     }
 
@@ -217,6 +251,26 @@ export class AgentToolAdapter {
     } finally {
       this.options.clearToolConfirmation?.();
       releaseApproval();
+    }
+  }
+
+  private async haltAfterPendingExecutions(current: Promise<void>): Promise<void> {
+    if (this.haltRequested) return;
+    this.haltRequested = true;
+    const siblings = [...this.pendingExecutions].filter(execution => execution !== current);
+    if (siblings.length > 0) {
+      await Promise.allSettled(siblings);
+    }
+  }
+
+  private parseObject(content: string): Record<string, unknown> | undefined {
+    try {
+      const parsed: unknown = JSON.parse(content);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : undefined;
+    } catch {
+      return undefined;
     }
   }
 

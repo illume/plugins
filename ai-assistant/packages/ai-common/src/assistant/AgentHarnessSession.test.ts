@@ -33,6 +33,60 @@ describe('AgentHarnessSession', () => {
     inlineToolApprovalManager.setApprovalHandler(null);
   });
 
+  it('requires approval for mutating host-provided tools', async () => {
+    const invoked = vi.fn(async () => 'must not execute');
+    const kubectl = tool(invoked, {
+      name: 'kubernetes_api_request',
+      description: 'Run kubectl',
+      schema: z.object({ method: z.string(), url: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            {
+              id: 'mutating-call',
+              name: 'kubernetes_api_request',
+              args: { method: 'DELETE', url: '/x' },
+            },
+          ],
+          [],
+        ],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
+    await session.enableDirectToolCalling([kubectl]);
+
+    await session.userSend('Delete resource');
+
+    expect(invoked).not.toHaveBeenCalled();
+  });
+
+  it('preserves errors from host-provided tools', async () => {
+    const kubectl = tool(async () => ({ error: true, message: 'command failed' }), {
+      name: 'kubectl',
+      description: 'Run kubectl',
+      schema: z.object({ command: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'error-call', name: 'kubectl', args: { command: 'get pods' } }], []],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    await session.enableDirectToolCalling([kubectl]);
+
+    await session.userSend('List pods');
+
+    expect(session.history.find(message => message.toolCallId === 'error-call')).toEqual(
+      expect.objectContaining({ error: true })
+    );
+  });
+
   it('uses createAgent and stores an aligned model-tool-model history', async () => {
     const execute = vi.fn();
     const toolManager = createMockToolManager({
@@ -160,6 +214,50 @@ describe('AgentHarnessSession', () => {
     );
     expect(session.history.find(message => message.role === 'tool')?.content).toBe(
       'kubectl output'
+    );
+  });
+
+  it('does not make a follow-up model call after a strict-false runtime result', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['metrics__query'],
+    });
+    const executeTool = vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => ({
+        content: JSON.stringify({ value: toolCallId }),
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: toolCallId !== 'strict-false-call',
+      })
+    );
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          { id: 'strict-false-call', name: 'metrics__query', args: { query: 'up' } },
+          { id: 'sibling-call', name: 'metrics__query', args: { query: 'down' } },
+        ],
+        [],
+      ],
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager,
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+
+    await session.userSend('Query metrics');
+
+    expect(executeTool).toHaveBeenCalledTimes(2);
+    expect(session.history.filter(message => message.role === 'assistant')).toHaveLength(1);
+    expect(session.history.map(message => message.toolCallId)).toEqual(
+      expect.arrayContaining(['strict-false-call', 'sibling-call'])
     );
   });
 

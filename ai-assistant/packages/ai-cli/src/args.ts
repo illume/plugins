@@ -172,8 +172,8 @@ Environment variables:
   HEADLAMP_AI_AUTO_APPROVE    Set to 1 to auto-approve all tool calls
   HEADLAMP_AI_MOCK_SKILLS     Set to 1 to inject the built-in mock skill set
   HEADLAMP_AI_MOCK_TOOLS      Set to 1 to inject mock Kubernetes tool results
-  HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS
-                              Set to 1 to use the experimental createAgent harness
+  HEADLAMP_AI_LEGACY_SESSION
+                              Set to 1 to use the previous session implementation
   HEADLAMP_AI_MOCK_ALL        Set to 1 to enable full offline/demo mode:
                               mock model + mock skills + mock tools + auto-approve
 

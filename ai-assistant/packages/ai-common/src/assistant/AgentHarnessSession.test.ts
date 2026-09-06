@@ -170,12 +170,14 @@ describe('AgentHarnessSession', () => {
       description: 'Requires approval',
       schema: z.object({}),
     });
+
     const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
       model: new FakeToolCallingModel({
         toolCalls: [[{ id: 'denied-call', name: 'external_tool', args: {} }], []],
       }),
       toolManager: createMockToolManager(),
     });
+
     inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
     await session.enableDirectToolCalling([externalTool]);
 
@@ -188,6 +190,70 @@ describe('AgentHarnessSession', () => {
         error: true,
       })
     );
+  });
+
+  it('marks metadata tool failures as errors', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['metrics__query'],
+    });
+    vi.spyOn(toolManager, 'executeTool').mockResolvedValue({
+      content: '{"value":3}',
+      shouldAddToHistory: true,
+      shouldProcessFollowUp: true,
+      metadata: { isError: true },
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({}),
+      }),
+    ]);
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'failed-call', name: 'metrics__query', args: {} }], []],
+      }),
+      toolManager,
+    });
+    await session.userSend('Query metrics');
+
+    expect(session.history.find(message => message.toolCallId === 'failed-call')).toEqual(
+      expect.objectContaining({ error: true })
+    );
+  });
+
+  it('does not execute an approval after the run is aborted', async () => {
+    const execute = vi.fn(async () => ({ ok: true }));
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['metrics__query'],
+      toolResults: { metrics__query: execute },
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({}),
+      }),
+    ]);
+    inlineToolApprovalManager.setApprovalHandler({
+      requestApproval: () => new Promise<string[]>(() => undefined),
+    } as any);
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'approval-call', name: 'metrics__query', args: {} }], []],
+      }),
+      toolManager,
+    });
+
+    const pendingRun = session.userSend('Query metrics');
+    await Promise.resolve();
+    session.abort();
+    await pendingRun;
+
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it('preserves the streaming API', async () => {
@@ -288,14 +354,12 @@ describe('AgentHarnessSession', () => {
       model,
       toolManager,
     });
-    const executeTool = vi
-      .spyOn(toolManager, 'executeTool')
-      .mockResolvedValue({
-        content: '{"status":"pending_confirmation"}',
-        shouldAddToHistory: false,
-        shouldProcessFollowUp: false,
-        metadata: { requiresConfirmation: true, method: 'DELETE' },
-      });
+    const executeTool = vi.spyOn(toolManager, 'executeTool').mockResolvedValue({
+      content: '{"status":"pending_confirmation"}',
+      shouldAddToHistory: false,
+      shouldProcessFollowUp: false,
+      metadata: { requiresConfirmation: true, method: 'DELETE' },
+    });
 
     const response = await session.userSend('Delete pod api-0');
 

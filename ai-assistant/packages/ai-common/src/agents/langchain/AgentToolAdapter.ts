@@ -43,6 +43,8 @@ export interface AgentToolAdapterOptions {
   clearToolConfirmation?: () => void;
   /** Records runtime result policy for session-history reconciliation. */
   onRuntimeResult?: (toolCallId: string, result: ToolExecutionResult) => void;
+  /** Signal used to cancel approval waits and prevent post-cancel execution. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -86,7 +88,12 @@ export class AgentToolAdapter {
       async (args, config) => {
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
-        const approved = await this.requestApproval(source.name, normalizedArgs, toolCallId);
+        const approved = await this.requestApproval(
+          source.name,
+          normalizedArgs,
+          toolCallId,
+          config?.signal ?? this.options.signal
+        );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
         }
@@ -99,7 +106,7 @@ export class AgentToolAdapter {
         );
         this.options.onRuntimeResult?.(toolCallId, result);
         const content = redactSecrets(result.content);
-        if (result.shouldProcessFollowUp === false) {
+        if (result.metadata?.requiresConfirmation === true) {
           throw new AgentToolExecutionHalt();
         }
         return content;
@@ -117,7 +124,12 @@ export class AgentToolAdapter {
       async (args, config) => {
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
-        const approved = await this.requestApproval(source.name, normalizedArgs, toolCallId);
+        const approved = await this.requestApproval(
+          source.name,
+          normalizedArgs,
+          toolCallId,
+          config?.signal ?? this.options.signal
+        );
         if (!approved) {
           return this.deniedResult(source.name, toolCallId);
         }
@@ -169,8 +181,10 @@ export class AgentToolAdapter {
   private async requestApproval(
     toolName: string,
     args: Record<string, unknown>,
-    toolCallId: string
+    toolCallId: string,
+    signal?: AbortSignal
   ): Promise<boolean> {
+    if (signal?.aborted) return false;
     if (isBuiltInTool(toolName) && !isSensitiveBuiltInToolCall(toolName, args)) {
       return true;
     }
@@ -190,20 +204,34 @@ export class AgentToolAdapter {
     this.approvalTail = new Promise<void>(resolve => {
       releaseApproval = resolve;
     });
-    await predecessor;
+    await this.waitForApprovalOrAbort(predecessor, signal);
 
     try {
-      const approvedIds = await inlineToolApprovalManager.requestApproval(
+      const approval = inlineToolApprovalManager.requestApproval(
         [call],
         this.options.approvalContext
       );
-      return approvedIds.includes(toolCallId);
+      const approvedIds = await this.waitForApprovalOrAbort(approval, signal);
+      return !signal?.aborted && approvedIds.includes(toolCallId);
     } catch {
       return false;
     } finally {
       this.options.clearToolConfirmation?.();
       releaseApproval();
     }
+  }
+
+  private async waitForApprovalOrAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+    if (!signal) return promise;
+    if (signal.aborted) throw new Error('Tool approval cancelled');
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        signal.addEventListener('abort', () => reject(new Error('Tool approval cancelled')), {
+          once: true,
+        });
+      }),
+    ]);
   }
 
   private findDescription(toolName: string): string {

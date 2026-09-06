@@ -17,7 +17,7 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
-import { AgentToolAdapter } from '../agents/langchain/AgentToolAdapter';
+import { AgentToolAdapter, AgentToolExecutionHalt } from '../agents/langchain/AgentToolAdapter';
 import { createAgentHarness } from '../agents/langchain/createAgentHarness';
 import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
@@ -77,6 +77,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
         clearToolConfirmation: () => this.clearToolConfirmation(),
         onRuntimeResult: (toolCallId, result) => runtimeResults.set(toolCallId, result),
+        signal: abortController.signal,
       });
       const adaptedTools = toolAdapter.createTools();
       const agent = await createAgentHarness({
@@ -102,6 +103,10 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       return this.lastAssistantMessage();
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
+      if (error instanceof AgentToolExecutionHalt) {
+        this.currentAbortController = null;
+        return this.lastAssistantMessage();
+      }
       return this.handleUserSendError(error);
     }
   }
@@ -173,7 +178,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           toolCalls?.map(toolCall => toolCall.id).filter((id): id is string => Boolean(id)) ?? []
         );
         for (const toolCall of toolCalls ?? []) {
-          toolNames.set(toolCall.id, toolCall.function.name);
+          if (toolCall.id) toolNames.set(toolCall.id, toolCall.function.name);
         }
       } else if (ToolMessage.isInstance(message)) {
         const runtimeResult = runtimeResults.get(message.tool_call_id);
@@ -250,7 +255,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         error:
           message.status === 'error' ||
           runtimeResult?.isError === true ||
-          Boolean(runtimeResult?.error),
+          Boolean(runtimeResult?.error) ||
+          Boolean(runtimeResult?.metadata?.isError || runtimeResult?.metadata?.error),
       });
     }
   }

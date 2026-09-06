@@ -209,15 +209,17 @@ export class MockToolManager implements LangChainToolRuntime {
    */
   getLangChainTools(): StructuredToolInterface[] {
     return this.enabledNames.map(toolName =>
-      tool(async () => '', {
-        name: toolName,
-        description: `Mock ${toolName} tool`,
-        schema: z.object({
-          url: z.string().optional(),
-          method: z.string().optional(),
-          body: z.string().optional(),
-        }),
-      })
+      tool(
+        async args => {
+          const result = await this.executeTool(toolName, args as Record<string, unknown>);
+          return result.content;
+        },
+        {
+          name: toolName,
+          description: `Mock ${toolName} tool`,
+          schema: z.object({}).passthrough(),
+        }
+      )
     );
   }
 

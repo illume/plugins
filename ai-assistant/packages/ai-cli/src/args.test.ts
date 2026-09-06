@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { parseArgs } from './args.js';
+import { describe, expect, it, vi } from 'vitest';
+import { parseArgs, printUsage } from './args.js';
 
 const base = ['node', 'headlamp-ai'];
 
@@ -63,6 +63,15 @@ describe('parseArgs', () => {
 
   it('parses --legacy-session', () => {
     expect(parseArgs([...base, '--legacy-session']).legacySession).toBe(true);
+  });
+
+  it('documents the legacy-session environment variable', () => {
+    const output = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    printUsage();
+    const text = output.mock.calls.flat().join('\n');
+    expect(text).toContain('HEADLAMP_AI_LEGACY_SESSION');
+    expect(text).not.toContain('HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS');
+    output.mockRestore();
   });
 
   it('parses --help and -h', () => {

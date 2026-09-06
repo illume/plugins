@@ -67,6 +67,7 @@ export class AgentToolAdapter {
 
   /** Creates agent-compatible wrappers for the current runtime inventory. */
   createTools(): StructuredToolInterface[] {
+    this.haltRequested = false;
     const runtimeTools = this.runtime.getLangChainTools();
     const runtimeToolNames = new Set(runtimeTools.map(runtimeTool => runtimeTool.name));
     const extraTools = (this.options.extraTools ?? []).filter(
@@ -258,6 +259,8 @@ export class AgentToolAdapter {
     if (this.haltRequested) return;
     this.haltRequested = true;
     const siblings = [...this.pendingExecutions].filter(execution => execution !== current);
+    // Once the first deferred result requests a halt, sibling callbacks skip
+    // waiting here and settle their own execution promises for the leader.
     if (siblings.length > 0) {
       await Promise.allSettled(siblings);
     }

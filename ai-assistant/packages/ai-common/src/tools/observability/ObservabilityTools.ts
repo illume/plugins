@@ -661,6 +661,14 @@ function rangeMilliseconds(value: string): number {
   return parsed;
 }
 
+/**
+ * Parses a positive Prometheus step expressed as seconds or a duration such as `1m`, `1h30m`, or
+ * `1ms`.
+ *
+ * @param value - Numeric seconds or a concatenated Prometheus duration.
+ * @returns The step duration in seconds.
+ * @throws When the value is not a positive supported duration.
+ */
 function prometheusStepSeconds(value: string): number {
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric > 0) return numeric;

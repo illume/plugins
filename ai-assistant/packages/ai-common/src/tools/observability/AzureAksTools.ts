@@ -219,7 +219,7 @@ async function logsQuery(
     url.username ||
     url.password
   ) {
-    throw new Error('Azure Monitor Logs URL must use HTTPS');
+    throw new Error('Azure Monitor Logs URL must use HTTPS, or HTTP for localhost');
   }
   url.pathname = `${url.pathname.replace(/\/+$/, '')}/query`;
   return azureRequest(context, 'logs', url, {

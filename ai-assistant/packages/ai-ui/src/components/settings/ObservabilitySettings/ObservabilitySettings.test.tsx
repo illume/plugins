@@ -37,10 +37,7 @@ it('edits native provider URLs and keeps credentials in password inputs', () => 
   expect(screen.getByLabelText('Resource Manager Token')).toHaveProperty('type', 'password');
   expect(screen.getByText(/require no MCP server/)).toBeTruthy();
   expect(screen.getByText(/Read-only does not mean risk-free/)).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Read the observability threat model' })).toHaveProperty(
-    'rel',
-    'noopener noreferrer'
-  );
+  expect(screen.queryByRole('link')).toBeNull();
 });
 
 it('guides setup and explicitly toggles persistent observability approval', () => {

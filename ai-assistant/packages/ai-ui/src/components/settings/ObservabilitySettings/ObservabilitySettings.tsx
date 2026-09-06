@@ -29,7 +29,6 @@ import {
   Button,
   CircularProgress,
   FormControlLabel,
-  Link,
   Switch,
   TextField,
   Typography,
@@ -255,14 +254,7 @@ export function ObservabilitySettings({
         <Typography variant="body2" sx={{ mt: 1 }}>
           {t(
             'Use trusted HTTPS endpoints and least-privilege credentials. Tool output is bounded and redacted, but provider-specific sensitive values may remain.'
-          )}{' '}
-          <Link
-            href="https://github.com/illume/plugins/blob/main/ai-assistant/docs/observability-threat-model.md"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t('Read the observability threat model')}
-          </Link>
+          )}
         </Typography>
       </Alert>
       {onAutoApprovalChange && (

@@ -467,6 +467,9 @@ const AZURE_DEPLOYMENT_CONCURRENCY = 8;
 /** Maximum time (ms) to wait for an Azure Management API request. */
 const AZURE_API_TIMEOUT_MS = 15_000;
 
+/** Maximum number of pages accepted from an Azure Management API list request. */
+const AZURE_API_MAX_PAGES = 100;
+
 /** Account row projected by the Azure Resource Graph query. */
 interface AzureResourceGraphAccount {
   /** Azure resource ID. */
@@ -535,7 +538,7 @@ export async function fetchAzureApi(
   }
   const timeoutId = setTimeout(abort, AZURE_API_TIMEOUT_MS);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, { ...init, redirect: 'error', signal: controller.signal });
   } finally {
     clearTimeout(timeoutId);
     signal?.removeEventListener('abort', abort);
@@ -628,8 +631,16 @@ export async function listAzureSubscriptionsWithApi(
 ): Promise<AzureSubscription[] | null> {
   const subscriptions: AzureSubscription[] = [];
   let url: string | undefined = 'https://management.azure.com/subscriptions?api-version=2022-12-01';
+  const visitedUrls = new Set<string>();
   try {
     while (url) {
+      if (visitedUrls.has(url)) {
+        throw new Error('Azure subscription pagination repeated a URL');
+      }
+      if (visitedUrls.size >= AZURE_API_MAX_PAGES) {
+        throw new Error('Azure subscription pagination returned too many pages');
+      }
+      visitedUrls.add(url);
       const response = await fetchAzureApi(
         url,
         { headers: { Authorization: `Bearer ${token}` } },

@@ -124,8 +124,15 @@ describe('createAgentHarness', () => {
     let maximumConcurrentCalls = 0;
     const completedCalls: string[] = [];
     let resolveBothStarted!: () => void;
-    const bothStarted = new Promise<void>(resolve => {
-      resolveBothStarted = resolve;
+    const bothStarted = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error('Expected tool calls to start concurrently')),
+        1000
+      );
+      resolveBothStarted = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
     });
     const inspectPods = vi.fn(async ({ namespace }: { namespace: string }) => {
       activeCalls += 1;
@@ -172,5 +179,5 @@ describe('createAgentHarness', () => {
         .filter(message => ToolMessage.isInstance(message))
         .map(message => message.content)
     ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
-  }, 1000);
+  }, 2000);
 });

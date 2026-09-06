@@ -71,6 +71,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_REQUEST_ATTEMPTS = 3;
 const MAX_RETRY_DELAY_MS = 5_000;
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
+const REQUEST_TIMEOUT_ERROR = `request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`;
 
 /** Returns whether a URL hostname is a local loopback name or address. */
 export function isLoopbackHostname(hostname: string): boolean {
@@ -332,7 +333,7 @@ async function requestJson(
   const deadline = Date.now() + REQUEST_TIMEOUT_MS;
   for (let attempt = 0; attempt < MAX_REQUEST_ATTEMPTS; attempt++) {
     const remaining = deadline - Date.now();
-    if (remaining <= 0) throw new Error(`${provider} request timed out after 30 seconds`);
+    if (remaining <= 0) throw new Error(`${provider} ${REQUEST_TIMEOUT_ERROR}`);
     try {
       const response = await (context.fetch ?? fetch)(url, {
         ...init,
@@ -353,7 +354,7 @@ async function requestJson(
         error instanceof DOMException &&
         (error.name === 'AbortError' || error.name === 'TimeoutError')
       ) {
-        throw new Error(`${provider} request timed out after 30 seconds`);
+        throw new Error(`${provider} ${REQUEST_TIMEOUT_ERROR}`);
       }
       if (!isNetworkError(error)) throw error;
       if (

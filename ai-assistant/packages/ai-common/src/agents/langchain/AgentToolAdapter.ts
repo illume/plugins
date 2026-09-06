@@ -223,14 +223,16 @@ export class AgentToolAdapter {
   private async waitForApprovalOrAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
     if (!signal) return promise;
     if (signal.aborted) throw new Error('Tool approval cancelled');
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        signal.addEventListener('abort', () => reject(new Error('Tool approval cancelled')), {
-          once: true,
-        });
-      }),
-    ]);
+    let onAbort!: () => void;
+    const abortPromise = new Promise<T>((_, reject) => {
+      onAbort = () => reject(new Error('Tool approval cancelled'));
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    try {
+      return await Promise.race([promise, abortPromise]);
+    } finally {
+      signal.removeEventListener('abort', onAbort);
+    }
   }
 
   private findDescription(toolName: string): string {

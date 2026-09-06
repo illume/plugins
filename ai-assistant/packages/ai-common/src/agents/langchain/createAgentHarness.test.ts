@@ -19,6 +19,7 @@ import { tool } from '@langchain/core/tools';
 import { FakeToolCallingModel } from 'langchain';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { basePrompt } from '../../prompts/baseAssistantPrompt';
 import {
   createAgentHarness,
   getAgentSystemPrompt,
@@ -26,6 +27,10 @@ import {
 } from './createAgentHarness';
 
 describe('createAgentHarness', () => {
+  it('uses the base prompt when no custom prompt is supplied', () => {
+    expect(getAgentSystemPrompt()).toBe(`${basePrompt}\n\n${parallelToolCallInstruction}`);
+  });
+
   it('instructs the agent to parallelize independent tool calls', () => {
     expect(getAgentSystemPrompt('Troubleshoot Kubernetes.')).toBe(
       `Troubleshoot Kubernetes.\n\n${parallelToolCallInstruction}`
@@ -70,6 +75,24 @@ describe('createAgentHarness', () => {
       expect.objectContaining({ toolCall: expect.objectContaining({ id: 'call-1' }) })
     );
     expect(result.messages.some(message => ToolMessage.isInstance(message))).toBe(true);
+  });
+
+  it('does not construct an agent when tool discovery fails', async () => {
+    const discoveryError = new Error('MCP discovery failed');
+    const getLangChainTools = vi.fn();
+
+    await expect(
+      createAgentHarness({
+        model: new FakeToolCallingModel(),
+        toolRuntime: {
+          waitForMCPToolsInitialization: async () => {
+            throw discoveryError;
+          },
+          getLangChainTools,
+        },
+      })
+    ).rejects.toBe(discoveryError);
+    expect(getLangChainTools).not.toHaveBeenCalled();
   });
 
   it('stops when the model-call limit is exceeded', async () => {
@@ -135,9 +158,7 @@ describe('createAgentHarness', () => {
     const completedCalls: string[] = [];
     let resolveBothStarted!: () => void;
     const bothStarted = new Promise<void>(resolve => {
-      resolveBothStarted = () => {
-        resolve();
-      };
+      resolveBothStarted = resolve;
     });
     const inspectPods = vi.fn(async ({ namespace }: { namespace: string }) => {
       // Tool callbacks run on the JavaScript event loop, so these synchronous

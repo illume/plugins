@@ -133,7 +133,7 @@ describe('createAgentHarness', () => {
       if (activeCalls === 2) {
         resolveBothStarted();
       }
-      await Promise.race([bothStarted, new Promise(resolve => setTimeout(resolve, 100))]);
+      await bothStarted;
       completedCalls.push(namespace);
       activeCalls -= 1;
       return `pods in ${namespace}`;
@@ -172,5 +172,5 @@ describe('createAgentHarness', () => {
         .filter(message => ToolMessage.isInstance(message))
         .map(message => message.content)
     ).toEqual(expect.arrayContaining(['pods in default', 'pods in kube-system']));
-  });
+  }, 1000);
 });

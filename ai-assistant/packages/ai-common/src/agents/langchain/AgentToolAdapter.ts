@@ -91,23 +91,23 @@ export class AgentToolAdapter {
       async (args, config) => {
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
-        const approved = await this.requestApproval(
-          source.name,
-          normalizedArgs,
-          toolCallId,
-          config?.signal ?? this.options.signal,
-          true
-        );
-        if (!approved) {
-          return this.deniedResult(source.name, toolCallId);
-        }
-
         let releaseExecution!: () => void;
         const execution = new Promise<void>(resolve => {
           releaseExecution = resolve;
         });
         this.pendingExecutions.add(execution);
         try {
+          const approved = await this.requestApproval(
+            source.name,
+            normalizedArgs,
+            toolCallId,
+            config?.signal ?? this.options.signal,
+            true
+          );
+          if (!approved) {
+            return this.deniedResult(source.name, toolCallId);
+          }
+
           const result = await this.runtime.executeTool(
             source.name,
             normalizedArgs,
@@ -145,39 +145,54 @@ export class AgentToolAdapter {
       async (args, config) => {
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
-        const approved = await this.requestApproval(
-          source.name,
-          normalizedArgs,
-          toolCallId,
-          config?.signal ?? this.options.signal,
-          false
-        );
-        if (!approved) {
-          return this.deniedResult(source.name, toolCallId);
-        }
-
-        const result = await source.invoke(normalizedArgs, {
-          ...config,
-          toolCall: { id: toolCallId, name: source.name, args: normalizedArgs, type: 'tool_call' },
+        let releaseExecution!: () => void;
+        const execution = new Promise<void>(resolve => {
+          releaseExecution = resolve;
         });
-        const content = ToolMessage.isInstance(result)
-          ? extractTextContent(result.content)
-          : typeof result === 'string'
-          ? result
-          : JSON.stringify(result);
-        const redactedContent = redactSecrets(content);
-        const parsedContent = this.parseObject(redactedContent);
-        const isError =
-          (ToolMessage.isInstance(result) && result.status === 'error') ||
-          (parsedContent !== undefined && parsedContent.error === true);
-        return isError
-          ? new ToolMessage({
-              status: 'error',
-              content: redactedContent,
-              tool_call_id: toolCallId,
+        this.pendingExecutions.add(execution);
+        try {
+          const approved = await this.requestApproval(
+            source.name,
+            normalizedArgs,
+            toolCallId,
+            config?.signal ?? this.options.signal,
+            false
+          );
+          if (!approved) {
+            return this.deniedResult(source.name, toolCallId);
+          }
+
+          const result = await source.invoke(normalizedArgs, {
+            ...config,
+            toolCall: {
+              id: toolCallId,
               name: source.name,
-            })
-          : redactedContent;
+              args: normalizedArgs,
+              type: 'tool_call',
+            },
+          });
+          const content = ToolMessage.isInstance(result)
+            ? extractTextContent(result.content)
+            : typeof result === 'string'
+            ? result
+            : JSON.stringify(result);
+          const redactedContent = redactSecrets(content);
+          const parsedContent = this.parseObject(redactedContent);
+          const isError =
+            (ToolMessage.isInstance(result) && result.status === 'error') ||
+            (parsedContent !== undefined && parsedContent.error === true);
+          return isError
+            ? new ToolMessage({
+                status: 'error',
+                content: redactedContent,
+                tool_call_id: toolCallId,
+                name: source.name,
+              })
+            : redactedContent;
+        } finally {
+          releaseExecution();
+          this.pendingExecutions.delete(execution);
+        }
       },
       {
         name: source.name,

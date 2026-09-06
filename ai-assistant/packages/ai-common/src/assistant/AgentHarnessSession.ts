@@ -235,6 +235,27 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         runtimeResult,
         runtimeHistory
       );
+      recordedToolCallIds.add(toolCallId);
+    }
+
+    // Any call still pending here never produced a runtime result or tool
+    // message, typically because the run aborted or halted while it was
+    // still executing. Record an explicit not-executed result so history
+    // stays aligned with the tool calls the model requested.
+    for (const toolCallId of pendingToolCallIds) {
+      if (recordedToolCallIds.has(toolCallId)) continue;
+      this.history.push({
+        role: 'tool',
+        content: JSON.stringify({
+          error: true,
+          status: 'cancelled',
+          message: 'Tool call did not complete before the run ended.',
+        }),
+        toolCallId,
+        name: toolNames.get(toolCallId),
+        error: true,
+      });
+      recordedToolCallIds.add(toolCallId);
     }
   }
 

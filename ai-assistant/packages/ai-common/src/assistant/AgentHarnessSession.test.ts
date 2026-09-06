@@ -387,7 +387,94 @@ describe('AgentHarnessSession', () => {
     await vi.waitFor(() => expect(started).toBe(2));
     session.abort();
     await run;
+
+    // The stalled call never produced a runtime result or tool message, but
+    // history must still record an explicit not-executed result for it so
+    // stored history remains aligned and auditable.
+    expect(session.history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'tool',
+          toolCallId: 'stalled-call',
+          error: true,
+        }),
+      ])
+    );
+    expect(validateToolCallAlignment(session.history).aligned).toBe(true);
   }, 2000);
+
+  it('still executes a sibling call that is queued for approval when a halt is requested', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['metrics__query'],
+    });
+    const executeTool = vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => ({
+        content: JSON.stringify({ value: toolCallId }),
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: toolCallId !== 'strict-false-call',
+      })
+    );
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+
+    // Approves the strict-false call immediately, but only resolves the
+    // sibling's approval once the strict-false call has already halted the
+    // run. This exercises the case where a callback is still waiting in the
+    // serialized approval queue when a sibling requests a halt.
+    let releaseSiblingApproval!: () => void;
+    const siblingApprovalGate = new Promise<void>(resolve => {
+      releaseSiblingApproval = resolve;
+    });
+    inlineToolApprovalManager.setApprovalHandler({
+      handleApproval: async toolCalls => {
+        const ids = toolCalls.map(toolCall => toolCall.id);
+        if (ids.includes('sibling-call')) {
+          await siblingApprovalGate;
+        }
+        return ids;
+      },
+    });
+
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            { id: 'strict-false-call', name: 'metrics__query', args: { query: 'up' } },
+            { id: 'sibling-call', name: 'metrics__query', args: { query: 'down' } },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+
+    const run = session.userSend('Query metrics');
+    await vi.waitFor(() =>
+      expect(executeTool.mock.calls.map(call => call[2])).toContain('strict-false-call')
+    );
+
+    let runSettled = false;
+    run.then(() => {
+      runSettled = true;
+    });
+    // Give the run every opportunity to (incorrectly) finish while the
+    // sibling call is still queued for approval.
+    await new Promise(resolve => setTimeout(resolve, 10));
+    expect(runSettled).toBe(false);
+
+    releaseSiblingApproval();
+    await run;
+
+    expect(executeTool).toHaveBeenCalledTimes(2);
+    expect(session.history.map(message => message.toolCallId)).toEqual(
+      expect.arrayContaining(['strict-false-call', 'sibling-call'])
+    );
+  });
 
   it('marks denied tool results as errors', async () => {
     const invoked = vi.fn(async () => 'must not execute');

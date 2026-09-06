@@ -12,7 +12,7 @@ const OBSERVABILITY_UPSTREAMS = {
 
 export interface ObservabilityApiRequest {
   /** Provider whose API received the request. */
-  provider: 'datadog' | 'splunk' | 'grafana' | 'prometheus';
+  provider: 'datadog' | 'splunk' | 'grafana' | 'prometheus' | 'azureMonitor';
   /** HTTP method received by the fixture. */
   method: string;
   /** Request pathname and query string. */
@@ -46,7 +46,8 @@ export interface MockObservabilityApi {
 export async function startMockObservabilityApi(): Promise<MockObservabilityApi> {
   const requests: ObservabilityApiRequest[] = [];
   const successfulUpstreams: MockObservabilityApi['successfulUpstreams'] = [];
-  const servers = (['datadog', 'splunk', 'grafana', 'prometheus'] as const).map(provider =>
+  const providers = ['datadog', 'splunk', 'grafana', 'prometheus', 'azureMonitor'] as const;
+  const servers = providers.map(provider =>
     createServer(async (request, response) => {
       if (request.method === 'OPTIONS') {
         response.writeHead(204, {
@@ -114,6 +115,16 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
       response.end(
         provider === 'splunk'
           ? JSON.stringify({ results: [{ host: 'e2e-splunk', _raw: 'fixture event' }] })
+          : provider === 'azureMonitor'
+          ? JSON.stringify({
+              tables: [
+                {
+                  name: 'PrimaryResult',
+                  columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+                  rows: [['2026-09-05T00:00:00Z']],
+                },
+              ],
+            })
           : JSON.stringify({ data: [{ id: 'e2e-datadog-log', type: 'log' }] })
       );
     })
@@ -131,8 +142,12 @@ export async function startMockObservabilityApi(): Promise<MockObservabilityApi>
     servers.map((server, index) => {
       const address = server.address();
       if (!address || typeof address === 'string') throw new Error('Mock API failed to bind');
-      const provider = (['datadog', 'splunk', 'grafana', 'prometheus'] as const)[index];
-      return [provider, `http://127.0.0.1:${address.port}`];
+      const provider = providers[index];
+      const origin = `http://127.0.0.1:${address.port}`;
+      return [
+        provider,
+        provider === 'azureMonitor' ? `${origin}/v1/workspaces/workspace-id` : origin,
+      ];
     })
   ) as MockObservabilityApi['urls'];
   return {

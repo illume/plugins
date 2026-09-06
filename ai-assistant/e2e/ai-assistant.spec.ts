@@ -22,7 +22,10 @@ test.describe.serial('AI Assistant on KWOK', () => {
     try {
       await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
       for (const [provider, url] of Object.entries(api.urls)) {
-        const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+        const name =
+          provider === 'azureMonitor'
+            ? 'Azure Monitor Traces'
+            : provider.charAt(0).toUpperCase() + provider.slice(1);
         await page.getByRole('textbox', { name: `${name} URL` }).fill(url);
       }
       await page.getByRole('group', { name: 'Datadog' }).getByLabel('API Key').fill('datadog-api');
@@ -42,8 +45,18 @@ test.describe.serial('AI Assistant on KWOK', () => {
         .getByRole('group', { name: 'Prometheus' })
         .getByLabel('HTTP Token')
         .fill('prometheus-token');
+      await page
+        .getByRole('group', { name: 'Azure Monitor Traces' })
+        .getByLabel('Access Token')
+        .fill('azure-monitor-token');
 
-      for (const toolName of ['Datadog Read', 'Splunk Read', 'Grafana Read', 'Prometheus Read']) {
+      for (const toolName of [
+        'Datadog Read',
+        'Splunk Read',
+        'Grafana Read',
+        'Prometheus Read',
+        'Azure Monitor Traces Read',
+      ]) {
         const toolToggle = page.getByRole('checkbox', {
           name: `Enable or disable ${toolName}`,
         });
@@ -66,6 +79,7 @@ test.describe.serial('AI Assistant on KWOK', () => {
           'splunk_read',
           'grafana_read',
           'prometheus_read',
+          'azure_monitor_traces_read',
         ]);
       await expect
         .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
@@ -79,9 +93,9 @@ test.describe.serial('AI Assistant on KWOK', () => {
       const promptInput = page.locator('#deployment-ai-prompt');
       await promptInput.fill('E2E query all observability providers');
       await promptInput.press('Enter');
-      await page.getByRole('button', { name: 'Execute 4 Tools' }).click();
+      await page.getByRole('button', { name: 'Execute 5 Tools' }).click();
 
-      await expect.poll(() => api.requests.length).toBeGreaterThanOrEqual(4);
+      await expect.poll(() => api.requests.length).toBeGreaterThanOrEqual(5);
       expect(api.requests.find(request => request.provider === 'datadog')).toMatchObject({
         method: 'POST',
         datadogApiKey: 'datadog-api',
@@ -100,6 +114,15 @@ test.describe.serial('AI Assistant on KWOK', () => {
         method: 'GET',
         path: '/api/v1/query?query=up',
         authorization: ['Bearer', 'prometheus-token'].join(' '),
+      });
+      const azureMonitorRequest = api.requests.find(request => request.provider === 'azureMonitor');
+      expect(azureMonitorRequest).toMatchObject({
+        method: 'POST',
+        path: '/v1/workspaces/workspace-id/query',
+        authorization: ['Bearer', 'azure-monitor-token'].join(' '),
+      });
+      expect(JSON.parse(azureMonitorRequest?.body ?? '{}')).toMatchObject({
+        query: expect.stringContaining('AppRequests'),
       });
       expect(api.successfulUpstreams).toEqual(expect.arrayContaining(['grafana', 'prometheus']));
     } finally {
@@ -219,7 +242,9 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await kubernetesTool.uncheck();
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-      .toContain('"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read"]');
+      .toContain(
+        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read","azure_monitor_traces_read"]'
+      );
     await page.reload();
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();

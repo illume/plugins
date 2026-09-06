@@ -692,7 +692,7 @@ export class AzureMonitorTracesTool extends ObservabilityTool {
     name: 'azure_monitor_traces_read',
     shortDescription: 'Query AKS traces in Azure Monitor',
     description:
-      'Run bounded, read-only KQL queries against an Azure Monitor Log Analytics workspace. Defaults to recent Application Insights request, dependency, and trace telemetry.',
+      'Run read-only KQL queries against an Azure Monitor Log Analytics workspace. A final take 100 limit is always applied. Defaults to recent Application Insights request, dependency, and trace telemetry.',
     schema: z.object({
       query: z.string().optional(),
       start: z.string().optional(),

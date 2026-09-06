@@ -34,6 +34,7 @@ export const GENERAL_FIXTURES: FixtureEntry[] = [
       { name: 'splunk_read', args: { action: 'search', query: 'search index=main error' } },
       { name: 'grafana_read', args: { action: 'search_dashboards', query: 'Kubernetes' } },
       { name: 'prometheus_read', args: { action: 'query', query: 'up' } },
+      { name: 'azure_monitor_traces_read', args: {} },
     ],
   },
   {

@@ -78,6 +78,33 @@ later scope.
 | Production feedback and validity                    | No valid offline proxy; Phase 1 only prepares portable fields, provenance, and disclosure classes            | `deferred_to_phase_5` | Phase 5: governed sampling/feedback, monitoring, incident promotion, holdout refresh, deployment studies, and metric lifecycle       |
 | Human reliance or usability                         | No valid offline proxy; earlier phases retain approval/interaction telemetry but make no human claim         | `deferred_to_phase_5` | Phase 5: governed study when required by a product decision; otherwise record `not_applicable`                                       |
 
+The generated methodology report also renders this concise phase index:
+
+| Best practice                                       | MVP phase | Required expansion phase |
+| --------------------------------------------------- | --------- | ------------------------ |
+| Decision, construct, acceptance criteria, reference | Phase 1   | Phase 3                  |
+| Candidate/truth separation and immutable evidence   | Phase 1   | Phase 4                  |
+| Eval-system health and failure ownership            | Phase 1   | Phase 2                  |
+| Case ownership, provenance, review, and quarantine  | Phase 1   | Phase 2                  |
+| Real product execution                              | Phase 1   | Phases 2–3               |
+| Dataset lifecycle                                   | Phase 1   | Phase 2                  |
+| Repeats and uncertainty                             | Phase 1   | Phase 2                  |
+| Continuous evaluation                               | Phase 1   | Phase 2                  |
+| Repair, approval, and least privilege               | Phase 1   | Phase 2                  |
+| External comparison                                 | Deferred  | Phase 2                  |
+| Interaction and robustness                          | Phase 1   | Phase 3                  |
+| Distribution coverage                               | Phase 1   | Phases 3 and 5           |
+| SME audit and case maintenance                      | Phase 1   | Phase 3                  |
+| Grader portfolio                                    | Phase 1   | Phase 3 decision gate    |
+| Adversarial safety                                  | Phase 1   | Phase 4                  |
+| Production feedback and validity                    | Deferred  | Phase 5                  |
+| Human reliance or usability                         | Deferred  | Phase 5 decision gate    |
+
+Each row includes its current disposition, evidence-artifact links, owner, and
+next review date. A practice with no valid MVP remains
+`deferred_to_phase_<n>`; preparatory telemetry or schema work does not make it
+`implemented`.
+
 #### What Copilot coding agents and Azure Foundry can scale in Phase 1
 
 Automation scales different units at very different evidentiary value. Use

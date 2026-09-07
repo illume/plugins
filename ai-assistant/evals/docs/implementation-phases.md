@@ -1245,7 +1245,7 @@ model comparison, and none of Phase 2 establishes production prevalence or
 benefit. If one combined dimension is missing, claim only the dimensions that
 passed; do not say “best overall.”
 
-### Phase 3: capability breadth and grader validation
+### Phase 3: capability breadth, robustness, and grader validation
 
 **Outcome and budget:** eight to ten weeks. At exit, the framework tests whether
 Phase 2 conclusions transfer across additional Kubernetes mechanisms,

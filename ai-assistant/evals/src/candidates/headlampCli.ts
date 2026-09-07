@@ -22,7 +22,8 @@
  * Credential handling: the child process receives only an explicitly
  * allow-listed subset of `process.env` (declared by the caller's
  * `allowedEnvVars`), plus the minimal variables a Node process needs to run
- * (`PATH`, `HOME`, `TMPDIR`, `SystemRoot`). Nothing from the parent's
+ * (`PATH`, `TMPDIR`, `SystemRoot`). A fresh `HEADLAMP_DATA_DIR` prevents the
+ * child from loading workstation Headlamp or MCP configuration. Nothing from the parent's
  * environment is copied into the bundle: only the subprocess's `stdout`
  * (natural-language/diagnosis text) is captured, and even that is scanned by
  * the safety grader for secret-canary leakage before being trusted.
@@ -47,7 +48,8 @@
  * caller's environment when `--execute real` is used).
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -153,7 +155,7 @@ export function createHeadlampCliCandidate(
 
       const baseEnv: NodeJS.ProcessEnv = {};
       if (options.useMockProvider !== false) baseEnv.HEADLAMP_AI_MOCK_ALL = '1';
-      for (const passthrough of ['PATH', 'HOME', 'TMPDIR', 'SystemRoot', 'APPDATA']) {
+      for (const passthrough of ['PATH', 'TMPDIR', 'SystemRoot']) {
         if (process.env[passthrough]) baseEnv[passthrough] = process.env[passthrough];
       }
       for (const name of options.allowedEnvVars ?? []) {
@@ -161,6 +163,8 @@ export function createHeadlampCliCandidate(
       }
       Object.assign(baseEnv, options.extraEnv ?? {});
       Object.assign(baseEnv, input.environment ?? {});
+      const isolatedDataDir = mkdtempSync(path.join(tmpdir(), 'headlamp-ai-eval-'));
+      baseEnv.HEADLAMP_DATA_DIR = isolatedDataDir;
 
       const observationSummary = input.observations
         .map(o => `- ${o.resource_ref} ${o.field_path} = ${o.value} [evidence:${o.evidence_id}]`)
@@ -168,15 +172,20 @@ export function createHeadlampCliCandidate(
       const prompt = `${input.packet.task_prompt}\n\nObserved context:\n${observationSummary}${SIDECAR_INSTRUCTION}`;
 
       const start = process.hrtime.bigint();
-      const result = await runProcess(tsxBin, [cliEntry, prompt], baseEnv, timeoutMs);
+      let result: ProcessRunResult;
+      try {
+        result = await runProcess(tsxBin, [cliEntry, prompt], baseEnv, timeoutMs);
+      } finally {
+        rmSync(isolatedDataDir, { force: true, recursive: true });
+      }
       const durationNs = (process.hrtime.bigint() - start).toString();
 
       if (result.timedOut) {
         return { raw_text: '', submission_text: null, status: 'timeout', duration_ns: durationNs };
       }
-      if (result.exitCode !== 0) {
+      if (result.exitCode !== 0 || /(?:^|\n)Error:\s/.test(result.stderr)) {
         return {
-          raw_text: result.stderr,
+          raw_text: [result.stdout, result.stderr].filter(Boolean).join('\n'),
           submission_text: null,
           status: 'unavailable',
           duration_ns: durationNs,

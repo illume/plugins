@@ -183,7 +183,7 @@ async function commandRerun(flags: Flags): Promise<void> {
   if (typeof sourceRunId !== 'string' || typeof sourceTrialId !== 'string') {
     throw new Error('--run <run_id> and --trial <trial_id> are required');
   }
-  const runsRoot = defaultRunsRoot();
+  const runsRoot = typeof flags['runs-dir'] === 'string' ? flags['runs-dir'] : defaultRunsRoot();
   const bundle = readClosedBundle(runsRoot, sourceRunId);
   const source = bundle.trials.find(t => t.trial_id === sourceTrialId);
   if (!source) throw new Error(`trial ${sourceTrialId} not found in run ${sourceRunId}`);

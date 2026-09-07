@@ -306,7 +306,9 @@ export class KubectlKwokAdapter implements ClusterAdapter {
       this.kubectl(['get', 'pod', podName, '-n', namespace, '-o', 'json'])
     );
     if (result.status !== 0) {
-      return { supported: true, condition: 'Unknown', reason: 'PodNotFound' };
+      throw new Error(
+        `failed to observe scheduling for pod/${podName}: ${result.stderr || result.stdout}`
+      );
     }
     const pod = JSON.parse(result.stdout) as KubectlPod;
     const scheduled = pod.status.conditions?.find(c => c.type === 'PodScheduled');

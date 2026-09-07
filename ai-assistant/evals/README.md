@@ -25,49 +25,66 @@ for the full roadmap this package implements Phase 1 of.
 ## Prerequisites
 
 - Node.js 20+ and npm.
-- No cluster, credentials, or network access are required for the default
-  `npm run check` / `npm run eval:local:kwok` path.
-- Optional, for a real KWOK cluster run (`--execute real`): `kubectl`, `kwokctl`,
-  and `docker` on `PATH`.
-- Optional, for a real product run (`--candidate headlamp-cli`): the sibling
-  `packages/ai-cli` package's dependencies installed
-  (`npm install --prefix ../packages/ai-cli`), plus provider credentials if
-  you want live inference. `--execute real --candidate headlamp-cli` never
-  forces the mock provider.
-- Optional, for AKS: a dedicated non-production cluster plus
-  `AKS_KUBECONFIG_PATH` and the Azure variables named in
-  `profiles/aks-azure.yaml`.
+- The default dry-run needs no cluster, credentials, container runtime, or
+  network access.
+- Real local KWOK execution needs a running Docker daemon and compatible
+  `docker`, `kubectl`, and `kwokctl` binaries on `PATH`. The runner creates and
+  deletes its own `headlamp-evals-*` cluster and never uses the current
+  kubeconfig context.
+- Real AKS execution needs a caller-provisioned, dedicated **non-production**
+  AKS cluster. Its kubeconfig principal must be able to create/delete
+  namespaces, apply fixtures, and create namespaced ServiceAccounts, Roles, and
+  RoleBindings. The candidate itself receives a generated, short-lived,
+  read-only namespaced kubeconfig.
+- The `headlamp-cli` candidate needs the sibling `packages/ai-cli` dependencies
+  and a provider configuration for live inference. The child process uses an
+  empty temporary Headlamp data directory, so workstation Headlamp/MCP settings
+  are deliberately ignored.
 
 ## Install
 
+From `ai-assistant/` (recommended):
+
+```sh
+cd ai-assistant
+npm ci
+```
+
+The top-level install also runs `npm ci` for `evals/`. Top-level type checking
+and tests include the eval package:
+
+```sh
+npm run tsc
+npm test
+```
+
+For an eval-only checkout or dependency refresh:
+
 ```sh
 cd ai-assistant/evals
-npm install
+npm ci
 ```
 
-## Running from the `ai-assistant` directory
+## Quick start: deterministic offline run
 
-The project root delegates to this package:
+From `ai-assistant/`:
 
 ```sh
-npm run eval -- <eval arguments>                 # tsx src/cli.ts run
-npm run eval:check                                # npm --prefix evals run check
-npm run eval:local:kwok -- <eval arguments>       # KWOK-compatible fast subset only
-npm run eval:report:publish -- --run <run_id>
-npm run eval:report:overall -- --check
+npm run eval:check
+npm run eval:local:kwok
 ```
 
-Or from inside `evals/` directly:
+This uses the simulated cluster adapter and scripted reference control. It runs
+only the two generated KWOK-compatible selector scenarios and writes a bundle
+under `ai-assistant/.eval-runs/`.
+
+Useful offline controls:
 
 ```sh
-npm run eval:local:kwok                                    # 2 kwok-compatible scenarios, reference control
-npx tsx src/cli.ts run --profile local-kwok --candidate wrong
-npx tsx src/cli.ts run --profile local-kwok --candidate reference --baseline wrong
-npx tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli
-npx tsx src/cli.ts list-scenarios --profile local-kwok
-npx tsx src/cli.ts report:publish --run <run_id>
-npx tsx src/cli.ts report:overall --check
-npx tsx src/cli.ts rerun --run <run_id> --trial <trial_id>
+npm run eval -- --profile local-kwok --candidate wrong
+npm run eval -- --profile local-kwok --candidate reference --baseline wrong
+npm run eval -- --profile local-kwok --case core-service-selector-fault-v1
+npm run eval:list-scenarios -- --profile local-kwok
 ```
 
 `--candidate` accepts `reference`, `wrong`, `malformed`, `unavailable`
@@ -77,6 +94,91 @@ npx tsx src/cli.ts rerun --run <run_id> --trial <trial_id>
 fully offline via `HEADLAMP_AI_MOCK_ALL=1` (the CLI's own deterministic
 `mock-testing-model`); pointing it at a real provider or cluster is opt-in
 and never happens by default.
+
+## Real KWOK and Headlamp CLI runs
+
+First verify Docker is running and the required binaries resolve:
+
+```sh
+docker info
+kubectl version --client
+kwokctl --version
+```
+
+Run the real isolated KWOK cluster with a scripted control:
+
+```sh
+npm run eval:local:kwok -- --execute real --candidate reference
+```
+
+To exercise the product CLI offline, ensure its dependencies are installed and
+omit `--execute real`; the CLI uses its deterministic mock provider:
+
+```sh
+npm ci --prefix packages/ai-cli
+npm run eval:local:kwok -- --candidate headlamp-cli
+```
+
+For live provider inference, `--execute real` disables the mock provider.
+Configure the AI CLI only through these allow-listed variables:
+
+```sh
+export HEADLAMP_AI_PROVIDER=copilot
+export HEADLAMP_AI_API_KEY='<token>'
+# Optional when required by the provider:
+export HEADLAMP_AI_MODEL='<model>'
+npm run eval:local:kwok -- --execute real --candidate headlamp-cli
+```
+
+For Azure OpenAI:
+
+```sh
+export HEADLAMP_AI_PROVIDER=azure
+export HEADLAMP_AI_API_KEY='<azure-openai-key>'
+export HEADLAMP_AI_ENDPOINT='https://<resource>.openai.azure.com'
+export HEADLAMP_AI_DEPLOYMENT_NAME='<deployment>'
+export HEADLAMP_AI_MODEL='<model>'
+npm run eval:local:kwok -- --execute real --candidate headlamp-cli
+```
+
+Do not put credentials in profiles, command arguments, scenario files, or
+committed results. Profiles contain environment-variable **names** only.
+
+## Real AKS run
+
+Use a dedicated non-production cluster and an explicit kubeconfig; the runner
+does not provision or select an Azure cluster:
+
+```sh
+export AKS_KUBECONFIG_PATH="$PWD/.private/evals-aks.kubeconfig"
+export HEADLAMP_AI_PROVIDER=azure
+export HEADLAMP_AI_API_KEY='<azure-openai-key>'
+export HEADLAMP_AI_ENDPOINT='https://<resource>.openai.azure.com'
+export HEADLAMP_AI_DEPLOYMENT_NAME='<deployment>'
+export HEADLAMP_AI_MODEL='<model>'
+npm run eval -- --profile aks --execute real --candidate headlamp-cli
+```
+
+The AKS profile runs all four Phase 1 scenarios. Never point
+`AKS_KUBECONFIG_PATH` at a production cluster.
+
+## Results, reruns, and publication
+
+Override private bundle storage with either
+`HEADLAMP_AI_EVAL_RUNS_DIR=/approved/path` or `--runs-dir /approved/path`.
+Use the same override for reruns and publication:
+
+```sh
+npm run eval:rerun -- --run <run_id> --trial <trial_id> --runs-dir /approved/path
+npm run eval:report:publish -- --run <run_id> --runs-dir /approved/path
+npm run eval:report:overall -- --check
+```
+
+`report:publish` creates a new immutable redacted directory under `results/runs/`;
+`report:overall --check` verifies that the top-level generated views match all
+published runs. Inspect `bundle/manifest.json` before treating a run as
+qualification evidence; capabilities listed under `unsupported_files` are not
+silently considered complete.
 
 ### Current qualification gap: `--baseline`/`--candidate`
 
@@ -127,6 +229,9 @@ not satisfy the Phase 1 exit gate.
   therefore reported as `unknown`, never silently passed.
 - The currently committed two-control publication is diagnostic-only and does
   not satisfy the Phase 1 exit gate.
+- `contract-refs.json` is explicitly unsupported by bundle format 1.1, so
+  pass-critical source contracts are not yet independently resolvable after
+  repository changes.
 
 ## Tests
 

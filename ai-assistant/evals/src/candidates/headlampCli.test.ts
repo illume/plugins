@@ -16,6 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { createHeadlampCliCandidate, extractJsonBlock } from './headlampCli.js';
 import { loadScenario } from '../scenarios/loader.js';
 import type { ProcessRunResult } from './headlampCli.js';
@@ -67,6 +68,33 @@ test('createHeadlampCliCandidate: a non-zero exit code is reported as unavailabl
   assert.equal(result.status, 'unavailable');
 });
 
+test('createHeadlampCliCandidate: an explicit CLI error with exit code zero is unavailable', async () => {
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async () => ({
+      stdout: '',
+      stderr: 'Error: No AI provider configured.',
+      exitCode: 0,
+      timedOut: false,
+    }),
+  });
+  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  assert.equal(result.status, 'unavailable');
+  assert.match(result.raw_text, /No AI provider configured/);
+});
+
+test('createHeadlampCliCandidate: preserves successful diagnostic prose beginning with Error', async () => {
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async () => ({
+      stdout: 'Error: ImagePullBackOff detected on pod/x',
+      stderr: '',
+      exitCode: 0,
+      timedOut: false,
+    }),
+  });
+  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  assert.equal(result.status, 'ok');
+});
+
 test('createHeadlampCliCandidate: a timeout is reported as status timeout', async () => {
   const candidate = createHeadlampCliCandidate({
     processRunner: async () => ({ stdout: '', stderr: '', exitCode: 1, timedOut: true }),
@@ -116,4 +144,22 @@ test('createHeadlampCliCandidate: does not forward disallowed env vars to the ch
   }
   assert.equal(observedEnv.HEADLAMP_AI_EVAL_TEST_SECRET, undefined);
   assert.equal(observedEnv.HEADLAMP_AI_MOCK_ALL, '1');
+});
+
+test('createHeadlampCliCandidate: isolates and removes the child Headlamp data directory', async () => {
+  let isolatedDataDir = '';
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async (_command, _args, env) => {
+      isolatedDataDir = env.HEADLAMP_DATA_DIR ?? '';
+      assert.ok(isolatedDataDir);
+      assert.equal(existsSync(isolatedDataDir), true);
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    environment: { HEADLAMP_DATA_DIR: '/must-not-be-used' },
+  });
+  assert.equal(existsSync(isolatedDataDir), false);
 });

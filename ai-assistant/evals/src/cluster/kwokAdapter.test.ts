@@ -190,6 +190,20 @@ test('getSchedulingObservation: parses the real PodScheduled condition', async (
   assert.equal(observation.reason, 'Unschedulable');
 });
 
+test('getSchedulingObservation: rejects kubectl failures instead of fabricating scheduler evidence', async () => {
+  const { runner } = createFakeCommandRunner([
+    {
+      match: [...kube, 'get', 'pod', 'missing', '-n', 'ns1', '-o', 'json'],
+      result: { status: 1, stdout: '', stderr: 'forbidden' },
+    },
+  ]);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
+  await assert.rejects(
+    () => adapter.getSchedulingObservation('ns1', 'missing'),
+    /failed to observe scheduling.*forbidden/
+  );
+});
+
 test('applyManifest and deleteNamespace issue the expected kubectl commands', async () => {
   const { runner, calls } = createFakeCommandRunner([
     {

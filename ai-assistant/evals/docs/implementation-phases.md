@@ -63,6 +63,7 @@ later scope.
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Decision, construct, acceptance criteria, reference | Phase 1: four frozen cases with verifier contracts and reference/known-bad controls                          | `implemented`         | Phase 3: periodic SME audit across broader families                                                                                  |
 | Candidate/truth separation and immutable evidence   | Phase 1: candidate packet, protected truth, complete trajectory, artifacts, and bundle digests               | `implemented`         | Phase 4: signed checkpoints, restricted identities, and post-close invalidation                                                      |
+| Export and observability portability                | Phase 1: canonical superset, pinned mapping manifests, and offline golden projections                        | `implemented`         | `deferred_to_phase_4`: live destination qualification; Phase 5 adds production privacy, retention, and deletion controls             |
 | Eval-system health and failure ownership            | Phase 1: setup/cleanup/grader/exclusion/flake/duration/cost measures and one owner per failed or invalid row | `implemented`         | `deferred_to_phase_2`: observed SLOs, alerting, trend review, and gating behavior                                                    |
 | Case ownership, provenance, review, and quarantine  | Phase 1: owner/source/review dates plus issue/reason/entry/expiry/requalification fields                     | `implemented`         | `deferred_to_phase_2`: scheduled execution, expiry enforcement, and requalification                                                  |
 | Real product execution                              | Phase 1: one real headless/shared-session path; mocks and scripted agents only as controls                   | `implemented`         | `deferred_to_phase_2`: browser approval path for repairs; Phase 3 expands UI/headless parity                                         |
@@ -90,6 +91,7 @@ evidenced `not_applicable`.
 | --------------------------------------------------- | :-----: | :-----: | :-----: | :-----: | :-----: |
 | Decision, construct, acceptance criteria, reference |    ◐    |    ◐    |   ✅    |   ✅    |   ✅    |
 | Candidate/truth separation and immutable evidence   |    ◐    |    ◐    |    ◐    |   ✅    |   ✅    |
+| Export and observability portability                |    ◐    |    ◐    |    ◐    |   ✅    |   ✅    |
 | Eval-system health and failure ownership            |    ◐    |   ✅    |   ✅    |   ✅    |   ✅    |
 | Case ownership, provenance, review, and quarantine  |    ◐    |   ✅    |   ✅    |   ✅    |   ✅    |
 | Real product execution                              |    ◐    |    ◐    |   ✅    |   ✅    |   ✅    |
@@ -531,6 +533,92 @@ unsafe task success remains a safety failure. A valid task observation can
 coexist with cleanup failure while preventing substrate reuse and possibly
 later-result eligibility.
 
+#### Canonical task metrics and exporter compatibility
+
+No single vendor format is a complete, stable eval interchange standard.
+[LangSmith](https://docs.langchain.com/langsmith/evaluation) centers datasets,
+examples, runs/traces, experiments, and feedback;
+[OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
+center resources, traces, spans, events, and metrics; and Datadog, Splunk, and
+Azure Monitor ingest overlapping trace data but expose different evaluation,
+tagging, retention, and query models. Keep the repository-owned bundle as a
+superset and generate versioned, potentially lossy destination projections.
+
+The canonical `result.json` must include these typed task measures rather than
+requiring an exporter to infer them from prose:
+
+| Canonical field                | Type and meaning                                                                                                                                                       | Convenient projected field                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `dimensions.root_cause`        | Applicability plus `pass`, `fail`, `partial`, `abstain`, or `no_result`; accepted fact IDs, evidence IDs, grader-result IDs, and invalidity remain linked              | `root_cause_found` with boolean or null value                    |
+| `dimensions.recommended_fix`   | Applicability plus the same outcome vocabulary for the proposed action's correctness, safety, scope, preconditions, and expected effect                                | `recommended_fix_correct` with boolean or null value             |
+| `dimensions.executed_repair`   | Phase 2+: approval binding, authorization, execution status, postcondition, rollback, duplicate-effect, and collateral-state results                                   | Separate repair/effect scores; never folded into fix correctness |
+| `timing.time_to_diagnosis_ns`  | Candidate-start to valid diagnosis submission, measured monotonically; includes applicability and censoring                                                            | `time_to_diagnosis_seconds`                                      |
+| `timing.time_to_resolution_ns` | Candidate-start to verifier-confirmed recovery, measured monotonically; `null` for read-only/non-repair cases and censored with a reason when recovery is not observed | `time_to_resolution_seconds`, such as `180`                      |
+| `tool_summary`                 | Attempted/completed/failed/denied/cancelled call counts, unique tools, retry counts, and total tool duration, derived from the trajectory                              | Dashboard counts and latency distributions                       |
+
+The boolean aliases are useful for simple dashboards, but they are never the
+canonical verdict. `true` means the eligible criterion passed, `false` means it
+failed, and `null` means not applicable, partial, abstained, invalid,
+unsupported, censored, or no result, with the sibling status preserving which
+one. In particular,
+`recommended_fix_correct` does not prove that a repair was approved, executed,
+effective, reversible, or free of collateral changes.
+
+Together, `scenario-ref.json`, the candidate/evaluator contract references,
+`environment-manifest.json`, `submissions.jsonl`, `grader-results.jsonl`,
+`trajectory.jsonl`, and `result.json` preserve the dataset input, protected
+reference, candidate output, evaluator feedback, execution hierarchy, timings,
+configuration, and terminal decision needed by the destination mappings.
+
+Do not store tool history as only strings such as `"kubectl get pods"`. Each
+tool event in `trajectory.jsonl` carries:
+
+- canonical event, trial, attempt, parent/correlation, and tool-call IDs;
+- tool name, version/schema digest, operation, and target resource identity;
+- argument digest plus an access-controlled structured argument artifact when
+  policy permits;
+- start/end timestamps, monotonic duration, attempt number, terminal status,
+  error class, and retry relationship;
+- result digest/artifact reference, evidence IDs extracted from that result,
+  and model token/usage records associated with the surrounding operation; and
+- approval/action IDs and authorization decision for mutating calls.
+
+A report may derive `tool_calls: ["kubectl get pods", "kubectl logs"]` for
+display only after redaction. The structured events remain authoritative
+because shell-like strings lose arguments, namespace/context, call order,
+results, retries, errors, approval, timing, and evidence linkage and may expose
+secrets.
+
+Use the following destination mappings:
+
+| Destination                                                                                                                                                                                                                                                                                                                                      | Mapping from the canonical bundle                                                                                                                                                                                                        | Qualification requirement and known loss                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LangSmith evaluation](https://docs.langchain.com/langsmith/evaluation) and [feedback format](https://docs.langchain.com/langsmith/feedback-data-format)                                                                                                                                                                                         | Dataset/example IDs map from scenario/version; experiment and run IDs map from experiment/trial/attempt; nested model/tool events map to child runs; typed grader results map to feedback key, score/value, comment, and source metadata | Preserve canonical IDs/digests in metadata and test trace-to-feedback linkage. LangSmith feedback cannot replace multi-axis eligibility, lifecycle, safety, or protected evidence records.                                   |
+| [LangSmith via OpenTelemetry](https://docs.langchain.com/langsmith/evaluate-with-opentelemetry)                                                                                                                                                                                                                                                  | Emit the same hierarchy through OTLP and attach dataset/example and experiment correlation attributes required by the pinned LangSmith mapping profile                                                                                   | Pin the mapping version and verify one synthetic experiment end to end; do not assume every LangSmith-native feedback field round-trips through OTLP.                                                                        |
+| [OpenTelemetry GenAI](https://opentelemetry.io/docs/specs/semconv/gen-ai/)                                                                                                                                                                                                                                                                       | Run/attempt becomes a trace/root span; model and tool operations become child spans or events; timestamps, duration, status/error, provider/model, token usage, and safe attributes map to the pinned semantic-convention version        | GenAI conventions can evolve and do not encode Headlamp's complete eval semantics. Emit namespaced eval events/attributes plus links to canonical grader/result IDs; content capture is opt-in and disclosure-filtered.      |
+| [Datadog LLM Observability](https://docs.datadoghq.com/llm_observability/) and [trace-level evaluations](https://docs.datadoghq.com/llm_observability/evaluations/custom_llm_as_a_judge_evaluations/trace_level_evaluations/)                                                                                                                    | OTLP trace/span hierarchy carries agent, model, and tool activity; destination tags/metrics carry safe dimensions, durations, tokens/cost, and external evaluation scores                                                                | Test span/trace scope, score attachment, tag cardinality, and dropped fields against a pinned Datadog export profile. Keep deterministic Headlamp grader evidence outside vendor-only judge fields.                          |
+| [Splunk AI agent monitoring](https://help.splunk.com/en/splunk-observability-cloud/observability-for-ai/splunk-ai-agent-monitoring) and [AI traces/spans](https://help.splunk.com/en/splunk-observability-cloud/observability-for-ai/splunk-ai-agent-monitoring/monitor-and-troubleshoot-ai-agents-and-applications/monitor-ai-traces-and-spans) | OTLP resources/traces/spans/logs preserve service/environment identity and model/tool call hierarchy; approved metrics expose outcomes, duration, token/cost, and failure classes                                                        | Verify field/cardinality limits, trace-log correlation, dashboard queries, and disclosure behavior through the Splunk OTel collector path. Eval verdicts remain namespaced projections, not presumed standard Splunk fields. |
+| [Azure Monitor AI agents](https://learn.microsoft.com/en-us/azure/azure-monitor/app/agents-view) and [LangChain/LangGraph tracing](https://learn.microsoft.com/en-us/azure/foundry/how-to/develop/langchain-traces)                                                                                                                              | OTLP/W3C correlation maps agent/model/tool spans into Application Insights; safe custom dimensions/metrics carry canonical IDs, outcome fields, durations, usage/cost, environment, and failure owner                                    | Verify trace continuity, Application Insights field limits, KQL reconstruction, sampling, and workspace retention. Never export credentials, raw protected truth, or unrestricted prompt/tool content.                       |
+
+Each exporter has a committed mapping manifest with destination, API/schema and
+semantic-convention versions, canonical-to-destination field map, unit
+conversions, cardinality policy, content/disclosure policy, unsupported and
+dropped fields, and exporter version. Its projection manifest records source
+bundle digest, mapping digest, emitted/rejected counts, destination receipt, and
+field-level loss. A destination outage never changes the canonical run result.
+
+Phase 1 freezes these canonical fields and proves offline golden projections
+for LangSmith-native and OTLP shapes without requiring a hosted account. Phase
+2 runs exporter contract tests in the deterministic lane. Phase 4 qualifies
+live OpenTelemetry delivery and each selected backend's direct or OTLP path
+before relying on hosted queries or dashboards. Phase 5 adds
+production-specific consent, sampling, retention, deletion, residency, and
+linkage controls. Qualification must prove that a synthetic run retains
+identity, parent/child order, task and safety outcomes, grader linkage,
+durations/units, tool-call status, token/cost values, and declared losses after
+export; it does not require reconstructing protected canonical content from a
+lossy destination.
+
 `projections/reports/<report_id>/report.json` is the stable machine-readable
 projection. Its core keys remain `report_id`, `schema_version`, `generated_at`,
 `generator_version`, `as_of_bundle_digest`, `source_bundle_digests`,
@@ -583,10 +671,10 @@ studies/<study_id>/
 Each study row references the source `run_id`, `trial_id`, and bundle digest;
 it does not add participant or production fields to the old trial. Corrected or
 deleted study records receive append-only correction/tombstone events under the
-governed policy. Parquet, SQL tables, OpenTelemetry, Application Insights,
-MLflow, Braintrust, LangSmith, and visualization files may be generated for
-analysis or collaboration, but remain lossy/rebuildable projections with export
-receipts, never canonical result storage.
+governed policy. Parquet, SQL tables, OpenTelemetry, LangSmith, Datadog, Splunk,
+Azure Monitor/Application Insights, MLflow, Braintrust, and visualization files
+may be generated for analysis or collaboration, but remain lossy/rebuildable
+projections with export receipts, never canonical result storage.
 
 #### Repository location and GitHub-rendered historical report
 
@@ -649,7 +737,8 @@ ai-assistant/evals/
     studies/                      # Phase 5 governed study schemas/analysis
   schema/                         # versioned JSON Schemas and golden examples
   scenarios/                      # public/development scenario contracts
-  profiles/                       # local-copilot, AKS/Azure, Foundry sweep
+  profiles/                       # local KWOK/Kind/Minikube, AKS/Azure, Foundry sweep
+  exporters/                      # versioned LangSmith/OTLP/vendor maps and golden projections
   controls/                       # reference, wrong, no-agent, leak, malformed
   test-fixtures/                   # synthetic bundles and adapter responses
   results/                         # committed redacted GitHub projections only
@@ -686,13 +775,14 @@ Expose manual root commands that delegate to the package:
 npm run eval -- <eval arguments>
 npm run eval:check
 npm run eval:local:kwok -- <eval arguments>
+npm run eval:local:kind -- <eval arguments>
 npm run eval:local:minikube -- <eval arguments>
 npm run eval:report:publish -- <publish arguments>
 npm run eval:report:overall -- --check
 ```
 
 Inside `evals/package.json`, provide `eval`, `check`, `test`, `tsc`, `format`,
-`eval:local:kwok`, `eval:local:minikube`, `report:publish`, and
+`eval:local:kwok`, `eval:local:kind`, `eval:local:minikube`, `report:publish`, and
 `report:overall` scripts. The root commands delegate to those package scripts
 and pass through additional selectors such as `--baseline`, `--candidate`, or
 `--case`. `eval:local:kwok` selects only the declared KWOK-compatible subset and
@@ -708,13 +798,13 @@ runtime, variance, cost, and credential boundaries.
 
 Implementation grows in place rather than being reorganized by phase:
 
-| Phase | Code added under `evals/src/`                                                                                                                                                                                   | Stable code retained                                                                       |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 1     | CLI, runner, contracts, lifecycle, Copilot/Azure and KWOK/AKS adapters, Headlamp adapter, deterministic graders, regression-delta analysis, health/ownership/quarantine metadata, storage/reporting/publication | Package, IDs, schemas, bundle reader/writer, report core, scenario/profile/control loaders |
-| 2     | HolmesGPT/K8sGPT, Kind, Minikube, and action adapters; approval journal; browser parity; cross-system comparisons; CI/schedule/quarantine operations; SLO and repeated-pair/statistical reducers                | All Phase 1 commands/formats and regression-delta rows; no second runner/report generator  |
-| 3     | Native benchmark adapters, interaction runner, transforms/shrinker, distribution/maintenance audit, UI parity matrix, conditional model-grader qualification                                                    | Same trial pipeline, adapters, operations, and result/report schemas                       |
-| 4     | Integrity/signing, restricted execution, red-team/threshold/safety-case workflows, invalidation drills, concurrency actors/barriers, telemetry adapters                                                         | Same event writer, artifact store, grader precedence, schedules, publication path          |
-| 5     | Governed study/sampling/feedback records, linkage and monitoring interfaces, incident/holdout/metric-lifecycle and cohort/analysis/report reducers                                                              | Offline run bundles remain immutable and are referenced by digest                          |
+| Phase | Code added under `evals/src/`                                                                                                                                                                                                                                                 | Stable code retained                                                                       |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1     | CLI, runner, contracts, lifecycle, Copilot/Azure and KWOK/AKS adapters, Headlamp adapter, deterministic graders, regression-delta analysis, health/ownership/quarantine metadata, canonical task/timing/tool fields, offline exporter mappings, storage/reporting/publication | Package, IDs, schemas, bundle reader/writer, report core, scenario/profile/control loaders |
+| 2     | HolmesGPT/K8sGPT, Kind, Minikube, and action adapters; approval journal; browser parity; cross-system comparisons; CI/schedule/quarantine operations; SLO and repeated-pair/statistical reducers                                                                              | All Phase 1 commands/formats and regression-delta rows; no second runner/report generator  |
+| 3     | Native benchmark adapters, interaction runner, transforms/shrinker, distribution/maintenance audit, UI parity matrix, conditional model-grader qualification                                                                                                                  | Same trial pipeline, adapters, operations, and result/report schemas                       |
+| 4     | Integrity/signing, restricted execution, red-team/threshold/safety-case workflows, invalidation drills, concurrency actors/barriers, telemetry and live destination exporters                                                                                                 | Same event writer, artifact store, grader precedence, schedules, publication path          |
+| 5     | Governed study/sampling/feedback records, linkage and monitoring interfaces, incident/holdout/metric-lifecycle and cohort/analysis/report reducers                                                                                                                            | Offline run bundles remain immutable and are referenced by digest                          |
 
 The cheap architecture check is that `npm --prefix evals run check` can build
 and test the eval package while the production plugin build contains none of
@@ -947,6 +1037,9 @@ allowed to follow repository conventions:
   `report`, all at the compatible Phase 1 major version;
 - `evals/profiles/local-kwok.yaml`, `aks-azure.yaml`, and optional
   `foundry-sweep.yaml`, with credentials referenced but never serialized;
+- versioned `evals/exporters/` mapping manifests and offline golden projections
+  for LangSmith-native and OTLP shapes, including explicit unsupported/lossy
+  fields and no network or hosted-account requirement;
 - one `evals/scenarios/<scenario_id>/` directory per public/development case
   containing `scenario.yaml`, setup/preflight/cleanup, grader-only gold, and
   positive/negative oracle controls, with shared controls under
@@ -1033,6 +1126,12 @@ contain:
 - one row per case/model/environment showing setup, candidate, typed RCA,
   evidence acquisition, uncertainty, safety, verifier, cleanup, latency,
   provider-native usage/cost, and artifact status separately;
+- typed `root_cause`, `recommended_fix`, and, where applicable,
+  `executed_repair` outcomes plus nullable projected `root_cause_found` and
+  `recommended_fix_correct` booleans with their applicability/status siblings;
+- diagnosis and resolution durations with units, boundary timestamps, and
+  censoring/applicability, plus tool-call counts and links to the complete
+  structured tool-event sequence;
 - typed cause/evidence/alternative decisions linked to submission, tool-result,
   and deterministic-grader record IDs;
 - reference, wrong, abstaining, malformed, unavailable-agent, leakage, and
@@ -1048,7 +1147,10 @@ contain:
 - local-versus-AKS and optional Foundry deployment cells without a pooled rank;
   and
 - claim scope, unsupported fields, known fixture/provider limits, and any
-  unscored natural-language output. Phase 1's `decision` is
+  unscored natural-language output; and
+- exporter coverage showing mapping versions, emitted/rejected fields, declared
+  losses, and offline LangSmith/OTLP golden-projection results. Phase 1's
+  `decision` is
   `development_diagnostic`, never a release approval.
 
 The terminal view is a compact rendering of the same `report.json`: decision
@@ -1082,7 +1184,9 @@ every event and artifact needed to reconstruct each attempt is retained; every
 failed, invalid, excluded, or quarantined row has one owning layer; health
 measures and case lifecycle metadata are complete; and every best-practice
 matrix row has an allowed disposition with a linked expansion phase where
-needed.
+needed. The typed task/timing/tool fields validate, and offline LangSmith and
+OTLP golden projections preserve required IDs, hierarchy, outcomes, units, and
+declared losses without contacting a hosted service.
 
 At that point Headlamp may claim a reproducible four-case read-only measurement
 foundation for typed causal, evidence, uncertainty, safety, and trace/state
@@ -1134,19 +1238,19 @@ root commands are intentionally direct:
 
 ```sh
 npm run eval:local:kwok
+npm run eval:local:kind
 npm run eval:local:minikube
 ```
 
-Both accept ordinary eval selectors after `--`. The KWOK command runs only the
-generated compatible subset. The Minikube command runs the full Phase 2 local
-suite, performs readiness and capability preflight, and reports unsupported
-host features instead of silently switching cluster backends. Kind remains a
-separate full-suite profile for local-mechanism parity.
+All three accept ordinary eval selectors after `--`. The KWOK command runs only
+the generated compatible subset. The Kind and Minikube commands each run the
+full Phase 2 local suite, perform readiness and capability preflight, and report
+unsupported host features instead of silently switching cluster backends.
 
 #### Phase 2 work packages
 
 1. **Weeks 1–2, cases, local clusters, and actions:** add the eight manifests,
-   Kind and Minikube profiles, explicit KWOK compatibility metadata, the two
+   Kind and Minikube profiles, explicit KWOK compatibility metadata, the three
    local npm commands, a canonical action and approval journal, before/after
    inventory, exact allowed-diff rules, postconditions, rollback, denied/stale
    approval controls, and stable cleanup. For each of the two repair flows, add
@@ -1179,10 +1283,11 @@ separate full-suite profile for local-mechanism parity.
    or manual-on-demand when credentials or cost prohibit PR execution. Derive
    initial setup, cleanup, invalid-grader, exclusion, and flake SLOs from the
    observed Phase 1 baseline; do not copy proposed thresholds without evidence.
-   Enforce quarantine expiry and requalification. Use remaining capacity on
-   fixture, repair, typed-submission, or provider reliability exposed by the
-   repeated runs. Do not add a human or model judge to rescue an under-specified
-   field; narrow the field and move free-form grading research to Phase 3.
+   Enforce quarantine expiry and requalification, and run offline exporter
+   contract tests in the deterministic lane. Use remaining capacity on fixture,
+   repair, typed-submission, or provider reliability exposed by the repeated
+   runs. Do not add a human or model judge to rescue an under-specified field;
+   narrow the field and move free-form grading research to Phase 3.
 
 The senior owns the pre-run scenario truth, accepted fact/action sets, action
 policy, and comparison scope. The junior owns runner/action-journal
@@ -1278,9 +1383,12 @@ Phase 2 exits only when:
   and gating rules are tested; initial health SLOs cite observed Phase 1 data;
   expired quarantine fails closed; and every repair has a passing real browser
   approval-path test matched to its headless action journal; and
-- `npm run eval:local:kwok` and `npm run eval:local:minikube` work from the
-  `ai-assistant` directory with documented prerequisites, pass through case and
-  candidate selectors, and emit distinct environment identities; and
+- `npm run eval:local:kwok`, `npm run eval:local:kind`, and
+  `npm run eval:local:minikube` work from the `ai-assistant` directory with
+  documented prerequisites, pass through case and candidate selectors, and emit
+  distinct environment identities; and
+- offline exporter contract tests preserve required fields and declare every
+  unsupported or lossy mapping for each maintained destination profile; and
 - `docs/eval-method-comparison.md` or an equivalent generated evidence page
   maps every row of the differentiation scorecard to a Headlamp artifact and
   the pinned public competitor evidence reviewed in Research 11.
@@ -1541,12 +1649,12 @@ unless a complete same-run measurement boundary is independently available.
 
 #### Phase 4 work packages and exit
 
-| Weeks | Deliverable                                                                                                                                                      |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1–3   | Restricted runner, candidate-view compiler, canary/disclosure scans, artifact signing, and integrity controls                                                    |
-| 4–6   | Red-team discovery, five attack/control pairs, grader-injection controls, thresholds, safety case, private-family/access registry, and independent threat review |
-| 7–9   | Action journal plus four controlled concurrency schedules in both actor orders                                                                                   |
-| 10–12 | Scheduled safety lane, quarantine/invalidation drills, two observability families, freshness barriers, stage timing/cost report, and reduced local reproduction  |
+| Weeks | Deliverable                                                                                                                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1–3   | Restricted runner, candidate-view compiler, canary/disclosure scans, artifact signing, and integrity controls                                                                                                      |
+| 4–6   | Red-team discovery, five attack/control pairs, grader-injection controls, thresholds, safety case, private-family/access registry, and independent threat review                                                   |
+| 7–9   | Action journal plus four controlled concurrency schedules in both actor orders                                                                                                                                     |
+| 10–12 | Scheduled safety lane, quarantine/invalidation drills, two observability families, freshness barriers, live exporter qualification for selected backends, stage timing/cost report, and reduced local reproduction |
 
 #### Phase 4 report and storage increment
 
@@ -1583,7 +1691,10 @@ The report preserves all earlier sections and adds:
   mitigation/disable readiness, and accountable release decision; and
 - quarantine and invalidation drill results, including affected-result
   reconstruction, replacement run linkage, and proof that superseded evidence
-  remains visible.
+  remains visible; and
+- live exporter conformance by destination/profile version, including
+  correlation reconstruction, emitted/rejected counts, field loss, sampling,
+  retention, and destination receipt.
 
 The Markdown report links to redacted views only. Restricted raw artifacts stay
 addressable by opaque digest and access class; omission from Markdown does not
@@ -1600,7 +1711,10 @@ out-of-scope destructive effect blocks the affected capability without being
 averaged against utility. The scheduled safety lane, production-like boundary
 tests, red-team-to-regression flow, threshold vetoes, signed safety case, and
 quarantine/invalidation drills must all pass their controls before the affected
-high-impact write capability can be released.
+high-impact write capability can be released. Each selected LangSmith, Datadog,
+Splunk, or Azure Monitor path must also pass its pinned direct or OTLP
+conformance fixture before hosted results can support a report or gate;
+unselected destinations remain explicitly `not_applicable`.
 
 ### Phase 5: deployment validity and continuing governance
 
@@ -1892,9 +2006,10 @@ After this loop catches a real or seeded regression, build the concrete Phase 2
 twelve-variant/six-family profile with two approved repairs, an attack/benign
 pair, matched uncertainty, and two separately protected holdout variants. Run
 the complete local suite independently on Kind and Minikube, retain a
-metadata-selected KWOK-compatible fast subset, and expose both local paths as
-`npm run eval:local:kwok` and `npm run eval:local:minikube`. Add only HolmesGPT
-and K8sGPT as external references: pin their container images,
+metadata-selected KWOK-compatible fast subset, and expose all three local paths
+as `npm run eval:local:kwok`, `npm run eval:local:kind`, and
+`npm run eval:local:minikube`. Add only HolmesGPT and K8sGPT as external
+references: pin their container images,
 configure only provider credentials plus kubeconfig/RBAC, assign the four
 frozen read-only cases, preserve unsupported cells, and require direct typed
 output or lossless native-field mapping. Publish each system's absolute

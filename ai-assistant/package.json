@@ -17,7 +17,12 @@
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",
     "test": "vitest run --config node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs --exclude \"**/packages/**\" --exclude \"**/node_modules/**\" --exclude \"e2e/**\"",
-    "i18n": "i18next"
+    "i18n": "i18next",
+    "eval": "npm --prefix evals run eval --",
+    "eval:check": "npm --prefix evals run check",
+    "eval:local:kwok": "npm --prefix evals run eval:local:kwok --",
+    "eval:report:publish": "npm --prefix evals run report:publish --",
+    "eval:report:overall": "npm --prefix evals run report:overall --"
   },
   "keywords": [
     "headlamp",

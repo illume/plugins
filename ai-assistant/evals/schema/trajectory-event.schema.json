@@ -1,0 +1,40 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/trajectory-event.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "event_id",
+    "trial_id",
+    "attempt_id",
+    "sequence",
+    "recorded_at",
+    "type",
+    "tool_name",
+    "operation",
+    "target_resource",
+    "argument_digest",
+    "duration_ns",
+    "status",
+    "result_digest",
+    "evidence_ids",
+    "mutating"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "trial_id": { "type": "string" },
+    "attempt_id": { "type": "string" },
+    "sequence": { "type": "number" },
+    "recorded_at": { "type": "string" },
+    "type": { "type": "string" },
+    "tool_name": { "type": "string" },
+    "operation": { "type": "string" },
+    "target_resource": { "type": "string" },
+    "argument_digest": { "type": "string" },
+    "duration_ns": { "type": "string" },
+    "status": { "type": "string", "enum": ["success", "error", "denied"] },
+    "error_class": { "type": "string" },
+    "result_digest": { "type": "string" },
+    "evidence_ids": { "type": "array", "items": { "type": "string" } },
+    "mutating": { "type": "boolean" }
+  }
+}

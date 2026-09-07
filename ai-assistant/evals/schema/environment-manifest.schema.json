@@ -1,0 +1,13 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/environment-manifest.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": ["schema_version", "trial_id", "cluster_profile", "candidate", "observed_at"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "trial_id": { "type": "string" },
+    "cluster_profile": { "type": "string" },
+    "candidate": { "type": "object" },
+    "observed_at": { "type": "string" }
+  }
+}

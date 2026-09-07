@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: big-node
+status:
+  allocatable:
+    cpu: '4'
+    memory: 8Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: huge-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.25
+      resources:
+        requests:
+          cpu: '8'
+          memory: 16Gi
+status:
+  phase: Pending

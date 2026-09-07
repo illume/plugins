@@ -1,0 +1,39 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/report.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "generator_version",
+    "as_of_bundle_digest",
+    "source_bundle_digests",
+    "phase_capabilities",
+    "summary",
+    "populations",
+    "slices",
+    "failures",
+    "trials",
+    "provenance",
+    "decision",
+    "limitations"
+  ],
+  "properties": {
+    "report_id": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "generator_version": { "type": "string" },
+    "as_of_bundle_digest": { "type": "string" },
+    "source_bundle_digests": { "type": "array", "items": { "type": "string" } },
+    "phase_capabilities": { "type": "array", "items": { "type": "string" } },
+    "summary": { "type": "object" },
+    "populations": { "type": "object" },
+    "slices": { "type": "object" },
+    "failures": { "type": "array" },
+    "trials": { "type": "array" },
+    "provenance": { "type": "object" },
+    "decision": { "type": "string" },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/diagnosis-submission.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "cause_facts",
+    "resource_refs",
+    "evidence_refs",
+    "alternative_dispositions",
+    "uncertainty",
+    "proposed_actions"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "cause_facts": { "type": "array" },
+    "resource_refs": { "type": "array", "items": { "type": "string" } },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "alternative_dispositions": { "type": "array", "items": { "type": "string" } },
+    "uncertainty": {
+      "type": "object",
+      "required": ["is_uncertain"],
+      "properties": { "is_uncertain": { "type": "boolean" }, "reason": { "type": "string" } }
+    },
+    "proposed_actions": { "type": "array" }
+  }
+}

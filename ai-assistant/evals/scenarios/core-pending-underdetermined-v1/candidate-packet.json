@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "core-pending-underdetermined-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "The `mystery-pod` Pod in this namespace is Pending. Investigate why, citing the exact resource evidence you retrieve. If the available evidence does not determine a unique cause, say so explicitly and list the remaining plausible hypotheses instead of guessing. This is a read-only investigation: do not propose or attempt any change.",
+  "visible_resource_refs": ["pod/mystery-pod"],
+  "allowed_observation_kinds": ["pod.phase", "pod.scheduling-condition"],
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,19 @@
+schema_version: '1.0.0'
+profile_name: aks
+cluster:
+  kind: aks
+  # AKS provisioning/credentials are not implemented in Phase 1. Selecting
+  # this profile always yields a clear `unsupported` preflight result; see
+  # `cluster/aks-stub-adapter.ts`. Populate these when Phase 1's on-demand
+  # cloud-portability run is actually wired to a dedicated non-production
+  # cluster.
+  credential_env_vars:
+    - AZURE_SUBSCRIPTION_ID
+    - AZURE_TENANT_ID
+    - AKS_KUBECONFIG_PATH
+model:
+  kind: azure
+  credential_env_vars:
+    - AZURE_OPENAI_API_KEY
+    - AZURE_OPENAI_ENDPOINT
+    - AZURE_OPENAI_DEPLOYMENT

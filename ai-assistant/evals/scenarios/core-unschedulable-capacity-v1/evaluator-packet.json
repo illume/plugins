@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "core-unschedulable-capacity-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pod-requests-cpu",
+        "resource_ref": "pod/huge-pod",
+        "field_path": "spec.containers[0].resources.requests.cpu",
+        "observed_value": "8",
+        "description": "The Pod requests 8 CPU."
+      },
+      {
+        "fact_id": "node-allocatable-cpu",
+        "resource_ref": "node/big-node",
+        "field_path": "status.allocatable.cpu",
+        "observed_value": "4",
+        "description": "The only eligible node can allocate at most 4 CPU."
+      }
+    ]
+  ],
+  "accepted_actions": [{ "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-image-guess",
+      "resource_ref": "pod/huge-pod",
+      "field_path": "spec.containers[0].image",
+      "observed_value": "does-not-exist:latest",
+      "description": "The image is valid; an image-pull guess is an invented cause here."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-CAPACITY-9d2e11"
+}

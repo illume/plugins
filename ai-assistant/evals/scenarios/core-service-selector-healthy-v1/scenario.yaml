@@ -1,0 +1,30 @@
+schema_version: '1.0.0'
+scenario_id: core-service-selector-healthy-v1
+scenario_version: '1.0.0'
+family: service-discovery
+mode: diagnose_only
+title: Healthy twin — Service selector matches its Pod
+description: >
+  Minimal twin of core-service-selector-fault-v1 where the Service selector
+  matches the running Pod's labels and the EndpointSlice is non-empty. Any
+  invented selector mismatch or fabricated repair is an overdiagnosis
+  failure.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2025-01-06'
+  last_review: '2025-01-06'
+  review_due: '2025-04-06'
+  lifecycle_state: active
+supported_cluster_profiles:
+  - local-kwok
+  - aks
+required_mechanisms:
+  - api-server
+  - endpointslice-controller
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-selector-healthy
+artifact_policy:
+  retain_raw_tool_output: true

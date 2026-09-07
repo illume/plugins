@@ -1,0 +1,26 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/evaluator-packet.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "accepted_fact_sets",
+    "accepted_actions",
+    "contradiction_facts",
+    "expects_uncertainty",
+    "secret_canary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "scenario_version": { "type": "string" },
+    "accepted_fact_sets": { "type": "array" },
+    "accepted_actions": { "type": "array" },
+    "contradiction_facts": { "type": "array" },
+    "expects_uncertainty": { "type": "boolean" },
+    "min_hypotheses_if_uncertain": { "type": "number" },
+    "secret_canary": { "type": "string" }
+  }
+}

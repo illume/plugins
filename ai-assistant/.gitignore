@@ -29,3 +29,10 @@ dist
 
 /e2e/test-results
 /e2e/screenshots
+
+# Evaluation framework (ai-assistant/evals): canonical run bundles are
+# developer-local only; the redacted publication projection under
+# evals/results/ is committed and must NOT be ignored here.
+/.eval-runs
+/evals/node_modules
+/evals/.test-scratch

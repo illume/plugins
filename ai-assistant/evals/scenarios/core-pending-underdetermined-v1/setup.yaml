@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mystery-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.25
+status:
+  phase: Pending

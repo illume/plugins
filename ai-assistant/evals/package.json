@@ -1,0 +1,42 @@
+{
+  "name": "@headlamp-k8s/ai-evals",
+  "version": "0.1.0",
+  "description": "Headlamp AI Assistant evaluation framework (Phase 1: local developer loop)",
+  "private": true,
+  "type": "module",
+  "main": "src/cli.ts",
+  "bin": {
+    "headlamp-ai-eval": "./src/cli.ts"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "eval": "tsx src/cli.ts run",
+    "eval:local:kwok": "tsx src/cli.ts run --profile local-kwok",
+    "check": "npm run format && npm run tsc && npm run test",
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "tsc": "tsc --noEmit",
+    "format": "prettier --check \"src/**/*.ts\" \"schema/**/*.json\" --ignore-path .gitignore",
+    "format:fix": "prettier --write \"src/**/*.ts\" \"schema/**/*.json\" --ignore-path .gitignore",
+    "report:publish": "tsx src/cli.ts report:publish",
+    "report:overall": "tsx src/cli.ts report:overall"
+  },
+  "keywords": [
+    "headlamp",
+    "evaluation",
+    "kubernetes"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.2",
+    "prettier": "^2.8.8",
+    "tsx": "^4.22.4",
+    "typescript": "5.6.2"
+  },
+  "dependencies": {
+    "js-yaml": "^4.3.1"
+  }
+}

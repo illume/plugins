@@ -1831,12 +1831,9 @@ Please analyze this data and provide a specific, detailed response that directly
 
         if (extraTool) {
           // Execute the extra LangChain tool directly
-          const result = await extraTool.invoke(
-            args,
-            this.currentAbortController?.signal
-              ? { signal: this.currentAbortController.signal }
-              : undefined
-          );
+          const result = await extraTool.invoke(args, {
+            signal: this.currentAbortController?.signal,
+          });
           const content = typeof result === 'string' ? result : JSON.stringify(result);
           toolResponse = {
             content,

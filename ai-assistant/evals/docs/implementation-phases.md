@@ -34,6 +34,42 @@ program, human-reliance study, energy measurement, and production feedback
 system do not enter the critical path until the corresponding decision exists
 and lower-cost evidence is insufficient.
 
+#### Best-practice coverage contract
+
+Maintain a versioned best-practice coverage matrix in the generated methodology
+report. Every row has exactly one roadmap disposition:
+
+- `implemented`: required evidence exists and the owning phase exit gate passed;
+- `deferred_to_phase_<n>`: the named later phase owns a concrete deliverable and
+  exit criterion; or
+- `not_applicable`: a named product decision makes the practice unnecessary,
+  with an owner, review date, and rationale.
+
+“Optional,” “future work,” and an empty cell are not dispositions. A conditional
+practice may remain `deferred_to_phase_<n>` until its trigger is evaluated; if
+the trigger is false, record `not_applicable` with evidence rather than silently
+dropping it. The matrix is regenerated from phase evidence, reviewed at every
+phase exit, and links each `implemented` row to canonical artifacts.
+
+| Best-practice obligation                              | Phase 1 disposition        | Eventual required destination and proof                                                                                                       |
+| ----------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Decision, construct, acceptance criteria, reference   | `implemented`              | Frozen scenario/verifier contracts and passing reference/known-bad controls                                                                    |
+| Candidate/truth separation and immutable evidence     | `implemented`              | Candidate packet, protected truth, complete trajectory, artifact and bundle digests                                                            |
+| Eval-system health and failure ownership              | `implemented`              | Setup/cleanup/grader/exclusion/flake/duration/cost measures and one owner for every failed or invalid row                                       |
+| Case ownership, provenance, review, and quarantine    | `implemented`              | Owner/source/review dates plus issue/reason/entry/expiry/requalification fields for every quarantined case                                     |
+| Real product execution                                | `implemented`              | At least one real headless/shared-session path; mocks and scripted agents remain controls                                                      |
+| Dataset splits and private holdout                    | `deferred_to_phase_2`      | Frozen development/regression/capability/safety splits and access-controlled lineage-separated holdout                                         |
+| Repeats, uncertainty, and regression thresholds       | `deferred_to_phase_2`      | Registered matched repeats, intervals, practical margins, and prespecified decisions                                                           |
+| PR regression and scheduled evaluation service       | `deferred_to_phase_2`      | Small deterministic PR suite plus scheduled repeated regression/capability/safety/comparator runs                                              |
+| Repair, approval, least privilege, and UI path        | `deferred_to_phase_2`      | Hard action/rollback/collateral checks and one real browser approval-path test for each repair                                                  |
+| External shared-task comparison                       | `deferred_to_phase_2`      | Qualified HolmesGPT/K8sGPT adapters and common-denominator repeated results                                                                    |
+| Breadth, interaction, robustness, and distribution    | `deferred_to_phase_3`      | Twenty bases, interaction/metamorphic/external cells, declared offline target-distribution coverage and gaps                                   |
+| Periodic SME audit and case lifecycle                 | `deferred_to_phase_3`      | Audited truth/rejections/pass-failure sample plus age/saturation/duplication/flake/review/retirement evidence                                   |
+| Free-form model grading                               | `deferred_to_phase_3`      | If decision-relevant, complete calibrated grader qualification; otherwise `not_applicable` with the triggering product decision                |
+| Adversarial, concurrency, and safety assurance        | `deferred_to_phase_4`      | Scheduled attack/control evidence, capability thresholds, vetoes, independent threat review, safety case, and invalidation drills              |
+| Production validity, feedback, and continuing control | `deferred_to_phase_5`      | Governed sampling/feedback, drift/calibration/outcomes, incident promotion, holdout refresh, controlled deployment studies, and metric lifecycle |
+| Human reliance or usability claims                    | `deferred_to_phase_5`      | Governed bounded human study when the product decision requires it; otherwise explicit `not_applicable`                                        |
+
 #### What Copilot coding agents and Azure Foundry can scale in Phase 1
 
 Automation scales different units at very different evidentiary value. Use

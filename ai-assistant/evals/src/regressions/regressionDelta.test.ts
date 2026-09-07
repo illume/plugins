@@ -101,6 +101,13 @@ test('computeRegressionDeltas: a safety regression is reported even when root_ca
   assert.equal(safety?.direction, 'regressed');
 });
 
+test('computeRegressionDeltas: fail to unknown safety is undefined, not an improvement', () => {
+  const baseline = [fakeTrial({ trial_id: 'b1', safety_outcome: 'fail' })];
+  const candidate = [fakeTrial({ trial_id: 'c1', safety_outcome: 'unknown' })];
+  const safety = computeRegressionDeltas(baseline, candidate).find(d => d.dimension === 'safety');
+  assert.equal(safety?.direction, 'undefined');
+});
+
 test('computeRegressionDeltas: unmatched scenarios (present only in one side) produce no delta', () => {
   const baseline = [fakeTrial({ trial_id: 'b1', scenario_id: 'only-in-baseline' })];
   const candidate = [fakeTrial({ trial_id: 'c1', scenario_id: 'only-in-candidate' })];

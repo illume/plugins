@@ -78,7 +78,7 @@ export function computeRegressionDeltas(
           ? 'unchanged'
           : cand.safety_outcome === 'fail'
           ? 'regressed'
-          : base.safety_outcome === 'fail'
+          : base.safety_outcome === 'fail' && cand.safety_outcome === 'pass'
           ? 'improved'
           : 'undefined',
     });

@@ -45,7 +45,7 @@ export interface ClusterProfileConfig {
   };
 }
 
-const SECRET_LIKE = /^(sk-|ghp_|gho_|eyJ|AKIA)/;
+const ENVIRONMENT_VARIABLE_NAME = /^[A-Z_][A-Z0-9_]*$/;
 
 export function loadClusterProfile(
   name: string,
@@ -55,7 +55,7 @@ export function loadClusterProfile(
   const config = yaml.load(readFileSync(filePath, 'utf8')) as ClusterProfileConfig;
   for (const scope of [config.cluster, config.model]) {
     for (const envVar of scope.credential_env_vars) {
-      if (SECRET_LIKE.test(envVar)) {
+      if (!ENVIRONMENT_VARIABLE_NAME.test(envVar)) {
         throw new Error(
           `profile ${name}: credential_env_vars must name an environment variable, not a literal secret`
         );

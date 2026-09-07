@@ -30,15 +30,15 @@ let counter = 0;
 
 /**
  * Returns a lexicographically sortable, monotonically increasing ID with the
- * given prefix. Uses wall-clock milliseconds plus a per-process counter so
- * IDs generated within the same run remain uniquely ordered even when
- * generated in the same millisecond.
+ * given prefix. The sortable wall-clock/counter prefix preserves local
+ * ordering, while UUID entropy prevents collisions between concurrent
+ * processes.
  */
 export function generateId(prefix: string): string {
   counter += 1;
   const time = Date.now().toString(36).padStart(9, '0');
   const seq = counter.toString(36).padStart(6, '0');
-  return `${prefix}_${time}${seq}`;
+  return `${prefix}_${time}${seq}_${randomUUID()}`;
 }
 
 /** Returns a random opaque UUID-based ID with the given prefix. */

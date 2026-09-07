@@ -63,6 +63,41 @@ describe('AgentHarnessSession', () => {
     expect(invoked).not.toHaveBeenCalled();
   });
 
+  it('requires approval for a mutating host-provided tool registered under a built-in tool name', async () => {
+    // A host (e.g. the CLI) can supply its own tool implementation but still
+    // advertise it under the same identifier as a built-in tool
+    // (`kubernetes_api_request`) for model-facing consistency. Auto-approval
+    // must still be denied for non-GET calls even though this arrives as a
+    // host-provided "extra" tool rather than through the runtime.
+    const invoked = vi.fn(async () => 'must not execute');
+    const kubectlBackedTool = tool(invoked, {
+      name: 'kubernetes_api_request',
+      description: 'Run a Kubernetes API request via kubectl',
+      schema: z.object({ method: z.string(), url: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            {
+              id: 'mutating-call',
+              name: 'kubernetes_api_request',
+              args: { method: 'DELETE', url: '/api/v1/namespaces/default/pods/my-pod' },
+            },
+          ],
+          [],
+        ],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
+    await session.enableDirectToolCalling([kubectlBackedTool]);
+
+    await session.userSend('Delete the pod');
+
+    expect(invoked).not.toHaveBeenCalled();
+  });
+
   it('requires approval for built-in Kubernetes Secret reads', async () => {
     const execute = vi.fn();
     const toolManager = createMockToolManager({

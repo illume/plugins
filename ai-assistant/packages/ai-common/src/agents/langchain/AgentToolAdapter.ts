@@ -140,8 +140,7 @@ export class AgentToolAdapter {
             source.name,
             normalizedArgs,
             toolCallId,
-            config?.signal ?? this.options.signal,
-            true
+            config?.signal ?? this.options.signal
           );
           if (!approved) {
             return this.deniedResult(source.name, toolCallId);
@@ -195,8 +194,7 @@ export class AgentToolAdapter {
             source.name,
             normalizedArgs,
             toolCallId,
-            config?.signal ?? this.options.signal,
-            false
+            config?.signal ?? this.options.signal
           );
           if (!approved) {
             return this.deniedResult(source.name, toolCallId);
@@ -271,15 +269,19 @@ export class AgentToolAdapter {
     toolName: string,
     args: Record<string, unknown>,
     toolCallId: string,
-    signal?: AbortSignal,
-    isRuntimeTool = false
+    signal?: AbortSignal
   ): Promise<boolean> {
     if (signal?.aborted) return false;
+    // Auto-approval is restricted to read-only calls regardless of whether the
+    // tool was routed through the runtime or supplied by the host: a
+    // host-provided tool can still be registered under a built-in tool's name
+    // (e.g. the CLI's kubectl-backed `kubernetes_api_request`), and must not
+    // bypass the mutation approval gate just because it arrived as an "extra"
+    // tool.
     if (
-      (isBuiltInTool(toolName) &&
-        !isSensitiveBuiltInToolCall(toolName, args) &&
-        (!isRuntimeTool || args.method === 'GET')) ||
-      (!isRuntimeTool && toolName === 'kubectl' && args.method === 'GET')
+      isBuiltInTool(toolName) &&
+      !isSensitiveBuiltInToolCall(toolName, args) &&
+      args.method === 'GET'
     ) {
       return true;
     }

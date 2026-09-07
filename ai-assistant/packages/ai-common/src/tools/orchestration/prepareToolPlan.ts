@@ -254,8 +254,12 @@ function firstSuccessOrAllSettled(
     tasks.forEach((task, index) => {
       tracked[index].then(() => {
         settledCount++;
+        // At this point `results[task.name]` was just written by `track()`
+        // (success or error-shaped failure) — it is never a `pending`
+        // placeholder here, since only `waitForOrchestrationResults` writes
+        // those, and only after this race has already resolved.
         const result = results[task.name];
-        const succeeded = !!result && !result.error && !result.isError && !result.pending;
+        const succeeded = !!result && !result.error && !result.isError;
         if (succeeded || settledCount === tasks.length) {
           resolve();
         }

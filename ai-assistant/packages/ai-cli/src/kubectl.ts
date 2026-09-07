@@ -147,12 +147,16 @@ export function buildKubectlArgs(
     throw new Error(`Invalid API path: must start with "/", got "${url}"`);
   }
   // Reject paths with characters that could be used for injection or path traversal.
-  // Query-string delimiters (?, =, &) are allowed since legitimate requests use
-  // them for selectors, pagination, and container-scoped log queries; the
-  // argument is passed to `execFile` (no shell), so they carry no injection risk.
-  if (!/^\/[a-zA-Z0-9\/_.:@%~?=&-]+$/.test(url)) {
+  // A single, optional query string (?key=value&key2=value2) is allowed since
+  // legitimate requests use it for selectors, pagination, and container-scoped
+  // log queries; the argument is passed to `execFile` (no shell), so these
+  // characters carry no injection risk. Restricting `?` to appear at most once,
+  // separating the path from the query string, keeps the path portion itself
+  // unambiguous.
+  if (!/^\/[a-zA-Z0-9\/_.:@%~-]+(\?[a-zA-Z0-9%=&._~-]*)?$/.test(url)) {
     throw new Error(
-      'Invalid API path: contains disallowed characters. Path must match /[a-zA-Z0-9/_.:@%~?=&-]+'
+      'Invalid API path: contains disallowed characters. Path must match ' +
+        '/[a-zA-Z0-9/_.:@%~-]+(?[a-zA-Z0-9%=&._~-]*)?'
     );
   }
 

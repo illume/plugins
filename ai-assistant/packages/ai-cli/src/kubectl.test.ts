@@ -138,6 +138,12 @@ describe('buildKubectlArgs', () => {
       '/api/v1/pods?labelSelector=app%3Dnginx&limit=10',
     ]);
   });
+
+  it('rejects URLs with more than one query-string delimiter', () => {
+    expect(() => buildKubectlArgs('/api/v1/pods?foo=1?bar=2', 'GET')).toThrow(
+      'contains disallowed characters'
+    );
+  });
 });
 
 describe('buildKubectlArgs read-only enforcement', () => {

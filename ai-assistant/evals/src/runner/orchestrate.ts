@@ -35,11 +35,7 @@ import type { ClusterProfileName, TrialResult } from '../contracts/types.js';
 import { createHeadlampCliCandidate } from '../candidates/headlampCli.js';
 import { createScriptedCandidate, type ScriptedCandidateMode } from '../candidates/scripted.js';
 import type { CandidateAdapter } from '../candidates/types.js';
-import {
-  kwokCompatibleScenarios,
-  loadAllScenarios,
-  type LoadedScenario,
-} from '../scenarios/loader.js';
+import { loadAllScenarios, type LoadedScenario } from '../scenarios/loader.js';
 import { isEligibleToRun, ownershipRow } from '../operations/ownership.js';
 import { computeRegressionDeltas } from '../regressions/regressionDelta.js';
 import { runTrial } from './trialRunner.js';
@@ -129,7 +125,11 @@ export function selectScenarios(
   }
 
   if (profile === 'local-kwok') {
-    return kwokCompatibleScenarios(scenariosRoot);
+    return all.filter(
+      scenario =>
+        scenario.kwokCompatible &&
+        scenario.manifest.supported_cluster_profiles.includes('local-kwok')
+    );
   }
   return all.filter(s => s.manifest.supported_cluster_profiles.includes(profile));
 }

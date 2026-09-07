@@ -6,4 +6,9 @@ cluster:
 model:
   kind: copilot-auto
   credential_env_vars:
-    - GH_TOKEN
+    - HEADLAMP_AI_PROVIDER
+    - HEADLAMP_AI_API_KEY
+    - HEADLAMP_AI_MODEL
+    - HEADLAMP_AI_BASE_URL
+    - HEADLAMP_AI_ENDPOINT
+    - HEADLAMP_AI_DEPLOYMENT_NAME

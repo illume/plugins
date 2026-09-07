@@ -84,6 +84,20 @@ export function loadScenario(scenarioId: string, root: string = scenariosRoot): 
     evaluatorPacket,
     `scenario ${scenarioId} evaluator packet`
   );
+  for (const [name, packet] of [
+    ['candidate', candidatePacket],
+    ['evaluator', evaluatorPacket],
+  ] as const) {
+    if (
+      packet.scenario_id !== manifest.scenario_id ||
+      packet.scenario_version !== manifest.scenario_version
+    ) {
+      throw new Error(
+        `scenario ${scenarioId}: ${name} packet identity does not match manifest ` +
+          `${manifest.scenario_id}@${manifest.scenario_version}`
+      );
+    }
+  }
 
   const kwokCompatible = isKwokCompatible(manifest.required_mechanisms);
   if (kwokCompatible !== manifest.declared_kwok_compatible) {

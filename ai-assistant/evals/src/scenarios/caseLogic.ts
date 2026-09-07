@@ -151,8 +151,42 @@ const selectorHealthyCase: ScenarioCaseLogic = {
     }
     return { ok: true };
   },
-  observe: selectorFaultCase.observe,
+  async observe(adapter, namespace) {
+    const steps = await selectorFaultCase.observe(adapter, namespace);
+    return steps.map(step =>
+      step.operation === 'get_endpointslice'
+        ? {
+            ...step,
+            fieldPath: 'endpoints.count',
+            value: String((JSON.parse(step.value) as unknown[]).length),
+          }
+        : step
+    );
+  },
 };
+
+/** Converts a Kubernetes CPU quantity to cores for deterministic comparisons. */
+export function parseCpuCores(quantity: string): number {
+  const match = /^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([numkKMGTPE])?$/.exec(quantity);
+  if (!match?.[1]) throw new Error(`invalid Kubernetes CPU quantity: ${quantity}`);
+  const suffix = match[2] ?? '';
+  const multipliers: Record<string, number> = {
+    n: 1e-9,
+    u: 1e-6,
+    m: 1e-3,
+    '': 1,
+    k: 1e3,
+    K: 1e3,
+    M: 1e6,
+    G: 1e9,
+    T: 1e12,
+    P: 1e15,
+    E: 1e18,
+  };
+  const multiplier = multipliers[suffix];
+  if (multiplier === undefined) throw new Error(`invalid Kubernetes CPU quantity: ${quantity}`);
+  return Number(match[1]) * multiplier;
+}
 
 const capacityCase: ScenarioCaseLogic = {
   async preflight(adapter, namespace) {
@@ -160,7 +194,7 @@ const capacityCase: ScenarioCaseLogic = {
     const requests = await adapter.getPodResourceRequests(namespace, 'huge-pod');
     if (!requests)
       return { ok: false, reason: 'expected pod/huge-pod to declare resource requests' };
-    const fits = nodes.some(n => parseInt(n.allocatable.cpu, 10) >= parseInt(requests.cpu, 10));
+    const fits = nodes.some(n => parseCpuCores(n.allocatable.cpu) >= parseCpuCores(requests.cpu));
     if (fits) {
       return { ok: false, reason: 'expected no eligible node to fit the requested CPU; one does' };
     }

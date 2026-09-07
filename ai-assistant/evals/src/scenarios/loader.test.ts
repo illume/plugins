@@ -16,7 +16,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { listScenarioIds, loadAllScenarios, loadScenario } from './loader.js';
+import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { listScenarioIds, loadAllScenarios, loadScenario, scenariosRoot } from './loader.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 
 test('lists exactly the four Phase 1 scenario IDs', () => {
   const ids = listScenarioIds();
@@ -52,6 +55,26 @@ test('the two selector scenarios are KWOK-compatible; the two scheduling scenari
 
 test('capacity/pending scenarios declare aks but not local-kwok as a supported profile', () => {
   const capacity = loadScenario('core-unschedulable-capacity-v1');
-  assert.ok(capacity.manifest.supported_cluster_profiles.includes('aks'));
-  assert.ok(!capacity.manifest.supported_cluster_profiles.includes('local-kwok'));
+  const pending = loadScenario('core-pending-underdetermined-v1');
+  for (const scenario of [capacity, pending]) {
+    assert.ok(scenario.manifest.supported_cluster_profiles.includes('aks'));
+    assert.ok(!scenario.manifest.supported_cluster_profiles.includes('local-kwok'));
+  }
+});
+
+test('loadScenario: rejects a packet whose identity differs from the manifest', () => {
+  const root = makeScratchDir('scenario-identity');
+  const scenarioId = 'core-service-selector-fault-v1';
+  try {
+    cpSync(path.join(scenariosRoot, scenarioId), path.join(root, scenarioId), {
+      recursive: true,
+    });
+    const packetPath = path.join(root, scenarioId, 'candidate-packet.json');
+    const packet = JSON.parse(readFileSync(packetPath, 'utf8')) as { scenario_version: string };
+    packet.scenario_version = '9.9.9';
+    writeFileSync(packetPath, JSON.stringify(packet));
+    assert.throws(() => loadScenario(scenarioId, root), /packet identity does not match manifest/);
+  } finally {
+    removeScratchDir(root);
+  }
 });

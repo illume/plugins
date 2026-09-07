@@ -10,7 +10,7 @@ description: >
   depends on an actual scheduler decision, which the simulated in-memory
   adapter cannot independently prove (see contracts/kwok-compatibility.ts);
   this scenario is declared for the `aks` profile only until a real local
-  Minikube/Kind adapter is qualified in a later phase.
+  Minikube adapter is qualified in a later phase.
 provenance:
   owner: ai-assistant-evals-team
   source: synthetic

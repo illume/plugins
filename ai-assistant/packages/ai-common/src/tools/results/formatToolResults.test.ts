@@ -45,6 +45,25 @@ describe('aggregateToolResults', () => {
     expect(out).not.toContain('cG9zdGdyZXM6Ly8=');
     expect(out).toContain('[REDACTED]');
   });
+
+  it('shows a still-running indicator for a pending result instead of Error/Success/raw JSON', () => {
+    const out = aggregateToolResults({
+      slow_tool: { pending: true, message: 'slow_tool was still running and was not waited on.' },
+    });
+    expect(out).toContain('### slow_tool');
+    expect(out).toContain('⏳ Still running');
+    expect(out).toContain('slow_tool was still running');
+    expect(out).not.toContain('**Error**:');
+    expect(out).not.toContain('Successfully executed');
+  });
+
+  it('treats a pending result as pending even when it also carries an error flag', () => {
+    // Defensive: pending must take precedence so a placeholder is never
+    // mistaken for a genuine failure of a tool that is still in flight.
+    const out = aggregateToolResults({ slow_tool: { pending: true, error: true } });
+    expect(out).toContain('⏳ Still running');
+    expect(out).not.toContain('**Error**:');
+  });
 });
 
 describe('formatToolResultsForLLM', () => {
@@ -116,5 +135,29 @@ describe('formatToolResultsForLLM', () => {
     });
     expect(out).not.toContain('hunter2');
     expect(out).toContain('[REDACTED]');
+  });
+
+  it('renders a still-running status and default message for a pending result', () => {
+    const out = formatToolResultsForLLM({ slow_tool: { pending: true } });
+    expect(out).toContain('⏳ Still running');
+    expect(out.toLowerCase()).toContain('still being gathered');
+    expect(out).not.toContain('❌ Error');
+    expect(out).not.toContain('✅ Success');
+  });
+
+  it('renders the pending placeholder message when provided', () => {
+    const out = formatToolResultsForLLM({
+      slow_tool: { pending: true, message: 'slow_tool was still running and was not waited on.' },
+    });
+    expect(out).toContain('slow_tool was still running');
+  });
+
+  it('treats a pending result as pending even when it also carries data/error flags', () => {
+    const out = formatToolResultsForLLM({
+      slow_tool: { pending: true, error: true, data: { partial: true } },
+    });
+    expect(out).toContain('⏳ Still running');
+    expect(out).not.toContain('❌ Error');
+    expect(out).not.toContain('✅ Success');
   });
 });

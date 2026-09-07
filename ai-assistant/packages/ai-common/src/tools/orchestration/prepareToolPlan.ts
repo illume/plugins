@@ -198,15 +198,23 @@ export async function waitForOrchestrationResults(
   // defensive `.catch()` is attached below wherever a tracked promise is not
   // otherwise awaited, so an unexpected throw can't surface as an unhandled
   // rejection once the required-gated path stops waiting on optional tasks.
+  //
+  // `task.run()` itself is called inside `Promise.resolve().then(...)` rather
+  // than invoked directly, so a task whose `run` throws synchronously (instead
+  // of returning a rejected promise) is still captured as an error result
+  // instead of throwing out of `track()` before any `.then`/`.catch` handler
+  // is attached.
   const track = (task: OrchestrationTask): Promise<void> =>
-    task.run().then(
-      result => {
-        results[task.name] = result;
-      },
-      error => {
-        results[task.name] = buildOrchestrationToolError(task.name, error as Error | null);
-      }
-    );
+    Promise.resolve()
+      .then(() => task.run())
+      .then(
+        result => {
+          results[task.name] = result;
+        },
+        error => {
+          results[task.name] = buildOrchestrationToolError(task.name, error as Error | null);
+        }
+      );
 
   const requiredTracked = requiredTasks.map(track);
   const optionalTracked = optionalTasks.map(task => track(task).catch(() => {}));

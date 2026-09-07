@@ -351,6 +351,74 @@ describe('waitForOrchestrationResults', () => {
     expect(results.broken_tool).toEqual(buildOrchestrationToolError('broken_tool', new Error('exploded')));
   });
 
+  it('records a synchronous throw from run() as an orchestration error rather than crashing', async () => {
+    const tasks: OrchestrationTask[] = [
+      {
+        name: 'sync_throw_tool',
+        required: true,
+        run: () => {
+          throw new Error('threw before returning a promise');
+        },
+      },
+    ];
+
+    const results = await waitForOrchestrationResults(tasks);
+    expect(results.sync_throw_tool).toEqual(
+      buildOrchestrationToolError('sync_throw_tool', new Error('threw before returning a promise'))
+    );
+  });
+
+  it('completes with error-shaped results and no hang when every required task fails', async () => {
+    const tasks: OrchestrationTask[] = [
+      { name: 'a', required: true, run: () => Promise.resolve({ error: true, message: 'a failed' }) },
+      { name: 'b', required: true, run: () => Promise.reject(new Error('b failed')) },
+    ];
+
+    const results = await waitForOrchestrationResults(tasks);
+    expect(results.a).toEqual({ error: true, message: 'a failed' });
+    expect(results.b).toEqual(buildOrchestrationToolError('b', new Error('b failed')));
+  });
+
+  it('reports a partial required failure alongside a still-pending optional tool', async () => {
+    const requiredOk = deferred<ToolResult>();
+    const requiredFail = deferred<ToolResult>();
+    const optional = deferred<ToolResult>(); // never resolves in this test
+    const tasks: OrchestrationTask[] = [
+      { name: 'required_ok', required: true, run: () => requiredOk.promise },
+      { name: 'required_fail', required: true, run: () => requiredFail.promise },
+      { name: 'optional_tool', required: false, run: () => optional.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks);
+    requiredOk.resolve(successResult);
+    requiredFail.resolve({ error: true, message: 'required_fail broke' });
+
+    const results = await resultsPromise;
+    expect(results.required_ok).toEqual(successResult);
+    expect(results.required_fail).toEqual({ error: true, message: 'required_fail broke' });
+    expect(results.optional_tool).toEqual(buildPendingToolPlaceholder('optional_tool'));
+  });
+
+  it('does not end the all-optional race on an early failure, only on a later success', async () => {
+    const early = deferred<ToolResult>();
+    const later = deferred<ToolResult>();
+    const tasks: OrchestrationTask[] = [
+      { name: 'early_fail', required: false, run: () => early.promise },
+      { name: 'later_success', required: false, run: () => later.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks, 60_000);
+
+    early.resolve({ error: true, message: 'early failure' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    later.resolve(successResult);
+    const results = await resultsPromise;
+    expect(results.early_fail).toEqual({ error: true, message: 'early failure' });
+    expect(results.later_success).toEqual(successResult);
+  });
+
   it('returns an empty map for an empty task list', async () => {
     const results = await waitForOrchestrationResults([]);
     expect(results).toEqual({});

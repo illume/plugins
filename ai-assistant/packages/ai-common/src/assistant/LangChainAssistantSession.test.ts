@@ -3210,6 +3210,95 @@ describe('handleMultipleToolExecution', () => {
     expect(userMessageContent).toContain('result_b');
     expect(userMessageContent).not.toContain('still running');
   });
+
+  it('still generates a response reflecting a failed required tool alongside a pending optional tool', async () => {
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['mcp_required', 'mcp_optional'],
+    });
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], { toolManager });
+    privateManager(manager).toolManager.getMCPTools = () => [
+      { name: 'mcp_required' },
+      { name: 'mcp_optional' },
+    ];
+
+    privateManager(manager).toolManager.executeTool = async (toolName: string) => {
+      if (toolName === 'mcp_required') {
+        throw new Error('cluster unreachable');
+      }
+      // Optional tool never resolves — the required tool's failure alone
+      // should be enough to unblock the response.
+      return new Promise(() => {});
+    };
+
+    privateManager(manager).model = {
+      invoke: vi.fn().mockResolvedValue({ content: 'Reporting the failure.', tool_calls: [] }),
+      stream: async function* () {},
+    };
+
+    vi.spyOn(ToolPlanner, 'groupToolsByExecutionStrategy').mockReturnValueOnce({
+      parallel: [
+        {
+          name: 'mcp_required',
+          priority: 'high' as const,
+          reason: 'answers the question',
+          description: '',
+          arguments: {},
+          required: true,
+        },
+        {
+          name: 'mcp_optional',
+          priority: 'low' as const,
+          reason: 'supplementary only',
+          description: '',
+          arguments: {},
+          required: false,
+        },
+      ],
+      sequential: [],
+    });
+
+    const recommended: RecommendedTool[] = [
+      {
+        name: 'mcp_required',
+        description: '',
+        priority: 'high',
+        reason: 'answers the question',
+        arguments: {},
+        required: true,
+      },
+      {
+        name: 'mcp_optional',
+        description: '',
+        priority: 'low',
+        reason: 'supplementary only',
+        arguments: {},
+        required: false,
+      },
+    ];
+
+    const result = await privateManager(manager).handleMultipleToolExecution(
+      'show cluster',
+      recommended
+    );
+
+    // The batch must still complete and produce an assistant response even
+    // though the only required tool failed — it must not hang or throw.
+    expect(result.role).toBe('assistant');
+    expect(result.content).toBeTruthy();
+
+    const modelCall = (privateManager(manager).model!.invoke as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    const userMessageContent = modelCall
+      .map((m: { content?: string }) => m.content ?? '')
+      .join('\n');
+    expect(userMessageContent).toContain('mcp_required');
+    expect(userMessageContent.toLowerCase()).toContain('cluster unreachable');
+    expect(userMessageContent).toContain('mcp_optional');
+    expect(userMessageContent.toLowerCase()).toContain('still running');
+  });
 });
 
 // =============================================================================

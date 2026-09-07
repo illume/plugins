@@ -428,6 +428,88 @@ describe('ToolOrchestrator.analyzeAndRecommendTools', () => {
     expect(result.shouldExecuteAll).toBe(false);
   });
 
+  it('defaults required to true when the model omits the field', async () => {
+    const response = JSON.stringify({
+      analysis: 'User wants to see pods',
+      tools: [
+        {
+          name: 'get_pods',
+          description: 'List all pods',
+          arguments: {},
+          priority: 'high',
+          reason: 'Needed to list pods',
+        },
+      ],
+      shouldExecuteAll: true,
+    });
+    const result = await ToolPlanner.analyzeAndRecommendTools(
+      'show me pods',
+      availableTools,
+      mockModel(response),
+      []
+    );
+    expect(result.tools[0].required).toBe(true);
+  });
+
+  it('parses required: false from the model response', async () => {
+    const response = JSON.stringify({
+      analysis: 'User wants pods and, if handy, extra logs',
+      tools: [
+        {
+          name: 'get_pods',
+          description: 'List all pods',
+          arguments: {},
+          priority: 'high',
+          required: true,
+          reason: 'Core answer',
+        },
+        {
+          name: 'get_nodes',
+          description: 'Supplementary node info',
+          arguments: {},
+          priority: 'low',
+          required: false,
+          reason: 'Best-effort extra context',
+        },
+      ],
+      shouldExecuteAll: true,
+    });
+    const result = await ToolPlanner.analyzeAndRecommendTools(
+      'show me pods',
+      availableTools,
+      mockModel(response),
+      []
+    );
+    expect(result.tools.find(t => t.name === 'get_pods')?.required).toBe(true);
+    expect(result.tools.find(t => t.name === 'get_nodes')?.required).toBe(false);
+  });
+
+  it('coerces a non-boolean required value from the model to the schema default', async () => {
+    const response = JSON.stringify({
+      analysis: 'Malformed required flag',
+      tools: [
+        {
+          name: 'get_pods',
+          description: 'List all pods',
+          arguments: {},
+          priority: 'high',
+          required: 'false',
+          reason: 'Needed',
+        },
+      ],
+      shouldExecuteAll: true,
+    });
+    const result = await ToolPlanner.analyzeAndRecommendTools(
+      'show me pods',
+      availableTools,
+      mockModel(response),
+      []
+    );
+    // Zod boolean parsing rejects the string "false"; the whole tools array
+    // entry fails and the tool is dropped rather than silently coerced.
+    expect(result.tools).toHaveLength(0);
+  });
+
   it('handles conversation history by including it in messages', async () => {
     const captured: BaseMessage[] = [];
     const spyModel = {

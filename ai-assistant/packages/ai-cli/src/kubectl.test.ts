@@ -117,6 +117,27 @@ describe('buildKubectlArgs', () => {
       'contains disallowed characters'
     );
   });
+
+  it('allows query-string URLs such as container-scoped log requests', () => {
+    const result = buildKubectlArgs(
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+      'GET'
+    );
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+    ]);
+  });
+
+  it('allows query-string URLs with label selectors and multiple parameters', () => {
+    const result = buildKubectlArgs('/api/v1/pods?labelSelector=app%3Dnginx&limit=10', 'GET');
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/pods?labelSelector=app%3Dnginx&limit=10',
+    ]);
+  });
 });
 
 describe('buildKubectlArgs read-only enforcement', () => {

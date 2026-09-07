@@ -36,7 +36,8 @@ export interface ToolHandler {
   (
     args: Record<string, unknown>,
     toolCallId?: string,
-    pendingPrompt?: Prompt
+    pendingPrompt?: Prompt,
+    signal?: AbortSignal
   ): Promise<ToolExecutionResult>;
 }
 
@@ -54,7 +55,7 @@ export abstract class LangChainTool {
    */
   createLangChainTool() {
     return tool(
-      async args => {
+      async (args, config) => {
         try {
           // toolCallId and pendingPrompt are not available inside the LangChain
           // tool callback — they are assigned by the LLM response and are only
@@ -64,7 +65,8 @@ export abstract class LangChainTool {
           const response = await this.handler(
             args as Record<string, unknown>,
             undefined, // toolCallId — not available in LangChain tool callback
-            undefined // pendingPrompt — not available in LangChain tool callback
+            undefined, // pendingPrompt — not available in LangChain tool callback
+            config?.signal
           );
           // Return just the content for LangChain, metadata is handled by ToolManager
           return response.content;

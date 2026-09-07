@@ -745,7 +745,8 @@ describe('AgentHarnessSession', () => {
             function: expect.objectContaining({ name: 'kubernetes_api_request' }),
           }),
         ],
-      })
+      }),
+      expect.any(AbortSignal)
     );
     expect(response.toolCalls?.[0]?.id).toBe('delete-call');
     expect(session.history.at(-1)).toEqual(
@@ -839,5 +840,58 @@ describe('AgentHarnessSession', () => {
       ])
     );
     expect(validateToolCallAlignment(session.history).aligned).toBe(true);
+  });
+
+  it('threads the session abort signal into runtime.executeTool so tool execution can be cancelled mid-flight', async () => {
+    const toolManager = createMockToolManager({ enabledToolNames: ['metrics__query'] });
+    let capturedSignal: AbortSignal | undefined;
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      (_name, _args, _toolCallId, _pendingPrompt, signal): Promise<ToolExecutionResult> => {
+        capturedSignal = signal;
+        // Never resolves on its own — only settles when the signal aborts —
+        // proving the run relies on genuine cancellation rather than a
+        // fixed timeout to stop in-flight tool execution.
+        return new Promise(resolve => {
+          signal?.addEventListener(
+            'abort',
+            () =>
+              resolve({
+                content: JSON.stringify({ error: true, message: 'cancelled' }),
+                shouldAddToHistory: true,
+                shouldProcessFollowUp: false,
+              }),
+            { once: true }
+          );
+        });
+      }
+    );
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    const model = new FakeToolCallingModel({
+      toolCalls: [[{ id: 'call-1', name: 'metrics__query', args: { query: 'up' } }], []],
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager,
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+
+    const sendPromise = session.userSend('Query metrics');
+    // Let the run reach runtime.executeTool before aborting.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(capturedSignal).toBeDefined();
+    expect(capturedSignal?.aborted).toBe(false);
+
+    session.abort();
+    await sendPromise;
+
+    expect(capturedSignal?.aborted).toBe(true);
   });
 });

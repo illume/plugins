@@ -15,6 +15,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import {
   NullToolClient as NullMCPClientAdapter,
   type ToolClient as MCPClientAdapter,
@@ -853,6 +854,122 @@ describe('ToolManager — executeTool', () => {
 
     const result = await mgr.executeTool('test-server__my_tool', { query: 'missing' });
     // isError should be set in metadata
+    expect(result.metadata?.isError).toBe(true);
+  });
+});
+
+// ── executeTool cancellation ───────────────────────────────────────────────────
+
+describe('ToolManager — executeTool cancellation', () => {
+  it('short-circuits a regular tool without invoking its handler when the signal is already aborted', async () => {
+    const handler = vi.fn();
+    const fakeTool: LangChainTool = {
+      config: {
+        name: 'fake-tool',
+        shortDescription: 'fake',
+        description: 'fake',
+        schema: z.object({}),
+      },
+      handler,
+      createLangChainTool: () =>
+        ({} as unknown as ReturnType<LangChainTool['createLangChainTool']>),
+    };
+    const mgr = new LangChainToolManager();
+    privateManager(mgr).addTool(fakeTool);
+    const controller = new AbortController();
+    controller.abort();
+
+    const result = await mgr.executeTool('fake-tool', {}, undefined, undefined, controller.signal);
+
+    expect(handler).not.toHaveBeenCalled();
+    const content = JSON.parse(result.content);
+    expect(content.error).toBe(true);
+    expect(result.metadata?.error).toBe('cancelled');
+  });
+
+  it('forwards the signal to a regular tool handler so it can honor cancellation itself', async () => {
+    let receivedSignal: AbortSignal | undefined;
+    const handler = vi.fn(async (_args, _toolCallId, _pendingPrompt, signal?: AbortSignal) => {
+      receivedSignal = signal;
+      return { content: 'ok', shouldAddToHistory: true, shouldProcessFollowUp: true };
+    });
+    const fakeTool: LangChainTool = {
+      config: {
+        name: 'fake-tool',
+        shortDescription: 'fake',
+        description: 'fake',
+        schema: z.object({}),
+      },
+      handler,
+      createLangChainTool: () =>
+        ({} as unknown as ReturnType<LangChainTool['createLangChainTool']>),
+    };
+    const mgr = new LangChainToolManager();
+    privateManager(mgr).addTool(fakeTool);
+    const controller = new AbortController();
+
+    await mgr.executeTool('fake-tool', {}, undefined, undefined, controller.signal);
+
+    expect(receivedSignal).toBe(controller.signal);
+  });
+
+  it('short-circuits an MCP tool without invoking the bridge when the signal is already aborted', async () => {
+    const executeTool = vi.fn(async () => ({ result: 'should not run' }));
+    const adapter = makeMCPAdapter({ executeTool });
+    const mgr = new LangChainToolManager({ mcpClient: adapter });
+    await mgr.waitForMCPToolsInitialization();
+    const controller = new AbortController();
+    controller.abort();
+
+    const result = await mgr.executeTool(
+      'test-server__my_tool',
+      { query: 'pods' },
+      undefined,
+      undefined,
+      controller.signal
+    );
+
+    expect(executeTool).not.toHaveBeenCalled();
+    const content = JSON.parse(result.content);
+    expect(content.error).toBe(true);
+    expect(result.metadata?.error).toBe('cancelled');
+  });
+
+  it('aborts an in-flight MCP tool call when the signal fires mid-execution', async () => {
+    const executeTool = vi.fn(
+      (_name: string, _args: Record<string, unknown>, _toolCallId?: string, signal?: AbortSignal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener(
+            'abort',
+            () => {
+              const err = new Error('The operation was aborted');
+              err.name = 'AbortError';
+              reject(err);
+            },
+            { once: true }
+          );
+        })
+    );
+    const adapter = makeMCPAdapter({ executeTool });
+    const mgr = new LangChainToolManager({ mcpClient: adapter });
+    await mgr.waitForMCPToolsInitialization();
+    const controller = new AbortController();
+
+    const pending = mgr.executeTool(
+      'test-server__my_tool',
+      { query: 'pods' },
+      undefined,
+      undefined,
+      controller.signal
+    );
+    // Let the tool call reach the MCP bridge's executeTool before aborting.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    controller.abort();
+
+    const result = await pending;
+    expect(executeTool).toHaveBeenCalled();
+    const content = JSON.parse(result.content);
+    expect(content.error).toBe(true);
     expect(result.metadata?.isError).toBe(true);
   });
 });

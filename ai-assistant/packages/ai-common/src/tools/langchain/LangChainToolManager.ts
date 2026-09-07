@@ -243,16 +243,27 @@ export class LangChainToolManager {
                * Maps and executes one dynamically discovered MCP tool.
                *
                * @param args - LangChain-produced arguments to normalize.
+               * @param _runManager - Unused LangChain callback manager.
+               * @param parentConfig - Invocation config; `signal` is forwarded to the bridge.
                * @returns String form of the bridge result.
                */
-              func: async (args: Record<string, unknown>) => {
+              func: async (
+                args: Record<string, unknown>,
+                _runManager?: unknown,
+                parentConfig?: { signal?: AbortSignal }
+              ) => {
                 try {
                   // Handle argument mapping for MCP tools
                   // LangChain may wrap args in different formats, need to handle properly
                   const mappedArgs = this.mapMCPToolArguments(args, toolData.inputSchema);
 
                   // Execute the MCP tool through the host bridge.
-                  const result = await this.mcpClient.executeTool(toolData.name, mappedArgs);
+                  const result = await this.mcpClient.executeTool(
+                    toolData.name,
+                    mappedArgs,
+                    undefined,
+                    parentConfig?.signal
+                  );
                   // Extract actual result from MCP response
                   const actualResult =
                     typeof result === 'object' && result !== null && 'result' in result
@@ -689,6 +700,9 @@ export class LangChainToolManager {
    * @param args - Tool arguments; MCP adapters normalize them against their schema.
    * @param toolCallId - Optional built-in tool-call correlation ID.
    * @param pendingPrompt - Optional pending message passed to built-in handlers.
+   * @param signal - Optional abort signal. Already-aborted signals are honored
+   *   before any tool starts; MCP calls also receive the signal so an in-flight
+   *   request is cancelled if it fires mid-call.
    * @returns Execution result with serialized content and error metadata when applicable.
    * @throws If inventory changes after the initial availability check and no handler remains.
    */
@@ -696,8 +710,18 @@ export class LangChainToolManager {
     toolName: string,
     args: Record<string, unknown>,
     toolCallId?: string,
-    pendingPrompt?: Prompt
+    pendingPrompt?: Prompt,
+    signal?: AbortSignal
   ): Promise<ToolExecutionResult> {
+    if (signal?.aborted) {
+      return {
+        content: JSON.stringify({ error: true, message: 'Tool execution cancelled.', toolName }),
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: false,
+        metadata: { error: 'cancelled', toolName, isError: true },
+      };
+    }
+
     if (!this.hasTool(toolName)) {
       return {
         content: JSON.stringify({
@@ -714,7 +738,7 @@ export class LangChainToolManager {
     const regularTool = this.toolHandlers.get(toolName);
     if (regularTool) {
       try {
-        return await regularTool.handler(args, toolCallId, pendingPrompt);
+        return await regularTool.handler(args, toolCallId, pendingPrompt, signal);
       } catch (error) {
         return {
           content: JSON.stringify({
@@ -733,7 +757,7 @@ export class LangChainToolManager {
     const mcpTool = this.mcpTools.find(tool => tool.name === toolName);
     if (mcpTool) {
       try {
-        const rawResult = await mcpTool.invoke(args);
+        const rawResult = await mcpTool.invoke(args, signal ? { signal } : undefined);
 
         // Check if the raw result indicates an error
         const isError = this.detectMCPError(rawResult);

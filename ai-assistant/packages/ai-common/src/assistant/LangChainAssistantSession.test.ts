@@ -2283,7 +2283,8 @@ describe('processToolCalls — malformed serialized arguments', () => {
       'test-tool',
       {},
       'tc-malformed',
-      expect.objectContaining({ role: 'assistant' })
+      expect.objectContaining({ role: 'assistant' }),
+      undefined
     );
   });
 });

@@ -151,7 +151,8 @@ export class AgentToolAdapter {
             source.name,
             normalizedArgs,
             toolCallId,
-            this.createPendingPrompt(source.name, normalizedArgs, toolCallId)
+            this.createPendingPrompt(source.name, normalizedArgs, toolCallId),
+            config?.signal ?? this.options.signal
           );
           this.options.onRuntimeResult?.(toolCallId, result);
           const content = redactSecrets(result.content);

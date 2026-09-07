@@ -52,6 +52,12 @@ export type ClusterWarnings = Record<
   }
 >;
 
+/** Cluster platform classification supplied by the host. */
+export type ClusterPlatform = 'aks' | 'other' | 'unknown';
+
+/** Cluster platform map: cluster name → detected platform. */
+export type ClusterPlatforms = Record<string, ClusterPlatform>;
+
 /** Resource fields retained when minimizing context sent to the model. */
 type MinimizedResource = Pick<
   KubernetesContextResource,
@@ -135,13 +141,15 @@ export function minimizeResourceList(resources: unknown): MinimizedResource[] {
  * @param currentCluster - Cluster currently displayed by the host.
  * @param clusterWarnings - Warning and loading-error details keyed by cluster.
  * @param selectedClusters - Clusters explicitly selected for the current request.
+ * @param clusterPlatforms - Detected Kubernetes platforms keyed by cluster.
  * @returns A multiline description the assistant can use as prompt context.
  */
 export function generateContextDescription(
   event: ContextEventPayload | null,
   currentCluster?: string,
   clusterWarnings?: ClusterWarnings,
-  selectedClusters?: string[]
+  selectedClusters?: string[],
+  clusterPlatforms?: ClusterPlatforms
 ): string {
   const contextParts: string[] = [];
   // Add cluster context - be clear about what clusters are in scope
@@ -153,6 +161,25 @@ export function generateContextDescription(
     }
   } else if (currentCluster) {
     contextParts.push(`You are viewing cluster: ${currentCluster}`);
+  }
+
+  if (Object.keys(clusterPlatforms || {}).length > 0) {
+    contextParts.push('Cluster platforms:');
+    for (const [clusterName, platform] of Object.entries(clusterPlatforms!)) {
+      if (platform === 'aks') {
+        contextParts.push(
+          `- ${clusterName}: Azure Kubernetes Service (AKS); Azure/AKS observability tools are applicable`
+        );
+      } else if (platform === 'other') {
+        contextParts.push(
+          `- ${clusterName}: not detected as AKS; do not use AKS-specific observability tools`
+        );
+      } else {
+        contextParts.push(
+          `- ${clusterName}: platform unknown; verify it is AKS before using AKS-specific observability tools`
+        );
+      }
+    }
   }
 
   // Add current view context

@@ -85,6 +85,7 @@ import EditorDialog from './editordialog';
 import { checkHolmesAgentHealth } from './holmesClient';
 import { HolmesHealthRequestGate } from './holmesHealthRequestGate';
 import { useKubernetesToolUI } from './hooks/useKubernetesToolUI';
+import { fetchClusterPlatforms } from './kubernetes/ClusterPlatformFetcher';
 import { fetchClusterWarnings, fetchWarningEventsForClusters } from './kubernetes/EventFetcher';
 import { createPluginCommandRunner } from './pluginCommandRunner';
 import { getSettingsURL, type PluginConfig, useGlobalState } from './pluginState';
@@ -1692,18 +1693,24 @@ export default function AIPrompt(props: {
     const event = _pluginSetting.event;
     const currentCluster = getCluster();
     const currentClusterGroup = getClusterGroup();
+    let cancelled = false;
 
     // Fetch warnings on-demand for context generation (one-shot, not continuous)
-    const clusters = clusterNames;
-    fetchClusterWarnings(clusters)
-      .then(warnings => {
+    const contextClusters = clusterNames;
+    Promise.all([
+      fetchClusterWarnings(contextClusters),
+      fetchClusterPlatforms(contextClusters, clusters),
+    ])
+      .then(([warnings, clusterPlatforms]) => {
+        if (cancelled) return;
         clusterWarningsRef.current = warnings;
 
         const contextDescription = generateContextDescription(
           event,
           currentCluster,
           warnings,
-          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined
+          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined,
+          clusterPlatforms
         );
         let fullContext = contextDescription;
         if (currentClusterGroup && currentClusterGroup.length > 1) {
@@ -1712,7 +1719,8 @@ export default function AIPrompt(props: {
         aiManager.setContext(fullContext);
       })
       .catch(err => {
-        console.error('[Context] Failed to fetch warnings for context:', err);
+        if (cancelled) return;
+        console.error('[Context] Failed to fetch cluster context:', err);
         // Fall back to generating context without warnings
         const contextDescription = generateContextDescription(
           event,
@@ -1726,7 +1734,10 @@ export default function AIPrompt(props: {
         }
         aiManager.setContext(fullContext);
       });
-  }, [_pluginSetting.event, aiManager, clusterNamesKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [_pluginSetting.event, aiManager, clusterNamesKey, clusters]);
 
   React.useEffect(() => {
     aiManager?.configureTools?.(

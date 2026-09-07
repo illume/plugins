@@ -156,7 +156,7 @@ export function buildKubectlArgs(
   if (!/^\/[a-zA-Z0-9\/_.:@%~-]+(\?[a-zA-Z0-9%=&._~-]*)?$/.test(url)) {
     throw new Error(
       'Invalid API path: contains disallowed characters. Path must match ' +
-        '/[a-zA-Z0-9/_.:@%~-]+(?[a-zA-Z0-9%=&._~-]*)?'
+        '/[a-zA-Z0-9/_.:@%~-]+(\\?[a-zA-Z0-9%=&._~-]*)?'
     );
   }
 

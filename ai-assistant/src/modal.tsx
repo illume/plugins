@@ -198,6 +198,14 @@ export default function AIPrompt(props: {
   // Effects key off this instead of the array so a new array with the same
   // clusters does not re-trigger event fetching.
   const clusterNamesKey = clusterNames.join(',');
+  const clusterPlatformConfigKey = JSON.stringify(
+    clusterNames.map(cluster => [
+      cluster,
+      clusters[cluster]?.server ?? clusters[cluster]?.cluster?.server ?? null,
+    ])
+  );
+  const clusterConfigsRef = useRef(clusters);
+  clusterConfigsRef.current = clusters;
 
   // Fetch cluster warnings on-demand for context generation (replaces
   // the continuous useClusterWarnings hook).
@@ -1727,7 +1735,7 @@ export default function AIPrompt(props: {
 
     Promise.all([
       fetchClusterWarnings(contextClusters),
-      fetchClusterPlatforms(contextClusters, clusters),
+      fetchClusterPlatforms(contextClusters, clusterConfigsRef.current),
     ])
       .then(([warnings, clusterPlatforms]) => {
         if (cancelled) return;
@@ -1741,7 +1749,7 @@ export default function AIPrompt(props: {
     return () => {
       cancelled = true;
     };
-  }, [_pluginSetting.event, aiManager, clusterNamesKey, clusters]);
+  }, [_pluginSetting.event, aiManager, clusterNamesKey, clusterPlatformConfigKey]);
 
   React.useEffect(() => {
     aiManager?.configureTools?.(

@@ -73,7 +73,9 @@ import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
   filterApprovedOrchestrationTools,
+  OrchestrationTask,
   shouldCacheResponse,
+  waitForOrchestrationResults,
 } from '../tools/orchestration/prepareToolPlan';
 import {
   assembleFallbackResponseContent,
@@ -1277,32 +1279,34 @@ export default class LangChainAssistantSession extends AssistantSession {
       const { parallel, sequential } = ToolPlanner.groupToolsByExecutionStrategy(approvedTools);
 
       // Execute parallel tools first
-      const toolResults: Record<string, ToolResult> = {};
       const toolExecutionIds: Record<string, string> = {};
 
+      let toolResults: Record<string, ToolResult> = {};
+
       if (parallel.length > 0) {
-        const parallelPromises = parallel.map(async tool => {
+        const tasks: OrchestrationTask[] = parallel.map(tool => {
           const approvalData = toolsForApproval.find(t => t.name === tool.name);
           const toolCallId = approvalData?.id || `orchestrated-${tool.name}-${Date.now()}`;
           toolExecutionIds[tool.name] = toolCallId;
 
-          try {
-            const result = await this.toolManager.executeTool(
-              tool.name,
-              approvalData?.arguments || tool.arguments || {},
-              toolCallId,
-              undefined,
-              this.currentAbortController?.signal
-            );
-            toolResults[tool.name] = result;
-            return result;
-          } catch (error) {
-            toolResults[tool.name] = buildOrchestrationToolError(tool.name, error as Error | null);
-          }
+          return {
+            name: tool.name,
+            // Undefined (older/mocked recommendations) defaults to required,
+            // preserving the original "wait for everything" behavior.
+            required: tool.required !== false,
+            run: () =>
+              this.toolManager.executeTool(
+                tool.name,
+                approvalData?.arguments || tool.arguments || {},
+                toolCallId,
+                undefined,
+                this.currentAbortController?.signal
+              ),
+          };
         });
 
         try {
-          await Promise.all(parallelPromises);
+          toolResults = await waitForOrchestrationResults(tasks);
         } catch (error) {
           console.error('Error executing parallel tools:', error);
           // Continue with sequential tools even if some parallel tools fail

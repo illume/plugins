@@ -1,10 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { RecommendedTool } from '../langchain/ToolPlanner';
+import type { ToolResult } from '../results/formatToolResults';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
+  buildPendingToolPlaceholder,
   filterApprovedOrchestrationTools,
+  OrchestrationTask,
   shouldCacheResponse,
+  waitForOrchestrationResults,
 } from './prepareToolPlan';
 
 const makeTool = (name: string, extra: Partial<RecommendedTool> = {}): RecommendedTool => ({
@@ -164,5 +168,191 @@ describe('buildMultiToolErrorPrompt', () => {
 
   it('suggests the user try again', () => {
     expect(buildMultiToolErrorPrompt(null).content.toLowerCase()).toContain('try');
+  });
+});
+
+// =============================================================================
+// buildPendingToolPlaceholder
+// =============================================================================
+
+describe('buildPendingToolPlaceholder', () => {
+  it('marks the result as pending', () => {
+    expect(buildPendingToolPlaceholder('get_pods').pending).toBe(true);
+  });
+
+  it('includes the tool name in the message', () => {
+    expect(buildPendingToolPlaceholder('get_pods').message).toContain('get_pods');
+  });
+});
+
+// =============================================================================
+// waitForOrchestrationResults
+// =============================================================================
+
+/** Creates a promise plus external resolve/reject controls for deterministic tests. */
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (error: unknown) => void;
+} {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+const successResult: ToolResult = { success: true, data: { ok: true } };
+
+describe('waitForOrchestrationResults', () => {
+  it('waits for all tasks when every task is required (default/no optional tools)', async () => {
+    const a = deferred<ToolResult>();
+    const b = deferred<ToolResult>();
+    const tasks: OrchestrationTask[] = [
+      { name: 'a', required: true, run: () => a.promise },
+      { name: 'b', required: true, run: () => b.promise },
+    ];
+
+    let settled = false;
+    const resultPromise = waitForOrchestrationResults(tasks).then(r => {
+      settled = true;
+      return r;
+    });
+
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    a.resolve(successResult);
+    await Promise.resolve();
+    expect(settled).toBe(false); // still waiting on b
+
+    b.resolve(successResult);
+    const results = await resultPromise;
+    expect(results.a).toEqual(successResult);
+    expect(results.b).toEqual(successResult);
+  });
+
+  it('does not wait for a slow optional tool once required tools have settled', async () => {
+    const required = deferred<ToolResult>();
+    const optional = deferred<ToolResult>(); // never resolves in this test
+    const tasks: OrchestrationTask[] = [
+      { name: 'required_tool', required: true, run: () => required.promise },
+      { name: 'optional_tool', required: false, run: () => optional.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks);
+    required.resolve(successResult);
+
+    const results = await resultsPromise;
+    expect(results.required_tool).toEqual(successResult);
+    expect(results.optional_tool).toEqual(buildPendingToolPlaceholder('optional_tool'));
+  });
+
+  it('uses an optional tool result if it happens to settle before required tools do', async () => {
+    const required = deferred<ToolResult>();
+    const optional = deferred<ToolResult>();
+    const tasks: OrchestrationTask[] = [
+      { name: 'required_tool', required: true, run: () => required.promise },
+      { name: 'optional_tool', required: false, run: () => optional.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks);
+    const optionalResult: ToolResult = { success: true, data: { fast: true } };
+    optional.resolve(optionalResult);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    required.resolve(successResult);
+    const results = await resultsPromise;
+    expect(results.optional_tool).toEqual(optionalResult);
+  });
+
+  it('races for the first successful result when every task is optional', async () => {
+    const slow = deferred<ToolResult>();
+    const fast = deferred<ToolResult>();
+    const tasks: OrchestrationTask[] = [
+      { name: 'slow_tool', required: false, run: () => slow.promise },
+      { name: 'fast_tool', required: false, run: () => fast.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks, 5_000);
+    fast.resolve(successResult);
+
+    const results = await resultsPromise;
+    expect(results.fast_tool).toEqual(successResult);
+    expect(results.slow_tool).toEqual(buildPendingToolPlaceholder('slow_tool'));
+  });
+
+  it('returns immediately once every optional task has failed, without waiting the full deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const failingA = deferred<ToolResult>();
+      const failingB = deferred<ToolResult>();
+      const tasks: OrchestrationTask[] = [
+        { name: 'a', required: false, run: () => failingA.promise },
+        { name: 'b', required: false, run: () => failingB.promise },
+      ];
+
+      const resultsPromise = waitForOrchestrationResults(tasks, 60_000);
+
+      failingA.resolve({ error: true, message: 'boom a' });
+      failingB.resolve({ error: true, message: 'boom b' });
+
+      // Let the microtask queue drain the resolved promises without advancing
+      // the 60s timer — proves we don't wait out the deadline when nothing
+      // left could possibly succeed.
+      await vi.advanceTimersByTimeAsync(0);
+
+      const results = await resultsPromise;
+      expect(results.a).toEqual({ error: true, message: 'boom a' });
+      expect(results.b).toEqual({ error: true, message: 'boom b' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives up at the deadline when every optional task is genuinely stuck', async () => {
+    vi.useFakeTimers();
+    try {
+      const stuck = new Promise<ToolResult>(() => {}); // never settles
+      const tasks: OrchestrationTask[] = [{ name: 'stuck_tool', required: false, run: () => stuck }];
+
+      const resultsPromise = waitForOrchestrationResults(tasks, 10_000);
+
+      let settled = false;
+      resultsPromise.then(() => {
+        settled = true;
+      });
+
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      const results = await resultsPromise;
+      expect(settled).toBe(true);
+      expect(results.stuck_tool).toEqual(buildPendingToolPlaceholder('stuck_tool'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('records a rejected task run() as an orchestration error rather than throwing', async () => {
+    const tasks: OrchestrationTask[] = [
+      {
+        name: 'broken_tool',
+        required: true,
+        run: () => Promise.reject(new Error('exploded')),
+      },
+    ];
+
+    const results = await waitForOrchestrationResults(tasks);
+    expect(results.broken_tool).toEqual(buildOrchestrationToolError('broken_tool', new Error('exploded')));
+  });
+
+  it('returns an empty map for an empty task list', async () => {
+    const results = await waitForOrchestrationResults([]);
+    expect(results).toEqual({});
   });
 });

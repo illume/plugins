@@ -3049,6 +3049,167 @@ describe('handleMultipleToolExecution', () => {
     );
     expect(result.role).toBe('assistant');
   });
+
+  it('responds once required tools settle without waiting for a slow optional tool', async () => {
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['mcp_required', 'mcp_optional'],
+    });
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], { toolManager });
+    privateManager(manager).toolManager.getMCPTools = () => [
+      { name: 'mcp_required' },
+      { name: 'mcp_optional' },
+    ];
+
+    let optionalCalled = false;
+    privateManager(manager).toolManager.executeTool = async (toolName: string) => {
+      if (toolName === 'mcp_required') {
+        return {
+          content: JSON.stringify({ success: true, data: 'fast' }),
+          shouldAddToHistory: true,
+          shouldProcessFollowUp: true,
+          success: true,
+          data: 'fast',
+        };
+      }
+      // The optional tool never resolves within the test's lifetime — proves
+      // the response isn't held up waiting for it.
+      optionalCalled = true;
+      return new Promise(() => {});
+    };
+
+    privateManager(manager).model = {
+      invoke: vi.fn().mockResolvedValue({ content: 'Combined result.', tool_calls: [] }),
+      stream: async function* () {},
+    };
+
+    vi.spyOn(ToolPlanner, 'groupToolsByExecutionStrategy').mockReturnValueOnce({
+      parallel: [
+        {
+          name: 'mcp_required',
+          priority: 'high' as const,
+          reason: 'answers the question',
+          description: '',
+          arguments: {},
+          required: true,
+        },
+        {
+          name: 'mcp_optional',
+          priority: 'low' as const,
+          reason: 'supplementary only',
+          description: '',
+          arguments: {},
+          required: false,
+        },
+      ],
+      sequential: [],
+    });
+
+    const recommended: RecommendedTool[] = [
+      {
+        name: 'mcp_required',
+        description: '',
+        priority: 'high',
+        reason: 'answers the question',
+        arguments: {},
+        required: true,
+      },
+      {
+        name: 'mcp_optional',
+        description: '',
+        priority: 'low',
+        reason: 'supplementary only',
+        arguments: {},
+        required: false,
+      },
+    ];
+
+    const result = await privateManager(manager).handleMultipleToolExecution(
+      'show cluster',
+      recommended
+    );
+
+    expect(result.role).toBe('assistant');
+    expect(result.content).toBeTruthy();
+    expect(optionalCalled).toBe(true);
+
+    // The response-generation model call should have seen the required
+    // tool's real data and a pending placeholder for the optional tool.
+    const modelCall = (privateManager(manager).model!.invoke as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    const userMessageContent = modelCall
+      .map((m: { content?: string }) => m.content ?? '')
+      .join('\n');
+    expect(userMessageContent).toContain('fast');
+    expect(userMessageContent).toContain('mcp_optional');
+    expect(userMessageContent.toLowerCase()).toContain('still running');
+  });
+
+  it('waits for every tool when no recommendation opts into required: false (default behavior unchanged)', async () => {
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['mcp_tool_a', 'mcp_tool_b'],
+      toolResults: {
+        mcp_tool_a: { data: 'result_a' },
+        mcp_tool_b: { data: 'result_b' },
+      },
+    });
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], { toolManager });
+    privateManager(manager).toolManager.getMCPTools = () => [
+      { name: 'mcp_tool_a' },
+      { name: 'mcp_tool_b' },
+    ];
+    privateManager(manager).model = {
+      invoke: vi.fn().mockResolvedValue({ content: 'Combined result.', tool_calls: [] }),
+      stream: async function* () {},
+    };
+
+    vi.spyOn(ToolPlanner, 'groupToolsByExecutionStrategy').mockReturnValueOnce({
+      parallel: [
+        {
+          name: 'mcp_tool_a',
+          priority: 'high' as const,
+          reason: 'a',
+          description: '',
+          arguments: {},
+        },
+        {
+          name: 'mcp_tool_b',
+          priority: 'medium' as const,
+          reason: 'b',
+          description: '',
+          arguments: {},
+        },
+      ],
+      sequential: [],
+    });
+
+    // Neither recommendation sets `required`, so both must be treated as
+    // required and the batch should wait for both (original behavior).
+    const recommended: RecommendedTool[] = [
+      { name: 'mcp_tool_a', description: '', priority: 'high', reason: 'a', arguments: {} },
+      { name: 'mcp_tool_b', description: '', priority: 'medium', reason: 'b', arguments: {} },
+    ];
+
+    const result = await privateManager(manager).handleMultipleToolExecution(
+      'show cluster',
+      recommended
+    );
+
+    expect(result.role).toBe('assistant');
+    const modelCall = (privateManager(manager).model!.invoke as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
+    const userMessageContent = modelCall
+      .map((m: { content?: string }) => m.content ?? '')
+      .join('\n');
+    expect(userMessageContent).toContain('result_a');
+    expect(userMessageContent).toContain('result_b');
+    expect(userMessageContent).not.toContain('still running');
+  });
 });
 
 // =============================================================================

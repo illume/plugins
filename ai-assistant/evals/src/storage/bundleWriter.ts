@@ -36,13 +36,13 @@
  *
  * `manifest.json` is written last, after every stream closes, and is the
  * only file allowed to declare the bundle "closed". A crash partway through
- * a run leaves `manifest.json` absent, which `bundle-reader.ts` treats as an
+ * a run leaves `manifest.json` absent, which `bundleReader.ts` treats as an
  * incomplete (not merely empty) bundle.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalStringify, type JsonValue } from '../canonical-json.js';
+import { canonicalStringify, type JsonValue } from '../canonicalJson.js';
 import { digestOfFile, JsonlWriter, readJsonlPayloads } from './jsonl.js';
 import { schemaUri } from '../contracts/schemas.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';

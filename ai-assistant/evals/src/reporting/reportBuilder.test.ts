@@ -18,8 +18,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { buildReport, writeReport } from './report-builder.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratch-dir.js';
+import { buildReport, writeReport } from './reportBuilder.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
 import type { TrialResult } from '../contracts/types.js';
 

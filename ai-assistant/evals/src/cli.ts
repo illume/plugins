@@ -32,8 +32,8 @@ import {
   type CandidateSpec,
 } from './runner/orchestrate.js';
 import { runId as generateRunId } from './ids.js';
-import { readClosedBundle } from './storage/bundle-reader.js';
-import { buildReport, writeReport } from './reporting/report-builder.js';
+import { readClosedBundle } from './storage/bundleReader.js';
+import { buildReport, writeReport } from './reporting/reportBuilder.js';
 import { ownershipRow } from './operations/ownership.js';
 import { loadAllScenarios } from './scenarios/loader.js';
 import { publishRun, regenerateOverallViews, checkOverallViews } from './publication/publish.js';

@@ -27,7 +27,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeScratchDir, removeScratchDir } from './test-helpers/scratch-dir.js';
+import { makeScratchDir, removeScratchDir } from './test-helpers/scratchDir.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');

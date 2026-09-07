@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalStringify, digestRef, sha256OfJson, sha256OfText } from './canonical-json.js';
+import { canonicalStringify, digestRef, sha256OfJson, sha256OfText } from './canonicalJson.js';
 
 test('canonicalStringify sorts object keys regardless of input order', () => {
   const a = canonicalStringify({ b: 1, a: 2, c: { z: 1, y: 2 } });

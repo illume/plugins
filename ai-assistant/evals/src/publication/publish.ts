@@ -30,9 +30,9 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonical-json.js';
+import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonicalJson.js';
 import { publicationId as generatePublicationId } from '../ids.js';
-import type { ReportJson } from '../reporting/report-builder.js';
+import type { ReportJson } from '../reporting/reportBuilder.js';
 
 export const DISCLOSURE_PROFILE = 'public-github';
 const REPORT_SCHEMA_VERSION = '1.0.0';

@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { JsonlWriter, readJsonl, readJsonlPayloads } from './jsonl.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratch-dir.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 
 test('JsonlWriter: appends records with a monotonic sequence and hash-chained digests', () => {
   const dir = makeScratchDir('jsonl');

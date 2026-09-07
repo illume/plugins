@@ -24,8 +24,8 @@
  */
 
 import type { ClusterProfileName } from '../contracts/types.js';
-import type { CommandRunner } from './command-runner.js';
-import { commandExists } from './command-runner.js';
+import type { CommandRunner } from './commandRunner.js';
+import { commandExists } from './commandRunner.js';
 import type {
   ClusterAdapter,
   EndpointsObservation,

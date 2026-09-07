@@ -30,7 +30,7 @@ import {
   sha256OfJson,
   sha256OfText,
   type JsonValue,
-} from '../canonical-json.js';
+} from '../canonicalJson.js';
 import { recordId as generateRecordId } from '../ids.js';
 
 export interface JsonlRecord<T extends JsonValue> {

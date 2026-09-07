@@ -15,10 +15,10 @@
  */
 
 import type { ClusterProfileName } from '../contracts/types.js';
-import { AksStubAdapter } from './aks-stub-adapter.js';
-import { createRealCommandRunner, type CommandRunner } from './command-runner.js';
+import { AksStubAdapter } from './aksStubAdapter.js';
+import { createRealCommandRunner, type CommandRunner } from './commandRunner.js';
 import { loadClusterProfile } from './profile.js';
-import { KubectlKwokAdapter } from './kwok-adapter.js';
+import { KubectlKwokAdapter } from './kwokAdapter.js';
 import { SimulatedKwokAdapter } from './simulated-adapter.js';
 import type { ClusterAdapter } from './types.js';
 

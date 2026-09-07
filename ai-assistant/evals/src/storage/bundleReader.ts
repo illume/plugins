@@ -23,10 +23,10 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { sha256OfText, type JsonValue } from '../canonical-json.js';
+import { sha256OfText, type JsonValue } from '../canonicalJson.js';
 import { readJsonlPayloads } from './jsonl.js';
 import type { RegressionDelta, TrialResult } from '../contracts/types.js';
-import type { TrialIndexRow } from './bundle-writer.js';
+import type { TrialIndexRow } from './bundleWriter.js';
 
 export interface ClosedBundle {
   runDir: string;

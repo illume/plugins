@@ -23,7 +23,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonical-json.js';
+import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonicalJson.js';
 import { reportId as generateReportId } from '../ids.js';
 import { computeHealthSummary } from '../lifecycle/health.js';
 import type { OwnershipRow } from '../operations/ownership.js';

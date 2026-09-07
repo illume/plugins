@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isKwokCompatible, KWOK_PROVEN_MECHANISMS } from './kwok-compatibility.js';
+import { isKwokCompatible, KWOK_PROVEN_MECHANISMS } from './kwokCompatibility.js';
 
 test('a scenario needing only proven mechanisms is kwok-compatible', () => {
   assert.equal(isKwokCompatible(['api-server', 'endpointslice-controller']), true);

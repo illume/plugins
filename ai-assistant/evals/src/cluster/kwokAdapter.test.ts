@@ -22,8 +22,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createFakeCommandRunner } from './command-runner.js';
-import { KubectlKwokAdapter } from './kwok-adapter.js';
+import { createFakeCommandRunner } from './commandRunner.js';
+import { KubectlKwokAdapter } from './kwokAdapter.js';
 
 test('preflight: reports unsupported with a specific reason when a tool is missing', async () => {
   const { runner } = createFakeCommandRunner([

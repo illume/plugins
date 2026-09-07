@@ -18,9 +18,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
-import { buildReport } from '../reporting/report-builder.js';
+import { buildReport } from '../reporting/reportBuilder.js';
 import { checkOverallViews, publishRun, redactReport, regenerateOverallViews } from './publish.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratch-dir.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
 import type { TrialResult } from '../contracts/types.js';
 

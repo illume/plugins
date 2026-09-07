@@ -16,7 +16,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonical-json.js';
+import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonicalJson.js';
 import { exportId as generateExportId } from '../ids.js';
 import type { TrialResult } from '../contracts/types.js';
 import { projectToLangSmith } from './langsmith.js';

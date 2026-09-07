@@ -80,7 +80,7 @@ export interface ScenarioManifest {
    * Whether the generated `kwok-compatible` fast subset may include this
    * case. Derived at load time from `required_mechanisms` against the set of
    * mechanisms KWOK is independently proved to provide
-   * (`KWOK_PROVEN_MECHANISMS` in `contracts/kwok-compatibility.ts`); stored
+   * (`KWOK_PROVEN_MECHANISMS` in `contracts/kwokCompatibility.ts`); stored
    * here only as the scenario author's declared expectation, which the
    * loader cross-checks and never silently overrides.
    */

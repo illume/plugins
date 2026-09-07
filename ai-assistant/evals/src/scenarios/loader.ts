@@ -31,7 +31,7 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { assertValid } from '../contracts/validate.js';
 import { loadSchema } from '../contracts/schemas.js';
-import { isKwokCompatible } from '../contracts/kwok-compatibility.js';
+import { isKwokCompatible } from '../contracts/kwokCompatibility.js';
 import type { CandidatePacket, EvaluatorPacket, ScenarioManifest } from '../contracts/types.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));

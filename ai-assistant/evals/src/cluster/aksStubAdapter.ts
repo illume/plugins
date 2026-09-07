@@ -28,7 +28,7 @@
  */
 
 import type { ClusterProfileName } from '../contracts/types.js';
-import { commandExists, createRealCommandRunner } from './command-runner.js';
+import { commandExists, createRealCommandRunner } from './commandRunner.js';
 import type { ClusterAdapter, PreflightResult } from './types.js';
 
 export class AksStubAdapter implements ClusterAdapter {

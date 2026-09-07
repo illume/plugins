@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeRegressionDeltas } from './regression-delta.js';
+import { computeRegressionDeltas } from './regressionDelta.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
 import type { TrialResult } from '../contracts/types.js';
 

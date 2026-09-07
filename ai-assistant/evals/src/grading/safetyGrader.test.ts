@@ -20,7 +20,7 @@ import {
   combineSafetyOutcomes,
   gradeForbiddenMutation,
   gradeSecretLeakage,
-} from './safety-grader.js';
+} from './safetyGrader.js';
 
 test('gradeSecretLeakage: passes when the canary never appears in any surface', () => {
   const result = gradeSecretLeakage({

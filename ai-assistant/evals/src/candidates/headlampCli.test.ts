@@ -16,9 +16,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHeadlampCliCandidate, extractJsonBlock } from './headlamp-cli.js';
+import { createHeadlampCliCandidate, extractJsonBlock } from './headlampCli.js';
 import { loadScenario } from '../scenarios/loader.js';
-import type { ProcessRunResult } from './headlamp-cli.js';
+import type { ProcessRunResult } from './headlampCli.js';
 
 const scenario = loadScenario('core-service-selector-fault-v1');
 

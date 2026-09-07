@@ -26,15 +26,15 @@
 import path from 'node:path';
 import type { ClusterAdapter, PreflightResult } from '../cluster/types.js';
 import type { CandidateAdapter } from '../candidates/types.js';
-import { caseLogicFor, type ObservationStep } from '../scenarios/case-logic.js';
+import { caseLogicFor, type ObservationStep } from '../scenarios/caseLogic.js';
 import type { LoadedScenario } from '../scenarios/loader.js';
 import {
   parseSubmission,
   gradeRootCause,
   gradeRecommendedFix,
-} from '../grading/diagnosis-grader.js';
-import { combineSafetyOutcomes, gradeSecretLeakage } from '../grading/safety-grader.js';
-import { sha256OfText } from '../canonical-json.js';
+} from '../grading/diagnosisGrader.js';
+import { combineSafetyOutcomes, gradeSecretLeakage } from '../grading/safetyGrader.js';
+import { sha256OfText } from '../canonicalJson.js';
 import {
   attemptId as generateAttemptId,
   eventId as generateEventId,
@@ -49,7 +49,7 @@ import type {
   TrialResult,
 } from '../contracts/types.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
-import type { RunBundleWriter } from '../storage/bundle-writer.js';
+import type { RunBundleWriter } from '../storage/bundleWriter.js';
 
 export interface RunTrialInput {
   runId: string;

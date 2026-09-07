@@ -24,7 +24,7 @@
  * namespace and returns only Pods with `phase: Running` — rather than
  * returning a fixture-authored answer. This is why `endpointslice-controller`
  * is listed as a KWOK-proven mechanism in
- * `contracts/kwok-compatibility.ts`: the behavior is derived from the applied
+ * `contracts/kwokCompatibility.ts`: the behavior is derived from the applied
  * objects, not hard-coded per scenario.
  *
  * `getSchedulingObservation` always reports `supported: false` here: no

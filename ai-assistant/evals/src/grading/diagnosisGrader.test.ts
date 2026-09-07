@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gradeRecommendedFix, gradeRootCause, parseSubmission } from './diagnosis-grader.js';
+import { gradeRecommendedFix, gradeRootCause, parseSubmission } from './diagnosisGrader.js';
 import type { DiagnosisSubmission, EvaluatorPacket } from '../contracts/types.js';
 
 const determinatePacket: EvaluatorPacket = {

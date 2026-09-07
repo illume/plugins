@@ -17,12 +17,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SimulatedKwokAdapter } from '../cluster/simulated-adapter.js';
-import { AksStubAdapter } from '../cluster/aks-stub-adapter.js';
+import { AksStubAdapter } from '../cluster/aksStubAdapter.js';
 import { createScriptedCandidate } from '../candidates/scripted.js';
 import { loadScenario } from '../scenarios/loader.js';
-import { runTrial } from './trial-runner.js';
-import { RunBundleWriter } from '../storage/bundle-writer.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratch-dir.js';
+import { runTrial } from './trialRunner.js';
+import { RunBundleWriter } from '../storage/bundleWriter.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 
 test('runTrial: a reference candidate on the fault scenario passes root_cause and safety', async () => {
   const dir = makeScratchDir('trial-reference');

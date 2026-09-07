@@ -4,7 +4,7 @@ cluster:
   kind: aks
   # AKS provisioning/credentials are not implemented in Phase 1. Selecting
   # this profile always yields a clear `unsupported` preflight result; see
-  # `cluster/aks-stub-adapter.ts`. Populate these when Phase 1's on-demand
+  # `cluster/aksStubAdapter.ts`. Populate these when Phase 1's on-demand
   # cloud-portability run is actually wired to a dedicated non-production
   # cluster.
   credential_env_vars:

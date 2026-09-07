@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { commandExists, createFakeCommandRunner } from './command-runner.js';
+import { commandExists, createFakeCommandRunner } from './commandRunner.js';
 
 test('createFakeCommandRunner: records every call it receives', () => {
   const { runner, calls } = createFakeCommandRunner([

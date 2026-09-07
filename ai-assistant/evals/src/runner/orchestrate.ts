@@ -30,9 +30,9 @@
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { createClusterAdapter, type ExecutionMode } from '../cluster/adapter-factory.js';
+import { createClusterAdapter, type ExecutionMode } from '../cluster/adapterFactory.js';
 import type { ClusterProfileName, TrialResult } from '../contracts/types.js';
-import { createHeadlampCliCandidate } from '../candidates/headlamp-cli.js';
+import { createHeadlampCliCandidate } from '../candidates/headlampCli.js';
 import { createScriptedCandidate, type ScriptedCandidateMode } from '../candidates/scripted.js';
 import type { CandidateAdapter } from '../candidates/types.js';
 import {
@@ -41,14 +41,14 @@ import {
   type LoadedScenario,
 } from '../scenarios/loader.js';
 import { isEligibleToRun, ownershipRow } from '../operations/ownership.js';
-import { computeRegressionDeltas } from '../regressions/regression-delta.js';
-import { runTrial } from './trial-runner.js';
-import { RunBundleWriter } from '../storage/bundle-writer.js';
-import { buildReport, writeReport } from '../reporting/report-builder.js';
-import { writeExportProjections } from '../exporters/write-exports.js';
+import { computeRegressionDeltas } from '../regressions/regressionDelta.js';
+import { runTrial } from './trialRunner.js';
+import { RunBundleWriter } from '../storage/bundleWriter.js';
+import { buildReport, writeReport } from '../reporting/reportBuilder.js';
+import { writeExportProjections } from '../exporters/writeExports.js';
 import { computeHealthSummary } from '../lifecycle/health.js';
 import { trialId as generateTrialId } from '../ids.js';
-import { sha256OfText } from '../canonical-json.js';
+import { sha256OfText } from '../canonicalJson.js';
 
 export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
 

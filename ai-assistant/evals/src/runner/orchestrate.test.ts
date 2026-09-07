@@ -17,7 +17,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isCandidateSpec, runEvaluation, selectScenarios } from './orchestrate.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratch-dir.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 
 test('selectScenarios: local-kwok defaults to exactly the generated KWOK-compatible subset', () => {
   const scenarios = selectScenarios('local-kwok', undefined);

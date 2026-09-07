@@ -113,7 +113,7 @@ function isAksClusterConfig(value: unknown): boolean {
   if (typeof server !== 'string') return false;
   try {
     const hostname = new URL(server).hostname.toLowerCase();
-    return hostname === 'azmk8s.io' || hostname.endsWith('.azmk8s.io');
+    return hostname.endsWith('.azmk8s.io');
   } catch {
     return false;
   }

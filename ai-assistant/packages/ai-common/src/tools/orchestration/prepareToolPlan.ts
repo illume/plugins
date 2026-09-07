@@ -193,7 +193,11 @@ export async function waitForOrchestrationResults(
   const optionalTasks = tasks.filter(task => !task.required);
 
   // Launch every task immediately and track its settlement into `results`,
-  // regardless of which wait strategy below ends up applying.
+  // regardless of which wait strategy below ends up applying. `track()` never
+  // rejects itself (both branches of `.then` just write to `results`), but a
+  // defensive `.catch()` is attached below wherever a tracked promise is not
+  // otherwise awaited, so an unexpected throw can't surface as an unhandled
+  // rejection once the required-gated path stops waiting on optional tasks.
   const track = (task: OrchestrationTask): Promise<void> =>
     task.run().then(
       result => {
@@ -205,7 +209,7 @@ export async function waitForOrchestrationResults(
     );
 
   const requiredTracked = requiredTasks.map(track);
-  const optionalTracked = optionalTasks.map(track);
+  const optionalTracked = optionalTasks.map(task => track(task).catch(() => {}));
 
   if (requiredTasks.length > 0 || optionalTasks.length === 0) {
     // Default / required-gated case.
@@ -251,7 +255,7 @@ function firstSuccessOrAllSettled(
       tracked[index].then(() => {
         settledCount++;
         const result = results[task.name];
-        const succeeded = !!result && !result.error && !result.isError;
+        const succeeded = !!result && !result.error && !result.isError && !result.pending;
         if (succeeded || settledCount === tasks.length) {
           resolve();
         }

@@ -100,6 +100,15 @@ export class AgentToolAdapter {
    * `wrapRuntimeTool`/`wrapExtraTool` genuinely stop the run.
    */
   getHaltMiddleware(): AgentMiddleware {
+    const errorToolMessage = (
+      request: Parameters<NonNullable<AgentMiddleware['wrapToolCall']>>[0],
+      content: string
+    ): ToolMessage =>
+      new ToolMessage({
+        content,
+        tool_call_id: request.toolCall.id ?? '',
+        name: request.toolCall.name ?? 'unknown',
+      });
     return createMiddleware({
       name: 'AgentToolAdapterHalt',
       wrapToolCall: async (request, handler) => {
@@ -108,17 +117,9 @@ export class AgentToolAdapter {
         } catch (error) {
           if (error instanceof AgentToolExecutionHalt) throw error;
           if (error instanceof ToolInvocationError) {
-            return new ToolMessage({
-              content: error.message,
-              tool_call_id: request.toolCall.id ?? '',
-              name: request.toolCall.name ?? 'unknown',
-            });
+            return errorToolMessage(request, error.message);
           }
-          return new ToolMessage({
-            content: `${error}\n Please fix your mistakes.`,
-            tool_call_id: request.toolCall.id ?? '',
-            name: request.toolCall.name ?? 'unknown',
-          });
+          return errorToolMessage(request, `${error}\n Please fix your mistakes.`);
         }
       },
     });

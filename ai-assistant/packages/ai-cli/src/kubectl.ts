@@ -91,13 +91,6 @@ Supported methods: ${methodList}.`;
 
   return tool(
     async ({ url, method, body }, config) => {
-      // LangChain's `tool()` wrapper races this callback against `config.signal`
-      // and, when the callback resolves (rather than rejects) while the signal
-      // is already aborted, its promise never settles at all. Throwing here
-      // instead of returning a JSON payload lets `invoke()` reject promptly.
-      if (config?.signal?.aborted) {
-        throw new Error('kubectl request cancelled.');
-      }
       try {
         const { args, input } = buildKubectlArgs(url, method, body, allowedMethods);
         const stdout = await runKubectl(args, input, config?.signal);
@@ -105,8 +98,11 @@ Supported methods: ${methodList}.`;
       } catch (err: unknown) {
         const commandError = err as Error & { stderr?: unknown; stdout?: unknown };
         if (config?.signal?.aborted) {
-          // Same reasoning as above: rethrow so the tool call rejects instead
-          // of resolving with a result the signal race will never deliver.
+          // LangChain's `tool()` wrapper races this callback against
+          // `config.signal`: if the callback resolves (rather than rejects)
+          // while the signal is already aborted, its promise never settles
+          // at all. Rethrow here so the tool call rejects promptly instead
+          // of returning a JSON payload the signal race would never deliver.
           throw commandError;
         }
         const stderr = commandError.stderr ? String(commandError.stderr).trim() : '';

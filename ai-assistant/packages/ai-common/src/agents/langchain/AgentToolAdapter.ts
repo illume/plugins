@@ -277,11 +277,12 @@ export class AgentToolAdapter {
     // host-provided tool can still be registered under a built-in tool's name
     // (e.g. the CLI's kubectl-backed `kubernetes_api_request`), and must not
     // bypass the mutation approval gate just because it arrived as an "extra"
-    // tool.
+    // tool. Tools without a `method` argument have no mutating/non-mutating
+    // distinction to enforce, so they remain eligible for auto-approval.
     if (
       isBuiltInTool(toolName) &&
       !isSensitiveBuiltInToolCall(toolName, args) &&
-      args.method === 'GET'
+      (args.method === undefined || args.method === 'GET')
     ) {
       return true;
     }

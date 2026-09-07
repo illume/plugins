@@ -45,12 +45,21 @@ export abstract class AssistantSession {
   }
 
   /**
+   * Clears conversation history while preserving the current host context.
+   *
+   * @returns No value.
+   */
+  clearHistory(): void {
+    this.history = [];
+  }
+
+  /**
    * Clears conversation history and any accumulated context.
    *
    * @returns No value.
    */
   reset(): void {
-    this.history = [];
+    this.clearHistory();
     this.currentContext = '';
   }
 

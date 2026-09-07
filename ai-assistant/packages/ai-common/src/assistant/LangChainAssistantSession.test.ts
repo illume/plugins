@@ -1046,6 +1046,28 @@ describe('userSend — response caching', () => {
     const second = await manager.userSend('test cache');
     expect(second.role).toBe('assistant');
   });
+
+  it('clears cached responses when host context changes', async () => {
+    const manager = createIntegrationManager();
+    await manager.userSend('what is happening?');
+    expect(privateManager(manager).responseCache.size).toBe(1);
+
+    manager.setContext('Cluster platforms:\n- production: Azure Kubernetes Service (AKS)');
+
+    expect(privateManager(manager).responseCache.size).toBe(0);
+  });
+
+  it('clears history and cached responses without removing host context', async () => {
+    const manager = createIntegrationManager();
+    manager.setContext('Cluster platforms:\n- production: Azure Kubernetes Service (AKS)');
+    await manager.userSend('what is happening?');
+
+    manager.clearHistory();
+
+    expect(manager.history).toEqual([]);
+    expect(manager.currentContext).toContain('Azure Kubernetes Service (AKS)');
+    expect(privateManager(manager).responseCache.size).toBe(0);
+  });
 });
 
 describe('userSend — abort / error paths', () => {

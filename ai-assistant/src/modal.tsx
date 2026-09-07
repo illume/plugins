@@ -80,7 +80,11 @@ import { useHistory, useLocation } from 'react-router-dom';
 import AIChatContent from './components/assistant/AIChatContent';
 import { AIInputSection } from './components/assistant/AllInputSection';
 import ContentRenderer from './ContentRenderer';
-import { generateContextDescription } from './context/contextGenerator';
+import {
+  type ClusterPlatforms,
+  type ClusterWarnings,
+  generateContextDescription,
+} from './context/contextGenerator';
 import EditorDialog from './editordialog';
 import { checkHolmesAgentHealth } from './holmesClient';
 import { HolmesHealthRequestGate } from './holmesHealthRequestGate';
@@ -686,6 +690,7 @@ export default function AIPrompt(props: {
             enabledTools,
             createSessionOptions()
           );
+          isolatedManager.setContext(aiManager?.currentContext ?? '');
           // LangChain doesn't stream intermediate events, so just report start/end
           onStep?.({
             id: `lc-start-${Date.now()}`,
@@ -726,6 +731,7 @@ export default function AIPrompt(props: {
     selectedModel,
     enabledTools,
     createSessionOptions,
+    aiManager,
     t,
   ]);
   // ─── End proactive diagnosis connection ─────────────────────────────
@@ -1697,6 +1703,28 @@ export default function AIPrompt(props: {
 
     // Fetch warnings on-demand for context generation (one-shot, not continuous)
     const contextClusters = clusterNames;
+    const selectedContextClusters =
+      selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined;
+    const setClusterContext = (warnings?: ClusterWarnings, clusterPlatforms?: ClusterPlatforms) => {
+      const contextDescription = generateContextDescription(
+        event,
+        currentCluster,
+        warnings,
+        selectedContextClusters,
+        clusterPlatforms
+      );
+      const fullContext =
+        currentClusterGroup && currentClusterGroup.length > 1
+          ? `Part of cluster group with ${currentClusterGroup.length} clusters\n${contextDescription}`
+          : contextDescription;
+      aiManager.setContext(fullContext);
+    };
+
+    setClusterContext(
+      undefined,
+      Object.fromEntries(contextClusters.map(cluster => [cluster, 'unknown'] as const))
+    );
+
     Promise.all([
       fetchClusterWarnings(contextClusters),
       fetchClusterPlatforms(contextClusters, clusters),
@@ -1704,35 +1732,11 @@ export default function AIPrompt(props: {
       .then(([warnings, clusterPlatforms]) => {
         if (cancelled) return;
         clusterWarningsRef.current = warnings;
-
-        const contextDescription = generateContextDescription(
-          event,
-          currentCluster,
-          warnings,
-          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined,
-          clusterPlatforms
-        );
-        let fullContext = contextDescription;
-        if (currentClusterGroup && currentClusterGroup.length > 1) {
-          fullContext = `Part of cluster group with ${currentClusterGroup.length} clusters\n${fullContext}`;
-        }
-        aiManager.setContext(fullContext);
+        setClusterContext(warnings, clusterPlatforms);
       })
       .catch(err => {
         if (cancelled) return;
         console.error('[Context] Failed to fetch cluster context:', err);
-        // Fall back to generating context without warnings
-        const contextDescription = generateContextDescription(
-          event,
-          currentCluster,
-          undefined,
-          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined
-        );
-        let fullContext = contextDescription;
-        if (currentClusterGroup && currentClusterGroup.length > 1) {
-          fullContext = `Part of cluster group with ${currentClusterGroup.length} clusters\n${fullContext}`;
-        }
-        aiManager.setContext(fullContext);
       });
     return () => {
       cancelled = true;
@@ -2022,7 +2026,7 @@ export default function AIPrompt(props: {
                 if (isTestMode) {
                   setPromptHistory([]);
                 } else {
-                  aiManager?.reset();
+                  aiManager?.clearHistory();
                   updateHistory();
                 }
                 // Clear tool approval session when history is cleared

@@ -35,14 +35,30 @@ describe('fetchClusterPlatforms', () => {
     vi.restoreAllMocks();
   });
 
-  it('detects AKS from the configured API server without requesting nodes', async () => {
+  it('detects AKS cloud endpoints from cluster configuration without requesting nodes', async () => {
     await expect(
-      fetchClusterPlatforms(['aks-config'], {
-        'aks-config': {
+      fetchClusterPlatforms(['public', 'government', 'legacy-government', 'china'], {
+        public: {
           server: 'https://private.example.privatelink.eastus.azmk8s.io:443',
         },
+        government: {
+          cluster: {
+            server: 'https://example.hcp.usgovvirginia.azmk8s.us:443',
+          },
+        },
+        'legacy-government': {
+          server: 'https://example.cx.aks.containerservice.azure.us:443',
+        },
+        china: {
+          server: 'https://example.hcp.chinaeast2.cx.prod.service.azk8s.cn:443',
+        },
       })
-    ).resolves.toEqual({ 'aks-config': 'aks' });
+    ).resolves.toEqual({
+      public: 'aks',
+      government: 'aks',
+      'legacy-government': 'aks',
+      china: 'aks',
+    });
     expect(mocks.clusterRequest).not.toHaveBeenCalled();
   });
 
@@ -90,5 +106,36 @@ describe('fetchClusterPlatforms', () => {
       'other-cluster': 'other',
       'unknown-cluster': 'unknown',
     });
+  });
+
+  it('does not reuse a platform result after a cluster server changes', async () => {
+    mocks.clusterRequest
+      .mockResolvedValueOnce({
+        items: [
+          {
+            metadata: { labels: { 'kubernetes.io/hostname': 'worker-1' } },
+            spec: { providerID: 'aws:///zone/instance' },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            metadata: { labels: { 'kubernetes.azure.com/cluster': 'aks-resource-group' } },
+          },
+        ],
+      });
+
+    await expect(
+      fetchClusterPlatforms(['reconfigured-cluster'], {
+        'reconfigured-cluster': { server: 'https://first.example.com' },
+      })
+    ).resolves.toEqual({ 'reconfigured-cluster': 'other' });
+    await expect(
+      fetchClusterPlatforms(['reconfigured-cluster'], {
+        'reconfigured-cluster': { server: 'https://second.example.com' },
+      })
+    ).resolves.toEqual({ 'reconfigured-cluster': 'aks' });
+    expect(mocks.clusterRequest).toHaveBeenCalledTimes(2);
   });
 });

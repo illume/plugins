@@ -39,6 +39,12 @@ interface ClusterConfig {
 
 const CACHE_MS = 5 * 60 * 1000;
 const UNKNOWN_CACHE_MS = 30 * 1000;
+const AKS_API_SERVER_SUFFIXES = [
+  '.azmk8s.io',
+  '.azmk8s.us',
+  '.cx.aks.containerservice.azure.us',
+  '.cx.prod.service.azk8s.cn',
+];
 const platformCache = new Map<string, { platform: ClusterPlatform; detectedAt: number }>();
 const inFlight = new Map<string, Promise<ClusterPlatform>>();
 
@@ -57,33 +63,37 @@ export async function fetchClusterPlatforms(
   clusterConfigs: Record<string, unknown> = {}
 ): Promise<ClusterPlatforms> {
   const entries = await Promise.all(
-    clusterNames.map(
-      async cluster =>
-        [
-          cluster,
-          isAksClusterConfig(clusterConfigs[cluster]) ? 'aks' : await fetchClusterPlatform(cluster),
-        ] as const
-    )
+    clusterNames.map(async cluster => {
+      const clusterConfig = clusterConfigs[cluster];
+      return [
+        cluster,
+        isAksClusterConfig(clusterConfig)
+          ? 'aks'
+          : await fetchClusterPlatform(cluster, clusterCacheKey(cluster, clusterConfig)),
+      ] as const;
+    })
   );
   return Object.fromEntries(entries);
 }
 
-async function fetchClusterPlatform(cluster: string): Promise<ClusterPlatform> {
-  const cached = platformCache.get(cluster);
+async function fetchClusterPlatform(cluster: string, cacheKey: string): Promise<ClusterPlatform> {
+  const cached = platformCache.get(cacheKey);
   const cacheLifetime = cached?.platform === 'unknown' ? UNKNOWN_CACHE_MS : CACHE_MS;
   if (cached && Date.now() - cached.detectedAt < cacheLifetime) {
     return cached.platform;
   }
 
-  const pending = inFlight.get(cluster);
+  const pending = inFlight.get(cacheKey);
   if (pending) return pending;
 
-  const request = requestClusterPlatform(cluster).finally(() => inFlight.delete(cluster));
-  inFlight.set(cluster, request);
+  const request = requestClusterPlatform(cluster, cacheKey).finally(() =>
+    inFlight.delete(cacheKey)
+  );
+  inFlight.set(cacheKey, request);
   return request;
 }
 
-async function requestClusterPlatform(cluster: string): Promise<ClusterPlatform> {
+async function requestClusterPlatform(cluster: string, cacheKey: string): Promise<ClusterPlatform> {
   let platform: ClusterPlatform;
   try {
     const response = (await clusterRequest('/api/v1/nodes?limit=10', {
@@ -102,21 +112,30 @@ async function requestClusterPlatform(cluster: string): Promise<ClusterPlatform>
     platform = 'unknown';
   }
 
-  platformCache.set(cluster, { platform, detectedAt: Date.now() });
+  platformCache.set(cacheKey, { platform, detectedAt: Date.now() });
   return platform;
 }
 
 function isAksClusterConfig(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false;
-  const config = value as ClusterConfig;
-  const server = config.server ?? config.cluster?.server;
-  if (typeof server !== 'string') return false;
+  const server = clusterServer(value);
+  if (!server) return false;
   try {
     const hostname = new URL(server).hostname.toLowerCase();
-    return hostname.endsWith('.azmk8s.io');
+    return AKS_API_SERVER_SUFFIXES.some(suffix => hostname.endsWith(suffix));
   } catch {
     return false;
   }
+}
+
+function clusterCacheKey(cluster: string, config: unknown): string {
+  return `${cluster}\0${clusterServer(config) ?? ''}`;
+}
+
+function clusterServer(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const config = value as ClusterConfig;
+  const server = config.server ?? config.cluster?.server;
+  return typeof server === 'string' ? server : undefined;
 }
 
 function isAksNode(value: KubernetesNode): boolean {

@@ -29,7 +29,7 @@ import type { OwnershipRow } from '../operations/ownership.js';
 import type { RegressionDelta, TrialResult } from '../contracts/types.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
 
-const GENERATOR_VERSION = '1.0.0';
+const GENERATOR_VERSION = '1.1.0';
 
 export interface ReportInput {
   runId: string;
@@ -82,7 +82,7 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
       t =>
         t.run_eligibility !== 'valid' ||
         t.safety_outcome === 'fail' ||
-        t.dimensions.root_cause.outcome === 'fail'
+        t.dimensions.root_cause.outcome !== 'pass'
     )
     .map(
       t =>
@@ -137,7 +137,7 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
     best_practice_gap_analysis: [
       { best_practice: 'Typed deterministic grading', phase_1: '✅' },
       { best_practice: 'Evidence-grounded causal facts', phase_1: '✅' },
-      { best_practice: 'Immutable reconstructable bundles', phase_1: '✅' },
+      { best_practice: 'Immutable reconstructable bundles', phase_1: '◐' },
       { best_practice: 'Real product execution', phase_1: '◐' },
       { best_practice: 'AKS/cloud parity', phase_1: '◐' },
       { best_practice: 'Repeated statistical comparisons', phase_1: '◐' },
@@ -156,6 +156,7 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
       'AKS requires a caller-provisioned dedicated cluster and explicit kubeconfig.',
       'Internal Headlamp CLI tool events are not observable; mutation safety is unknown for that adapter.',
       'Candidate/baseline selectors are configurations, not frozen Headlamp Git revisions; those runs do not qualify for the Phase 1 exit gate.',
+      'contract-refs.json is explicitly unsupported by bundle format 1.1, so pass-critical contracts are not independently resolvable after repository changes.',
     ],
   };
   return report;

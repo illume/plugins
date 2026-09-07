@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { isBundleClosed, RunBundleWriter } from './bundleWriter.js';
 import { readClosedBundle } from './bundleReader.js';
@@ -143,6 +143,41 @@ test('close() throws if called twice on the same bundle', () => {
     const writer = new RunBundleWriter(dir, 'run_3');
     writer.close('scripted-reference', 'local-kwok');
     assert.throws(() => writer.close('scripted-reference', 'local-kwok'), /already closed/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('constructor refuses to reopen an existing run directory', () => {
+  const dir = makeScratchDir('bundle-existing');
+  try {
+    mkdirSync(path.join(dir, 'run_existing'));
+    assert.throws(() => new RunBundleWriter(dir, 'run_existing'), /run directory already exists/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('close() atomically writes a sorted manifest and declares contract refs unsupported', () => {
+  const dir = makeScratchDir('bundle-manifest');
+  try {
+    const writer = new RunBundleWriter(dir, 'run_manifest');
+    writer.close('scripted-reference', 'local-kwok');
+    const manifest = JSON.parse(
+      readFileSync(path.join(writer.bundleDir, 'manifest.json'), 'utf8')
+    ) as {
+      files: Array<{ path: string }>;
+      unsupported_files: string[];
+    };
+    assert.deepEqual(
+      manifest.files.map(file => file.path),
+      manifest.files.map(file => file.path).sort()
+    );
+    assert.ok(manifest.unsupported_files.includes('contract-refs.json'));
+    assert.deepEqual(
+      readdirSync(writer.bundleDir).filter(name => name.includes('manifest.json.')),
+      []
+    );
   } finally {
     removeScratchDir(dir);
   }

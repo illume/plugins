@@ -107,6 +107,26 @@ test('buildReport: failures section lists only non-eligible or failing trials', 
   assert.equal((report.failures[0] as unknown as { trial_id: string }).trial_id, 't2');
 });
 
+test('buildReport: failures include valid trials with every non-pass root-cause outcome', () => {
+  const trials = (['partial', 'abstain', 'no_result'] as const).map((outcome, index) =>
+    fakeTrial({
+      trial_id: `t${index}`,
+      dimensions: {
+        root_cause: { applicable: true, outcome, grader_result_ids: [] },
+        recommended_fix: { applicable: true, outcome: 'pass', grader_result_ids: [] },
+      },
+    })
+  );
+  const report = buildReport({
+    runId: 'run_x',
+    bundleDigest: 'sha256:abc',
+    trials,
+    regressionDeltas: [],
+    ownership: [],
+  });
+  assert.equal(report.failures.length, 3);
+});
+
 test('buildReport: always lists the Phase 1 no-tool-comparison limitation', () => {
   const report = buildReport({
     runId: 'run_x',

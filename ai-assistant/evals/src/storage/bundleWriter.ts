@@ -40,7 +40,19 @@
  * incomplete (not merely empty) bundle.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { canonicalStringify, sha256OfText, type JsonValue } from '../canonicalJson.js';
 import { digestOfFile, JsonlWriter, readJsonlPayloads } from './jsonl.js';
@@ -153,6 +165,9 @@ export class RunBundleWriter {
   constructor(runsRoot: string, readonly runId: string) {
     this.runDir = path.join(runsRoot, runId);
     this.bundleDir = path.join(this.runDir, 'bundle');
+    if (existsSync(this.runDir)) {
+      throw new Error(`run directory already exists: ${this.runDir}`);
+    }
     mkdirSync(this.bundleDir, { recursive: true });
     this.trialsIndex = new JsonlWriter(
       path.join(this.bundleDir, 'trials.jsonl'),
@@ -200,6 +215,7 @@ export class RunBundleWriter {
     if (this.closed) throw new Error(`bundle for run ${this.runId} is already closed`);
     const files = listFiles(this.bundleDir)
       .filter(relativePath => relativePath !== 'manifest.json')
+      .sort()
       .map(relativePath => ({
         path: relativePath,
         digest: digestOfFile(path.join(this.bundleDir, relativePath)),
@@ -216,18 +232,35 @@ export class RunBundleWriter {
       files,
       supported_files: ['trials.jsonl', 'regression-deltas.jsonl', 'trials/<trial_id>/*'],
       unsupported_files: [
+        'contract-refs.json',
         'comparisons.jsonl',
         'relation-results.jsonl',
         'integrity-checkpoints.jsonl',
       ],
       closed: true,
     };
-    writeFileSync(
+    writeAtomicManifest(
       path.join(this.bundleDir, 'manifest.json'),
-      canonicalStringify(manifest as unknown as JsonValue),
-      'utf8'
+      canonicalStringify(manifest as unknown as JsonValue)
     );
     this.closed = true;
+  }
+}
+
+function writeAtomicManifest(manifestPath: string, content: string): void {
+  const temporaryPath = `${manifestPath}.${process.pid}.${randomUUID()}.tmp`;
+  let descriptor: number | undefined;
+  try {
+    descriptor = openSync(temporaryPath, 'wx', 0o600);
+    writeFileSync(descriptor, content, 'utf8');
+    fsyncSync(descriptor);
+    closeSync(descriptor);
+    descriptor = undefined;
+    renameSync(temporaryPath, manifestPath);
+  } catch (error) {
+    if (descriptor !== undefined) closeSync(descriptor);
+    rmSync(temporaryPath, { force: true });
+    throw error;
   }
 }
 

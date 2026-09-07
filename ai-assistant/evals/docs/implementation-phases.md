@@ -51,24 +51,32 @@ the trigger is false, record `not_applicable` with evidence rather than silently
 dropping it. The matrix is regenerated from phase evidence, reviewed at every
 phase exit, and links each `implemented` row to canonical artifacts.
 
-| Best-practice obligation                              | Phase 1 disposition        | Eventual required destination and proof                                                                                                       |
-| ----------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Decision, construct, acceptance criteria, reference   | `implemented`              | Frozen scenario/verifier contracts and passing reference/known-bad controls                                                                    |
-| Candidate/truth separation and immutable evidence     | `implemented`              | Candidate packet, protected truth, complete trajectory, artifact and bundle digests                                                            |
-| Eval-system health and failure ownership              | `implemented`              | Setup/cleanup/grader/exclusion/flake/duration/cost measures and one owner for every failed or invalid row                                       |
-| Case ownership, provenance, review, and quarantine    | `implemented`              | Owner/source/review dates plus issue/reason/entry/expiry/requalification fields for every quarantined case                                     |
-| Real product execution                                | `implemented`              | At least one real headless/shared-session path; mocks and scripted agents remain controls                                                      |
-| Dataset splits and private holdout                    | `deferred_to_phase_2`      | Frozen development/regression/capability/safety splits and access-controlled lineage-separated holdout                                         |
-| Repeats, uncertainty, and regression thresholds       | `deferred_to_phase_2`      | Registered matched repeats, intervals, practical margins, and prespecified decisions                                                           |
-| PR regression and scheduled evaluation service       | `deferred_to_phase_2`      | Small deterministic PR suite plus scheduled repeated regression/capability/safety/comparator runs                                              |
-| Repair, approval, least privilege, and UI path        | `deferred_to_phase_2`      | Hard action/rollback/collateral checks and one real browser approval-path test for each repair                                                  |
-| External shared-task comparison                       | `deferred_to_phase_2`      | Qualified HolmesGPT/K8sGPT adapters and common-denominator repeated results                                                                    |
-| Breadth, interaction, robustness, and distribution    | `deferred_to_phase_3`      | Twenty bases, interaction/metamorphic/external cells, declared offline target-distribution coverage and gaps                                   |
-| Periodic SME audit and case lifecycle                 | `deferred_to_phase_3`      | Audited truth/rejections/pass-failure sample plus age/saturation/duplication/flake/review/retirement evidence                                   |
-| Free-form model grading                               | `deferred_to_phase_3`      | If decision-relevant, complete calibrated grader qualification; otherwise `not_applicable` with the triggering product decision                |
-| Adversarial, concurrency, and safety assurance        | `deferred_to_phase_4`      | Scheduled attack/control evidence, capability thresholds, vetoes, independent threat review, safety case, and invalidation drills              |
-| Production validity, feedback, and continuing control | `deferred_to_phase_5`      | Governed sampling/feedback, drift/calibration/outcomes, incident promotion, holdout refresh, controlled deployment studies, and metric lifecycle |
-| Human reliance or usability claims                    | `deferred_to_phase_5`      | Governed bounded human study when the product decision requires it; otherwise explicit `not_applicable`                                        |
+Best practices are not all-or-nothing. Implement the cheapest valid form in the
+earliest phase, label its narrow scope, and keep the expanded form
+`deferred_to_phase_<n>` until its own evidence exists. For example, Phase 1
+records health measures and quarantine metadata; Phase 2 turns them into
+observed SLOs and an operating quarantine service. An MVP row cannot claim the
+later scope.
+
+| Best-practice obligation                            | Earliest low-cost valid scope                                                                                | Earliest disposition  | Required expansion                                                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Decision, construct, acceptance criteria, reference | Phase 1: four frozen cases with verifier contracts and reference/known-bad controls                          | `implemented`         | Phase 3: periodic SME audit across broader families                                                                                  |
+| Candidate/truth separation and immutable evidence   | Phase 1: candidate packet, protected truth, complete trajectory, artifacts, and bundle digests               | `implemented`         | Phase 4: signed checkpoints, restricted identities, and post-close invalidation                                                      |
+| Eval-system health and failure ownership            | Phase 1: setup/cleanup/grader/exclusion/flake/duration/cost measures and one owner per failed or invalid row | `implemented`         | `deferred_to_phase_2`: observed SLOs, alerting, trend review, and gating behavior                                                    |
+| Case ownership, provenance, review, and quarantine  | Phase 1: owner/source/review dates plus issue/reason/entry/expiry/requalification fields                     | `implemented`         | `deferred_to_phase_2`: scheduled execution, expiry enforcement, and requalification                                                  |
+| Real product execution                              | Phase 1: one real headless/shared-session path; mocks and scripted agents only as controls                   | `implemented`         | `deferred_to_phase_2`: browser approval path for repairs; Phase 3 expands UI/headless parity                                         |
+| Dataset lifecycle                                   | Phase 1: public development cases, lineage, one promoted regression, and draft qualification queue           | `implemented`         | `deferred_to_phase_2`: frozen development/regression/capability/safety splits and lineage-separated private holdout                  |
+| Repeats and uncertainty                             | Phase 1: exploratory repeats and descriptive variability without inferential claims                          | `implemented`         | `deferred_to_phase_2`: registered matched repeats, intervals, practical margins, and prespecified decisions                          |
+| Continuous evaluation                               | Phase 1: manual local check and reproducible report command                                                  | `implemented`         | `deferred_to_phase_2`: small deterministic PR suite plus scheduled repeated regression/capability/safety/comparator runs             |
+| Repair, approval, and least privilege               | Phase 1: read-only denial, secret canary, and forbidden-action controls                                      | `implemented`         | `deferred_to_phase_2`: action/rollback/collateral checks and real browser approval paths                                             |
+| External comparison                                 | No valid Phase 1 proxy; preserve neutral contracts and published context without making a comparison claim   | `deferred_to_phase_2` | Phase 2: qualified HolmesGPT/K8sGPT adapters and common-denominator repeats                                                          |
+| Interaction and robustness                          | Phase 1: healthy, insufficient-evidence, malformed, and simple deterministic variants                        | `implemented`         | `deferred_to_phase_3`: twenty bases, multi-turn interaction, metamorphic relations, and external replay                              |
+| Distribution coverage                               | Phase 1: declare the narrow four-case/local-AKS profile and unsupported cells                                | `implemented`         | `deferred_to_phase_3`: explicit offline target-distribution coverage/gaps; Phase 5 validates transport to production                 |
+| SME audit and case maintenance                      | Phase 1: senior pre-run truth review and owner/review-due metadata                                           | `implemented`         | `deferred_to_phase_3`: periodic truth/rejection/pass-failure audit and age/saturation/duplication/flake/retirement decisions         |
+| Grader portfolio                                    | Phase 1: hard and structured deterministic graders with positive/negative controls                           | `implemented`         | `deferred_to_phase_3`: if free-form quality matters, qualify a calibrated model grader; otherwise record `not_applicable`            |
+| Adversarial safety                                  | Phase 1: leakage/forbidden-access controls; Phase 2 adds one attack/benign pair                              | `implemented`         | `deferred_to_phase_4`: scheduled attack portfolio, capability thresholds/vetoes, threat review, safety case, and invalidation drills |
+| Production feedback and validity                    | No valid offline proxy; Phase 1 only prepares portable fields, provenance, and disclosure classes            | `deferred_to_phase_5` | Phase 5: governed sampling/feedback, monitoring, incident promotion, holdout refresh, deployment studies, and metric lifecycle       |
+| Human reliance or usability                         | No valid offline proxy; earlier phases retain approval/interaction telemetry but make no human claim         | `deferred_to_phase_5` | Phase 5: governed study when required by a product decision; otherwise record `not_applicable`                                       |
 
 #### What Copilot coding agents and Azure Foundry can scale in Phase 1
 
@@ -510,13 +518,13 @@ changes the old report in place.
 
 The progression is additive:
 
-| Phase | Canonical data added                                                                                                                                                                                 | Report contents added; all earlier sections remain                                                                                                                                                                                                                                                       |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Base bundle, complete trial census, typed diagnosis submissions, deterministic grader rows, environment identity, traces, terminal results, artifact index, descriptive internal `comparisons.jsonl` | Candidate/profile identity; separate eligibility/stage/task/safety/lifecycle flows; per-case typed RCA/evidence/uncertainty; controls; internal Headlamp baseline/candidate gaps; local/AKS and Foundry cells; artifact links and claim limits                                                           |
-| 2     | Action/approval events in `trajectory.jsonl`; before/after state artifacts; split/holdout opaque metadata; cross-system and inferential fields appended under a new `comparison` schema minor        | Everything from Phase 1 plus HolmesGPT/K8sGPT shared-task gaps, registered repeated pair flow, transitions and intervals; family slices; diagnosis-and-repair conjunction; approval/action/collateral outcomes; safety twins; AKS parity; private-holdout status; differentiation scorecard and decision |
-| 3     | Lineage/transform/interaction events; `relation-results.jsonl`; external-adapter and environment-cell records using the same trial/result schemas                                                    | Everything from Phase 2 plus obligation coverage and gaps; lineage concentration; interaction outcomes; metamorphic absolute/relation discordance; external-adapter qualification; model/environment/version Pareto views without one blended rank                                                       |
-| 4     | Security/audit/action events in the same trajectory ledger; signed `integrity-checkpoints.jsonl`; canary, quarantine, concurrency, telemetry, and signature artifacts                                | Everything from Phase 3 plus hard safety/integrity vetoes; attack/control utility; checkpoint and invalidation blast radius; replayable race histories; telemetry freshness/missingness; stage timing/cost; artifact/signature verification and residual risks                                           |
-| 5     | Separate governed `studies/<study_id>/` bundle referencing immutable run/trial IDs and digests; prediction/exposure/linkage/outcome/adjudication JSONL                                               | Offline report remains unchanged; study report adds governance, cohort flow, missingness, prediction/calibration/threshold results, human-study results where run, null/harm/inconclusive outcomes, transport limits, and metric/policy lifecycle decision                                               |
+| Phase | Canonical data added                                                                                                                                                                                                                                | Report contents added; all earlier sections remain                                                                                                                                                                                                       |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Base bundle, complete trial census, typed diagnosis submissions, deterministic grader rows, environment identity, traces, terminal results, artifact index, descriptive internal `comparisons.jsonl`, case lifecycle and best-practice dispositions | Candidate/profile identity; separate eligibility/stage/task/safety/lifecycle flows; per-case typed RCA/evidence/uncertainty; controls; health/ownership/quarantine measures; internal gaps; local/AKS and Foundry cells; artifact links and claim limits |
+| 2     | Action/approval events; before/after state; split/holdout metadata; cross-system/inferential fields; CI/schedule, SLO, quarantine and browser-parity records                                                                                        | Everything from Phase 1 plus HolmesGPT/K8sGPT gaps, registered repeats/intervals; repair/approval/collateral results; PR/scheduled lane health and gates; SLO/quarantine decisions; UI repair parity; private-holdout status                             |
+| 3     | Lineage/transform/interaction events; `relation-results.jsonl`; external/environment cells; source-class, distribution, maintenance, SME-audit, UI-parity, and conditional grader-qualification records                                             | Everything from Phase 2 plus obligation/distribution gaps; interaction/metamorphic/external results; case lifecycle; SME audit; UI/headless parity; qualified grader evidence or `not_applicable`; model/environment views                               |
+| 4     | Security/audit/action events; signed checkpoints; canary, quarantine, concurrency, telemetry, red-team, threshold, safety-case, and invalidation-drill artifacts                                                                                    | Everything from Phase 3 plus hard vetoes; attack/control utility; scheduled safety results; safety case; invalidation blast radius; races; telemetry freshness/timing/cost; residual risks                                                               |
+| 5     | Governed study bundle plus sampling/feedback, monitoring, incident, holdout-refresh, deployment-study, and metric-lifecycle records                                                                                                                 | Offline report remains unchanged; study report adds governance/cohort flow, predictive/human/impact results, production monitoring and feedback, incident promotion, controlled deployment evidence, and lifecycle decisions                             |
 
 Phase 5 study storage is separate because its access, deletion, and correction
 rules differ from synthetic eval runs:
@@ -598,6 +606,7 @@ ai-assistant/evals/
     storage/                      # canonicalization, JSONL, bundles, artifacts
     reporting/                    # per-run report.json/report.md generation
     publication/                  # public-github disclosure and overall report
+    operations/                   # health, ownership, quarantine, CI/schedules, maintenance
     comparisons/                  # Phase 1 internal gaps; Phase 2 cross-system pairing/inference
     transforms/                   # Phase 3 metamorphic derivation and shrinking
     integrity/                    # Phase 4 canaries, signing, invalidation
@@ -633,8 +642,9 @@ boundary; the eval package supplies the recorder implementation.
 The candidate adapter should exercise the real headless AI Assistant/CLI or
 shared-session boundary, while the cluster adapters may reuse functions
 extracted from `e2e/run-ai-assistant-e2e.ts`. Keep Playwright E2E as product-
-wiring coverage; do not turn `e2e/` into the eval runner or write eval results
-under `e2e/test-results`.
+wiring coverage and reuse it for the Phase 2–3 browser parity checks; do not turn
+`e2e/` into the eval runner or write canonical eval results under
+`e2e/test-results`.
 
 Expose manual root commands that delegate to the package:
 
@@ -649,18 +659,19 @@ Inside `evals/package.json`, provide `eval`, `check`, `test`, `tsc`, `format`,
 `report:publish`, and `report:overall` scripts. Phase 1 runs these manually and
 does not add `evals` to the root `check`, pull-request jobs, scheduled jobs, or
 CI credential paths. A local acceptance check is
-`npm --prefix evals run check`; CI adoption remains the explicit Phase 2
-decision already described.
+`npm --prefix evals run check`; Phase 2 must add the bounded PR and scheduled
+lanes described below after Phase 1 establishes runtime, variance, cost, and
+credential boundaries.
 
 Implementation grows in place rather than being reorganized by phase:
 
-| Phase | Code added under `evals/src/`                                                                                                                                                           | Stable code retained                                                                            |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1     | CLI, runner, contracts, lifecycle, Copilot/Azure and KWOK/AKS adapters, Headlamp candidate adapter, deterministic graders, internal comparison reducer, storage, reporting, publication | Package, IDs, schemas, bundle reader/writer, report core, scenario/profile/control loaders      |
-| 2     | HolmesGPT/K8sGPT container adapters, Kind/action adapters, approval/action journal, cross-system and repeated-pair/statistical comparison reducers                                      | All Phase 1 commands/formats and internal comparison rows; no second runner or report generator |
-| 3     | Native benchmark adapters, interaction runner, transforms/shrinker, environment matrix                                                                                                  | Same trial pipeline, reference-system adapters, and result/report schemas                       |
-| 4     | Integrity/signing, restricted execution, concurrency actors/barriers, telemetry adapters                                                                                                | Same event writer, artifact store, grader precedence, publication path                          |
-| 5     | Governed study records, linkage interfaces, cohort/analysis/report reducers                                                                                                             | Offline run bundles remain immutable and are referenced by digest                               |
+| Phase | Code added under `evals/src/`                                                                                                                                                                             | Stable code retained                                                                         |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1     | CLI, runner, contracts, lifecycle, Copilot/Azure and KWOK/AKS adapters, Headlamp adapter, deterministic graders, internal comparison, health/ownership/quarantine metadata, storage/reporting/publication | Package, IDs, schemas, bundle reader/writer, report core, scenario/profile/control loaders   |
+| 2     | HolmesGPT/K8sGPT and Kind/action adapters, approval journal, browser parity, CI/schedule/quarantine operations, SLO and repeated-pair/statistical reducers                                                | All Phase 1 commands/formats and internal comparison rows; no second runner/report generator |
+| 3     | Native benchmark adapters, interaction runner, transforms/shrinker, distribution/maintenance audit, UI parity matrix, conditional model-grader qualification                                              | Same trial pipeline, adapters, operations, and result/report schemas                         |
+| 4     | Integrity/signing, restricted execution, red-team/threshold/safety-case workflows, invalidation drills, concurrency actors/barriers, telemetry adapters                                                   | Same event writer, artifact store, grader precedence, schedules, publication path            |
+| 5     | Governed study/sampling/feedback records, linkage and monitoring interfaces, incident/holdout/metric-lifecycle and cohort/analysis/report reducers                                                        | Offline run bundles remain immutable and are referenced by digest                            |
 
 The cheap architecture check is that `npm --prefix evals run check` can build
 and test the eval package while the production plugin build contains none of
@@ -767,13 +778,13 @@ up” afterward.
 
 The overall report grows without changing its core:
 
-| Phase | Overall GitHub report addition                                                                                                                                                                                                                         |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1     | First immutable run summary; four-case outcome/control table; internal Headlamp baseline/candidate gaps; local/AKS and Foundry cells; one-point series labeled descriptive                                                                             |
-| 2     | HolmesGPT/K8sGPT assignment and common-denominator gaps; repeated reference-system and internal baseline/candidate trends; RCA/repair conjunction; public approval/safety/collateral summaries; superiority scorecard; private holdout status withheld |
-| 3     | Obligation/lineage coverage; interaction and metamorphic discordance; external-adapter qualification; model/environment/version Pareto trend sections                                                                                                  |
-| 4     | Sanitized hard-veto and benign-utility trends; checkpoint/quarantine history; concurrency and telemetry summaries without publishing attack payloads or sensitive traces                                                                               |
-| 5     | Only approved aggregate cohort/predictive/human/impact results, missingness and population limits, metric lifecycle decisions, and explicit withheld cells                                                                                             |
+| Phase | Overall GitHub report addition                                                                                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | First immutable run summary; four-case outcomes/controls; health/ownership/quarantine and best-practice dispositions; internal gaps; local/AKS and Foundry cells; descriptive one-point series   |
+| 2     | HolmesGPT/K8sGPT gaps; repeated trends; repair/approval/safety; PR/scheduled lane and SLO/quarantine status; UI repair parity; private holdout withheld; superiority decision                    |
+| 3     | Obligation/distribution and source coverage; maintenance and SME audit; UI/headless parity; grader decision/qualification; interaction/metamorphic/external and model/environment views          |
+| 4     | Sanitized veto/utility trends; red-team promotion and scheduled safety; thresholds/safety case; checkpoint/quarantine/invalidation drills; concurrency/telemetry summaries                       |
+| 5     | Approved aggregate predictive/human/impact evidence; sampling/feedback flow; drift/outcome/incident/holdout monitoring; deployment-study and metric-lifecycle decisions; explicit withheld cells |
 
 #### No human evaluation in Phases 1–2
 
@@ -811,9 +822,11 @@ a new scenario/grader version if accepted, and rerun every compared candidate.
 Every typed field needs deterministic reference, partial, wrong, unsupported-
 evidence, contradicted, abstaining, overconfident, unsafe-effective, malformed,
 and injection controls where applicable. If those controls do not discriminate
-the field, mark it diagnostic-only and narrow the Phase 1/2 claim. A bounded
-model grader and its human calibration are optional Phase 3 work only if
-free-form semantic or communication quality becomes decision-relevant.
+the field, mark it diagnostic-only and narrow the Phase 1/2 claim. Phase 3 must
+decide whether free-form semantic or communication quality is product-relevant.
+If it is, the bounded model grader and complete human calibration program are
+required before use; otherwise the coverage matrix records `not_applicable`
+with its rationale and review date.
 
 Cluster and model hosting are independent axes:
 
@@ -874,9 +887,9 @@ allowed to follow repository conventions:
 
 - standalone `evals/package.json`, `package-lock.json`, `tsconfig.json`,
   `vitest.config.ts`, and `README.md`;
-- `evals/src/cli.ts` plus the `runner`, `contracts`, `lifecycle`, `adapters`,
-  `graders`, `comparisons`, `storage`, `reporting`, and `publication` modules
-  defined above, including the Headlamp candidate adapter and internal
+- `evals/src/cli.ts` plus the `runner`, `contracts`, `lifecycle`, `operations`,
+  `adapters`, `graders`, `comparisons`, `storage`, `reporting`, and `publication`
+  modules defined above, including the Headlamp candidate adapter and internal
   baseline/candidate comparison;
 - `evals/schema/` definitions for `scenario`, `bundle-manifest`, `trial-index`,
   `environment-manifest`, `trajectory-event`, `diagnosis-submission`,
@@ -887,7 +900,10 @@ allowed to follow repository conventions:
 - one `evals/scenarios/<scenario_id>/` directory per public/development case
   containing `scenario.yaml`, setup/preflight/cleanup, grader-only gold, and
   positive/negative oracle controls, with shared controls under
-  `evals/controls/`;
+  `evals/controls/`. Every scenario records accountable owner, provenance,
+  source/license, admission date, last expert review, review-due date, and
+  lifecycle state. A quarantined scenario additionally requires linked issue,
+  reason, entry date, expiry, and objective requalification criteria;
 - gitignored `/.eval-runs/` as the developer-local default for canonical
   bundles/projections, plus `HEADLAMP_AI_EVAL_RUNS_DIR` for an approved external
   root;
@@ -896,6 +912,9 @@ allowed to follow repository conventions:
 - `.gitignore` rules that exclude `/.eval-runs/` and any local/private study or
   contract stores without ignoring `evals/results/`;
 - an “Evaluation results” link in the project `README.md`; and
+- a generated best-practice coverage section whose rows use only
+  `implemented`, `deferred_to_phase_<n>`, or evidenced `not_applicable`
+  dispositions; and
 - a proposed command such as
   `npm run eval -- --profile local-copilot --baseline <ref> --candidate <ref>`
   that uses the existing no-config Copilot detection path, plus a command that
@@ -914,6 +933,10 @@ usage/cost, and cleanup separately. Phase 1 has no blended score and no LLM
 judge. The runner deterministically grades the typed diagnosis submission and
 trace; user-facing prose is retained but unscored. Deterministic checks remain
 authoritative for setup, identity, access, forbidden actions, and world state.
+Aggregate eval-system health separately from candidate quality: setup and
+cleanup validity, invalid-grader and exclusion rates, observed flake rate,
+stage/run duration, provider-native usage, and cost. These Phase 1 values are
+descriptive baselines, not invented SLO gates.
 
 #### Phase 1 execution plan
 
@@ -966,6 +989,8 @@ contain:
   cleanup-control results;
 - failure groups by first owner/stage with direct links to trial result,
   trajectory, submission, grader, and artifact records;
+- eval-system health rows for setup, cleanup, invalid graders, exclusions,
+  flakes, duration, and cost, plus case owner/review/quarantine state;
 - internal baseline/candidate absolute typed RCA, evidence, abstention, safety,
   reliability, latency, token, and cost values on each eligible cell;
 - the largest supported internal Headlamp regression and improvement by named
@@ -1001,7 +1026,13 @@ overdiagnosis controls fail; and one real or seeded product defect has become a
 replayable regression. The `public-github` disclosure scan passes, the first
 immutable publication directory exists, the overall README is linked from the
 project README, and deleting/regenerating its three top-level generated files
-produces the same content digest.
+produces the same content digest. At least one candidate run exercises the real
+AI CLI/shared-session product boundary rather than a scripted or fixture agent;
+every event and artifact needed to reconstruct each attempt is retained; every
+failed, invalid, excluded, or quarantined row has one owning layer; health
+measures and case lifecycle metadata are complete; and every best-practice
+matrix row has an allowed disposition with a linked expansion phase where
+needed.
 
 At that point Headlamp may make the scorecard's **stronger per-case read-only
 RCA evaluation** claim for typed causal, evidence, uncertainty, safety, and
@@ -1019,7 +1050,8 @@ unsupported or diagnostic-only rather than adding a manual verdict.
 supports a narrow but complete diagnosis-to-safe-repair comparison and can earn
 the scorecard's “strongest combined methodology” claim. It also compares the
 four frozen read-only cases with exactly two container-friendly references,
-HolmesGPT and K8sGPT. CI is optional and is not required to earn this milestone.
+HolmesGPT and K8sGPT, and turns the manual Phase 1 loop into a bounded regression
+service.
 
 #### Phase 2 case inventory
 
@@ -1049,6 +1081,9 @@ explicit; do not imply that unrun variants passed on AKS.
 1. **Weeks 1–2, cases and actions:** add the eight manifests, a canonical action
    and approval journal, before/after inventory, exact allowed-diff rules,
    postconditions, rollback, denied/stale approval controls, and stable cleanup.
+   For each of the two repair flows, add at least one real browser/UI test that
+   proves the displayed request, approval, executed request digest, result, and
+   denial/reapproval behavior agree with the headless evaluation path.
 2. **Week 3, deterministic grading and reference adapters:** create typed
    required/supporting/contradictory evidence and accepted repair sets. Build
    machine-authored reference, partial, wrong, abstaining, overconfident,
@@ -1068,10 +1103,16 @@ explicit; do not imply that unrun variants passed on AKS.
    baseline/candidate order. Report pair identity, every attempt, family-level
    estimates/intervals, hard events, exclusions, latency, tokens/cost, and
    local/AKS discordance without pooling environments.
-5. **Week 6 if needed, reliability:** spend the optional week on fixture,
-   repair, typed-submission, or provider reliability exposed by the repeated
-   runs. Do not add a human or model judge to rescue an under-specified field;
-   narrow the field and move free-form grading research to Phase 3.
+5. **Week 6, regression service and reliability:** add a small deterministic PR
+   lane and scheduled broader lanes for repeated regression, capability, safety,
+   and HolmesGPT/K8sGPT comparison. Keep expensive provider/AKS cells scheduled
+   or manual-on-demand when credentials or cost prohibit PR execution. Derive
+   initial setup, cleanup, invalid-grader, exclusion, and flake SLOs from the
+   observed Phase 1 baseline; do not copy proposed thresholds without evidence.
+   Enforce quarantine expiry and requalification. Use remaining capacity on
+   fixture, repair, typed-submission, or provider reliability exposed by the
+   repeated runs. Do not add a human or model judge to rescue an under-specified
+   field; narrow the field and move free-form grading research to Phase 3.
 
 The senior owns the pre-run scenario truth, accepted fact/action sets, action
 policy, and comparison scope. The junior owns runner/action-journal
@@ -1080,6 +1121,17 @@ report generation. Neither engineer assigns a post-run candidate score. An
 unrecognized but potentially valid answer or action is
 `unscored_novel_strategy`, enters the next-version engineering backlog, and
 cannot alter the frozen comparison.
+
+The PR lane runs schema/bundle/report golden tests, fixture and grader controls,
+and a small high-signal regression subset without cloud credentials. It blocks
+only deterministic harness regressions and prespecified credible product
+regressions. The scheduled lanes retain every attempt and run the wider
+repeated, capability, safety, comparator, and eligible cloud cells. A hard safety
+failure blocks the affected capability; an exploratory capability failure
+creates a visible triage item but does not block unrelated changes. Quarantine
+never converts failure to pass: quarantined cases run on schedule, remain
+visible with owner/issue/reason/expiry, and re-enter gating only after their
+declared requalification evidence passes.
 
 #### Phase 2 report and storage increment
 
@@ -1115,7 +1167,10 @@ The report preserves every Phase 1 section and adds:
   private variants are descriptive leakage/generalization sentinels, not a
   precise holdout performance estimate; no interval or broad generalization
   claim is made until the registered information target is met;
-- typed-submission control coverage and `unscored_novel_strategy` counts; and
+- typed-submission control coverage and `unscored_novel_strategy` counts;
+- PR/scheduled lane status, health-SLO numerator and denominator, threshold
+  source window, violations, quarantine age/expiry/requalification, and
+  capability-scoped gating decisions; and
 - the differentiation scorecard with a link from every claimed row to canonical
   evidence and the explicit incumbent advantages/claim limits.
 
@@ -1145,6 +1200,11 @@ Phase 2 exits only when:
   assigned all four read-only cases; every cell has an eligibility disposition;
   and at least two fault/healthy cells are jointly eligible across Headlamp and
   both references; and
+- the deterministic PR lane and scheduled broader lanes run from repository-
+  owned definitions; their credential boundaries, retention, failure routing,
+  and gating rules are tested; initial health SLOs cite observed Phase 1 data;
+  expired quarantine fails closed; and every repair has a passing real browser
+  approval-path test matched to its headless action journal; and
 - `docs/eval-method-comparison.md` or an equivalent generated evidence page
   maps every row of the differentiation scorecard to a Headlamp artifact and
   the pinned public competitor evidence reviewed in Research 11.
@@ -1158,12 +1218,18 @@ model comparison, and none of Phase 2 establishes production prevalence or
 benefit. If one combined dimension is missing, claim only the dimensions that
 passed; do not say “best overall.”
 
-### Phase 3: capability breadth and robustness
+### Phase 3: capability breadth and grader validation
 
 **Outcome and budget:** eight to ten weeks. At exit, the framework tests whether
 Phase 2 conclusions transfer across additional Kubernetes mechanisms,
 interaction failures, harmless representation changes, and one independent
 public replay corpus. It still does not claim production representativeness.
+
+Before adding generated breadth, admit reviewed source-backed cases from real
+product bugs, support incidents, and repeatable manual checks. Apply the same
+rights, privacy, candidate-view, mechanism, oracle, and cleanup gates as public
+fixtures; record any unavailable source class as a distribution gap rather than
+substituting synthetic descendants.
 
 #### Phase 3 base portfolio
 
@@ -1213,14 +1279,13 @@ not replace it silently with an easier score.
 
 #### Phase 3 work packages
 
-| Weeks          | Deliverable                                                                                                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 1–2            | Admit pair A and one core pair; update the obligation/gap ledger and environment manifest                                            |
-| 3–4            | Admit the remaining two pairs; preserve operator/core setup, oracle, and cleanup ownership separately                                |
-| 5              | Add the four multi-turn/error/denial contracts with complete attempt graphs                                                          |
-| 6–7            | Implement and qualify the three metamorphic transforms on four bases, including invalid-transform controls and one minimized failure |
-| 8              | Qualify the ten-case Cloud-OpsBench adapter with a fixed-trajectory parity control                                                   |
-| 9–10 if needed | Run two decision-relevant candidate configurations, one current/n-1 Kubernetes sentinel subset, and complete family-level analysis   |
+| Weeks | Deliverable                                                                                                                                                                                                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1–2   | Run the phase-start SME audit; admit a reviewed tranche with at least one qualifying real product bug, support incident, and repeatable manual check or an explicit gap for an unavailable class; then admit pair A and one core pair; update the obligation/gap ledger and environment manifest |
+| 3–4   | Admit the remaining two pairs; preserve operator/core setup, oracle, and cleanup ownership separately                                                                                                                                                                                            |
+| 5     | Add the four multi-turn/error/denial contracts with complete attempt graphs                                                                                                                                                                                                                      |
+| 6–7   | Implement and qualify the three metamorphic transforms on four bases, including invalid-transform controls and one minimized failure                                                                                                                                                             |
+| 8–10  | Qualify the ten-case Cloud-OpsBench adapter with a fixed-trajectory parity control; run the prespecified candidates, UI/headless parity, required environment sentinels, exit SME audit, and grader decision gate; complete family/distribution analysis                                         |
 
 Limit model comparison to two configurations selected before results. Run the
 same four sentinel variants on local Kind and AKS and, where the product support
@@ -1228,6 +1293,35 @@ claim requires it, current and n-1 Kubernetes. Do not create a full provider ×
 cluster × version × model product. Emit `environment-manifest.json` with
 resolved build, lockfile, browser, Kubernetes, CRD/operator, tool-schema, model
 deployment, and provider metadata; unresolved cells stop before model scoring.
+
+Define the offline target distribution before interpreting breadth: supported
+task/family, severity, read-only/repair, cluster size, Kubernetes/operator
+version, permission, telemetry, language, interaction, and user-skill cells.
+Report represented, underrepresented, unsupported, and unmeasured cells without
+reweighting the suite into a production-prevalence claim.
+
+Run representative diagnosis, clarification, denial, and repair scenarios
+through both the real browser UI and headless/shared-session boundary. Require
+the same candidate packet, tool/action identities, approvals, terminal outcome,
+and grader inputs after documented presentation-only normalization.
+
+At phase start and before exit, a Kubernetes SME independent of the original
+score authorship audits scenario truth, a prespecified blinded sample of
+passes/failures, and all `unscored_novel_strategy` or disputed rejections. The
+audit changes only a new scenario/grader version followed by reruns; it never
+rescues an individual historical result. Establish a documented recurring
+cadence in Phase 3 and add it to the scheduled service created in Phase 2.
+
+Free-form model grading has a mandatory decision gate. If communication,
+semantic coherence, or novel-strategy quality affects a product decision,
+qualify the grader before its score can gate or support a claim: use an expert-
+labeled calibration set spanning strong, partial, wrong, terse, verbose,
+abstaining, and adversarial outputs; blind candidate identity; randomize and
+swap order; run length/verbosity and injection controls; measure dimension-level
+agreement with prespecified statistics; maintain a judge holdout; pin model,
+prompt, parameters, parser, and rubric; and backfill the baseline and relevant
+history. If no such product decision exists, record `not_applicable` with owner,
+evidence, and review date. An unqualified grader remains diagnostic only.
 
 #### Phase 3 report and storage increment
 
@@ -1255,7 +1349,19 @@ The report preserves all Phase 1–2 sections and adds:
   decision;
 - model, environment, current/n-1, local/AKS, latency, token, and cost slices as
   separate coordinates and Pareto views, never one blended leaderboard; and
-- environment-manifest completeness and changed/unsupported contract epochs.
+- environment-manifest completeness and changed/unsupported contract epochs;
+- source-class flow for bugs, support incidents, manual checks, public fixtures,
+  and generated descendants, with rights/privacy exclusions;
+- declared offline target-distribution cells and represented,
+  underrepresented, unsupported, and unmeasured gaps;
+- case owner, age, last/review-due date, saturation, duplication, flake,
+  invalidity, maintenance cost, quarantine, graduation, replacement, and
+  retirement decisions;
+- browser/headless parity differences for diagnosis, clarification, denial, and
+  repair; and
+- SME audit sampling, disagreements, version/rerun outcomes, plus either the
+  complete model-grader calibration/holdout/bias/agreement/backfill evidence or
+  the reviewed `not_applicable` decision.
 
 Coverage tables and Pareto views are derived into `report.json`; optional CSV
 or Parquet exports may aid analysis but carry source report/bundle digests and
@@ -1269,7 +1375,11 @@ twelve metamorphic pairs reject invalid transforms and report mapped
 discordance; the external adapter passes fixed-trajectory parity or is
 explicitly rejected; and the report shows obligations, uncovered cells,
 single-lineage concentration, family-level uncertainty, environment
-discordance, tool-capability differences, latency, tokens, and cost.
+discordance, tool-capability differences, latency, tokens, and cost. It also
+requires source-backed case flow, offline distribution gaps, case-lifecycle
+decisions, passing representative UI/headless parity, a completed SME audit,
+and a closed free-form grader decision gate. No model-grader result supports a
+claim unless every qualification and baseline-backfill requirement passed.
 
 The valid claim is robustness and broader capability within the published
 obligation profile. Do not add scenario descendants, external replay rows, or
@@ -1302,6 +1412,22 @@ signer/digest, and result-writer-denial controls. Run candidates in a disposable
 restricted environment with separate setup, candidate, verifier, artifact, and
 grader identities. Private holdout/generator access is logged; one withheld
 attack family remains untouched until the final Phase 4 review.
+
+Run a periodic red-team discovery session through production-like browser,
+approval, tool, permission, and artifact boundaries. Discovery examples do not
+estimate prevalence. Triage each into accepted reproducible attack/control
+regression, duplicate, invalid, mitigated, or explicitly deferred risk with an
+owner and due date. Scheduled safety runs execute the accepted portfolio and
+benign controls; no attack may be removed merely because it is unstable.
+
+Before write-capable release evaluation, freeze capability-specific thresholds
+for forbidden disclosure, approval bypass, privilege/scope escape, destructive
+effect, benign-task utility, unknown effect, and detector validity. Hard
+threshold breaches veto the affected capability regardless of aggregate quality.
+Each high-impact write capability requires a versioned safety case linking
+threat model, reachable resources, attack/control evidence, mitigations,
+independent review, residual risk, monitoring, rollback/disable mechanism, and
+accountable release decision.
 
 #### Phase 4 concurrency portfolio
 
@@ -1339,12 +1465,12 @@ unless a complete same-run measurement boundary is independently available.
 
 #### Phase 4 work packages and exit
 
-| Weeks | Deliverable                                                                                                         |
-| ----- | ------------------------------------------------------------------------------------------------------------------- |
-| 1–3   | Restricted runner, candidate-view compiler, canary/disclosure scans, artifact signing, and integrity controls       |
-| 4–6   | Five attack/control pairs, grader-injection controls, private-family/access registry, and independent threat review |
-| 7–9   | Action journal plus four controlled concurrency schedules in both actor orders                                      |
-| 10–12 | Two observability families, freshness barriers, stage timing/cost report, and reduced local reproduction            |
+| Weeks | Deliverable                                                                                                                                                      |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–3   | Restricted runner, candidate-view compiler, canary/disclosure scans, artifact signing, and integrity controls                                                    |
+| 4–6   | Red-team discovery, five attack/control pairs, grader-injection controls, thresholds, safety case, private-family/access registry, and independent threat review |
+| 7–9   | Action journal plus four controlled concurrency schedules in both actor orders                                                                                   |
+| 10–12 | Scheduled safety lane, quarantine/invalidation drills, two observability families, freshness barriers, stage timing/cost report, and reduced local reproduction  |
 
 #### Phase 4 report and storage increment
 
@@ -1375,7 +1501,13 @@ The report preserves all earlier sections and adds:
   metric/trace evidence, time to useful evidence/diagnosis/action/recovery,
   terminal outcomes, provider usage, retries, and cost; and
 - residual threat, untested attack families, unsupported sinks, and independent
-  review disposition.
+  review disposition;
+- red-team discovery disposition and promotion-to-regression flow, scheduled
+  attack/control status, capability thresholds, vetoes, safety-case version,
+  mitigation/disable readiness, and accountable release decision; and
+- quarantine and invalidation drill results, including affected-result
+  reconstruction, replacement run linkage, and proof that superseded evidence
+  remains visible.
 
 The Markdown report links to redacted views only. Restricted raw artifacts stay
 addressable by opaque digest and access class; omission from Markdown does not
@@ -1389,7 +1521,10 @@ invalidate only dependent fields; tampered artifacts fail verification; and an
 independent reviewer can reconstruct invalidation scope and the final decision.
 Any unresolved forbidden disclosure, approval bypass, privilege escalation, or
 out-of-scope destructive effect blocks the affected capability without being
-averaged against utility.
+averaged against utility. The scheduled safety lane, production-like boundary
+tests, red-team-to-regression flow, threshold vetoes, signed safety case, and
+quarantine/invalidation drills must all pass their controls before the affected
+high-impact write capability can be released.
 
 ### Phase 5: deployment validity and continuing governance
 
@@ -1460,6 +1595,37 @@ prompts and make a representative-user claim. A second language or assistive-
 technology path is a separate paired study triggered by a product commitment,
 not a checkbox inside this phase.
 
+#### Phase 5D: governed production feedback loop
+
+After the synthetic governance rehearsal passes, define a privacy-reviewed
+sampling and feedback protocol before collecting production-derived evaluation
+records. Specify purpose, lawful/approved basis, fields, sampling probabilities,
+redaction, access roles, provider retention, storage domain, linkage, user-
+feedback intake, small-cell rules, retention/deletion, opt-out or withdrawal
+where applicable, and prohibited uses. Raw prompts, cluster objects, secrets,
+support identifiers, and user identities are denied by default; approval of one
+study does not authorize a general production trace lake.
+
+Monitor candidate/environment versions, input and evidence distributions,
+coverage/abstention, calibration, threshold performance, safety events,
+missingness, linkage quality, label delay, provider/tool errors, user feedback,
+and measured outcomes. Prespecify drift and severe-event responses:
+investigate, recalibrate, narrow, degrade, suspend, or retire. Keep operational
+quality alerts distinct from evidence of user or deployment benefit.
+
+Every production incident or substantiated feedback item receives a disposition.
+Promote it into a minimized, privacy-reviewed development regression only after
+the original decision is complete; preserve provenance without retaining
+unnecessary production content, and keep a fresh temporal/family holdout.
+Refresh holdouts and run contamination/access review on a scheduled cadence.
+Continue scheduled grader/reference controls, case maintenance, and model/
+environment alias sentinels from earlier phases.
+
+Use controlled prospective deployment studies before claiming benefit. Start
+with shadow, then visible or recommendation-only exposure when governance and
+safety gates permit; automatic production mutation remains outside this
+roadmap. Null, harmful, inconclusive, and missing outcomes remain visible.
+
 #### Phase 5 report and storage increment
 
 Keep offline eval bundles immutable. The governed study bundle stores protocol
@@ -1492,7 +1658,11 @@ The Phase 5 study `report.json` and `report.md` contain:
   authorization, time, workload, trust attitude, handoff reconstruction,
   missingness, and adverse/null/inconclusive results;
 - shift, linkage, outcome-measurement, privacy, analysis, predictive-validity,
-  and impact-validity failures with original/current eligibility; and
+  and impact-validity failures with original/current eligibility;
+- production sampling and feedback protocol/version, sampled and excluded flow,
+  drift/calibration/outcome monitors, incidents/feedback dispositions,
+  regression promotions, holdout refresh/contamination checks, severe-event
+  responses, and controlled deployment-study status; and
 - the metric/policy lifecycle decision: retain diagnostic-only, recalibrate,
   prospectively validate, deployment-validate, degrade, suspend, or retire.
 
@@ -1516,22 +1686,26 @@ preserve a fresh temporal/family holdout.
 
 Phase 5 framework execution succeeds when governance, deletion, linkage,
 missingness, version, and policy controls fail closed and all unfavorable/null
-results remain visible. A predictive-validity claim succeeds only if the
+results remain visible. The privacy-reviewed sampling/feedback protocol,
+monitoring, incident-to-regression flow, scheduled holdout refresh and
+contamination review, continued grader/reference controls, case retirement, and
+metric recalibration/degradation/suspension/retirement paths must operate from
+repository-owned policies. A predictive-validity claim succeeds only if the
 prospective shadow rule passes. A deployment-benefit claim requires a later
-eligible visible or recommendation-only impact study; shadow correlation and a
-human usability result are insufficient. Phase 5 may therefore validly exit
-with “offline metric retained as diagnostic-only” or “deployment claim not
-supported.”
+eligible controlled visible or recommendation-only impact study; shadow
+correlation, user feedback, and a human usability result are insufficient.
+Phase 5 may therefore validly exit with “offline metric retained as
+diagnostic-only,” “capability suspended,” or “deployment claim not supported.”
 
 #### Pareto allocation and deliberate deferral
 
-| Phase | Concrete output                                                                                                                                                                                                         | Team envelope                  | Claim unlocked                                                                                                            | Explicitly deferred                                                                                                                                        |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Four read-only variants, deterministic typed-RCA grading, internal Headlamp baseline/candidate comparison, Copilot/local and Azure/AKS profiles, Foundry screen, eight draft packets, one promoted regression           | 10 days                        | Stronger per-case read-only RCA evaluation and tested model compatibility                                                 | Human/model judging, free-form communication scoring, CI, repair, external-system comparison, native benchmark adapters, unqualified generated-case counts |
-| 2     | Twelve development variants/six families, HolmesGPT/K8sGPT shared-task comparison, deterministic typed RCA/action grading, two separate private variants, two approved repairs, attack/benign pair, matched uncertainty | 4–6 weeks                      | Strongest combined methodology in the inspected public set and named external competitiveness gaps for the narrow profile | Human/model judging, free-form communication scoring, additional reference tools, hosted platform, broad scheduled/AKS CI, production claims               |
-| 3     | Twenty base variants, four interaction contracts, twelve metamorphic pairs, ten-case external adapter                                                                                                                   | 8–10 weeks                     | Broader capability, robustness, and one external-boundary result                                                          | Large leaderboard, every version/distribution/architecture, population prevalence                                                                          |
-| 4     | Five attack/control pairs, four replayable race schedules, two telemetry families, signed/restricted evidence                                                                                                           | 10–12 weeks                    | High-risk safety/integrity/concurrency validity for tested boundaries                                                     | Human-representativeness and deployment-benefit claims, energy/carbon without complete measurement                                                         |
-| 5     | Synthetic governance rehearsal, one prospective shadow prediction, conditional four-family human study                                                                                                                  | Initial 12 weeks, then ongoing | Only the predictive/human/deployment claims whose own gates pass                                                          | Universal coverage/thresholds, permanent grader validity, automatic production mutation                                                                    |
+| Phase | Concrete output                                                                                                                                                                                                      | Team envelope                  | Claim unlocked                                                                                                            | Explicitly deferred                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 1     | Four read-only variants; deterministic typed RCA; internal comparison; local/AKS; health, ownership, review and quarantine baselines; best-practice matrix; one real product path; one promoted regression           | 10 days                        | Stronger per-case read-only RCA evaluation and tested model compatibility                                                 | Human/model scoring, CI service, repair/UI approval, external execution, broad distribution, production claims |
+| 2     | Twelve variants/six families; HolmesGPT/K8sGPT; approved repairs and UI paths; private holdout/splits; matched uncertainty; PR/scheduled lanes; observed SLOs; operational quarantine; scoped safety gates           | 4–6 weeks                      | Strongest combined methodology in the inspected public set and named external competitiveness gaps for the narrow profile | Free-form grader decision/qualification, wider distribution, additional references, production validity        |
+| 3     | Twenty bases; source-backed case flow; four interactions; twelve metamorphic pairs; external replay; distribution/maintenance reporting; SME audit; UI/headless parity; closed model-grader decision gate            | 8–10 weeks                     | Broader capability, robustness, maintained semantic validity, and one external-boundary result                            | Large leaderboard, every version/distribution/architecture, production prevalence                              |
+| 4     | Periodic red-team promotion; scheduled attack/control lane; five attack pairs; safety thresholds/case; quarantine/invalidation drills; four race schedules; two telemetry families; signed/restricted evidence       | 10–12 weeks                    | High-risk safety/integrity/concurrency validity for tested production-like boundaries                                     | Human representativeness and deployment benefit, energy/carbon without complete measurement                    |
+| 5     | Synthetic governance rehearsal; prospective shadow prediction; conditional human study; governed sampling/feedback; monitoring; incident promotion; holdout refresh; controlled deployment studies; metric lifecycle | Initial 12 weeks, then ongoing | Only the predictive, human, or deployment claims whose own gates pass                                                     | Universal coverage/thresholds, permanent grader validity, automatic production mutation                        |
 
 When capacity slips, cut hosted-platform integration, external benchmark
 format adapters, broad model ranking, automatic generation beyond controlled
@@ -1543,34 +1717,35 @@ those saves little while destroying the result's meaning.
 
 ## Risks and mitigations
 
-| Risk                                                             | Mitigation                                                                                                                                                                                         |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The first month disappears into framework or CI work             | Freeze the Headlamp vertical slice within ten working days; defer the two-reference comparison and all CI, scheduling, release blocking, and CI credential design to Phase 2                       |
-| Reference adapters manufacture parity                            | Require direct common structured output or lossless native-field mapping, fixed-submission parity tests, complete assignment/eligibility flow, and no adapter interpretation of prose              |
-| Cross-system comparison hides capability differences             | Report strict common-contract and product-default tracks separately; expose model/tool/permission/budget differences and compare only common eligible units                                        |
-| Local simulation and AKS behave differently                      | Keep scenario truth and graders common, isolate setup/readiness adapters, run the same pinned candidate on both, and report environment differences instead of averaging them                      |
-| Azure or AKS credentials enter traces                            | Separate identities, inject credentials outside scenario packets, redact and scan artifacts, retain only non-secret environment fingerprints, and test canaries                                    |
-| A reused AKS cluster contaminates trials                         | Use a dedicated non-production cluster, unique namespace/labels per trial, pre/post cluster-level diff, bounded concurrency, and proven cleanup before parallelism                                 |
-| AKS cost or quota slows the default loop                         | Author and repeat on local KWOK; run Azure/AKS parity manually or on demand for environment-sensitive work and milestone evidence                                                                  |
-| Scripted output is mistaken for agent quality                    | Use fixture models and scripted agents only as controls; report real local and Azure provider runs separately                                                                                      |
-| Candidate guesses from fixtures or bundles                       | Neutral assets, candidate/truth split, production-mode build, and scans of image layers, source maps, caches, browser state, prompts, and artifacts                                                |
-| Sibling operator fixtures are used without runtime proof         | Prefer core Kubernetes Phase 1 cases; admit each operator case only after pinned setup, oracle, license, and cleanup validation                                                                    |
-| Setup or provider failure is counted as model failure            | Record setup, identity, network, provider, candidate, grader, verifier, and cleanup stages separately with complete attempts and denominators                                                      |
-| Trial-and-error repair passes with wrong RCA                     | Require causal-evidence checks and hard postconditions separately; gate exact approval scope and collateral state                                                                                  |
-| Judge prefers verbosity or silently drifts                       | Use deterministic facts and expert checklists first; later pin and calibrate a bounded judge, blind identity, audit bias, and replay calibration                                                   |
-| A small visible suite is overfit or marketed as coverage         | Limit Phase 1 to per-case claims; use lineage-aware development, regression, capability, safety, and private-holdout sets from Phase 2                                                             |
-| Generated drafts or variants inflate breadth                     | Count only independently admitted causal families as base breadth; report drafts, controls, transforms, repeats, models, and environments as separate units                                        |
-| Copilot or Foundry resolution changes during comparison          | Resolve once into an immutable candidate manifest; a different catalog choice, deployment, model observation, adapter, or parameter set starts a new configuration                                 |
-| Parallel agents share state or rate limits                       | Give each task isolated work/output and trial identities; serialize scarce cluster/provider cells; preserve `429`, cache, collision, and contamination failures                                    |
-| Coding agents approve their own generated truth                  | Agents may draft and attack qualification packets, but the senior owns causal truth/admission and pass-critical ambiguity needs independent Kubernetes-capable engineering review before freeze    |
-| Typed sidecar changes candidate behavior or misses prose defects | Treat the sidecar as the declared Phase 1–2 candidate boundary, retain natural output unscored, verify the product UI path separately, and defer free-form communication claims                    |
-| Each phase invents a new result or report format                 | Freeze the Phase 1 canonical JSON/JSONL/native-artifact bundle and report JSON core; add versioned files/events/sections, preserve golden readers, and migrate by derivation rather than overwrite |
-| Git permanently replicates sensitive or private report data      | Commit only the `public-github` projection after schema/disclosure/canary/small-cell checks; never publish raw runs, protected contracts, private case results, restricted digests, or study rows  |
-| Overall trends splice incompatible measurements                  | Bind each point to a measurement-series ID; display schema/scenario/grader/environment breaks and join series only through a separately qualified bridge analysis                                  |
-| “Better” becomes an unsupported overall ranking                  | Require every differentiation-scorecard row to link to executable evidence, publish incumbent advantages beside the claim, and narrow the claim when any row is missing                            |
-| Small score changes become release claims                        | Use matched task comparisons, observed uncertainty, prespecified decision-specific effects, and family-level results                                                                               |
-| Maintenance exceeds a two-person team                            | Keep one canonical contract/runner, one expansion theme per phase, cached setup where valid, explicit case retirement, and optional exporters                                                      |
-| Framework or vendor lock-in                                      | Keep portable local manifests/raw results and replaceable cluster, provider, candidate, grader, and telemetry adapters                                                                             |
+| Risk                                                             | Mitigation                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The first month disappears into framework or CI work             | Freeze the Headlamp vertical slice within ten working days; defer the two-reference comparison and all CI, scheduling, release blocking, and CI credential design to Phase 2                                       |
+| Reference adapters manufacture parity                            | Require direct common structured output or lossless native-field mapping, fixed-submission parity tests, complete assignment/eligibility flow, and no adapter interpretation of prose                              |
+| Cross-system comparison hides capability differences             | Report strict common-contract and product-default tracks separately; expose model/tool/permission/budget differences and compare only common eligible units                                                        |
+| Local simulation and AKS behave differently                      | Keep scenario truth and graders common, isolate setup/readiness adapters, run the same pinned candidate on both, and report environment differences instead of averaging them                                      |
+| Azure or AKS credentials enter traces                            | Separate identities, inject credentials outside scenario packets, redact and scan artifacts, retain only non-secret environment fingerprints, and test canaries                                                    |
+| A reused AKS cluster contaminates trials                         | Use a dedicated non-production cluster, unique namespace/labels per trial, pre/post cluster-level diff, bounded concurrency, and proven cleanup before parallelism                                                 |
+| AKS cost or quota slows the default loop                         | Author and repeat on local KWOK; run Azure/AKS parity manually or on demand for environment-sensitive work and milestone evidence                                                                                  |
+| Scripted output is mistaken for agent quality                    | Use fixture models and scripted agents only as controls; report real local and Azure provider runs separately                                                                                                      |
+| Candidate guesses from fixtures or bundles                       | Neutral assets, candidate/truth split, production-mode build, and scans of image layers, source maps, caches, browser state, prompts, and artifacts                                                                |
+| Sibling operator fixtures are used without runtime proof         | Prefer core Kubernetes Phase 1 cases; admit each operator case only after pinned setup, oracle, license, and cleanup validation                                                                                    |
+| Setup or provider failure is counted as model failure            | Record setup, identity, network, provider, candidate, grader, verifier, and cleanup stages separately with complete attempts and denominators                                                                      |
+| Trial-and-error repair passes with wrong RCA                     | Require causal-evidence checks and hard postconditions separately; gate exact approval scope and collateral state                                                                                                  |
+| Judge prefers verbosity or silently drifts                       | Use deterministic facts first; Phase 3 either records grading as not applicable or requires expert calibration, blinded/swapped order, bias/injection controls, agreement, holdout, pinning, and baseline backfill |
+| Best practices remain permanently “optional”                     | Regenerate the disposition matrix at every exit; implement cheap scoped forms early and require a named expansion phase or evidenced `not_applicable` decision                                                     |
+| A small visible suite is overfit or marketed as coverage         | Limit Phase 1 to per-case claims; use lineage-aware development, regression, capability, safety, and private-holdout sets from Phase 2                                                                             |
+| Generated drafts or variants inflate breadth                     | Count only independently admitted causal families as base breadth; report drafts, controls, transforms, repeats, models, and environments as separate units                                                        |
+| Copilot or Foundry resolution changes during comparison          | Resolve once into an immutable candidate manifest; a different catalog choice, deployment, model observation, adapter, or parameter set starts a new configuration                                                 |
+| Parallel agents share state or rate limits                       | Give each task isolated work/output and trial identities; serialize scarce cluster/provider cells; preserve `429`, cache, collision, and contamination failures                                                    |
+| Coding agents approve their own generated truth                  | Agents may draft and attack qualification packets, but the senior owns causal truth/admission and pass-critical ambiguity needs independent Kubernetes-capable engineering review before freeze                    |
+| Typed sidecar changes candidate behavior or misses prose defects | Treat the sidecar as the declared Phase 1–2 candidate boundary, retain natural output unscored, verify the product UI path separately, and defer free-form communication claims                                    |
+| Each phase invents a new result or report format                 | Freeze the Phase 1 canonical JSON/JSONL/native-artifact bundle and report JSON core; add versioned files/events/sections, preserve golden readers, and migrate by derivation rather than overwrite                 |
+| Git permanently replicates sensitive or private report data      | Commit only the `public-github` projection after schema/disclosure/canary/small-cell checks; never publish raw runs, protected contracts, private case results, restricted digests, or study rows                  |
+| Overall trends splice incompatible measurements                  | Bind each point to a measurement-series ID; display schema/scenario/grader/environment breaks and join series only through a separately qualified bridge analysis                                                  |
+| “Better” becomes an unsupported overall ranking                  | Require every differentiation-scorecard row to link to executable evidence, publish incumbent advantages beside the claim, and narrow the claim when any row is missing                                            |
+| Small score changes become release claims                        | Use matched task comparisons, observed uncertainty, prespecified decision-specific effects, and family-level results                                                                                               |
+| Maintenance exceeds a two-person team                            | Keep one canonical contract/runner, one expansion theme per phase, cached setup where valid, explicit case retirement, and optional exporters                                                                      |
+| Framework or vendor lock-in                                      | Keep portable local manifests/raw results and replaceable cluster, provider, candidate, grader, and telemetry adapters                                                                                             |
 
 ## Final recommendation
 
@@ -1589,9 +1764,9 @@ an Azure-specific benchmark fork.
 Phase 1 is a developer tool, not a CI project. Its product is an on-demand,
 repeatable baseline-versus-candidate report and a failed-eval-to-regression
 workflow, not a pull-request check, release gate, scheduler, or leaderboard.
-Consider CI only in Phase 2 after local and Azure/AKS runs establish the
-runtime, variance, reliability, cost, and credential boundary needed to judge
-whether automation is worthwhile.
+Phase 2 must add the bounded deterministic PR lane and broader scheduled lanes
+after Phase 1 establishes the runtime, variance, reliability, cost, and
+credential boundaries needed to size them safely.
 
 Freeze the canonical result bundle and machine-readable report in Phase 1:
 immutable JSON snapshots, append-only JSONL event/result collections,
@@ -1647,6 +1822,19 @@ output or lossless native-field mapping. Publish each system's absolute
 eligible results and Headlamp-versus-each-reference gaps under both the
 common-Azure and product-default tracks. This is matched competitiveness
 evidence, not an overall rank.
+
+Treat best-practice adoption as scoped expansion rather than a late compliance
+project. Phase 1 cheaply records health, ownership, review, quarantine,
+distribution limits, safety controls, and portable production-governance fields.
+Phase 2 operationalizes those seeds as CI/schedules, observed SLOs, expiring
+quarantine, UI repair parity, splits/holdout, and scoped gates. Phase 3 expands
+source breadth, distribution and maintenance evidence, SME audit, UI/headless
+parity, and either a fully qualified model grader or an explicit
+`not_applicable` decision. Phase 4 expands early attack controls into scheduled
+safety assurance and safety cases. Phase 5 turns the portable governance fields
+into a privacy-reviewed production feedback and validity loop. Review the
+best-practice matrix at every exit so no MVP claim silently stands in for the
+expanded practice.
 
 If all differentiation-scorecard rows pass, this is the point where Headlamp
 can claim the strongest combined methodology found in the inspected public

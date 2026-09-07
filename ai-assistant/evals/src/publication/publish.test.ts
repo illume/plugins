@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { buildReport } from '../reporting/reportBuilder.js';
 import { checkOverallViews, publishRun, redactReport, regenerateOverallViews } from './publish.js';
@@ -115,6 +115,36 @@ test('publishRun + regenerateOverallViews: writes an immutable run directory and
     assert.equal(overall.publication_count, 1);
     const readme = readFileSync(path.join(dir, 'README.md'), 'utf8');
     assert.match(readme, /Latest publication/);
+    assert.match(readme, /scripted-reference/);
+    assert.match(readme, /Control-only diagnostic/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('regenerateOverallViews: rejects an invalid publication manifest', () => {
+  const dir = makeScratchDir('publish-invalid-manifest');
+  try {
+    const report = buildReport({
+      runId: 'run_x',
+      bundleDigest: 'sha256:abc',
+      trials: [fakeTrial()],
+      regressionDeltas: [],
+      ownership: [],
+    });
+    const { publicationDir } = publishRun({
+      resultsRoot: dir,
+      report,
+      bundleDigest: 'sha256:abc',
+      now: new Date('2024-06-01T00:00:00Z'),
+    });
+    const manifestPath = path.join(publicationDir, 'projection-manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      report_content_digest: string;
+    };
+    manifest.report_content_digest = 'not-a-digest';
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    assert.throws(() => regenerateOverallViews(dir), /invalid report_content_digest/);
   } finally {
     removeScratchDir(dir);
   }

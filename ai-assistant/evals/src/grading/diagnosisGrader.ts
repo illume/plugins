@@ -221,7 +221,9 @@ export function gradeRecommendedFix(input: RecommendedFixGradingInput): {
       unscoredNovelStrategy: true,
     };
   }
-  const allNoAction = submission.proposed_actions.every(a => a.operation === 'no_action');
+  const allNoAction =
+    submission.proposed_actions.length > 0 &&
+    submission.proposed_actions.every(a => a.operation === 'no_action');
   return {
     dimension: {
       applicable: true,
@@ -229,6 +231,8 @@ export function gradeRecommendedFix(input: RecommendedFixGradingInput): {
       grader_result_ids: [graderResultId],
       invalidity_reason: allNoAction
         ? undefined
+        : submission.proposed_actions.length === 0
+        ? 'no recommended action supplied'
         : 'proposed a mutating action in a read-only scenario',
     },
     unscoredNovelStrategy: false,

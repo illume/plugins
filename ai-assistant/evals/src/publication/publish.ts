@@ -165,7 +165,55 @@ function renderRunReadme(report: RedactedReport, manifest: PublicationManifest):
     task_outcomes_root_cause: Record<string, number>;
     safety_outcomes: Record<string, number>;
   };
+  const slices = report.slices as unknown as {
+    by_candidate: Record<string, number>;
+  };
+  const candidateIds = Object.keys(slices.by_candidate);
   const lines = [
+    `# Run ${manifest.publication_id}`,
+    '',
+    `- published_at: ${manifest.published_at}`,
+    `- source_bundle_digest: \`${manifest.source_bundle_digest}\``,
+    `- report_content_digest: \`${manifest.report_content_digest}\``,
+    `- decision: **${report.decision}**`,
+    '',
+    `Total trials: ${summary.total_trials}`,
+    '',
+    '| run_eligibility | count |',
+    '| --- | ---: |',
+    ...Object.entries(summary.run_eligibility).map(([k, v]) => `| ${k} | ${v} |`),
+    '',
+    '| root_cause outcome | count |',
+    '| --- | ---: |',
+    ...Object.entries(summary.task_outcomes_root_cause).map(([k, v]) => `| ${k} | ${v} |`),
+    '',
+    '| candidate | count |',
+    '| --- | ---: |',
+    ...Object.entries(slices.by_candidate).map(([k, v]) => `| ${k} | ${v} |`),
+    '',
+    ...(candidateIds.length > 0 && candidateIds.every(id => id.startsWith('scripted-'))
+      ? [
+          '> **Control-only diagnostic:** scripted candidates validate the harness and are not AI Assistant capability evidence.',
+          '',
+        ]
+      : []),
+    `Failures: ${report.failure_count}`,
+    '',
+    '## Limitations',
+    '',
+    ...report.limitations.map(l => `- ${l}`),
+    '',
+  ];
+  return lines.join('\n');
+}
+
+function renderRunReadmeV1(report: RedactedReport, manifest: PublicationManifest): string {
+  const summary = report.summary as unknown as {
+    total_trials: number;
+    run_eligibility: Record<string, number>;
+    task_outcomes_root_cause: Record<string, number>;
+  };
+  return [
     `# Run ${manifest.publication_id}`,
     '',
     `- published_at: ${manifest.published_at}`,
@@ -189,14 +237,55 @@ function renderRunReadme(report: RedactedReport, manifest: PublicationManifest):
     '',
     ...report.limitations.map(l => `- ${l}`),
     '',
-  ];
-  return lines.join('\n');
+  ].join('\n');
 }
 
 interface RunEntry {
   dirName: string;
   manifest: PublicationManifest;
   report: RedactedReport;
+}
+
+function assertPublicationManifest(
+  value: unknown,
+  directoryName: string
+): asserts value is PublicationManifest {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`${directoryName}: publication manifest must be an object`);
+  }
+  const manifest = value as Record<string, unknown>;
+  const requiredStrings = [
+    'publication_id',
+    'published_at',
+    'source_bundle_digest',
+    'report_schema_version',
+    'generator_version',
+    'disclosure_profile',
+    'report_content_digest',
+  ];
+  for (const field of requiredStrings) {
+    if (typeof manifest[field] !== 'string' || manifest[field] === '') {
+      throw new Error(`${directoryName}: publication manifest has invalid ${field}`);
+    }
+  }
+  if (manifest.status !== 'active' && manifest.status !== 'superseded') {
+    throw new Error(`${directoryName}: publication manifest has invalid status`);
+  }
+  if (
+    manifest.supersedes_publication_id !== null &&
+    typeof manifest.supersedes_publication_id !== 'string'
+  ) {
+    throw new Error(`${directoryName}: publication manifest has invalid supersedes_publication_id`);
+  }
+  if (Number.isNaN(Date.parse(manifest.published_at as string))) {
+    throw new Error(`${directoryName}: publication manifest has invalid published_at`);
+  }
+  if (!/^[a-f0-9]{64}$/.test(manifest.report_content_digest as string)) {
+    throw new Error(`${directoryName}: publication manifest has invalid report_content_digest`);
+  }
+  if (!directoryName.endsWith(`-${manifest.publication_id as string}`)) {
+    throw new Error(`${directoryName}: publication ID does not match directory name`);
+  }
 }
 
 function loadPublishedRuns(resultsRoot: string): RunEntry[] {
@@ -210,7 +299,9 @@ function loadPublishedRuns(resultsRoot: string): RunEntry[] {
     if (!existsSync(manifestPath) || !existsSync(reportPath) || !existsSync(readmePath)) {
       throw new Error(`${dirName}: incomplete publication directory`);
     }
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PublicationManifest;
+    const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    assertPublicationManifest(manifestValue, dirName);
+    const manifest = manifestValue;
     const reportText = readFileSync(reportPath, 'utf8');
     if (manifest.disclosure_profile !== DISCLOSURE_PROFILE) {
       throw new Error(`${dirName}: unsupported disclosure profile`);
@@ -220,7 +311,11 @@ function loadPublishedRuns(resultsRoot: string): RunEntry[] {
     }
     assertSafePublication(reportText);
     const report = JSON.parse(reportText) as RedactedReport;
-    if (readFileSync(readmePath, 'utf8') !== renderRunReadme(report, manifest)) {
+    const expectedReadme =
+      manifest.generator_version === '1.0.0'
+        ? renderRunReadmeV1(report, manifest)
+        : renderRunReadme(report, manifest);
+    if (readFileSync(readmePath, 'utf8') !== expectedReadme) {
       throw new Error(`${dirName}: published README is stale or corrupt`);
     }
     entries.push({
@@ -310,6 +405,10 @@ function renderOverallReadme(runs: RunEntry[], overall: OverallReport): string {
     task_outcomes_root_cause: Record<string, number>;
     safety_outcomes: Record<string, number>;
   };
+  const slices = latest.report.slices as unknown as {
+    by_candidate: Record<string, number>;
+  };
+  const candidateIds = Object.keys(slices.by_candidate);
   return [
     '# Headlamp AI Assistant — evaluation results',
     '',
@@ -334,6 +433,16 @@ function renderOverallReadme(runs: RunEntry[], overall: OverallReport): string {
     '| --- | ---: |',
     ...Object.entries(summary.safety_outcomes).map(([k, v]) => `| ${k} | ${v} |`),
     '',
+    '| candidate | count |',
+    '| --- | ---: |',
+    ...Object.entries(slices.by_candidate).map(([k, v]) => `| ${k} | ${v} |`),
+    '',
+    ...(candidateIds.length > 0 && candidateIds.every(id => id.startsWith('scripted-'))
+      ? [
+          '> **Control-only diagnostic:** scripted candidates validate the harness and are not AI Assistant capability evidence.',
+          '',
+        ]
+      : []),
     '## Trend',
     '',
     runs.length === 1

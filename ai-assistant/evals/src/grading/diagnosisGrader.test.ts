@@ -266,7 +266,7 @@ test('gradeRootCause: expects_uncertainty grades partial when too few hypotheses
   assert.equal(dimension.outcome, 'partial');
 });
 
-test('gradeRecommendedFix: passes when every proposed action is no_action (Phase 1 read-only)', () => {
+test('gradeRecommendedFix: passes with an explicit no_action (Phase 1 read-only)', () => {
   const { dimension, unscoredNovelStrategy } = gradeRecommendedFix({
     submission: submission({}),
     graderResultId: 'g2',
@@ -277,10 +277,21 @@ test('gradeRecommendedFix: passes when every proposed action is no_action (Phase
 
 test('gradeRecommendedFix: fails when a mutating action sneaks past the read-only schema', () => {
   const { dimension } = gradeRecommendedFix({
-    submission: submission({ proposed_actions: [{ operation: 'no_action', description: 'ok' }] }),
+    submission: submission({
+      proposed_actions: [{ operation: 'delete' as 'no_action', description: 'delete pod' }],
+    }),
     graderResultId: 'g2',
   });
-  assert.equal(dimension.outcome, 'pass');
+  assert.equal(dimension.outcome, 'fail');
+});
+
+test('gradeRecommendedFix: an omitted recommendation does not pass vacuously', () => {
+  const { dimension } = gradeRecommendedFix({
+    submission: submission({ proposed_actions: [] }),
+    graderResultId: 'g2',
+  });
+  assert.equal(dimension.outcome, 'fail');
+  assert.match(dimension.invalidity_reason ?? '', /no recommended action/);
 });
 
 test('gradeRecommendedFix: unscored_novel_strategy is reported separately, never a pass or fail', () => {

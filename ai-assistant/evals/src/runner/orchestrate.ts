@@ -49,6 +49,7 @@ import { writeExportProjections } from '../exporters/writeExports.js';
 import { computeHealthSummary } from '../lifecycle/health.js';
 import { trialId as generateTrialId } from '../ids.js';
 import { sha256OfText } from '../canonicalJson.js';
+import { loadClusterProfile } from '../cluster/profile.js';
 
 export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
 
@@ -66,6 +67,7 @@ export interface RunOptions {
   candidate: CandidateSpec;
   baseline?: CandidateSpec;
   scenariosRoot?: string;
+  supersedesTrialId?: string;
 }
 
 export interface RunOutcome {
@@ -76,8 +78,21 @@ export interface RunOutcome {
   reportDir: string;
 }
 
-function buildCandidate(spec: CandidateSpec, scenario: LoadedScenario): CandidateAdapter {
-  if (spec === 'headlamp-cli') return createHeadlampCliCandidate();
+function buildCandidate(
+  spec: CandidateSpec,
+  scenario: LoadedScenario,
+  mode: ExecutionMode,
+  profile: ClusterProfileName
+): CandidateAdapter {
+  if (spec === 'headlamp-cli') {
+    return createHeadlampCliCandidate({
+      useMockProvider: mode !== 'real',
+      allowedEnvVars:
+        mode === 'real'
+          ? loadClusterProfile(profile === 'aks' ? 'aks-azure' : profile).model.credential_env_vars
+          : [],
+    });
+  }
   return createScriptedCandidate(spec, scenario.evaluatorPacket);
 }
 
@@ -125,24 +140,31 @@ async function runOneCandidatePass(
   runId: string,
   bundleWriter: RunBundleWriter,
   profile: ClusterProfileName,
-  mode: ExecutionMode
+  mode: ExecutionMode,
+  supersedesTrialId?: string
 ): Promise<TrialResult[]> {
   const clusterAdapter = createClusterAdapter(profile, mode);
   const clusterPreflight = await clusterAdapter.preflight();
   const results: TrialResult[] = [];
-  for (const scenario of scenarios) {
-    const candidateAdapter = buildCandidate(spec, scenario);
-    const trialId = generateTrialId();
-    const result = await runTrial({
-      runId,
-      trialId,
-      scenario,
-      clusterAdapter,
-      clusterPreflight,
-      candidateAdapter,
-      bundleWriter,
-    });
-    results.push(result);
+  try {
+    for (const scenario of scenarios) {
+      const candidateAdapter = buildCandidate(spec, scenario, mode, profile);
+      const trialId = generateTrialId();
+      const result = await runTrial({
+        runId,
+        trialId,
+        scenario,
+        clusterAdapter,
+        clusterPreflight,
+        candidateAdapter,
+        bundleWriter,
+        executionMode: mode,
+        supersedesTrialId,
+      });
+      results.push(result);
+    }
+  } finally {
+    await clusterAdapter.dispose?.();
   }
   return results;
 }
@@ -162,7 +184,8 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
     options.runId,
     bundleWriter,
     options.profile,
-    options.mode
+    options.mode,
+    options.supersedesTrialId
   );
 
   let allTrials = candidateResults;

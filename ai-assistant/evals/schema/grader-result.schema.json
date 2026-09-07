@@ -10,6 +10,6 @@
     "applicable": { "type": "boolean" },
     "dimension": { "type": "string" },
     "outcome": { "type": "string" },
-    "invalidity_reason": { "type": "string" }
+    "invalidity_reason": { "type": ["string", "null"] }
   }
 }

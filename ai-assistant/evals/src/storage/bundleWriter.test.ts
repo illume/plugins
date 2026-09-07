@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { isBundleClosed, RunBundleWriter } from './bundleWriter.js';
 import { readClosedBundle } from './bundleReader.js';
@@ -33,6 +33,7 @@ function fakeTrialResult(overrides: Partial<TrialResult> = {}): TrialResult {
     scenario_version: '1.0.0',
     candidate_id: 'scripted-reference',
     candidate_kind: 'scripted',
+    execution_mode: 'dry-run',
     cluster_profile: 'local-kwok',
     run_eligibility: 'valid',
     stage_status: { setup: 'ok', candidate: 'ok', grader: 'ok', verifier: 'ok', cleanup: 'ok' },
@@ -56,6 +57,7 @@ function fakeTrialResult(overrides: Partial<TrialResult> = {}): TrialResult {
     },
     submission_status: 'valid',
     unscored_novel_strategy: false,
+    supersedes_trial_id: null,
     recorded_at: new Date().toISOString(),
     ...overrides,
   };
@@ -80,7 +82,14 @@ test('a trial written through TrialBundleWriter round-trips through readClosedBu
     const writer = new RunBundleWriter(dir, 'run_2');
     const trialWriter = writer.newTrial('trial_1');
     trialWriter.writeScenarioRef({ scenario_id: 'core-service-selector-fault-v1' });
-    trialWriter.writeEnvironmentManifest({ trial_id: 'trial_1' });
+    trialWriter.writeEnvironmentManifest({
+      schema_version: SCHEMA_VERSION,
+      trial_id: 'trial_1',
+      cluster_profile: 'local-kwok',
+      candidate: { id: 'scripted-reference', kind: 'scripted' },
+      execution_mode: 'dry-run',
+      observed_at: '2025-01-01T00:00:00.000Z',
+    });
     trialWriter.trajectory.append({
       event_id: 'ev1',
       trial_id: 'trial_1',
@@ -134,6 +143,18 @@ test('close() throws if called twice on the same bundle', () => {
     const writer = new RunBundleWriter(dir, 'run_3');
     writer.close('scripted-reference', 'local-kwok');
     assert.throws(() => writer.close('scripted-reference', 'local-kwok'), /already closed/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('readClosedBundle rejects a file changed after the manifest was written', () => {
+  const dir = makeScratchDir('bundle-tamper');
+  try {
+    const writer = new RunBundleWriter(dir, 'run_tamper');
+    writer.close('scripted-reference', 'local-kwok');
+    writeFileSync(path.join(writer.bundleDir, 'trials.jsonl'), 'tampered\n', 'utf8');
+    assert.throws(() => readClosedBundle(dir, 'run_tamper'), /digest mismatch/);
   } finally {
     removeScratchDir(dir);
   }

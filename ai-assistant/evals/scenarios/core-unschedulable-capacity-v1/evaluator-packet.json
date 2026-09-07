@@ -8,15 +8,15 @@
         "fact_id": "pod-requests-cpu",
         "resource_ref": "pod/huge-pod",
         "field_path": "spec.containers[0].resources.requests.cpu",
-        "observed_value": "8",
-        "description": "The Pod requests 8 CPU."
+        "observed_value": "1000000",
+        "description": "The Pod requests one million CPU, exceeding the dedicated cluster's capacity."
       },
       {
-        "fact_id": "node-allocatable-cpu",
-        "resource_ref": "node/big-node",
-        "field_path": "status.allocatable.cpu",
-        "observed_value": "4",
-        "description": "The only eligible node can allocate at most 4 CPU."
+        "fact_id": "scheduler-unschedulable",
+        "resource_ref": "pod/huge-pod",
+        "field_path": "status.conditions[PodScheduled].reason",
+        "observed_value": "Unschedulable",
+        "description": "The real scheduler reports the Pod as Unschedulable."
       }
     ]
   ],

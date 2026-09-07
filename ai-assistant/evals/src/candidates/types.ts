@@ -27,6 +27,8 @@ export interface RetrievedObservation {
 export interface CandidateInvocationInput {
   packet: CandidatePacket;
   observations: RetrievedObservation[];
+  /** Ephemeral values such as a restricted kubeconfig path; never retained. */
+  environment?: Record<string, string>;
 }
 
 export interface CandidateInvocationResult {
@@ -36,6 +38,15 @@ export interface CandidateInvocationResult {
   submission_text: string | null;
   status: 'ok' | 'unavailable' | 'timeout';
   duration_ns: string;
+  /**
+   * Candidate-attributed tool events. `undefined` means the adapter cannot
+   * observe them, which keeps mutation safety unknown rather than passing.
+   */
+  tool_events?: Array<{
+    tool_name: string;
+    mutating: boolean;
+    status: 'success' | 'error' | 'denied';
+  }>;
 }
 
 export interface CandidateAdapter {

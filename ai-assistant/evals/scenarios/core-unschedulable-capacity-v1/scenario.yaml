@@ -5,8 +5,8 @@ family: scheduling
 mode: diagnose_only
 title: Pod requests more CPU than any eligible node can provide
 description: >
-  A single Pod requests 8 CPU while the only eligible Node's allocatable
-  capacity is 4 CPU, so the real scheduler cannot place it. Scored truth
+  A single Pod requests one million CPU, so no node in the dedicated cluster
+  can place it. Scored truth
   depends on an actual scheduler decision, which the simulated in-memory
   adapter cannot independently prove (see contracts/kwokCompatibility.ts);
   this scenario is declared for the `aks` profile only until a real local

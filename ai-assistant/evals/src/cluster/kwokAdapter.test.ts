@@ -25,12 +25,15 @@ import assert from 'node:assert/strict';
 import { createFakeCommandRunner } from './commandRunner.js';
 import { KubectlKwokAdapter } from './kwokAdapter.js';
 
+const isolation = { clusterName: 'test-evals', kubeconfigPath: '/tmp/test-kubeconfig' };
+const kube = ['kubectl', '--kubeconfig', isolation.kubeconfigPath];
+
 test('preflight: reports unsupported with a specific reason when a tool is missing', async () => {
   const { runner } = createFakeCommandRunner([
     { match: ['which', 'kubectl'], result: { status: 0, stdout: '/usr/bin/kubectl', stderr: '' } },
     { match: ['which', 'kwokctl'], result: { status: 1, stdout: '', stderr: '' } },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const preflight = await adapter.preflight();
   assert.equal(preflight.supported, false);
   assert.match(preflight.reason ?? '', /kwokctl/);
@@ -42,11 +45,33 @@ test('preflight: supported when every tool resolves and kubectl responds', async
     { match: ['which', 'kwokctl'], result: { status: 0, stdout: '/usr/bin/kwokctl', stderr: '' } },
     { match: ['which', 'docker'], result: { status: 0, stdout: '/usr/bin/docker', stderr: '' } },
     {
-      match: ['kubectl', 'version', '--client'],
+      match: [
+        'kwokctl',
+        'create',
+        'cluster',
+        '--name',
+        isolation.clusterName,
+        '--runtime',
+        'docker',
+        '--kubeconfig',
+        isolation.kubeconfigPath,
+      ],
+      result: { status: 0, stdout: '', stderr: '' },
+    },
+    {
+      match: [...kube, 'version'],
       result: { status: 0, stdout: 'v1.30', stderr: '' },
     },
+    {
+      match: [...kube, 'apply', '-f'],
+      result: { status: 0, stdout: 'node/kwok-worker configured', stderr: '' },
+    },
+    {
+      match: [...kube, 'wait', 'node/kwok-worker'],
+      result: { status: 0, stdout: 'condition met', stderr: '' },
+    },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const preflight = await adapter.preflight();
   assert.equal(preflight.supported, true);
 });
@@ -54,7 +79,7 @@ test('preflight: supported when every tool resolves and kubectl responds', async
 test('getServiceSelector: parses the selector from kubectl JSON output', async () => {
   const { runner, calls } = createFakeCommandRunner([
     {
-      match: ['kubectl', 'get', 'service', 'web', '-n', 'ns1', '-o', 'json'],
+      match: [...kube, 'get', 'service', 'web', '-n', 'ns1', '-o', 'json'],
       result: {
         status: 0,
         stdout: JSON.stringify({ spec: { selector: { app: 'web' } } }),
@@ -62,7 +87,7 @@ test('getServiceSelector: parses the selector from kubectl JSON output', async (
       },
     },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const observation = await adapter.getServiceSelector('ns1', 'web');
   assert.deepEqual(observation, { found: true, selector: { app: 'web' } });
   assert.equal(calls.length, 1);
@@ -71,11 +96,11 @@ test('getServiceSelector: parses the selector from kubectl JSON output', async (
 test('getServiceSelector: reports not found without throwing when kubectl exits non-zero', async () => {
   const { runner } = createFakeCommandRunner([
     {
-      match: ['kubectl', 'get', 'service', 'missing', '-n', 'ns1', '-o', 'json'],
+      match: [...kube, 'get', 'service', 'missing', '-n', 'ns1', '-o', 'json'],
       result: { status: 1, stdout: '', stderr: 'not found' },
     },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const observation = await adapter.getServiceSelector('ns1', 'missing');
   assert.deepEqual(observation, { found: false, selector: null });
 });
@@ -83,7 +108,7 @@ test('getServiceSelector: reports not found without throwing when kubectl exits 
 test('listPodsByLabelSelector: builds a comma-joined selector and maps kubectl JSON list items', async () => {
   const { runner } = createFakeCommandRunner([
     {
-      match: ['kubectl', 'get', 'pods', '-n', 'ns1', '-l', 'app=web,tier=backend', '-o', 'json'],
+      match: [...kube, 'get', 'pods', '-n', 'ns1', '-l', 'app=web,tier=backend', '-o', 'json'],
       result: {
         status: 0,
         stdout: JSON.stringify({
@@ -99,7 +124,7 @@ test('listPodsByLabelSelector: builds a comma-joined selector and maps kubectl J
       },
     },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const pods = await adapter.listPodsByLabelSelector('ns1', { app: 'web', tier: 'backend' });
   assert.equal(pods.length, 1);
   assert.equal(pods[0]?.name, 'web-1');
@@ -110,7 +135,7 @@ test('computeEndpoints: flattens addresses across every returned EndpointSlice',
   const { runner } = createFakeCommandRunner([
     {
       match: [
-        'kubectl',
+        ...kube,
         'get',
         'endpointslices',
         '-n',
@@ -129,7 +154,7 @@ test('computeEndpoints: flattens addresses across every returned EndpointSlice',
       },
     },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const endpoints = await adapter.computeEndpoints('ns1', 'web');
   assert.deepEqual(endpoints.addresses, ['10.0.0.1', '10.0.0.2']);
 });
@@ -137,7 +162,7 @@ test('computeEndpoints: flattens addresses across every returned EndpointSlice',
 test('getSchedulingObservation: parses the real PodScheduled condition', async () => {
   const { runner } = createFakeCommandRunner([
     {
-      match: ['kubectl', 'get', 'pod', 'huge-pod', '-n', 'ns1', '-o', 'json'],
+      match: [...kube, 'get', 'pod', 'huge-pod', '-n', 'ns1', '-o', 'json'],
       result: {
         status: 0,
         stdout: JSON.stringify({
@@ -158,7 +183,7 @@ test('getSchedulingObservation: parses the real PodScheduled condition', async (
       },
     },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   const observation = await adapter.getSchedulingObservation('ns1', 'huge-pod');
   assert.equal(observation.supported, true);
   assert.equal(observation.condition, 'False');
@@ -168,16 +193,52 @@ test('getSchedulingObservation: parses the real PodScheduled condition', async (
 test('applyManifest and deleteNamespace issue the expected kubectl commands', async () => {
   const { runner, calls } = createFakeCommandRunner([
     {
-      match: ['kubectl', 'apply', '-n', 'ns1', '-f', '/scenario/setup.yaml'],
+      match: [...kube, 'apply', '-n', 'ns1', '-f', '/scenario/setup.yaml'],
       result: { status: 0, stdout: '', stderr: '' },
     },
     {
-      match: ['kubectl', 'delete', 'namespace', 'ns1', '--ignore-not-found', '--wait=false'],
+      match: [
+        ...kube,
+        'delete',
+        'namespace',
+        'ns1',
+        '--ignore-not-found',
+        '--wait=true',
+        '--timeout=120s',
+      ],
       result: { status: 0, stdout: '', stderr: '' },
     },
+    {
+      match: [...kube, 'get', 'namespace', 'ns1'],
+      result: { status: 1, stdout: '', stderr: 'not found' },
+    },
   ]);
-  const adapter = new KubectlKwokAdapter('local-kwok', runner);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
   await adapter.applyManifest('ns1', '/scenario/setup.yaml');
   await adapter.deleteNamespace('ns1');
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
+  assert.ok(
+    calls
+      .filter(call => call.command === 'kubectl')
+      .every(call => call.args[0] === '--kubeconfig' && call.args[1] === isolation.kubeconfigPath)
+  );
+});
+
+test('deleteNamespace reports cleanup failure instead of silently succeeding', async () => {
+  const { runner } = createFakeCommandRunner([
+    {
+      match: [
+        ...kube,
+        'delete',
+        'namespace',
+        'ns1',
+        '--ignore-not-found',
+        '--wait=true',
+        '--timeout=120s',
+      ],
+      result: { status: 1, stdout: '', stderr: 'timed out' },
+    },
+  ]);
+  const adapter = new KubectlKwokAdapter('local-kwok', runner, isolation);
+  await assert.rejects(() => adapter.deleteNamespace('ns1'), /timed out/);
 });

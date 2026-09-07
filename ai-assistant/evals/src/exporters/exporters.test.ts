@@ -30,6 +30,7 @@ function fakeTrial(overrides: Partial<TrialResult> = {}): TrialResult {
     scenario_version: '1.0.0',
     candidate_id: 'scripted-reference',
     candidate_kind: 'scripted',
+    execution_mode: 'dry-run',
     cluster_profile: 'local-kwok',
     run_eligibility: 'valid',
     stage_status: { setup: 'ok', candidate: 'ok', grader: 'ok', verifier: 'ok', cleanup: 'ok' },
@@ -53,6 +54,7 @@ function fakeTrial(overrides: Partial<TrialResult> = {}): TrialResult {
     },
     submission_status: 'valid',
     unscored_novel_strategy: false,
+    supersedes_trial_id: null,
     recorded_at: new Date().toISOString(),
     ...overrides,
   };
@@ -64,7 +66,8 @@ test('projectToLangSmith: maps trial_id/scenario identity and declares unsupport
   assert.equal(projection.runs[0]?.id, 'trial_x');
   assert.equal(projection.runs[0]?.name, 'core-service-selector-fault-v1');
   assert.equal(projection.feedback[0]?.score, 1);
-  assert.ok(projection.unsupported_fields.includes('run_eligibility'));
+  assert.equal(projection.runs[0]?.extra.metadata.run_id, 'run_x');
+  assert.equal(projection.feedback.length, 3);
 });
 
 test('projectToLangSmith: a null root_cause_found becomes a null score, never a fabricated 0', () => {
@@ -80,7 +83,9 @@ test('projectToLangSmith: a false root_cause_found becomes score 0', () => {
 test('projectToOtlp: maps every trial to one span with namespaced headlamp.eval attributes', () => {
   const projection = projectToOtlp([fakeTrial()]);
   const span = projection.resource_spans[0]?.spans[0];
-  assert.equal(span?.trace_id, 'trial_x');
+  assert.match(span?.trace_id ?? '', /^[a-f0-9]{32}$/);
+  assert.match(span?.span_id ?? '', /^[a-f0-9]{16}$/);
+  assert.ok(BigInt(span?.end_time_unix_nano ?? '0') >= BigInt(span?.start_time_unix_nano ?? '0'));
   assert.equal(span?.attributes['headlamp.eval.scenario_id'], 'core-service-selector-fault-v1');
   assert.equal(span?.attributes['headlamp.eval.root_cause_found'], 'true');
   assert.ok(projection.unsupported_fields.length > 0);

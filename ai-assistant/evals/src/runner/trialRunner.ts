@@ -33,8 +33,12 @@ import {
   gradeRootCause,
   gradeRecommendedFix,
 } from '../grading/diagnosisGrader.js';
-import { combineSafetyOutcomes, gradeSecretLeakage } from '../grading/safetyGrader.js';
-import { sha256OfText } from '../canonicalJson.js';
+import {
+  combineSafetyOutcomes,
+  gradeForbiddenMutation,
+  gradeSecretLeakage,
+} from '../grading/safetyGrader.js';
+import { sha256OfText, type JsonValue } from '../canonicalJson.js';
 import {
   attemptId as generateAttemptId,
   eventId as generateEventId,
@@ -59,6 +63,8 @@ export interface RunTrialInput {
   clusterPreflight: PreflightResult;
   candidateAdapter: CandidateAdapter;
   bundleWriter: RunBundleWriter;
+  executionMode: 'dry-run' | 'real';
+  supersedesTrialId?: string;
 }
 
 function noApplicableDimension(reason: string): DimensionResult {
@@ -79,6 +85,8 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     clusterPreflight,
     candidateAdapter,
     bundleWriter,
+    executionMode,
+    supersedesTrialId,
   } = input;
   const namespace = `${scenario.manifest.namespace_prefix}-${trialId}`.toLowerCase();
   const trialWriter = bundleWriter.newTrial(trialId);
@@ -95,6 +103,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     trial_id: trialId,
     cluster_profile: clusterAdapter.profile,
     candidate: { id: candidateAdapter.id, kind: candidateAdapter.kind },
+    execution_mode: executionMode,
     observed_at: new Date().toISOString(),
   });
 
@@ -116,8 +125,11 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
   let safetyEvents: string[] = [];
   let lifecycleValidity: LifecycleValidity = 'clean';
   let timeToDiagnosisNs: string | null = null;
+  let diagnosisStartedAt: string | undefined;
+  let diagnosisCompletedAt: string | undefined;
   const toolCounters = { attempted: 0, completed: 0, failed: 0, denied: 0, totalDurationNs: 0n };
   const uniqueTools = new Set<string>();
+  const artifacts: Array<Record<string, JsonValue>> = [];
 
   const recordToolEvent = (
     step: ObservationStep,
@@ -173,6 +185,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       scenario_version: scenario.manifest.scenario_version,
       candidate_id: candidateAdapter.id,
       candidate_kind: candidateAdapter.kind,
+      execution_mode: executionMode,
       cluster_profile: clusterAdapter.profile,
       run_eligibility: runEligibility,
       first_failure_owner: firstFailureOwner,
@@ -183,7 +196,12 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       safety_outcome: safetyOutcome,
       safety_events: safetyEvents,
       lifecycle_validity: lifecycleValidity,
-      timing: { time_to_diagnosis_ns: timeToDiagnosisNs, time_to_resolution_ns: null },
+      timing: {
+        time_to_diagnosis_ns: timeToDiagnosisNs,
+        time_to_resolution_ns: null,
+        diagnosis_started_at: diagnosisStartedAt,
+        diagnosis_completed_at: diagnosisCompletedAt,
+      },
       tool_summary: {
         attempted: toolCounters.attempted,
         completed: toolCounters.completed,
@@ -194,13 +212,14 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       },
       submission_status: submissionStatusResult,
       unscored_novel_strategy: unscoredNovelStrategy,
+      supersedes_trial_id: supersedesTrialId ?? null,
       recorded_at: new Date().toISOString(),
     };
     trialWriter.writeResult(result);
     trialWriter.writeArtifactIndex({
       schema_version: SCHEMA_VERSION,
       trial_id: trialId,
-      artifacts: [],
+      artifacts,
     });
     bundleWriter.recordTrialIndex({
       trial_id: trialId,
@@ -211,7 +230,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       cluster_profile: clusterAdapter.profile,
       run_eligibility: runEligibility,
       first_failure_owner: firstFailureOwner ?? null,
-      supersedes_trial_id: null,
+      supersedes_trial_id: supersedesTrialId ?? null,
     });
     return result;
   };
@@ -225,141 +244,175 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     return finalize();
   }
 
-  // --- Setup ---
+  let shouldCleanup = false;
+  let currentStage: keyof StageStatus = 'setup';
+  let steps: ObservationStep[] = [];
+  let aborted = false;
   try {
+    // --- Setup ---
+    shouldCleanup = true;
     await clusterAdapter.createNamespace(namespace);
     await clusterAdapter.applyManifest(
       namespace,
       path.join(scenario.directory, scenario.manifest.setup_manifest_path)
     );
     stageStatus.setup = 'ok';
-  } catch (err) {
-    stageStatus.setup = 'error';
+    const caseLogic = caseLogicFor(scenario.manifest.scenario_id);
+    const preflightOutcome = await caseLogic.preflight(clusterAdapter, namespace);
+    if (!preflightOutcome.ok) {
+      stageStatus.setup = 'error';
+      runEligibility = 'invalid';
+      firstFailureOwner = 'setup';
+      aborted = true;
+    }
+
+    if (!aborted) {
+      // --- Observe + candidate ---
+      steps = await caseLogic.observe(clusterAdapter, namespace);
+      const retrievedObservations = steps.map(step => {
+        const evidenceId = recordToolEvent(step, step.durationNs);
+        return {
+          evidence_id: evidenceId,
+          resource_ref: step.resourceRef,
+          field_path: step.fieldPath,
+          value: step.value,
+        };
+      });
+      if (scenario.manifest.artifact_policy.retain_raw_tool_output) {
+        artifacts.push(
+          trialWriter.writeArtifact(
+            'observations.json',
+            JSON.stringify(retrievedObservations),
+            'application/json'
+          )
+        );
+      }
+
+      currentStage = 'candidate';
+      diagnosisStartedAt = new Date().toISOString();
+      const invocation = await candidateAdapter.invoke({
+        packet: scenario.candidatePacket,
+        observations: retrievedObservations,
+        environment: await clusterAdapter.candidateEnvironment?.(namespace),
+      });
+      diagnosisCompletedAt = new Date().toISOString();
+      timeToDiagnosisNs = invocation.duration_ns;
+      trialWriter.submissions.append({
+        trial_id: trialId,
+        attempt_id: attemptId,
+        raw_text_digest: sha256OfText(invocation.raw_text),
+        submission_text: invocation.submission_text,
+      });
+      artifacts.push(
+        trialWriter.writeArtifact('candidate-output.txt', invocation.raw_text),
+        trialWriter.writeArtifact(
+          'diagnosis-submission.json',
+          invocation.submission_text ?? 'null',
+          'application/json'
+        )
+      );
+
+      // Safety scans every retained surface, including failed/timeout output.
+      const leakage = gradeSecretLeakage({
+        secretCanary: scenario.evaluatorPacket.secret_canary,
+        surfaces: [invocation.raw_text, invocation.submission_text ?? ''],
+      });
+      const mutation = gradeForbiddenMutation({
+        allowMutations: scenario.candidatePacket.allow_mutations,
+        mutatingToolCalls:
+          invocation.tool_events === undefined
+            ? null
+            : invocation.tool_events.filter(event => event.mutating).length,
+      });
+      const combined = combineSafetyOutcomes([leakage, mutation]);
+      safetyOutcome = combined.outcome;
+      safetyEvents = combined.events;
+
+      if (invocation.status !== 'ok') {
+        stageStatus.candidate = invocation.status === 'unavailable' ? 'unsupported' : 'error';
+        runEligibility = 'invalid';
+        firstFailureOwner = 'candidate';
+        aborted = true;
+      } else {
+        stageStatus.candidate = 'ok';
+      }
+
+      if (!aborted) {
+        // --- Grader ---
+        currentStage = 'grader';
+        const parsed = parseSubmission(invocation.submission_text);
+        submissionStatusResult = parsed.status;
+        if (parsed.status !== 'valid' || !parsed.submission) {
+          stageStatus.grader = 'ok';
+          rootCauseDimension = {
+            applicable: true,
+            outcome: 'no_result',
+            grader_result_ids: [],
+            invalidity_reason: `submission ${parsed.status}${
+              parsed.parseError ? `: ${parsed.parseError}` : ''
+            }`,
+          };
+          recommendedFixDimension = rootCauseDimension;
+        } else {
+          const rootCauseGraderId = generateRecordId();
+          rootCauseDimension = gradeRootCause({
+            submission: parsed.submission,
+            evaluatorPacket: scenario.evaluatorPacket,
+            retrievedObservations,
+            graderResultId: rootCauseGraderId,
+          });
+          trialWriter.graderResults.append({
+            grader_result_id: rootCauseGraderId,
+            grader_name: 'deterministic-diagnosis-grader',
+            grader_version: SCHEMA_VERSION,
+            applicable: rootCauseDimension.applicable,
+            dimension: 'root_cause',
+            outcome: rootCauseDimension.outcome,
+            invalidity_reason: rootCauseDimension.invalidity_reason ?? null,
+          });
+
+          const fixGraderId = generateRecordId();
+          const fixResult = gradeRecommendedFix({
+            submission: parsed.submission,
+            graderResultId: fixGraderId,
+          });
+          recommendedFixDimension = fixResult.dimension;
+          unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
+          trialWriter.graderResults.append({
+            grader_result_id: fixGraderId,
+            grader_name: 'deterministic-diagnosis-grader',
+            grader_version: SCHEMA_VERSION,
+            applicable: recommendedFixDimension.applicable,
+            dimension: 'recommended_fix',
+            outcome: recommendedFixDimension.outcome,
+            invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
+          });
+          stageStatus.grader = 'ok';
+        }
+
+        // --- Verifier ---
+        currentStage = 'verifier';
+        const afterSteps = await caseLogic.observe(clusterAdapter, namespace);
+        const normalize = (items: ObservationStep[]) =>
+          items.map(({ durationNs: _durationNs, ...step }) => step);
+        if (JSON.stringify(normalize(afterSteps)) !== JSON.stringify(normalize(steps))) {
+          stageStatus.verifier = 'error';
+          runEligibility = 'invalid';
+          firstFailureOwner = 'verifier';
+          lifecycleValidity = 'contamination_detected';
+        } else {
+          stageStatus.verifier = 'ok';
+        }
+      }
+    }
+  } catch (error) {
+    stageStatus[currentStage] = 'error';
     runEligibility = 'invalid';
-    firstFailureOwner = 'setup';
-    return finalize();
+    if (!firstFailureOwner) firstFailureOwner = currentStage;
+    artifacts.push(trialWriter.writeArtifact('error.txt', String(error)));
+  } finally {
+    if (shouldCleanup) await safeCleanup();
   }
-
-  // --- Scenario preflight (case-specific hard truth check) ---
-  const caseLogic = caseLogicFor(scenario.manifest.scenario_id);
-  const preflightOutcome = await caseLogic.preflight(clusterAdapter, namespace);
-  if (!preflightOutcome.ok) {
-    stageStatus.setup = 'error';
-    runEligibility = 'invalid';
-    firstFailureOwner = 'setup';
-    await safeCleanup();
-    return finalize();
-  }
-
-  // --- Observe + candidate ---
-  const diagnosisStart = process.hrtime.bigint();
-  const steps = await caseLogic.observe(clusterAdapter, namespace);
-  const retrievedObservations = steps.map(step => {
-    const stepStart = process.hrtime.bigint();
-    const evidenceId = recordToolEvent(step, process.hrtime.bigint() - stepStart);
-    return {
-      evidence_id: evidenceId,
-      resource_ref: step.resourceRef,
-      field_path: step.fieldPath,
-      value: step.value,
-    };
-  });
-
-  let invocation;
-  try {
-    invocation = await candidateAdapter.invoke({
-      packet: scenario.candidatePacket,
-      observations: retrievedObservations,
-    });
-  } catch (err) {
-    stageStatus.candidate = 'error';
-    runEligibility = 'invalid';
-    firstFailureOwner = 'candidate';
-    await safeCleanup();
-    return finalize();
-  }
-  timeToDiagnosisNs = (process.hrtime.bigint() - diagnosisStart).toString();
-
-  if (invocation.status !== 'ok') {
-    stageStatus.candidate = invocation.status === 'unavailable' ? 'unsupported' : 'error';
-    runEligibility = 'invalid';
-    firstFailureOwner = 'candidate';
-    await safeCleanup();
-    return finalize();
-  }
-  stageStatus.candidate = 'ok';
-
-  trialWriter.submissions.append({
-    trial_id: trialId,
-    attempt_id: attemptId,
-    raw_text_digest: sha256OfText(invocation.raw_text),
-    submission_text: invocation.submission_text,
-  });
-
-  // --- Grader ---
-  const parsed = parseSubmission(invocation.submission_text);
-  submissionStatusResult = parsed.status;
-  if (parsed.status !== 'valid' || !parsed.submission) {
-    stageStatus.grader = 'ok';
-    rootCauseDimension = {
-      applicable: true,
-      outcome: 'no_result',
-      grader_result_ids: [],
-      invalidity_reason: `submission ${parsed.status}${
-        parsed.parseError ? `: ${parsed.parseError}` : ''
-      }`,
-    };
-    recommendedFixDimension = rootCauseDimension;
-  } else {
-    const rootCauseGraderId = generateRecordId();
-    rootCauseDimension = gradeRootCause({
-      submission: parsed.submission,
-      evaluatorPacket: scenario.evaluatorPacket,
-      retrievedEvidenceIds: retrievedObservations.map(o => o.evidence_id),
-      graderResultId: rootCauseGraderId,
-    });
-    trialWriter.graderResults.append({
-      grader_result_id: rootCauseGraderId,
-      grader_name: 'deterministic-diagnosis-grader',
-      grader_version: SCHEMA_VERSION,
-      applicable: rootCauseDimension.applicable,
-      dimension: 'root_cause',
-      outcome: rootCauseDimension.outcome,
-      invalidity_reason: rootCauseDimension.invalidity_reason ?? null,
-    });
-
-    const fixGraderId = generateRecordId();
-    const fixResult = gradeRecommendedFix({
-      submission: parsed.submission,
-      graderResultId: fixGraderId,
-    });
-    recommendedFixDimension = fixResult.dimension;
-    unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
-    trialWriter.graderResults.append({
-      grader_result_id: fixGraderId,
-      grader_name: 'deterministic-diagnosis-grader',
-      grader_version: SCHEMA_VERSION,
-      applicable: recommendedFixDimension.applicable,
-      dimension: 'recommended_fix',
-      outcome: recommendedFixDimension.outcome,
-      invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
-    });
-    stageStatus.grader = 'ok';
-  }
-
-  // --- Safety (hard, orthogonal to task outcome) ---
-  const surfaces = [invocation.raw_text, invocation.submission_text ?? ''];
-  const leakage = gradeSecretLeakage({
-    secretCanary: scenario.evaluatorPacket.secret_canary,
-    surfaces,
-  });
-  const combined = combineSafetyOutcomes([leakage]);
-  safetyOutcome = combined.outcome;
-  safetyEvents = combined.events;
-
-  // --- Verifier + cleanup ---
-  stageStatus.verifier = 'ok';
-  await safeCleanup();
 
   return finalize();
 
@@ -367,9 +420,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     try {
       await clusterAdapter.deleteNamespace(namespace);
       stageStatus.cleanup = 'ok';
-      lifecycleValidity = 'clean';
+      if (lifecycleValidity !== 'contamination_detected') lifecycleValidity = 'clean';
     } catch {
       stageStatus.cleanup = 'error';
+      runEligibility = 'invalid';
       lifecycleValidity = 'cleanup_failed';
       if (!firstFailureOwner) firstFailureOwner = 'cleanup';
     }

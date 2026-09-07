@@ -40,16 +40,17 @@
  * incomplete (not merely empty) bundle.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canonicalStringify, type JsonValue } from '../canonicalJson.js';
+import { canonicalStringify, sha256OfText, type JsonValue } from '../canonicalJson.js';
 import { digestOfFile, JsonlWriter, readJsonlPayloads } from './jsonl.js';
 import { schemaUri } from '../contracts/schemas.js';
 import { SCHEMA_VERSION } from '../contracts/types.js';
 import type { RegressionDelta, TrajectoryToolEvent, TrialResult } from '../contracts/types.js';
+import { artifactId as generateArtifactId } from '../ids.js';
 
 const PRODUCER = '@headlamp-k8s/ai-evals';
-const BUNDLE_FORMAT_VERSION = '1.0.0';
+const BUNDLE_FORMAT_VERSION = '1.1.0';
 
 export interface TrialIndexRow extends Record<string, JsonValue> {
   trial_id: string;
@@ -80,7 +81,7 @@ export class TrialBundleWriter {
     );
     this.submissions = new JsonlWriter(
       path.join(this.trialDir, 'submissions.jsonl'),
-      schemaUri('diagnosis-submission'),
+      schemaUri('submission-record'),
       SCHEMA_VERSION,
       PRODUCER
     );
@@ -118,6 +119,27 @@ export class TrialBundleWriter {
       canonicalStringify(artifacts),
       'utf8'
     );
+  }
+
+  writeArtifact(
+    fileName: string,
+    content: string,
+    mediaType = 'text/plain'
+  ): Record<string, JsonValue> {
+    if (!/^[a-zA-Z0-9._-]+$/.test(fileName)) {
+      throw new Error(`unsafe artifact filename: ${fileName}`);
+    }
+    const relativePath = path.posix.join('artifacts', fileName);
+    const artifactPath = path.join(this.trialDir, relativePath);
+    mkdirSync(path.dirname(artifactPath), { recursive: true });
+    writeFileSync(artifactPath, content, 'utf8');
+    return {
+      artifact_id: generateArtifactId(),
+      path: relativePath,
+      digest: sha256OfText(content),
+      media_type: mediaType,
+      size_bytes: Buffer.byteLength(content),
+    };
   }
 }
 
@@ -176,8 +198,12 @@ export class RunBundleWriter {
    */
   close(candidateId: string, clusterProfile: string): void {
     if (this.closed) throw new Error(`bundle for run ${this.runId} is already closed`);
-    const trialsFile = path.join(this.bundleDir, 'trials.jsonl');
-    const regressionFile = path.join(this.bundleDir, 'regression-deltas.jsonl');
+    const files = listFiles(this.bundleDir)
+      .filter(relativePath => relativePath !== 'manifest.json')
+      .map(relativePath => ({
+        path: relativePath,
+        digest: digestOfFile(path.join(this.bundleDir, relativePath)),
+      }));
     const manifest = {
       schema_version: SCHEMA_VERSION,
       bundle_format_version: BUNDLE_FORMAT_VERSION,
@@ -187,10 +213,7 @@ export class RunBundleWriter {
       capabilities: ['phase-1-diagnose-only'],
       candidate_id: candidateId,
       cluster_profile: clusterProfile,
-      files: [
-        { path: 'trials.jsonl', digest: digestOfFile(trialsFile) },
-        { path: 'regression-deltas.jsonl', digest: digestOfFile(regressionFile) },
-      ],
+      files,
       supported_files: ['trials.jsonl', 'regression-deltas.jsonl', 'trials/<trial_id>/*'],
       unsupported_files: [
         'comparisons.jsonl',
@@ -206,6 +229,16 @@ export class RunBundleWriter {
     );
     this.closed = true;
   }
+}
+
+function listFiles(root: string, relative = ''): string[] {
+  const directory = path.join(root, relative);
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const child = relative ? path.join(relative, entry.name) : entry.name;
+    return entry.isDirectory()
+      ? listFiles(root, child)
+      : [child.split(path.sep).join(path.posix.sep)];
+  });
 }
 
 /** Returns whether a run's bundle exists and was closed (manifest present + `closed: true`). */

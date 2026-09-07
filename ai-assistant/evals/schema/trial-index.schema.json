@@ -12,6 +12,6 @@
       "type": "string",
       "enum": ["valid", "invalid", "inconclusive", "quarantined"]
     },
-    "supersedes_trial_id": { "type": "string" }
+    "supersedes_trial_id": { "type": ["string", "null"] }
   }
 }

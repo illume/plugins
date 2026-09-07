@@ -51,7 +51,12 @@ const uncertainPacket: EvaluatorPacket = {
   accepted_fact_sets: [],
   expects_uncertainty: true,
   min_hypotheses_if_uncertain: 2,
+  accepted_hypotheses_if_uncertain: ['h1', 'h2'],
 };
+
+function evidence(evidence_id: string, resource_ref: string, field_path: string, value: string) {
+  return { evidence_id, resource_ref, field_path, value };
+}
 
 function submission(partial: Partial<DiagnosisSubmission>): DiagnosisSubmission {
   return {
@@ -81,6 +86,11 @@ test('parseSubmission: JSON that violates the schema is reported as malformed', 
   assert.equal(result.status, 'malformed');
 });
 
+test('parseSubmission: nested null values are rejected before grading', () => {
+  const invalid = submission({ cause_facts: [null as never] });
+  assert.equal(parseSubmission(JSON.stringify(invalid)).status, 'malformed');
+});
+
 test('parseSubmission: a schema-conforming object parses as valid', () => {
   const result = parseSubmission(JSON.stringify(submission({})));
   assert.equal(result.status, 'valid');
@@ -96,7 +106,7 @@ test('gradeRootCause: passes when cause_facts cover an accepted fact set with gr
       evidence_refs: ['ev1'],
     }),
     evaluatorPacket: determinatePacket,
-    retrievedEvidenceIds: ['ev1'],
+    retrievedObservations: [evidence('ev1', 'service/web', 'spec.selector', 'X')],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'pass');
@@ -112,8 +122,24 @@ test('gradeRootCause: fails on ungrounded evidence (never actually retrieved)', 
       evidence_refs: ['ev-not-retrieved'],
     }),
     evaluatorPacket: determinatePacket,
-    retrievedEvidenceIds: ['ev1'],
+    retrievedObservations: [evidence('ev1', 'service/web', 'spec.selector', 'X')],
     graderResultId: 'g1',
+  });
+
+  test('gradeRootCause: fails when a cited event does not support the asserted fact', () => {
+    const dimension = gradeRootCause({
+      submission: submission({
+        cause_facts: [
+          { resource_ref: 'service/web', field_path: 'spec.selector', observed_value: 'X' },
+        ],
+        evidence_refs: ['ev1'],
+      }),
+      evaluatorPacket: determinatePacket,
+      retrievedObservations: [evidence('ev1', 'service/web', 'spec.selector', 'different')],
+      graderResultId: 'g1',
+    });
+    assert.equal(dimension.outcome, 'fail');
+    assert.match(dimension.invalidity_reason ?? '', /not supported/);
   });
   assert.equal(dimension.outcome, 'fail');
   assert.match(dimension.invalidity_reason ?? '', /never actually retrieved/);
@@ -132,7 +158,7 @@ test('gradeRootCause: fails on a cited contradiction fact (overdiagnosis)', () =
       evidence_refs: ['ev1'],
     }),
     evaluatorPacket: determinatePacket,
-    retrievedEvidenceIds: ['ev1'],
+    retrievedObservations: [evidence('ev1', 'pod/web-1', 'status.phase', 'CrashLoopBackOff')],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'fail');
@@ -143,7 +169,7 @@ test('gradeRootCause: abstaining with no cause facts when a determinate cause ex
   const dimension = gradeRootCause({
     submission: submission({ cause_facts: [], evidence_refs: [] }),
     evaluatorPacket: determinatePacket,
-    retrievedEvidenceIds: [],
+    retrievedObservations: [],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'abstain');
@@ -177,7 +203,7 @@ test('gradeRootCause: partial credit when only some required facts are cited', (
       evidence_refs: ['ev1'],
     }),
     evaluatorPacket: packetWithTwoFacts,
-    retrievedEvidenceIds: ['ev1'],
+    retrievedObservations: [evidence('ev1', 'service/web', 'spec.selector', 'X')],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'partial');
@@ -191,7 +217,7 @@ test('gradeRootCause: expects_uncertainty passes on bounded uncertainty with eno
       cause_facts: [],
     }),
     evaluatorPacket: uncertainPacket,
-    retrievedEvidenceIds: [],
+    retrievedObservations: [],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'pass');
@@ -206,7 +232,7 @@ test('gradeRootCause: expects_uncertainty fails on a falsely confident unique ca
       ],
     }),
     evaluatorPacket: uncertainPacket,
-    retrievedEvidenceIds: [],
+    retrievedObservations: [],
     graderResultId: 'g1',
   });
   assert.equal(dimension.outcome, 'fail');
@@ -220,8 +246,22 @@ test('gradeRootCause: expects_uncertainty grades partial when too few hypotheses
       cause_facts: [],
     }),
     evaluatorPacket: uncertainPacket,
-    retrievedEvidenceIds: [],
+    retrievedObservations: [],
     graderResultId: 'g1',
+  });
+
+  test('gradeRootCause: arbitrary labels do not satisfy bounded uncertainty', () => {
+    const dimension = gradeRootCause({
+      submission: submission({
+        uncertainty: { is_uncertain: true },
+        alternative_dispositions: ['made-up-a', 'made-up-b'],
+        cause_facts: [],
+      }),
+      evaluatorPacket: uncertainPacket,
+      retrievedObservations: [],
+      graderResultId: 'g1',
+    });
+    assert.equal(dimension.outcome, 'partial');
   });
   assert.equal(dimension.outcome, 'partial');
 });

@@ -33,6 +33,7 @@ function fakeTrial(): TrialResult {
     scenario_version: '1.0.0',
     candidate_id: 'scripted-reference',
     candidate_kind: 'scripted',
+    execution_mode: 'dry-run',
     cluster_profile: 'local-kwok',
     run_eligibility: 'valid',
     stage_status: { setup: 'ok', candidate: 'ok', grader: 'ok', verifier: 'ok', cleanup: 'ok' },
@@ -56,6 +57,7 @@ function fakeTrial(): TrialResult {
     },
     submission_status: 'valid',
     unscored_novel_strategy: false,
+    supersedes_trial_id: null,
     recorded_at: new Date().toISOString(),
   };
 }

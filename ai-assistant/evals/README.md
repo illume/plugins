@@ -1,6 +1,6 @@
 # @headlamp-k8s/ai-evals
 
-Phase 1 evaluation framework for the Headlamp AI Assistant: a local,
+Phase 1 evaluation framework under qualification for the Headlamp AI Assistant: a local,
 deterministic, offline-by-default developer loop that answers **"which
 Headlamp behavior changed?"** from retained evidence, not from a blended
 score. See [`docs/implementation-phases.md`](docs/implementation-phases.md)
@@ -12,14 +12,14 @@ for the full roadmap this package implements Phase 1 of.
   four frozen Kubernetes scenarios, deterministic graders, a canonical
   immutable result bundle, generated reports, a redacted public publication
   view, and offline golden exporter projections (LangSmith-native, OTLP).
-- **Is not**: a CI service, a release gate, a cross-system comparison (that
+- **Is not**: a release gate, a cross-system comparison (that
   begins in Phase 2), or a claim about free-form answer quality (natural
   language is retained but never scored in Phases 1–2).
 - **Default execution is offline and deterministic.** The default cluster
   adapter is an in-memory simulation of the two KWOK-compatible scenarios;
   real `kubectl`/`kwokctl` execution and real product (Copilot/Azure)
   inference are strictly opt-in, and every unsupported capability (Minikube,
-  AKS without credentials, missing binaries) is reported as an explicit
+  AKS without a caller-provisioned cluster, missing binaries) is reported as an explicit
   `unsupported`/`invalid` result — never faked.
 
 ## Prerequisites
@@ -27,13 +27,16 @@ for the full roadmap this package implements Phase 1 of.
 - Node.js 20+ and npm.
 - No cluster, credentials, or network access are required for the default
   `npm run check` / `npm run eval:local:kwok` path.
-- Optional, for a real cluster run (`--execute real`): `kubectl`, `kwokctl`,
+- Optional, for a real KWOK cluster run (`--execute real`): `kubectl`, `kwokctl`,
   and `docker` on `PATH`.
 - Optional, for a real product run (`--candidate headlamp-cli`): the sibling
   `packages/ai-cli` package's dependencies installed
   (`npm install --prefix ../packages/ai-cli`), plus provider credentials if
-  you want live inference rather than the offline `mock-testing-model`
-  default.
+  you want live inference. `--execute real --candidate headlamp-cli` never
+  forces the mock provider.
+- Optional, for AKS: a dedicated non-production cluster plus
+  `AKS_KUBECONFIG_PATH` and the Azure variables named in
+  `profiles/aks-azure.yaml`.
 
 ## Install
 
@@ -60,7 +63,7 @@ Or from inside `evals/` directly:
 npm run eval:local:kwok                                    # 2 kwok-compatible scenarios, reference control
 npx tsx src/cli.ts run --profile local-kwok --candidate wrong
 npx tsx src/cli.ts run --profile local-kwok --candidate reference --baseline wrong
-npx tsx src/cli.ts run --profile aks --candidate reference  # always reports unsupported: no credentials
+npx tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli
 npx tsx src/cli.ts list-scenarios --profile local-kwok
 npx tsx src/cli.ts report:publish --run <run_id>
 npx tsx src/cli.ts report:overall --check
@@ -75,7 +78,7 @@ fully offline via `HEADLAMP_AI_MOCK_ALL=1` (the CLI's own deterministic
 `mock-testing-model`); pointing it at a real provider or cluster is opt-in
 and never happens by default.
 
-### Phase 1 MVP simplification: `--baseline`/`--candidate`
+### Current qualification gap: `--baseline`/`--candidate`
 
 The roadmap describes `--baseline <ref> --candidate <ref>` as two Git
 revisions of Headlamp compared under the same scenarios. This MVP instead
@@ -86,7 +89,8 @@ profiles) run within the same bundle, and computes the same
 revisions (checking each out, building, and running both) is a natural
 extension once this runtime is proven; it is deliberately deferred to keep
 the ten-day Phase 1 vertical slice buildable. This is a documented
-limitation, not a silent gap.
+limitation, not a silent gap. Runs using this shorthand are diagnostic and do
+not satisfy the Phase 1 exit gate.
 
 ## Storage layout
 
@@ -116,14 +120,13 @@ limitation, not a silent gap.
 - `local-minikube` is a declared Phase 2 profile name with no Phase 1
   adapter; selecting it fails with an explicit message rather than a silent
   KWOK fallback.
-- `aks` has a preflight-only stub adapter: it validates credential/tool
-  presence and always reports `unsupported` until a real dedicated
-  non-production AKS cluster is wired up (never fakes a cloud run).
-- The `headlamp-cli` candidate observes trial state only through the task
-  prompt (best-effort context injection), not through a live MCP kube tool
-  bound to the trial's namespace; its diagnosis is graded honestly
-  (`missing`/`malformed` when no valid sidecar is produced) rather than
-  assumed correct.
+- `aks` uses a caller-provisioned dedicated cluster and explicit kubeconfig;
+  the eval runner does not provision Azure resources.
+- The `headlamp-cli` subprocess receives the trial kubeconfig in real mode,
+  but its internal tool events are not yet observable. Mutation safety is
+  therefore reported as `unknown`, never silently passed.
+- The currently committed two-control publication is diagnostic-only and does
+  not satisfy the Phase 1 exit gate.
 
 ## Tests
 

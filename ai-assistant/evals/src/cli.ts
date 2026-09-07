@@ -201,9 +201,10 @@ async function commandRerun(flags: Flags): Promise<void> {
     runId,
     runsRoot,
     profile: source.cluster_profile,
-    mode: 'dry-run',
+    mode: source.execution_mode ?? 'dry-run',
     cases: [source.scenario_id],
     candidate,
+    supersedesTrialId: source.trial_id,
   });
   console.log(
     `Rerun complete: run_id=${outcome.runId} (supersedes ${sourceRunId}/${sourceTrialId})`

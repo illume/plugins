@@ -2,11 +2,8 @@ schema_version: '1.0.0'
 profile_name: aks
 cluster:
   kind: aks
-  # AKS provisioning/credentials are not implemented in Phase 1. Selecting
-  # this profile always yields a clear `unsupported` preflight result; see
-  # `cluster/aksStubAdapter.ts`. Populate these when Phase 1's on-demand
-  # cloud-portability run is actually wired to a dedicated non-production
-  # cluster.
+  # The caller provisions a dedicated non-production cluster and supplies an
+  # explicit kubeconfig. The eval runner never provisions Azure resources.
   credential_env_vars:
     - AZURE_SUBSCRIPTION_ID
     - AZURE_TENANT_ID

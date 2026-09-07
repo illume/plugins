@@ -86,7 +86,27 @@ test('runEvaluation: a single-candidate run has no regression-deltas rows', asyn
       mode: 'dry-run',
       candidate: 'reference',
     });
+
     assert.equal(outcome.trials.length, 2);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: rerun lineage is retained on the replacement trial', async () => {
+  const dir = makeScratchDir('orchestrate-rerun');
+  try {
+    const outcome = await runEvaluation({
+      runId: 'run_rerun',
+      runsRoot: dir,
+      profile: 'local-kwok',
+      mode: 'dry-run',
+      candidate: 'reference',
+      cases: ['core-service-selector-fault-v1'],
+      supersedesTrialId: 'trial_original',
+    });
+    assert.equal(outcome.trials[0]?.supersedes_trial_id, 'trial_original');
+    assert.equal(outcome.trials[0]?.execution_mode, 'dry-run');
   } finally {
     removeScratchDir(dir);
   }

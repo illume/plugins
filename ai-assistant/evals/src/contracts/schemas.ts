@@ -36,6 +36,7 @@ export type SchemaName =
   | 'candidate-packet'
   | 'evaluator-packet'
   | 'diagnosis-submission'
+  | 'submission-record'
   | 'bundle-manifest'
   | 'trial-index'
   | 'trajectory-event'

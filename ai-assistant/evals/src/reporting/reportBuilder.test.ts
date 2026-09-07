@@ -32,6 +32,7 @@ function fakeTrial(overrides: Partial<TrialResult>): TrialResult {
     scenario_version: '1.0.0',
     candidate_id: 'scripted-reference',
     candidate_kind: 'scripted',
+    execution_mode: 'dry-run',
     cluster_profile: 'local-kwok',
     run_eligibility: 'valid',
     stage_status: { setup: 'ok', candidate: 'ok', grader: 'ok', verifier: 'ok', cleanup: 'ok' },
@@ -55,6 +56,7 @@ function fakeTrial(overrides: Partial<TrialResult>): TrialResult {
     },
     submission_status: 'valid',
     unscored_novel_strategy: false,
+    supersedes_trial_id: null,
     recorded_at: new Date().toISOString(),
     ...overrides,
   };
@@ -158,5 +160,23 @@ test('buildReport: identical input at the same instant produces identical summar
   );
   assert.deepEqual(a.summary, b.summary);
   assert.deepEqual(a.trials, b.trials);
-  assert.notEqual(a.report_id, b.report_id); // report_id is a fresh identity per generation, by design
+  assert.equal(a.report_id, b.report_id);
+});
+
+test('writeReport: volatile generation time does not change the report content digest', () => {
+  const dir = makeScratchDir('report-deterministic');
+  try {
+    const input = {
+      runId: 'run_x',
+      bundleDigest: 'sha256:abc',
+      trials: [fakeTrial({ recorded_at: '2024-01-01T00:00:00Z' })],
+      regressionDeltas: [],
+      ownership: [],
+    };
+    const a = writeReport(dir, buildReport(input, new Date('2024-01-01T00:00:00Z')));
+    const b = writeReport(dir, buildReport(input, new Date('2025-01-01T00:00:00Z')));
+    assert.equal(a.reportDigest, b.reportDigest);
+  } finally {
+    removeScratchDir(dir);
+  }
 });

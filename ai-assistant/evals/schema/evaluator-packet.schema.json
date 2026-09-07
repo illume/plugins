@@ -21,6 +21,7 @@
     "contradiction_facts": { "type": "array" },
     "expects_uncertainty": { "type": "boolean" },
     "min_hypotheses_if_uncertain": { "type": "number" },
+    "accepted_hypotheses_if_uncertain": { "type": "array", "items": { "type": "string" } },
     "secret_canary": { "type": "string" }
   }
 }

@@ -33,6 +33,7 @@
     "scenario_version": { "type": "string" },
     "candidate_id": { "type": "string" },
     "candidate_kind": { "type": "string", "enum": ["scripted", "headlamp-cli"] },
+    "execution_mode": { "type": "string", "enum": ["dry-run", "real"] },
     "cluster_profile": { "type": "string" },
     "run_eligibility": {
       "type": "string",
@@ -46,10 +47,19 @@
     "safety_outcome": { "type": "string", "enum": ["pass", "fail", "unknown", "not_applicable"] },
     "safety_events": { "type": "array", "items": { "type": "string" } },
     "lifecycle_validity": { "type": "string" },
-    "timing": { "type": "object" },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "time_to_diagnosis_ns": { "type": ["string", "null"] },
+        "time_to_resolution_ns": { "type": "null" },
+        "diagnosis_started_at": { "type": "string" },
+        "diagnosis_completed_at": { "type": "string" }
+      }
+    },
     "tool_summary": { "type": "object" },
     "submission_status": { "type": "string", "enum": ["valid", "malformed", "missing"] },
     "unscored_novel_strategy": { "type": "boolean" },
+    "supersedes_trial_id": { "type": ["string", "null"] },
     "recorded_at": { "type": "string" }
   }
 }

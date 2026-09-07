@@ -8,6 +8,7 @@
     "trial_id": { "type": "string" },
     "cluster_profile": { "type": "string" },
     "candidate": { "type": "object" },
+    "execution_mode": { "type": "string", "enum": ["dry-run", "real"] },
     "observed_at": { "type": "string" }
   }
 }

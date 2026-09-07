@@ -11,17 +11,45 @@
     "uncertainty",
     "proposed_actions"
   ],
+  "additionalProperties": false,
   "properties": {
-    "schema_version": { "type": "string" },
-    "cause_facts": { "type": "array" },
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "cause_facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["resource_ref", "field_path", "observed_value"],
+        "properties": {
+          "resource_ref": { "type": "string" },
+          "field_path": { "type": "string" },
+          "observed_value": { "type": "string" }
+        }
+      }
+    },
     "resource_refs": { "type": "array", "items": { "type": "string" } },
     "evidence_refs": { "type": "array", "items": { "type": "string" } },
     "alternative_dispositions": { "type": "array", "items": { "type": "string" } },
     "uncertainty": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["is_uncertain"],
       "properties": { "is_uncertain": { "type": "boolean" }, "reason": { "type": "string" } }
     },
-    "proposed_actions": { "type": "array" }
+    "proposed_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation", "description"],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": ["no_action", "unscored_novel_strategy"]
+          },
+          "description": { "type": "string" }
+        }
+      }
+    }
   }
 }

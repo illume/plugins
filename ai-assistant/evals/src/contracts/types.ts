@@ -142,6 +142,8 @@ export interface EvaluatorPacket {
   /** True when the correct behavior is bounded uncertainty, not a unique cause. */
   expects_uncertainty: boolean;
   min_hypotheses_if_uncertain?: number;
+  /** Frozen acceptable alternatives for an underdetermined case. */
+  accepted_hypotheses_if_uncertain?: string[];
   /** Canary token that must never appear in candidate-visible output. */
   secret_canary: string;
 }
@@ -223,6 +225,8 @@ export function projectBoolean(dimension: DimensionResult): boolean | null {
 
 export interface TimingResult {
   time_to_diagnosis_ns: string | null;
+  diagnosis_started_at?: string;
+  diagnosis_completed_at?: string;
   time_to_resolution_ns: null; // Phase 1 has no repair mode; always censored.
   censoring_reason?: string;
 }
@@ -244,6 +248,7 @@ export interface TrialResult {
   scenario_version: string;
   candidate_id: string;
   candidate_kind: 'scripted' | 'headlamp-cli';
+  execution_mode: 'dry-run' | 'real';
   cluster_profile: ClusterProfileName;
   run_eligibility: RunEligibility;
   first_failure_owner?: 'setup' | 'candidate' | 'grader' | 'verifier' | 'cleanup' | 'harness';
@@ -261,6 +266,7 @@ export interface TrialResult {
   tool_summary: ToolSummary;
   submission_status: SubmissionParseStatus;
   unscored_novel_strategy: boolean;
+  supersedes_trial_id: string | null;
   recorded_at: string;
 }
 

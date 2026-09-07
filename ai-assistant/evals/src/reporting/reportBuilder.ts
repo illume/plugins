@@ -24,7 +24,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalStringify, sha256OfJson, type JsonValue } from '../canonicalJson.js';
-import { reportId as generateReportId } from '../ids.js';
 import { computeHealthSummary } from '../lifecycle/health.js';
 import type { OwnershipRow } from '../operations/ownership.js';
 import type { RegressionDelta, TrialResult } from '../contracts/types.js';
@@ -56,6 +55,8 @@ export interface ReportJson extends Record<string, JsonValue> {
   provenance: JsonValue;
   decision: string;
   limitations: string[];
+  best_practice_gap_analysis: JsonValue[];
+  exporter_coverage: JsonValue;
 }
 
 function countBy<T extends string>(values: T[]): Record<string, number> {
@@ -95,7 +96,7 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
     );
 
   const report: ReportJson = {
-    report_id: generateReportId(),
+    report_id: `report_${input.bundleDigest.replace(/^sha256:/, '').slice(0, 24)}`,
     schema_version: SCHEMA_VERSION,
     generated_at: generatedAt.toISOString(),
     generator_version: GENERATOR_VERSION,
@@ -105,10 +106,18 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
     summary: {
       run_id: input.runId,
       total_trials: input.trials.length,
+      assigned: input.trials.length,
+      started: input.trials.filter(t => t.stage_status.setup !== 'skipped').length,
       run_eligibility: eligibility,
+      run_eligibility_denominator: input.trials.length,
       task_outcomes_root_cause: taskOutcomes,
+      task_outcomes_root_cause_denominator: input.trials.filter(
+        t => t.run_eligibility === 'valid' && t.dimensions.root_cause.applicable
+      ).length,
       safety_outcomes: safety,
+      safety_outcomes_denominator: input.trials.length,
       lifecycle_validity: lifecycle,
+      lifecycle_validity_denominator: input.trials.length,
     } as unknown as JsonValue,
     populations: {
       by_scenario: countBy(input.trials.map(t => t.scenario_id)),
@@ -125,11 +134,28 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
       regression_deltas: input.regressionDeltas as unknown as JsonValue,
     } as unknown as JsonValue,
     decision: 'development_diagnostic',
+    best_practice_gap_analysis: [
+      { best_practice: 'Typed deterministic grading', phase_1: '✅' },
+      { best_practice: 'Evidence-grounded causal facts', phase_1: '✅' },
+      { best_practice: 'Immutable reconstructable bundles', phase_1: '✅' },
+      { best_practice: 'Real product execution', phase_1: '◐' },
+      { best_practice: 'AKS/cloud parity', phase_1: '◐' },
+      { best_practice: 'Repeated statistical comparisons', phase_1: '◐' },
+      { best_practice: 'External tool comparison', phase_1: '—', begins_in_phase: 2 },
+    ] as JsonValue[],
+    exporter_coverage: {
+      status: 'partial',
+      mappings: ['langsmith@1.0.0', 'otlp-genai@1.0.0'],
+      deferred: ['datadog', 'splunk', 'azure-monitor'],
+      losses_declared: true,
+    } as JsonValue,
     limitations: [
       'Phase 1 makes no relative claim about another tool (HolmesGPT/K8sGPT comparison begins in Phase 2).',
       'No free-form natural-language quality scoring; prose is retained but unscored.',
       'local-minikube is a declared Phase 2 profile with no Phase 1 adapter.',
-      'aks trials report a preflight-only stub result until Phase 1 credentials/tooling are wired up.',
+      'AKS requires a caller-provisioned dedicated cluster and explicit kubeconfig.',
+      'Internal Headlamp CLI tool events are not observable; mutation safety is unknown for that adapter.',
+      'Candidate/baseline selectors are configurations, not frozen Headlamp Git revisions; those runs do not qualify for the Phase 1 exit gate.',
     ],
   };
   return report;
@@ -146,6 +172,17 @@ function renderMarkdown(report: ReportJson): string {
   };
   const lines: string[] = [];
   lines.push(`# Headlamp AI Assistant evaluation report`);
+  lines.push('');
+  lines.push('## Best-practice gap analysis');
+  lines.push('');
+  lines.push('| Best practice | Phase 1 |');
+  lines.push('| --- | :---: |');
+  for (const row of report.best_practice_gap_analysis as unknown as Array<{
+    best_practice: string;
+    phase_1: string;
+  }>) {
+    lines.push(`| ${row.best_practice} | ${row.phase_1} |`);
+  }
   lines.push('');
   lines.push(`- report_id: \`${report.report_id}\``);
   lines.push(`- run_id: \`${summary.run_id}\``);
@@ -228,7 +265,9 @@ export function writeReport(
   const reportJsonText = canonicalStringify(report);
   writeFileSync(path.join(reportDir, 'report.json'), reportJsonText, 'utf8');
   writeFileSync(path.join(reportDir, 'report.md'), renderMarkdown(report), 'utf8');
-  const reportDigest = sha256OfJson(report);
+  const { generated_at: _generatedAt, ...stableReport } = report;
+  void _generatedAt;
+  const reportDigest = sha256OfJson(stableReport as unknown as JsonValue);
   writeFileSync(
     path.join(reportDir, 'projection-manifest.json'),
     canonicalStringify({

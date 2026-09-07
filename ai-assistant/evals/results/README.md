@@ -5,6 +5,8 @@ Latest publication: [`pub_0mtr1w2ep000002`](./runs/2026-09-07-pub_0mtr1w2ep00000
 
 ## Current status
 
+**Qualification: not Phase 1 qualifying.** Publications remain development diagnostics until all Phase 1 exit evidence is present.
+
 Total trials in the latest run: 2
 
 | run_eligibility | count |

@@ -121,6 +121,8 @@ export interface HeadlampCliCandidateOptions {
   extraEnv?: Record<string, string>;
   timeoutMs?: number;
   processRunner?: ProcessRunner;
+  /** Use the CLI's deterministic mock provider. Real evals must set this false. */
+  useMockProvider?: boolean;
 }
 
 const SIDECAR_INSTRUCTION =
@@ -149,7 +151,8 @@ export function createHeadlampCliCandidate(
         };
       }
 
-      const baseEnv: NodeJS.ProcessEnv = { HEADLAMP_AI_MOCK_ALL: '1' };
+      const baseEnv: NodeJS.ProcessEnv = {};
+      if (options.useMockProvider !== false) baseEnv.HEADLAMP_AI_MOCK_ALL = '1';
       for (const passthrough of ['PATH', 'HOME', 'TMPDIR', 'SystemRoot', 'APPDATA']) {
         if (process.env[passthrough]) baseEnv[passthrough] = process.env[passthrough];
       }
@@ -157,6 +160,7 @@ export function createHeadlampCliCandidate(
         if (process.env[name]) baseEnv[name] = process.env[name];
       }
       Object.assign(baseEnv, options.extraEnv ?? {});
+      Object.assign(baseEnv, input.environment ?? {});
 
       const observationSummary = input.observations
         .map(o => `- ${o.resource_ref} ${o.field_path} = ${o.value} [evidence:${o.evidence_id}]`)

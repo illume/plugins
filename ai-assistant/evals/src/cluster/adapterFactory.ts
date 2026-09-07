@@ -15,11 +15,11 @@
  */
 
 import type { ClusterProfileName } from '../contracts/types.js';
-import { AksStubAdapter } from './aksStubAdapter.js';
+import { AksAdapter } from './aksAdapter.js';
 import { createRealCommandRunner, type CommandRunner } from './commandRunner.js';
 import { loadClusterProfile } from './profile.js';
 import { KubectlKwokAdapter } from './kwokAdapter.js';
-import { SimulatedKwokAdapter } from './simulated-adapter.js';
+import { SimulatedKwokAdapter } from './simulatedAdapter.js';
 import type { ClusterAdapter } from './types.js';
 
 export type ExecutionMode = 'dry-run' | 'real';
@@ -44,8 +44,13 @@ export function createClusterAdapter(
     );
   }
   if (profileName === 'aks') {
+    if (mode !== 'real') {
+      throw new Error(
+        'the aks profile requires --execute real; dry-run never mutates an AKS cluster'
+      );
+    }
     const config = loadClusterProfile('aks-azure');
-    return new AksStubAdapter(config.cluster.credential_env_vars);
+    return new AksAdapter(config.cluster.credential_env_vars, runner);
   }
   // local-kwok
   return mode === 'dry-run'

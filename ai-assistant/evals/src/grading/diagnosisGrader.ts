@@ -74,13 +74,19 @@ function factMatches(
 export interface RootCauseGradingInput {
   submission: DiagnosisSubmission;
   evaluatorPacket: EvaluatorPacket;
-  retrievedEvidenceIds: string[];
+  retrievedObservations: Array<{
+    evidence_id: string;
+    resource_ref: string;
+    field_path: string;
+    value: string;
+  }>;
   graderResultId: string;
 }
 
 /** Grades the `root_cause` dimension of a valid, schema-conforming submission. */
 export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
-  const { submission, evaluatorPacket, retrievedEvidenceIds, graderResultId } = input;
+  const { submission, evaluatorPacket, retrievedObservations, graderResultId } = input;
+  const retrievedEvidenceIds = retrievedObservations.map(observation => observation.evidence_id);
 
   const ungrounded = submission.evidence_refs.filter(ref => !retrievedEvidenceIds.includes(ref));
   if (ungrounded.length > 0) {
@@ -89,6 +95,25 @@ export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
       outcome: 'fail',
       grader_result_ids: [graderResultId],
       invalidity_reason: `cited evidence was never actually retrieved: ${ungrounded.join(', ')}`,
+    };
+  }
+
+  const unsupportedFacts = submission.cause_facts.filter(
+    fact =>
+      !retrievedObservations.some(
+        observation =>
+          submission.evidence_refs.includes(observation.evidence_id) &&
+          observation.resource_ref === fact.resource_ref &&
+          observation.field_path === fact.field_path &&
+          observation.value === fact.observed_value
+      )
+  );
+  if (unsupportedFacts.length > 0) {
+    return {
+      applicable: true,
+      outcome: 'fail',
+      grader_result_ids: [graderResultId],
+      invalidity_reason: 'one or more asserted cause facts are not supported by cited evidence',
     };
   }
 
@@ -106,6 +131,8 @@ export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
 
   if (evaluatorPacket.expects_uncertainty) {
     const minHypotheses = evaluatorPacket.min_hypotheses_if_uncertain ?? 2;
+    const acceptedHypotheses = new Set(evaluatorPacket.accepted_hypotheses_if_uncertain ?? []);
+    const distinctHypotheses = new Set(submission.alternative_dispositions);
     if (!submission.uncertainty.is_uncertain) {
       return {
         applicable: true,
@@ -116,7 +143,8 @@ export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
       };
     }
     if (
-      submission.alternative_dispositions.length >= minHypotheses &&
+      distinctHypotheses.size >= minHypotheses &&
+      [...distinctHypotheses].every(hypothesis => acceptedHypotheses.has(hypothesis)) &&
       submission.cause_facts.length === 0
     ) {
       return { applicable: true, outcome: 'pass', grader_result_ids: [graderResultId] };
@@ -129,8 +157,10 @@ export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
     };
   }
 
-  const matchingSet = evaluatorPacket.accepted_fact_sets.find(set =>
-    set.every(gold => submission.cause_facts.some(fact => factMatches(fact, gold)))
+  const matchingSet = evaluatorPacket.accepted_fact_sets.find(
+    set =>
+      set.every(gold => submission.cause_facts.some(fact => factMatches(fact, gold))) &&
+      submission.cause_facts.every(fact => set.some(gold => factMatches(fact, gold)))
   );
   if (matchingSet) {
     return {

@@ -3,8 +3,8 @@ kind: Pod
 metadata:
   name: mystery-pod
 spec:
+  nodeSelector:
+    headlamp-eval/available: 'true'
   containers:
     - name: app
       image: nginx:1.25
-status:
-  phase: Pending

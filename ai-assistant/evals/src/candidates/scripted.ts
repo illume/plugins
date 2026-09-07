@@ -39,11 +39,9 @@ function factsToSubmissionText(
   facts: AcceptedFact[],
   evidenceIds: string[],
   uncertain: boolean,
-  minHypotheses = 2
+  hypotheses: string[] = []
 ): string {
-  const alternativeDispositions = uncertain
-    ? Array.from({ length: minHypotheses }, (_, i) => `hypothesis_${i + 1}_insufficient_evidence`)
-    : [];
+  const alternativeDispositions = uncertain ? hypotheses : [];
   return JSON.stringify({
     schema_version: '1.0.0',
     cause_facts: facts.map(f => ({
@@ -82,7 +80,7 @@ export function createScriptedCandidate(
         status: CandidateInvocationResult['status'] = 'ok'
       ) => {
         const durationNs = (process.hrtime.bigint() - start).toString();
-        return { raw_text, submission_text, status, duration_ns: durationNs };
+        return { raw_text, submission_text, status, duration_ns: durationNs, tool_events: [] };
       };
 
       switch (mode) {
@@ -92,7 +90,10 @@ export function createScriptedCandidate(
             facts,
             evidenceIds,
             evaluatorPacket.expects_uncertainty,
-            evaluatorPacket.min_hypotheses_if_uncertain ?? 2
+            evaluatorPacket.accepted_hypotheses_if_uncertain?.slice(
+              0,
+              evaluatorPacket.min_hypotheses_if_uncertain ?? 2
+            ) ?? []
           );
           return finish(submission, 'Reference control: cites the accepted fact set verbatim.');
         }

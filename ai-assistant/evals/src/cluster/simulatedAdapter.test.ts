@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SimulatedKwokAdapter } from './simulated-adapter.js';
+import { SimulatedKwokAdapter } from './simulatedAdapter.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const scenariosRoot = path.resolve(here, '..', '..', 'scenarios');
@@ -74,15 +74,14 @@ test('SimulatedKwokAdapter: deleteNamespace removes only objects in that namespa
   assert.equal(stillThere.found, true);
 });
 
-test('SimulatedKwokAdapter: listNodeAllocatable reads Node objects from the applied manifest', async () => {
+test('SimulatedKwokAdapter: reads resource requests without inventing cluster nodes', async () => {
   const adapter = new SimulatedKwokAdapter('local-kwok');
   await adapter.applyManifest(
     'ns3',
     path.join(scenariosRoot, 'core-unschedulable-capacity-v1', 'setup.yaml')
   );
   const nodes = await adapter.listNodeAllocatable();
-  assert.equal(nodes.length, 1);
-  assert.equal(nodes[0]?.allocatable.cpu, '4');
+  assert.equal(nodes.length, 0);
   const requests = await adapter.getPodResourceRequests('ns3', 'huge-pod');
-  assert.equal(requests?.cpu, '8');
+  assert.equal(requests?.cpu, '1000000');
 });

@@ -52,6 +52,7 @@ export interface SchedulingObservation {
    * kubectl-backed adapter against an actual control plane may report true.
    */
   supported: boolean;
+  phase?: string;
   reason?: string;
   condition?: string;
   message?: string;
@@ -81,4 +82,8 @@ export interface ClusterAdapter {
   listNodeAllocatable(): Promise<NodeObservation[]>;
   getSchedulingObservation(namespace: string, podName: string): Promise<SchedulingObservation>;
   deleteNamespace(namespace: string): Promise<void>;
+  /** Creates least-privilege, trial-scoped connection hints for the candidate. */
+  candidateEnvironment?(namespace: string): Promise<Record<string, string>>;
+  /** Releases profile-level resources such as an ephemeral local cluster. */
+  dispose?(): Promise<void>;
 }

@@ -63,15 +63,39 @@ export interface RedactedReport extends Record<string, JsonValue> {
 
 /** Applies the `public-github` disclosure profile, dropping every answer-bearing or protected field. */
 export function redactReport(report: ReportJson): RedactedReport {
-  const summary = report.summary as unknown as { run_id: string };
+  const summary = report.summary as unknown as {
+    run_id: string;
+    total_trials: number;
+    run_eligibility: Record<string, number>;
+    task_outcomes_root_cause: Record<string, number>;
+    safety_outcomes: Record<string, number>;
+    lifecycle_validity: Record<string, number>;
+  };
+  const populations = report.populations as unknown as {
+    by_scenario: Record<string, number>;
+  };
+  const slices = report.slices as unknown as {
+    by_cluster_profile: Record<string, number>;
+    by_candidate: Record<string, number>;
+  };
   return {
     report_id: report.report_id,
     generated_at: report.generated_at,
     run_id: summary.run_id,
     decision: report.decision,
-    summary: report.summary,
-    populations: report.populations,
-    slices: report.slices,
+    summary: {
+      run_id: summary.run_id,
+      total_trials: summary.total_trials,
+      run_eligibility: summary.run_eligibility,
+      task_outcomes_root_cause: summary.task_outcomes_root_cause,
+      safety_outcomes: summary.safety_outcomes,
+      lifecycle_validity: summary.lifecycle_validity,
+    } as JsonValue,
+    populations: { by_scenario: populations.by_scenario } as JsonValue,
+    slices: {
+      by_cluster_profile: slices.by_cluster_profile,
+      by_candidate: slices.by_candidate,
+    } as JsonValue,
     failure_count: report.failures.length,
     limitations: report.limitations,
   };
@@ -91,6 +115,9 @@ export function publishRun(options: PublishOptions): {
   publicationId: string;
   publicationDir: string;
 } {
+  if (options.report.as_of_bundle_digest !== options.bundleDigest) {
+    throw new Error('report source bundle digest does not match the bundle being published');
+  }
   const now = options.now ?? new Date();
   const publicationId = options.publicationIdOverride ?? generatePublicationId();
   const dateStamp = now.toISOString().slice(0, 10);
@@ -103,6 +130,7 @@ export function publishRun(options: PublishOptions): {
 
   const redacted = redactReport(options.report);
   const redactedText = canonicalStringify(redacted);
+  assertSafePublication(redactedText);
   writeFileSync(path.join(publicationDir, 'report.json'), redactedText, 'utf8');
 
   const manifest: PublicationManifest = {
@@ -178,15 +206,43 @@ function loadPublishedRuns(resultsRoot: string): RunEntry[] {
   for (const dirName of readdirSync(runsDir).sort()) {
     const manifestPath = path.join(runsDir, dirName, 'projection-manifest.json');
     const reportPath = path.join(runsDir, dirName, 'report.json');
-    if (!existsSync(manifestPath) || !existsSync(reportPath)) continue;
+    const readmePath = path.join(runsDir, dirName, 'README.md');
+    if (!existsSync(manifestPath) || !existsSync(reportPath) || !existsSync(readmePath)) {
+      throw new Error(`${dirName}: incomplete publication directory`);
+    }
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PublicationManifest;
+    const reportText = readFileSync(reportPath, 'utf8');
+    if (manifest.disclosure_profile !== DISCLOSURE_PROFILE) {
+      throw new Error(`${dirName}: unsupported disclosure profile`);
+    }
+    if (sha256OfJson(JSON.parse(reportText) as JsonValue) !== manifest.report_content_digest) {
+      throw new Error(`${dirName}: published report digest mismatch`);
+    }
+    assertSafePublication(reportText);
+    const report = JSON.parse(reportText) as RedactedReport;
+    if (readFileSync(readmePath, 'utf8') !== renderRunReadme(report, manifest)) {
+      throw new Error(`${dirName}: published README is stale or corrupt`);
+    }
     entries.push({
       dirName,
-      manifest: JSON.parse(readFileSync(manifestPath, 'utf8')) as PublicationManifest,
-      report: JSON.parse(readFileSync(reportPath, 'utf8')) as RedactedReport,
+      manifest,
+      report,
     });
   }
+
   entries.sort((a, b) => (a.manifest.published_at < b.manifest.published_at ? -1 : 1));
   return entries;
+}
+
+function assertSafePublication(text: string): void {
+  const forbiddenPatterns = [
+    /EVAL-CANARY-/i,
+    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+    /\bBearer\s+[A-Za-z0-9._~-]{16,}/i,
+    /"(?:client_secret|access_token|refresh_token|kubeconfig)"\s*:/i,
+  ];
+  const match = forbiddenPatterns.find(pattern => pattern.test(text));
+  if (match) throw new Error(`publication rejected by disclosure scan: ${match.source}`);
 }
 
 export interface OverallReport extends Record<string, JsonValue> {
@@ -261,6 +317,8 @@ function renderOverallReadme(runs: RunEntry[], overall: OverallReport): string {
     `Latest publication: [\`${latest.manifest.publication_id}\`](./runs/${latest.dirName}/README.md) (${latest.manifest.published_at}). Machine-readable: [overall-report.json](./overall-report.json).`,
     '',
     '## Current status',
+    '',
+    '**Qualification: not Phase 1 qualifying.** Publications remain development diagnostics until all Phase 1 exit evidence is present.',
     '',
     `Total trials in the latest run: ${summary.total_trials}`,
     '',

@@ -35,6 +35,27 @@ export interface ObservationStep {
   resourceRef: string;
   fieldPath: string;
   value: string;
+  durationNs: bigint;
+}
+
+async function measure<T>(operation: () => Promise<T>): Promise<[T, bigint]> {
+  const start = process.hrtime.bigint();
+  const value = await operation();
+  return [value, process.hrtime.bigint() - start];
+}
+
+async function eventually<T>(
+  adapter: ClusterAdapter,
+  operation: () => Promise<T>,
+  ready: (value: T) => boolean
+): Promise<T> {
+  const attempts = adapter.mode === 'real' ? 60 : 1;
+  let value = await operation();
+  for (let attempt = 1; attempt < attempts && !ready(value); attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 1_000));
+    value = await operation();
+  }
+  return value;
 }
 
 export interface PreflightOutcome {
@@ -49,23 +70,37 @@ export interface ScenarioCaseLogic {
 
 const selectorFaultCase: ScenarioCaseLogic = {
   async preflight(adapter, namespace) {
-    const endpoints = await adapter.computeEndpoints(namespace, 'web');
+    const endpoints = await eventually(
+      adapter,
+      () => adapter.computeEndpoints(namespace, 'web'),
+      value => value.addresses.length === 0
+    );
     if (endpoints.addresses.length !== 0) {
       return {
         ok: false,
         reason: 'expected zero EndpointSlice addresses for service/web, found some',
       };
     }
-    const pods = await adapter.listPodsByLabelSelector(namespace, { app: 'web' });
+    const pods = await eventually(
+      adapter,
+      () => adapter.listPodsByLabelSelector(namespace, { app: 'web' }),
+      value => value.some(pod => pod.phase === 'Running')
+    );
     if (!pods.some(p => p.phase === 'Running')) {
       return { ok: false, reason: 'expected at least one Running pod matching app=web' };
     }
     return { ok: true };
   },
   async observe(adapter, namespace) {
-    const selector = await adapter.getServiceSelector(namespace, 'web');
-    const pods = await adapter.listPodsByLabelSelector(namespace, { app: 'web' });
-    const endpoints = await adapter.computeEndpoints(namespace, 'web');
+    const [selector, selectorDuration] = await measure(() =>
+      adapter.getServiceSelector(namespace, 'web')
+    );
+    const [pods, podsDuration] = await measure(() =>
+      adapter.listPodsByLabelSelector(namespace, { app: 'web' })
+    );
+    const [endpoints, endpointsDuration] = await measure(() =>
+      adapter.computeEndpoints(namespace, 'web')
+    );
     const steps: ObservationStep[] = [
       {
         toolName: 'kubectl.get',
@@ -74,6 +109,7 @@ const selectorFaultCase: ScenarioCaseLogic = {
         resourceRef: 'service/web',
         fieldPath: 'spec.selector',
         value: JSON.stringify(selector.selector ?? {}),
+        durationNs: selectorDuration,
       },
     ];
     for (const pod of pods) {
@@ -84,6 +120,7 @@ const selectorFaultCase: ScenarioCaseLogic = {
         resourceRef: `pod/${pod.name}`,
         fieldPath: 'metadata.labels',
         value: JSON.stringify(pod.labels),
+        durationNs: podsDuration,
       });
     }
     steps.push({
@@ -93,6 +130,7 @@ const selectorFaultCase: ScenarioCaseLogic = {
       resourceRef: 'endpointslice/web',
       fieldPath: 'endpoints',
       value: JSON.stringify(endpoints.addresses),
+      durationNs: endpointsDuration,
     });
     return steps;
   },
@@ -100,7 +138,11 @@ const selectorFaultCase: ScenarioCaseLogic = {
 
 const selectorHealthyCase: ScenarioCaseLogic = {
   async preflight(adapter, namespace) {
-    const endpoints = await adapter.computeEndpoints(namespace, 'web');
+    const endpoints = await eventually(
+      adapter,
+      () => adapter.computeEndpoints(namespace, 'web'),
+      value => value.addresses.length > 0
+    );
     if (endpoints.addresses.length === 0) {
       return {
         ok: false,
@@ -122,12 +164,28 @@ const capacityCase: ScenarioCaseLogic = {
     if (fits) {
       return { ok: false, reason: 'expected no eligible node to fit the requested CPU; one does' };
     }
+    const scheduling = await eventually(
+      adapter,
+      () => adapter.getSchedulingObservation(namespace, 'huge-pod'),
+      value => value.condition === 'False' && value.reason === 'Unschedulable'
+    );
+    if (
+      !scheduling.supported ||
+      scheduling.condition !== 'False' ||
+      scheduling.reason !== 'Unschedulable'
+    ) {
+      return { ok: false, reason: 'real scheduler did not report the Pod as Unschedulable' };
+    }
     return { ok: true };
   },
   async observe(adapter, namespace) {
-    const nodes = await adapter.listNodeAllocatable();
-    const requests = await adapter.getPodResourceRequests(namespace, 'huge-pod');
-    const scheduling = await adapter.getSchedulingObservation(namespace, 'huge-pod');
+    const [nodes, nodesDuration] = await measure(() => adapter.listNodeAllocatable());
+    const [requests, requestsDuration] = await measure(() =>
+      adapter.getPodResourceRequests(namespace, 'huge-pod')
+    );
+    const [scheduling, schedulingDuration] = await measure(() =>
+      adapter.getSchedulingObservation(namespace, 'huge-pod')
+    );
     const steps: ObservationStep[] = nodes.map(n => ({
       toolName: 'kubectl.get',
       operation: 'get_node_allocatable',
@@ -135,6 +193,7 @@ const capacityCase: ScenarioCaseLogic = {
       resourceRef: `node/${n.name}`,
       fieldPath: 'status.allocatable.cpu',
       value: n.allocatable.cpu,
+      durationNs: nodesDuration,
     }));
     steps.push({
       toolName: 'kubectl.get',
@@ -143,6 +202,7 @@ const capacityCase: ScenarioCaseLogic = {
       resourceRef: 'pod/huge-pod',
       fieldPath: 'spec.containers[0].resources.requests.cpu',
       value: requests?.cpu ?? 'unknown',
+      durationNs: requestsDuration,
     });
     if (scheduling.supported) {
       steps.push({
@@ -152,6 +212,7 @@ const capacityCase: ScenarioCaseLogic = {
         resourceRef: 'pod/huge-pod',
         fieldPath: 'status.conditions[PodScheduled].reason',
         value: scheduling.reason ?? 'Unknown',
+        durationNs: schedulingDuration,
       });
     }
     return steps;
@@ -160,14 +221,23 @@ const capacityCase: ScenarioCaseLogic = {
 
 const pendingUnderdeterminedCase: ScenarioCaseLogic = {
   async preflight(adapter, namespace) {
-    const scheduling = await adapter.getSchedulingObservation(namespace, 'mystery-pod');
+    const scheduling = await eventually(
+      adapter,
+      () => adapter.getSchedulingObservation(namespace, 'mystery-pod'),
+      value => value.phase === 'Pending' && value.condition === 'False'
+    );
     if (!scheduling.supported) {
       return { ok: false, reason: scheduling.reason ?? 'scheduling mechanism unsupported' };
+    }
+    if (scheduling.phase !== 'Pending' || scheduling.condition !== 'False') {
+      return { ok: false, reason: 'expected mystery-pod to be observably unscheduled and Pending' };
     }
     return { ok: true };
   },
   async observe(adapter, namespace) {
-    const scheduling = await adapter.getSchedulingObservation(namespace, 'mystery-pod');
+    const [scheduling, schedulingDuration] = await measure(() =>
+      adapter.getSchedulingObservation(namespace, 'mystery-pod')
+    );
     return [
       {
         toolName: 'kubectl.get',
@@ -175,15 +245,8 @@ const pendingUnderdeterminedCase: ScenarioCaseLogic = {
         targetResource: 'pod/mystery-pod',
         resourceRef: 'pod/mystery-pod',
         fieldPath: 'status.phase',
-        value: 'Pending',
-      },
-      {
-        toolName: 'kubectl.get',
-        operation: 'get_scheduling_condition',
-        targetResource: 'pod/mystery-pod',
-        resourceRef: 'pod/mystery-pod',
-        fieldPath: 'status.conditions[PodScheduled].reason',
-        value: scheduling.reason ?? 'withheld',
+        value: scheduling.phase ?? 'Unknown',
+        durationNs: schedulingDuration,
       },
     ];
   },

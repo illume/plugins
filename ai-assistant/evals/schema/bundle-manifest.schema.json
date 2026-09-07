@@ -21,7 +21,18 @@
     "generated_at": { "type": "string" },
     "producer": { "type": "string" },
     "capabilities": { "type": "array", "items": { "type": "string" } },
-    "files": { "type": "array" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "digest"],
+        "properties": {
+          "path": { "type": "string" },
+          "digest": { "type": "string" }
+        }
+      }
+    },
     "supported_files": { "type": "array", "items": { "type": "string" } },
     "unsupported_files": { "type": "array", "items": { "type": "string" } },
     "closed": { "type": "boolean" }

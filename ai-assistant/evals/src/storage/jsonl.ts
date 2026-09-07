@@ -23,7 +23,7 @@
  * for the Phase 4 signing this repository has not implemented).
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   canonicalStringify,
@@ -32,6 +32,8 @@ import {
   type JsonValue,
 } from '../canonicalJson.js';
 import { recordId as generateRecordId } from '../ids.js';
+import { loadSchema, type SchemaName } from '../contracts/schemas.js';
+import { assertValid } from '../contracts/validate.js';
 
 export interface JsonlRecord<T extends JsonValue> {
   record_id: string;
@@ -56,10 +58,16 @@ export class JsonlWriter<T extends JsonValue> {
     private readonly producer: string
   ) {
     mkdirSync(path.dirname(filePath), { recursive: true });
+    if (!existsSync(filePath)) writeFileSync(filePath, '', 'utf8');
   }
 
   /** Appends one validated, hash-chained record and returns it. */
   append(payload: T): JsonlRecord<T> {
+    const localSchemaMatch = /\/([^/]+)\.schema\.json$/.exec(this.schemaUri);
+    if (this.schemaUri.startsWith('https://headlamp-k8s.local/') && localSchemaMatch?.[1]) {
+      const schemaName = localSchemaMatch[1] as SchemaName;
+      assertValid(loadSchema(schemaName), payload, `${schemaName} payload`);
+    }
     this.sequence += 1;
     const payloadDigest = sha256OfJson(payload);
     const record: JsonlRecord<T> = {

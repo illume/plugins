@@ -58,6 +58,10 @@ import {
 import { HolmesAgentSettings } from '../HolmesAgentSettings/HolmesAgentSettings';
 import { type ConfigStore, MCPSettings } from '../MCPSettings/MCPSettings';
 import ModelSelector from '../ModelSelector/ModelSelector';
+import {
+  ObservabilitySettings,
+  type ObservabilitySettingsProps,
+} from '../ObservabilitySettings/ObservabilitySettings';
 import { SkillSettings } from '../SkillSettings/SkillSettings';
 import type { SkillDisplayInfo, SkillLoadProgress } from '../SkillsViewerDialog/SkillsViewerDialog';
 
@@ -89,6 +93,14 @@ export interface SettingsPageProps {
   isToolEnabled?: (toolId: string) => boolean;
   /** Callback when a tool toggle is flipped. */
   onToolToggle?: (toolId: string) => void;
+  /** Native read-only observability API settings. */
+  observabilityConfig?: ObservabilitySettingsProps['config'];
+  /** Persists native observability API settings. */
+  onObservabilityConfigChange?: ObservabilitySettingsProps['onChange'];
+  /** Whether observability calls stay approved until explicitly disabled. */
+  observabilityAutoApproval?: ObservabilitySettingsProps['autoApprovalEnabled'];
+  /** Persists the observability approval preference. */
+  onObservabilityAutoApprovalChange?: ObservabilitySettingsProps['onAutoApprovalChange'];
 
   // --- MCP ---
 
@@ -202,6 +214,10 @@ export function SettingsPage({
   tools,
   isToolEnabled: isToolEnabledFn,
   onToolToggle,
+  observabilityConfig,
+  onObservabilityConfigChange,
+  observabilityAutoApproval,
+  onObservabilityAutoApprovalChange,
   isRunningAsApp = false,
   configStore,
   checkPathExists,
@@ -475,6 +491,20 @@ export function SettingsPage({
             tools={tools}
             isToolEnabled={isToolEnabledFn}
             onToolToggle={onToolToggle}
+          />
+        </>
+      )}
+
+      {/* Observability Data Sources Section */}
+      {onObservabilityConfigChange && (
+        <>
+          <Divider sx={{ my: 3 }} />
+          <ObservabilitySettings
+            config={observabilityConfig}
+            onChange={onObservabilityConfigChange}
+            autoApprovalEnabled={observabilityAutoApproval}
+            onAutoApprovalChange={onObservabilityAutoApprovalChange}
+            commandRunner={cliDetectionEnabled ? commandRunner ?? undefined : undefined}
           />
         </>
       )}

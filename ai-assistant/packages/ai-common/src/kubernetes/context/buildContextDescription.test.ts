@@ -98,6 +98,30 @@ describe('contextGenerator', () => {
       expect(result).toContain('Current view: Overview');
     });
 
+    it('describes cluster platforms and guides AKS-specific tool use', () => {
+      const result = generateContextDescription(
+        null,
+        undefined,
+        undefined,
+        ['aks-cluster', 'local-cluster', 'unavailable-cluster'],
+        {
+          'aks-cluster': 'aks',
+          'local-cluster': 'other',
+          'unavailable-cluster': 'unknown',
+        }
+      );
+
+      expect(result).toContain(
+        'aks-cluster: Azure Kubernetes Service (AKS); Azure/AKS observability tools are applicable'
+      );
+      expect(result).toContain(
+        'local-cluster: not detected as AKS; do not use AKS-specific observability tools'
+      );
+      expect(result).toContain(
+        'unavailable-cluster: platform unknown; verify it is AKS before using AKS-specific observability tools'
+      );
+    });
+
     it('describes a pod resource with status and container readiness', () => {
       const result = generateContextDescription(
         {

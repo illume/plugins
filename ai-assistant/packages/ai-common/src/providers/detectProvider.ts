@@ -452,7 +452,7 @@ type DiscoverableAzureOpenAIAccount = AzureOpenAIAccount & {
 };
 
 /** Azure subscription returned by Azure Resource Manager. */
-interface AzureSubscription {
+export interface AzureSubscription {
   /** Subscription resource path. */
   id?: string;
   /** Subscription GUID used by Azure Resource Graph. */
@@ -466,6 +466,9 @@ const AZURE_DEPLOYMENT_CONCURRENCY = 8;
 
 /** Maximum time (ms) to wait for an Azure Management API request. */
 const AZURE_API_TIMEOUT_MS = 15_000;
+
+/** Maximum number of pages accepted from an Azure Management API list request. */
+const AZURE_API_MAX_PAGES = 100;
 
 /** Account row projected by the Azure Resource Graph query. */
 interface AzureResourceGraphAccount {
@@ -521,7 +524,7 @@ interface AzureOpenAIDeployment {
  * @param signal - Optional parent cancellation signal.
  * @returns Azure API response.
  */
-async function fetchAzureApi(
+export async function fetchAzureApi(
   input: RequestInfo | URL,
   init: RequestInit = {},
   signal?: AbortSignal
@@ -535,7 +538,7 @@ async function fetchAzureApi(
   }
   const timeoutId = setTimeout(abort, AZURE_API_TIMEOUT_MS);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await fetch(input, { ...init, redirect: 'error', signal: controller.signal });
   } finally {
     clearTimeout(timeoutId);
     signal?.removeEventListener('abort', abort);
@@ -568,33 +571,41 @@ function isChatDeployment(deployment: AzureOpenAIDeployment): boolean {
 }
 
 /**
- * Obtains an Azure Resource Manager token from the authenticated Azure CLI session.
+ * Obtains an Azure access token for one resource from the authenticated CLI session.
  *
  * @param commandRunner - Host-provided command executor.
- * @returns ARM bearer token, or `null` when authentication is unavailable.
+ * @param resource - OAuth resource/audience requested from Azure CLI.
+ * @param signal - Optional cancellation signal.
+ * @returns The access token, or `null` when authentication is unavailable.
  */
-async function getAzureManagementToken(
+export async function getAzureAccessToken(
   commandRunner: CommandRunner,
+  resource: string,
   signal?: AbortSignal
 ): Promise<string | null> {
   const { stdout, exitCode } = await runDetectCommand(
     'az',
-    [
-      'account',
-      'get-access-token',
-      '--resource',
-      'https://management.azure.com/',
-      '--query',
-      'accessToken',
-      '-o',
-      'tsv',
-    ],
+    ['account', 'get-access-token', '--resource', resource, '--query', 'accessToken', '-o', 'tsv'],
     commandRunner,
     signal
   );
   if (exitCode !== 0) return null;
   const token = stdout.trim();
   return token || null;
+}
+
+/**
+ * Obtains an Azure Resource Manager token from the authenticated Azure CLI session.
+ *
+ * @param commandRunner - Host-provided command executor.
+ * @param signal - Optional cancellation signal.
+ * @returns ARM bearer token, or `null` when authentication is unavailable.
+ */
+export async function getAzureManagementToken(
+  commandRunner: CommandRunner,
+  signal?: AbortSignal
+): Promise<string | null> {
+  return getAzureAccessToken(commandRunner, 'https://management.azure.com/', signal);
 }
 
 /**
@@ -611,16 +622,25 @@ function logAzureApiFailure(operation: string, cause: unknown): void {
  * Lists subscriptions available to the authenticated Azure identity.
  *
  * @param token - ARM bearer token.
+ * @param signal - Optional cancellation signal.
  * @returns Accessible subscriptions, or `null` when the API is unavailable.
  */
-async function listAzureSubscriptionsWithApi(
+export async function listAzureSubscriptionsWithApi(
   token: string,
   signal?: AbortSignal
 ): Promise<AzureSubscription[] | null> {
   const subscriptions: AzureSubscription[] = [];
   let url: string | undefined = 'https://management.azure.com/subscriptions?api-version=2022-12-01';
+  const visitedUrls = new Set<string>();
   try {
     while (url) {
+      if (visitedUrls.has(url)) {
+        throw new Error('Azure subscription pagination repeated a URL');
+      }
+      if (visitedUrls.size >= AZURE_API_MAX_PAGES) {
+        throw new Error('Azure subscription pagination returned too many pages');
+      }
+      visitedUrls.add(url);
       const response = await fetchAzureApi(
         url,
         { headers: { Authorization: `Bearer ${token}` } },
@@ -633,7 +653,15 @@ async function listAzureSubscriptionsWithApi(
       const page: AzureManagementListResponse<AzureSubscription> = await response.json();
       if (!Array.isArray(page.value)) return null;
       subscriptions.push(...page.value);
-      url = page.nextLink;
+      if (page.nextLink) {
+        const nextUrl = new URL(page.nextLink);
+        if (nextUrl.origin !== 'https://management.azure.com') {
+          throw new Error('Azure subscription pagination returned an untrusted URL');
+        }
+        url = nextUrl.toString();
+      } else {
+        url = undefined;
+      }
     }
     return subscriptions;
   } catch (e) {

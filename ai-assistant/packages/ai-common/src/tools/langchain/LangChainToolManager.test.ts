@@ -19,6 +19,7 @@ import {
   NullToolClient as NullMCPClientAdapter,
   type ToolClient as MCPClientAdapter,
 } from '../../mcp/client/ToolClient';
+import { PrometheusTool } from '../observability/ObservabilityTools';
 import type { LangChainTool } from './LangChainTool';
 import { LangChainToolManager } from './LangChainToolManager';
 
@@ -95,6 +96,12 @@ describe('ToolManager with injected MCPClientAdapter', () => {
   it('uses NullMCPClientAdapter by default', () => {
     const mgr = new LangChainToolManager();
     expect(mgr.getMCPClient().isAvailable()).toBe(false);
+  });
+
+  it('skips observability tools when no provider context is configured', () => {
+    const mgr = new LangChainToolManager({ enabledToolIds: ['grafana_read'] });
+
+    expect(privateManager(mgr).tools.map(tool => tool.config.name)).not.toContain('grafana_read');
   });
 
   it('accepts a custom MCPClientAdapter', async () => {
@@ -795,6 +802,18 @@ describe('ToolManager — executeTool', () => {
     expect(content.message).toContain('disabled or not available');
     expect(result.shouldAddToHistory).toBe(true);
     expect(result.shouldProcessFollowUp).toBe(false);
+  });
+
+  it('validates built-in tool arguments before invoking handlers', async () => {
+    const mgr = new LangChainToolManager();
+    privateManager(mgr).addTool(new PrometheusTool());
+
+    const result = await mgr.executeTool('prometheus_read', { action: 'delete' });
+    const content = JSON.parse(result.content);
+
+    expect(content.error).toBe(true);
+    expect(content.message).toContain('invalid_value');
+    expect(result.metadata?.isError).toBe(true);
   });
 
   it('BUG FIX: regular tool errors are now wrapped as ToolResponse instead of throwing', async () => {

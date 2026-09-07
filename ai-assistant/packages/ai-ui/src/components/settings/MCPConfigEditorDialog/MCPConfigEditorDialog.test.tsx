@@ -108,7 +108,41 @@ it('normalizes and saves a valid configuration before closing', () => {
       },
     ],
   });
+
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+it('normalizes and saves a dependency-free HTTP server', () => {
+  const onSave = vi.fn();
+  render(<MCPConfigEditorDialog {...openMCPConfigEditorArgs} onSave={onSave} />);
+  setEditorContent(
+    JSON.stringify({
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          headers: { Authorization: 'token' },
+          enabled: true,
+        },
+      ],
+    })
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+  expect(onSave).toHaveBeenCalledWith({
+    enabled: true,
+    servers: [
+      {
+        name: 'remote',
+        transport: 'http',
+        url: 'https://example.com/mcp',
+        headers: { Authorization: 'token' },
+        enabled: true,
+      },
+    ],
+  });
 });
 
 it.each([
@@ -124,6 +158,66 @@ it.each([
     'Server 1: command must be a non-empty string',
   ],
   [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'file:///tmp/mcp',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          url: 'http://remote.example/mcp',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          url: Object.assign(new URL('https://example.com/mcp'), { username: 'user' }).toString(),
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          command: '',
+          args: [],
+          url: 'https://',
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: url must be an HTTP URL',
+  ],
+  [
     { enabled: true, servers: [{ name: 's', command: 'cmd', args: [1], enabled: true }] },
     'Server 1: args must be an array of strings',
   ],
@@ -133,6 +227,21 @@ it.each([
       servers: [{ name: 's', command: 'cmd', args: [], env: { KEY: 1 }, enabled: true }],
     },
     'Server 1: env must contain only string key-value pairs',
+  ],
+  [
+    {
+      enabled: true,
+      servers: [
+        {
+          name: 's',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          headers: { 'Bad Header': 'value' },
+          enabled: true,
+        },
+      ],
+    },
+    'Server 1: headers must contain valid HTTP names and string values',
   ],
   [
     { enabled: true, servers: [{ name: 's', command: 'cmd', args: [], enabled: 'yes' }] },
@@ -166,6 +275,39 @@ it('rejects duplicate server names case-insensitively', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
   expect(screen.getByRole('alert').textContent).toBe('Server names must be unique');
   expect(onSave).not.toHaveBeenCalled();
+});
+
+it('drops process environment fields from remote server JSON', () => {
+  const onSave = vi.fn();
+  render(<MCPConfigEditorDialog {...openMCPConfigEditorArgs} onSave={onSave} />);
+  setEditorContent(
+    JSON.stringify({
+      enabled: true,
+      servers: [
+        {
+          name: 'remote',
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          env: { UNUSED: 'value' },
+          enabled: true,
+        },
+      ],
+    })
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+
+  expect(onSave).toHaveBeenCalledWith({
+    enabled: true,
+    servers: [
+      {
+        name: 'remote',
+        transport: 'http',
+        url: 'https://example.com/mcp',
+        enabled: true,
+      },
+    ],
+  });
 });
 
 it('shows translated invalid JSON and clears validation when editing resumes', () => {

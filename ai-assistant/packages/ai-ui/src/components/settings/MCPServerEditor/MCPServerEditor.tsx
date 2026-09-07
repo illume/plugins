@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import {
@@ -15,6 +16,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DefaultDialog } from '../../defaults/DefaultSlots/DefaultSlots';
+import { isValidHttpHeaders } from '../mcpValidation';
 
 export type { MCPServer } from '@headlamp-k8s/ai-common/mcp/types';
 
@@ -50,8 +52,11 @@ export default function MCPServerEditor({
 }: MCPServerEditorProps): React.ReactElement {
   const { t } = useTranslation();
   const [name, setName] = useState('');
+  const [transport, setTransport] = useState<'stdio' | 'http' | 'sse'>('stdio');
   const [command, setCommand] = useState('');
   const [args, setArgs] = useState('');
+  const [url, setUrl] = useState('');
+  const [headers, setHeaders] = useState('{}');
   const [env, setEnv] = useState<Array<{ key: string; value: string }>>([]);
   const [enabled, setEnabled] = useState(true);
   const [autoApprove, setAutoApprove] = useState(false);
@@ -64,8 +69,11 @@ export default function MCPServerEditor({
     if (open) {
       if (server) {
         setName(server.name);
-        setCommand(server.command);
-        setArgs(JSON.stringify(server.args));
+        setTransport(server.transport ?? 'stdio');
+        setCommand(server.command ?? '');
+        setArgs(JSON.stringify(server.args ?? []));
+        setUrl(server.url ?? '');
+        setHeaders(JSON.stringify(server.headers ?? {}, null, 2));
         setEnv(
           server.env ? Object.entries(server.env).map(([key, value]) => ({ key, value })) : []
         );
@@ -73,8 +81,11 @@ export default function MCPServerEditor({
         setAutoApprove(server.autoApprove ?? false);
       } else {
         setName('');
+        setTransport('stdio');
         setCommand('');
         setArgs('[]');
+        setUrl('');
+        setHeaders('{}');
         setEnv([]);
         setEnabled(true);
         setAutoApprove(false);
@@ -115,8 +126,11 @@ export default function MCPServerEditor({
   /** Loads a valid example server. @returns No value. */
   const handleLoadExample = (): void => {
     setName('flux-mcp');
+    setTransport('stdio');
     setCommand('flux-operator-mcp');
     setArgs(JSON.stringify(['serve', '--kube-context', 'HEADLAMP_CURRENT_CLUSTER']));
+    setUrl('');
+    setHeaders('{}');
     setEnv([{ key: 'KUBECONFIG', value: 'PATH_TO_KUBECONFIG' }]);
     setEnabled(true);
     setAutoApprove(false);
@@ -135,6 +149,18 @@ export default function MCPServerEditor({
     }
   };
 
+  /** @returns Parsed request headers or a translated validation failure. */
+  const parseHeaders = (): { headers?: Record<string, string>; error?: string } => {
+    try {
+      const parsed: unknown = JSON.parse(headers);
+      return isValidHttpHeaders(parsed)
+        ? { headers: parsed as Record<string, string> }
+        : { error: t('Headers must contain valid HTTP names and string values') };
+    } catch {
+      return { error: t('Headers must be valid JSON') };
+    }
+  };
+
   /** @returns Translated validation failure, or null when valid. */
   const validateServer = (): string | null => {
     const normalizedName = name.trim();
@@ -142,8 +168,15 @@ export default function MCPServerEditor({
       return t('Server name is required');
     }
 
-    if (!command.trim()) {
+    if (transport === 'stdio' && !command.trim()) {
       return t('Command is required');
+    }
+    if (transport !== 'stdio') {
+      if (!isSafeRemoteMcpUrl(url)) {
+        return t('A valid HTTP server URL is required');
+      }
+      const parsedHeaders = parseHeaders();
+      if (parsedHeaders.error) return parsedHeaders.error;
     }
 
     // Check for duplicate names (excluding current server if editing)
@@ -152,18 +185,18 @@ export default function MCPServerEditor({
       return t('A server with this name already exists');
     }
 
-    const parsedArgs = parseArgs();
-    if (parsedArgs.error) return parsedArgs.error;
-
-    // Validate env variables
-    const seenKeys = new Set<string>();
-    for (const envVar of env) {
-      const key = envVar.key.trim();
-      if (!key) {
-        return t('Environment variable keys cannot be empty');
+    if (transport === 'stdio') {
+      const parsedArgs = parseArgs();
+      if (parsedArgs.error) return parsedArgs.error;
+      const seenKeys = new Set<string>();
+      for (const envVar of env) {
+        const key = envVar.key.trim();
+        if (!key) {
+          return t('Environment variable keys cannot be empty');
+        }
+        if (seenKeys.has(key)) return t('Environment variable keys must be unique');
+        seenKeys.add(key);
       }
-      if (seenKeys.has(key)) return t('Environment variable keys must be unique');
-      seenKeys.add(key);
     }
 
     return null;
@@ -177,21 +210,35 @@ export default function MCPServerEditor({
       return;
     }
 
-    const parsedArgs = parseArgs();
-    if (!parsedArgs.args) return;
-    const mcpServer: MCPServer = {
-      name: name.trim(),
-      command: command.trim(),
-      args: parsedArgs.args,
-      enabled,
-      autoApprove,
-    };
-
-    if (env.length > 0) {
-      mcpServer.env = Object.fromEntries(env.map(item => [item.key.trim(), item.value]));
+    if (transport === 'stdio') {
+      const parsedArgs = parseArgs();
+      if (!parsedArgs.args) return;
+      const mcpServer: MCPServer = {
+        name: name.trim(),
+        command: command.trim(),
+        args: parsedArgs.args,
+        enabled,
+        autoApprove,
+      };
+      if (env.length > 0) {
+        mcpServer.env = Object.fromEntries(env.map(item => [item.key.trim(), item.value]));
+      }
+      onSave(mcpServer);
+    } else {
+      const parsedHeaders = parseHeaders();
+      if (!parsedHeaders.headers) return;
+      onSave({
+        name: name.trim(),
+        transport,
+        url: url.trim(),
+        ...(Object.keys(parsedHeaders.headers).length > 0
+          ? { headers: parsedHeaders.headers }
+          : {}),
+        enabled,
+        autoApprove,
+      });
     }
 
-    onSave(mcpServer);
     onClose();
   };
 
@@ -203,14 +250,16 @@ export default function MCPServerEditor({
             {isEditing ? t('Edit Server') : t('Add MCP Server')}
           </Typography>
           {!isEditing && (
-            <Button
-              size="small"
-              variant="text"
-              onClick={handleLoadExample}
-              startIcon={<Icon icon="mdi:file-document" aria-hidden="true" />}
-            >
-              {t('Load Example')}
-            </Button>
+            <Box display="flex" alignItems="center">
+              <Button
+                size="small"
+                variant="text"
+                onClick={handleLoadExample}
+                startIcon={<Icon icon="mdi:file-document" aria-hidden="true" />}
+              >
+                {t('Load Example')}
+              </Button>
+            </Box>
           )}
         </Box>
       </Box>
@@ -255,102 +304,145 @@ export default function MCPServerEditor({
           </Box>
 
           <TextField
-            label={t('Command')}
-            value={command}
-            onChange={event => {
-              setCommand(event.target.value);
-              setValidationError('');
-            }}
-            fullWidth
-            required
-            helperText={t("Executable command (e.g., 'docker', 'npx', 'python')")}
-          />
+            select
+            label={t('Transport')}
+            value={transport}
+            onChange={event => setTransport(event.target.value as 'stdio' | 'http' | 'sse')}
+            SelectProps={{ native: true }}
+          >
+            <option value="stdio">stdio</option>
+            <option value="http">HTTP</option>
+            <option value="sse">SSE</option>
+          </TextField>
 
-          <TextField
-            label={t('Arguments')}
-            value={args}
-            onChange={event => {
-              setArgs(event.target.value);
-              setValidationError('');
-            }}
-            fullWidth
-            multiline
-            minRows={2}
-            helperText={t(
-              'JSON array of command-line arguments. Use HEADLAMP_CURRENT_CLUSTER as a placeholder for the current cluster context.'
-            )}
-          />
+          {transport === 'stdio' ? (
+            <>
+              <TextField
+                label={t('Command')}
+                value={command}
+                onChange={event => {
+                  setCommand(event.target.value);
+                  setValidationError('');
+                }}
+                fullWidth
+                required
+                helperText={t("Executable command (e.g., 'docker', 'npx', 'python')")}
+              />
 
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <Box>
-                <Typography variant="subtitle2" component="h3">
-                  {t('Environment Variables')}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {t('Use')} <code>HEADLAMP_CURRENT_CLUSTER</code>{' '}
-                  {t('as a placeholder for the current cluster context')}
-                </Typography>
+              <TextField
+                label={t('Arguments')}
+                value={args}
+                onChange={event => {
+                  setArgs(event.target.value);
+                  setValidationError('');
+                }}
+                fullWidth
+                multiline
+                minRows={2}
+                helperText={t(
+                  'JSON array of command-line arguments. Use HEADLAMP_CURRENT_CLUSTER as a placeholder for the current cluster context.'
+                )}
+              />
+            </>
+          ) : (
+            <>
+              <TextField
+                label={t('Server URL')}
+                value={url}
+                onChange={event => {
+                  setUrl(event.target.value);
+                  setValidationError('');
+                }}
+                fullWidth
+                required
+              />
+              <TextField
+                label={t('Request Headers')}
+                value={headers}
+                onChange={event => {
+                  setHeaders(event.target.value);
+                  setValidationError('');
+                }}
+                fullWidth
+                multiline
+                minRows={2}
+                helperText={t('JSON object of HTTP headers used for authentication and routing')}
+              />
+            </>
+          )}
+
+          {transport === 'stdio' && (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                <Box>
+                  <Typography variant="subtitle2" component="h3">
+                    {t('Environment Variables')}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {t('Use')} <code>HEADLAMP_CURRENT_CLUSTER</code>{' '}
+                    {t('as a placeholder for the current cluster context')}
+                  </Typography>
+                </Box>
+                <Button
+                  size="small"
+                  onClick={handleAddEnvVar}
+                  startIcon={<Icon icon="mdi:plus" aria-hidden="true" />}
+                >
+                  {t('Add Variable')}
+                </Button>
               </Box>
-              <Button
-                size="small"
-                onClick={handleAddEnvVar}
-                startIcon={<Icon icon="mdi:plus" aria-hidden="true" />}
-              >
-                {t('Add Variable')}
-              </Button>
+
+              {env.length === 0 ? (
+                <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+                  {t('No environment variables configured')}
+                </Typography>
+              ) : (
+                <Box display="flex" flexDirection="column" gap={1}>
+                  {env.map((envVar, index) => (
+                    <Box key={index} display="flex" gap={1} alignItems="center">
+                      <TextField
+                        label={t('Key')}
+                        inputProps={{
+                          'aria-label': t('Environment variable {{number}} key', {
+                            number: index + 1,
+                          }),
+                        }}
+                        value={envVar.key}
+                        onChange={e => handleEnvVarChange(index, 'key', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label={t('Value')}
+                        inputProps={{
+                          'aria-label': t('Environment variable {{number}} value', {
+                            number: index + 1,
+                          }),
+                        }}
+                        value={envVar.value}
+                        onChange={e => handleEnvVarChange(index, 'value', e.target.value)}
+                        size="small"
+                        sx={{ flex: 2 }}
+                        placeholder={t('e.g., HEADLAMP_CURRENT_CLUSTER')}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveEnvVar(index)}
+                        color="error"
+                        aria-label={
+                          envVar.key
+                            ? t('Remove environment variable {{key}}', { key: envVar.key })
+                            : t('Remove environment variable {{number}}', { number: index + 1 })
+                        }
+                      >
+                        <Icon icon="mdi:delete" aria-hidden="true" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
-
-            {env.length === 0 ? (
-              <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
-                {t('No environment variables configured')}
-              </Typography>
-            ) : (
-              <Box display="flex" flexDirection="column" gap={1}>
-                {env.map((envVar, index) => (
-                  <Box key={index} display="flex" gap={1} alignItems="center">
-                    <TextField
-                      label={t('Key')}
-                      inputProps={{
-                        'aria-label': t('Environment variable {{number}} key', {
-                          number: index + 1,
-                        }),
-                      }}
-                      value={envVar.key}
-                      onChange={e => handleEnvVarChange(index, 'key', e.target.value)}
-                      size="small"
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      label={t('Value')}
-                      inputProps={{
-                        'aria-label': t('Environment variable {{number}} value', {
-                          number: index + 1,
-                        }),
-                      }}
-                      value={envVar.value}
-                      onChange={e => handleEnvVarChange(index, 'value', e.target.value)}
-                      size="small"
-                      sx={{ flex: 2 }}
-                      placeholder={t('e.g., HEADLAMP_CURRENT_CLUSTER')}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={() => handleRemoveEnvVar(index)}
-                      color="error"
-                      aria-label={
-                        envVar.key
-                          ? t('Remove environment variable {{key}}', { key: envVar.key })
-                          : t('Remove environment variable {{number}}', { number: index + 1 })
-                      }
-                    >
-                      <Icon icon="mdi:delete" aria-hidden="true" />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
+          )}
         </Box>
       </DialogContent>
 

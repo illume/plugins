@@ -25,23 +25,28 @@ export interface CacheEntry<T> {
 }
 
 /**
- * Generates a deterministic string cache key from `history` (last 3 entries)
- * and `message`.
+ * Generates a deterministic string cache key from host context, `history`
+ * (last 3 entries), and `message`.
  *
  * Uses a djb2-style 32-bit hash so collisions are possible but rare for
  * typical chat inputs.
  *
  * @param history - Conversation history whose last three entries provide context.
  * @param message - Current user message included in the key.
+ * @param currentContext - Host context that can affect the model response.
  * @returns A deterministic key containing a signed hash and message length.
  */
-export function generateCacheKey(history: Prompt[], message: string): string {
+export function generateCacheKey(
+  history: Prompt[],
+  message: string,
+  currentContext: string = ''
+): string {
   const contextStr = history
     .slice(-3)
     .map(p => `${p.role}:${p.content?.substring(0, 100) ?? ''}`)
     .join('|');
 
-  const fullStr = `${contextStr}|${message}`;
+  const fullStr = `${currentContext}|${contextStr}|${message}`;
   let hash = 0;
   for (let i = 0; i < fullStr.length; i++) {
     const char = fullStr.charCodeAt(i);

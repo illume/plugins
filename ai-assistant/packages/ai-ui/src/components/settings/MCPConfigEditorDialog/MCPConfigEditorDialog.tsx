@@ -1,3 +1,4 @@
+import { isSafeRemoteMcpUrl } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPServer, MCPSettings } from '@headlamp-k8s/ai-common/mcp/types';
 import { Icon } from '@iconify/react';
 import Editor from '@monaco-editor/react';
@@ -15,6 +16,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DefaultDialog } from '../../defaults/DefaultSlots/DefaultSlots';
+import { isValidHttpHeaders } from '../mcpValidation';
 
 /** Top-level MCP configuration edited by this dialog. */
 export type MCPConfig = MCPSettings;
@@ -76,10 +78,27 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
         error: t('Server {{number}}: name must be a non-empty string', { number }),
       };
     }
-    if (typeof server.command !== 'string' || !server.command.trim()) {
+    const transport = server.transport ?? 'stdio';
+    if (typeof transport !== 'string' || !['stdio', 'http', 'sse'].includes(transport)) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: transport must be stdio, http, or sse', { number }),
+      };
+    }
+    if (transport === 'stdio' && (typeof server.command !== 'string' || !server.command.trim())) {
       return {
         valid: false,
         error: t('Server {{number}}: command must be a non-empty string', { number }),
+      };
+    }
+    let remoteUrlIsValid = true;
+    if (transport !== 'stdio') {
+      remoteUrlIsValid = isSafeRemoteMcpUrl(server.url);
+    }
+    if (!remoteUrlIsValid) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: url must be an HTTP URL', { number }),
       };
     }
     const normalizedName = server.name.trim();
@@ -90,17 +109,30 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
       };
     }
     serverNames.add(normalizedName.toLowerCase());
-    if (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string')) {
+    if (
+      (transport === 'stdio' && !Array.isArray(server.args)) ||
+      (server.args !== undefined &&
+        (!Array.isArray(server.args) || !server.args.every(arg => typeof arg === 'string')))
+    ) {
       return {
         valid: false,
         error: t('Server {{number}}: args must be an array of strings', { number }),
       };
     }
-    const env = server.env;
-    if (env !== undefined && !isStringRecord(env)) {
+    const env = transport === 'stdio' ? server.env : undefined;
+    if (transport === 'stdio' && env !== undefined && !isStringRecord(env)) {
       return {
         valid: false,
         error: t('Server {{number}}: env must contain only string key-value pairs', { number }),
+      };
+    }
+    const headers = server.headers;
+    if (headers !== undefined && !isValidHttpHeaders(headers)) {
+      return {
+        valid: false,
+        error: t('Server {{number}}: headers must contain valid HTTP names and string values', {
+          number,
+        }),
       };
     }
     if (typeof server.enabled !== 'boolean') {
@@ -117,13 +149,22 @@ function validateConfig(value: unknown, t: Translate): ValidationResult {
       };
     }
 
-    const normalizedServer: MCPServer = {
-      name: normalizedName,
-      command: server.command.trim(),
-      args: server.args,
-      enabled: server.enabled,
-    };
-    if (isStringRecord(env)) normalizedServer.env = env;
+    const normalizedServer: MCPServer =
+      transport === 'stdio'
+        ? {
+            name: normalizedName,
+            command: (server.command as string).trim(),
+            args: server.args as string[],
+            enabled: server.enabled,
+          }
+        : {
+            name: normalizedName,
+            transport: transport as 'http' | 'sse',
+            url: server.url as string,
+            ...(isValidHttpHeaders(headers) ? { headers } : {}),
+            enabled: server.enabled,
+          };
+    if (transport === 'stdio' && isStringRecord(env)) normalizedServer.env = env;
     if (typeof autoApprove === 'boolean') normalizedServer.autoApprove = autoApprove;
     servers.push(normalizedServer);
   }
@@ -233,8 +274,13 @@ export default function MCPConfigEditorDialog({
       servers: [
         {
           name: t('string - Unique server name'),
+          transport: t('stdio, http, or sse (optional; defaults to stdio)'),
           command: t('string - Executable command or path'),
           args: [t('array of strings - Command arguments')],
+          url: t('string - HTTP or SSE endpoint URL'),
+          headers: {
+            Authorization: t('string value - Request headers (optional)'),
+          },
           env: {
             KEY: t('string value - Environment variables (optional)'),
           },

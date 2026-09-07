@@ -24,6 +24,10 @@ import type { MCPToolsConfig, MCPToolState } from '../../mcp/types';
 import { AVAILABLE_TOOLS, getToolByName } from '../catalog/builtInTools';
 import type { KubernetesToolContext } from '../kubernetes/context';
 import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
+import {
+  ObservabilityTool,
+  type ObservabilityToolContext,
+} from '../observability/ObservabilityTools';
 import type { ToolExecutionResult } from '../ToolRuntime';
 import { LangChainTool } from './LangChainTool';
 
@@ -90,11 +94,14 @@ export class LangChainToolManager {
    */
   constructor({
     kubernetesContext,
+    observabilityContext,
     enabledToolIds,
     mcpClient,
   }: {
     /** Optional Kubernetes context forwarded before built-in tool initialization. */
     kubernetesContext?: KubernetesToolContext;
+    /** Optional connection settings for native read-only observability tools. */
+    observabilityContext?: ObservabilityToolContext;
     /** Optional allowlist of built-in tool IDs. */
     enabledToolIds?: string[];
     /** MCP bridge adapter. Defaults to a no-op when not provided. */
@@ -104,7 +111,7 @@ export class LangChainToolManager {
       this.configureKubernetesContext(kubernetesContext);
     }
     this.mcpClient = mcpClient ?? new NullToolClient();
-    this.initializeTools(enabledToolIds);
+    this.initializeTools(enabledToolIds, observabilityContext);
     this.mcpInitializationPromise = this.initializeMCPTools();
   }
 
@@ -114,12 +121,22 @@ export class LangChainToolManager {
    * Individual construction failures are logged without stopping other tools.
    *
    * @param enabledToolIds - Optional allowlist; absence enables every catalog tool.
+   * @param observabilityContext - Optional native provider API settings.
    * @returns No value.
    */
-  private initializeTools(enabledToolIds?: string[]): void {
+  private initializeTools(
+    enabledToolIds?: string[],
+    observabilityContext?: ObservabilityToolContext
+  ): void {
     // Initialize built-in tools first
     for (const ToolClass of AVAILABLE_TOOLS) {
       const tempTool = new ToolClass();
+      if (tempTool instanceof ObservabilityTool) {
+        if (!observabilityContext) {
+          continue;
+        }
+        tempTool.setContext(observabilityContext);
+      }
       if (enabledToolIds && !enabledToolIds.includes(tempTool.config.name)) {
         continue; // Skip tools not enabled
       }
@@ -714,7 +731,8 @@ export class LangChainToolManager {
     const regularTool = this.toolHandlers.get(toolName);
     if (regularTool) {
       try {
-        return await regularTool.handler(args, toolCallId, pendingPrompt);
+        const validatedArgs = regularTool.config.schema.parse(args) as Record<string, unknown>;
+        return await regularTool.handler(validatedArgs, toolCallId, pendingPrompt);
       } catch (error) {
         return {
           content: JSON.stringify({

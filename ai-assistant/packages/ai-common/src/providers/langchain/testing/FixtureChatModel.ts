@@ -15,6 +15,7 @@
  */
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage } from '@langchain/core/messages';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { DEMO_CLUSTER_EXPLORATION, DIAGNOSIS_FIXTURES, GENERAL_FIXTURES } from './modelFixtures.js';
 
@@ -61,6 +62,13 @@ export interface FixtureEntry {
   prompt: string;
   /** Response template returned when the prompt matches. */
   response: string;
+  /** Optional deterministic tool calls returned instead of plain text. */
+  toolCalls?: Array<{
+    /** Tool name. */
+    name: string;
+    /** Tool arguments. */
+    args: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -214,8 +222,7 @@ function fillTemplate(template: string, vars: Record<string, string>): string {
 }
 
 /**
- * Tries each fixture's prompt pattern against `input`.  Returns the first
- * matching response with variables substituted, or `undefined` if nothing matches.
+ * Finds the first fixture whose prompt pattern matches `input`.
  *
  * First attempts an exact match (the input, after trimming, must match the
  * template from start to end).  If no exact match is found, tries to find a
@@ -225,16 +232,19 @@ function fillTemplate(template: string, vars: Record<string, string>): string {
  *
  * @param input - User or composed prompt text to match.
  * @param fixtures - Ordered fixture entries to test in two passes.
- * @returns The first substituted response, or `undefined` when no fixture matches.
+ * @returns The first substituted response and associated tool calls, or `undefined`.
  */
-function matchFixtures(input: string, fixtures: FixtureEntry[]): string | undefined {
+function findFixtureMatch(
+  input: string,
+  fixtures: FixtureEntry[]
+): { response: string; toolCalls?: FixtureEntry['toolCalls'] } | undefined {
   const trimmed = input.trim();
 
   // Pass 1: exact match.
   for (const entry of fixtures) {
     const vars = matchTemplate(trimmed, entry.prompt);
     if (vars) {
-      return fillTemplate(entry.response, vars);
+      return { response: fillTemplate(entry.response, vars), toolCalls: entry.toolCalls };
     }
   }
 
@@ -255,11 +265,22 @@ function matchFixtures(input: string, fixtures: FixtureEntry[]): string | undefi
     const candidate = trimmed.slice(idx);
     const vars = matchTemplate(candidate, entry.prompt);
     if (vars) {
-      return fillTemplate(entry.response, vars);
+      return { response: fillTemplate(entry.response, vars), toolCalls: entry.toolCalls };
     }
   }
 
   return undefined;
+}
+
+/**
+ * Matches fixture response text for testing and compatibility.
+ *
+ * @param input - User or composed prompt text to match.
+ * @param fixtures - Ordered fixture entries to test.
+ * @returns The first substituted response, or `undefined` when no fixture matches.
+ */
+function matchFixtures(input: string, fixtures: FixtureEntry[]): string | undefined {
+  return findFixtureMatch(input, fixtures)?.response;
 }
 
 /**
@@ -470,6 +491,7 @@ export function createFixtureChatModel(options: FixtureChatModelOptions = {}): B
     const superGenerate = prototype._generate.bind(patchedModel);
     patchedModel._generate = async function (messages, options, runManager) {
       let matched: string;
+      let toolCalls: FixtureEntry['toolCalls'];
 
       if (sequenceTurns) {
         matched = sequenceTurns[sequenceIndex % sequenceTurns.length].response;
@@ -478,13 +500,26 @@ export function createFixtureChatModel(options: FixtureChatModelOptions = {}): B
         const lastHuman = [...messages].reverse().find(message => message._getType() === 'human');
         const input = extractMessageText(lastHuman?.content);
 
-        matched = matchFixtures(input, allFixtures) ?? fallback;
+        const fixtureMatch = findFixtureMatch(input, allFixtures);
+        matched = fixtureMatch?.response ?? fallback;
+        toolCalls = fixtureMatch?.toolCalls;
       }
 
       patchedModel.responses = [matched];
       patchedModel.i = 0;
 
-      return superGenerate(messages, options, runManager);
+      const result = await superGenerate(messages, options, runManager);
+      if (toolCalls?.length && result.generations[0]) {
+        result.generations[0].message = new AIMessage({
+          content: matched,
+          tool_calls: toolCalls.map((toolCall, index) => ({
+            ...toolCall,
+            id: `fixture-tool-call-${index}`,
+            type: 'tool_call' as const,
+          })),
+        });
+      }
+      return result;
     };
 
     // Override bindTools so the patch survives tool-binding.

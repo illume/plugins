@@ -80,11 +80,16 @@ import { useHistory, useLocation } from 'react-router-dom';
 import AIChatContent from './components/assistant/AIChatContent';
 import { AIInputSection } from './components/assistant/AllInputSection';
 import ContentRenderer from './ContentRenderer';
-import { generateContextDescription } from './context/contextGenerator';
+import {
+  type ClusterPlatforms,
+  type ClusterWarnings,
+  generateContextDescription,
+} from './context/contextGenerator';
 import EditorDialog from './editordialog';
 import { checkHolmesAgentHealth } from './holmesClient';
 import { HolmesHealthRequestGate } from './holmesHealthRequestGate';
 import { useKubernetesToolUI } from './hooks/useKubernetesToolUI';
+import { fetchClusterPlatforms } from './kubernetes/ClusterPlatformFetcher';
 import { fetchClusterWarnings, fetchWarningEventsForClusters } from './kubernetes/EventFetcher';
 import { createPluginCommandRunner } from './pluginCommandRunner';
 import { getSettingsURL, type PluginConfig, useGlobalState } from './pluginState';
@@ -193,6 +198,14 @@ export default function AIPrompt(props: {
   // Effects key off this instead of the array so a new array with the same
   // clusters does not re-trigger event fetching.
   const clusterNamesKey = clusterNames.join(',');
+  const clusterPlatformConfigKey = JSON.stringify(
+    clusterNames.map(cluster => [
+      cluster,
+      clusters[cluster]?.server ?? clusters[cluster]?.cluster?.server ?? null,
+    ])
+  );
+  const clusterConfigsRef = useRef(clusters);
+  clusterConfigsRef.current = clusters;
 
   // Fetch cluster warnings on-demand for context generation (replaces
   // the continuous useClusterWarnings hook).
@@ -563,6 +576,25 @@ export default function AIPrompt(props: {
     }
   }, [pluginSettings?.mcpConfig]);
 
+  const createSessionOptions = React.useCallback(
+    () =>
+      pluginSettings?.devOptions?.enableMockTools
+        ? { toolManager: createMockKubernetesToolManager() }
+        : {
+            mcpClient: electronMCPClient,
+            observabilityContext: {
+              config: pluginSettings?.observability ?? {},
+              commandRunner: commandRunnerRef.current ?? undefined,
+            },
+            autoApproveObservabilityTools: pluginSettings?.observabilityAutoApproval === true,
+          },
+    [
+      pluginSettings?.devOptions?.enableMockTools,
+      pluginSettings?.observability,
+      pluginSettings?.observabilityAutoApproval,
+    ]
+  );
+
   React.useEffect(() => {
     // Recreate the manager whenever pluginSettings change (including tool settings)
     // or when activeConfig/selectedModel/mcpConfig changes
@@ -588,9 +620,7 @@ export default function AIPrompt(props: {
           activeConfig!.providerId,
           configWithModel,
           enabledTools,
-          pluginSettings?.devOptions?.enableMockTools
-            ? { toolManager: createMockKubernetesToolManager() }
-            : { mcpClient: electronMCPClient }
+          createSessionOptions()
         );
         setAiManager(newManager);
       } catch (error: unknown) {
@@ -606,13 +636,7 @@ export default function AIPrompt(props: {
     return () => {
       isCurrent = false;
     };
-  }, [
-    enabledTools,
-    activeConfig,
-    selectedModel,
-    mcpConfigKey,
-    pluginSettings?.devOptions?.enableMockTools,
-  ]);
+  }, [enabledTools, activeConfig, selectedModel, mcpConfigKey, createSessionOptions]);
 
   // ─── Wire up SkillManager for prompt skill injection ──────────────────────
   // Creates a SkillManager with browser-compatible adapters (fetch + JSZip).
@@ -672,10 +696,9 @@ export default function AIPrompt(props: {
             activeConfig.providerId,
             configWithModel,
             enabledTools,
-            pluginSettings?.devOptions?.enableMockTools
-              ? { toolManager: createMockKubernetesToolManager() }
-              : { mcpClient: electronMCPClient }
+            createSessionOptions()
           );
+          isolatedManager.setContext(aiManager?.currentContext ?? '');
           // LangChain doesn't stream intermediate events, so just report start/end
           onStep?.({
             id: `lc-start-${Date.now()}`,
@@ -715,7 +738,8 @@ export default function AIPrompt(props: {
     activeConfig,
     selectedModel,
     enabledTools,
-    pluginSettings,
+    createSessionOptions,
+    aiManager,
     t,
   ]);
   // ─── End proactive diagnosis connection ─────────────────────────────
@@ -1683,41 +1707,49 @@ export default function AIPrompt(props: {
     const event = _pluginSetting.event;
     const currentCluster = getCluster();
     const currentClusterGroup = getClusterGroup();
+    let cancelled = false;
 
     // Fetch warnings on-demand for context generation (one-shot, not continuous)
-    const clusters = clusterNames;
-    fetchClusterWarnings(clusters)
-      .then(warnings => {
-        clusterWarningsRef.current = warnings;
+    const contextClusters = clusterNames;
+    const selectedContextClusters =
+      selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined;
+    const setClusterContext = (warnings?: ClusterWarnings, clusterPlatforms?: ClusterPlatforms) => {
+      const contextDescription = generateContextDescription(
+        event,
+        currentCluster,
+        warnings,
+        selectedContextClusters,
+        clusterPlatforms
+      );
+      const fullContext =
+        currentClusterGroup && currentClusterGroup.length > 1
+          ? `Part of cluster group with ${currentClusterGroup.length} clusters\n${contextDescription}`
+          : contextDescription;
+      aiManager.setContext(fullContext);
+    };
 
-        const contextDescription = generateContextDescription(
-          event,
-          currentCluster,
-          warnings,
-          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined
-        );
-        let fullContext = contextDescription;
-        if (currentClusterGroup && currentClusterGroup.length > 1) {
-          fullContext = `Part of cluster group with ${currentClusterGroup.length} clusters\n${fullContext}`;
-        }
-        aiManager.setContext(fullContext);
+    setClusterContext(
+      undefined,
+      Object.fromEntries(contextClusters.map(cluster => [cluster, 'unknown'] as const))
+    );
+
+    Promise.all([
+      fetchClusterWarnings(contextClusters),
+      fetchClusterPlatforms(contextClusters, clusterConfigsRef.current),
+    ])
+      .then(([warnings, clusterPlatforms]) => {
+        if (cancelled) return;
+        clusterWarningsRef.current = warnings;
+        setClusterContext(warnings, clusterPlatforms);
       })
       .catch(err => {
-        console.error('[Context] Failed to fetch warnings for context:', err);
-        // Fall back to generating context without warnings
-        const contextDescription = generateContextDescription(
-          event,
-          currentCluster,
-          undefined,
-          selectedClusters && selectedClusters.length > 0 ? selectedClusters : undefined
-        );
-        let fullContext = contextDescription;
-        if (currentClusterGroup && currentClusterGroup.length > 1) {
-          fullContext = `Part of cluster group with ${currentClusterGroup.length} clusters\n${fullContext}`;
-        }
-        aiManager.setContext(fullContext);
+        if (cancelled) return;
+        console.error('[Context] Failed to fetch cluster context:', err);
       });
-  }, [_pluginSetting.event, aiManager, clusterNamesKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [_pluginSetting.event, aiManager, clusterNamesKey, clusterPlatformConfigKey]);
 
   React.useEffect(() => {
     aiManager?.configureTools?.(
@@ -2002,7 +2034,7 @@ export default function AIPrompt(props: {
                 if (isTestMode) {
                   setPromptHistory([]);
                 } else {
-                  aiManager?.reset();
+                  aiManager?.clearHistory();
                   updateHistory();
                 }
                 // Clear tool approval session when history is cleared

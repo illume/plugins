@@ -748,7 +748,7 @@ describe('AgentHarnessSession', () => {
 
     await session.userSend('Show me the secret');
 
-    const toolEntry = session.history.find(message => message.role === 'tool');
+    const toolEntry = session.history.findLast(message => message.role === 'tool');
     expect(toolEntry?.content).not.toContain('cG9zdGdyZXM6Ly8=');
     expect(toolEntry?.content).toContain('[REDACTED]');
   });

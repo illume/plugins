@@ -87,6 +87,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           getLangChainTools: () => adaptedTools,
         },
         systemPrompt: this.createSystemPrompt(),
+        middleware: [toolAdapter.getHaltMiddleware()],
       });
       inputMessages = this.prepareChatHistory();
       historyLengthBeforeRun = this.history.length;
@@ -100,27 +101,22 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
 
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       this.currentAbortController = null;
-      const deferredResult = this.getDeferredResult(runtimeResults);
+      const deferredResult = this.getDeferredResultsContent(runtimeResults);
       if (deferredResult) {
-        return { role: 'assistant', content: redactSecrets(deferredResult.content) };
+        return { role: 'assistant', content: deferredResult };
       }
       return this.lastAssistantMessage();
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
-      if (error instanceof AgentToolExecutionHalt) {
+      const halt = this.asToolExecutionHalt(error);
+      if (halt) {
         this.currentAbortController = null;
-        if (error.resultContent && !error.requiresConfirmation) {
-          return {
-            role: 'assistant',
-            content: error.resultContent,
-          };
-        }
-        if (error.requiresConfirmation) {
+        if (halt.requiresConfirmation) {
           return this.lastAssistantMessage();
         }
-        const deferredResult = this.getDeferredResult(runtimeResults);
+        const deferredResult = this.getDeferredResultsContent(runtimeResults) ?? halt.resultContent;
         if (deferredResult) {
-          return { role: 'assistant', content: redactSecrets(deferredResult.content) };
+          return { role: 'assistant', content: deferredResult };
         }
         return this.lastAssistantMessage();
       }
@@ -129,13 +125,47 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     }
   }
 
-  private getDeferredResult(
+  /**
+   * Unwraps an `AgentToolExecutionHalt` from the halt-enforcement middleware.
+   *
+   * `createAgent`'s `ToolNode` wraps errors thrown by `wrapToolCall`
+   * middleware in a `MiddlewareError`, preserving the original error on
+   * `.cause`, so the halt signal must be recovered from there. When multiple
+   * parallel tool calls halt in the same superstep, LangGraph aggregates them
+   * into a single error exposing the individual failures on `.errors`.
+   */
+  private asToolExecutionHalt(error: unknown): AgentToolExecutionHalt | undefined {
+    if (error instanceof AgentToolExecutionHalt) return error;
+    const cause = (error as { cause?: unknown } | undefined)?.cause;
+    if (cause instanceof AgentToolExecutionHalt) return cause;
+    const errors = (error as { errors?: unknown[] } | undefined)?.errors;
+    if (Array.isArray(errors)) {
+      for (const nested of errors) {
+        const halt = this.asToolExecutionHalt(nested);
+        if (halt) return halt;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Combines every non-confirmation deferred result from a run into one
+   * user-visible response.
+   *
+   * A single halt can be triggered by one call while parallel siblings (for
+   * example concurrent MCP queries) also set `shouldProcessFollowUp: false`;
+   * returning only the triggering call's content would silently drop the
+   * others even though they are still recorded in session history.
+   */
+  private getDeferredResultsContent(
     runtimeResults: Map<string, ToolExecutionResult>
-  ): ToolExecutionResult | undefined {
-    return [...runtimeResults.values()].find(
+  ): string | undefined {
+    const deferred = [...runtimeResults.values()].filter(
       result =>
         result.shouldProcessFollowUp === false && result.metadata?.requiresConfirmation !== true
     );
+    if (deferred.length === 0) return undefined;
+    return deferred.map(result => redactSecrets(result.content)).join('\n\n');
   }
 
   /**

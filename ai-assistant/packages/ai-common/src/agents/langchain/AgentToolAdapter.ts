@@ -17,6 +17,8 @@
 import { ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface, ToolRunnableConfig } from '@langchain/core/tools';
 import { tool } from '@langchain/core/tools';
+import type { AgentMiddleware } from 'langchain';
+import { createMiddleware, ToolInvocationError } from 'langchain';
 import { extractTextContent } from '../../conversation/content';
 import type { ConversationMessage } from '../../conversation/types';
 import { redactSecrets } from '../../security/redactSecrets';
@@ -84,6 +86,42 @@ export class AgentToolAdapter {
       ...runtimeTools.map(runtimeTool => this.wrapRuntimeTool(runtimeTool)),
       ...extraTools.map(extraTool => this.wrapExtraTool(extraTool)),
     ];
+  }
+
+  /**
+   * Middleware that lets a deferred halt (confirmation-pending or strict
+   * `shouldProcessFollowUp: false` result) actually abort the graph before
+   * its next model turn, instead of only being detected after the fact.
+   *
+   * `createAgent`'s `ToolNode` catches every tool-callback error itself and
+   * converts it into an ordinary `ToolMessage` unless the error originates
+   * from `wrapToolCall` middleware, in which case it re-throws. Routing our
+   * halt signal through this hook is what makes the throw in
+   * `wrapRuntimeTool`/`wrapExtraTool` genuinely stop the run.
+   */
+  getHaltMiddleware(): AgentMiddleware {
+    return createMiddleware({
+      name: 'AgentToolAdapterHalt',
+      wrapToolCall: async (request, handler) => {
+        try {
+          return await handler(request);
+        } catch (error) {
+          if (error instanceof AgentToolExecutionHalt) throw error;
+          if (error instanceof ToolInvocationError) {
+            return new ToolMessage({
+              content: error.message,
+              tool_call_id: request.toolCall.id ?? '',
+              name: request.toolCall.name ?? 'unknown',
+            });
+          }
+          return new ToolMessage({
+            content: `${error}\n Please fix your mistakes.`,
+            tool_call_id: request.toolCall.id ?? '',
+            name: request.toolCall.name ?? 'unknown',
+          });
+        }
+      },
+    });
   }
 
   private wrapRuntimeTool(source: StructuredToolInterface): StructuredToolInterface {

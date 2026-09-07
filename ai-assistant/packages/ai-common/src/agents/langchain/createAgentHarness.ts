@@ -16,6 +16,7 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import type { AgentMiddleware } from 'langchain';
 import { createAgent, modelCallLimitMiddleware, toolCallLimitMiddleware } from 'langchain';
 import { basePrompt } from '../../prompts/baseAssistantPrompt';
 
@@ -48,6 +49,8 @@ export interface AgentHarnessOptions {
   modelCallLimit?: number;
   /** Maximum tool calls in one invocation. */
   toolCallLimit?: number;
+  /** Additional middleware, such as the tool adapter's halt-enforcement hook. */
+  middleware?: AgentMiddleware[];
 }
 
 /**
@@ -75,6 +78,7 @@ export async function createAgentHarness(options: AgentHarnessOptions) {
         runLimit: options.toolCallLimit ?? DEFAULT_TOOL_CALL_LIMIT,
         exitBehavior: 'error',
       }),
+      ...(options.middleware ?? []),
     ],
     name: 'headlamp-kubernetes-agent',
   });

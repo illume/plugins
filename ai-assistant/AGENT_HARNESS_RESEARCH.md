@@ -242,7 +242,7 @@ The current `createAgent` base now provides:
 - Explicit prompt guidance to issue independent tool calls in parallel, with regression coverage proving concurrent execution and complete results.
 - Configurable model-call and tool-call budgets with deterministic error exits.
 - Custom or default system-prompt support.
-- An adapter for the existing session contract, including streaming, cancellation, approval handling, confirmation suspension, history alignment, redaction, and runtime error metadata.
+- An adapter for the existing session contract, including streaming, run/approval cancellation, approval handling, confirmation suspension, history alignment, redaction, and runtime error metadata. Cancellation stops the graph from starting further model or tool calls and releases pending approvals; it does not interrupt a tool execution that has already started.
 - Deterministic mock-tool support that preserves arbitrary model arguments for offline tests.
 
 These capabilities are covered by focused deterministic tests for normal model-tool-model loops,
@@ -364,8 +364,10 @@ on the criteria below.
 Before production use:
 
 1. keep the existing `ToolRuntime.executeTool()` boundary so graph calls retain
-   call IDs, structured metadata, history policy, redaction, and approval policy,
-   and interrupt the graph when a result defers follow-up;
+   call IDs, structured metadata, history policy, redaction, and approval
+   policy — deferred results already halt the graph before another model/tool
+   turn; the remaining gap is resuming a halted run through a checkpointed
+   graph thread instead of the host session;
 2. add host-owned typed Kubernetes context and reject model attempts to change
    cluster, namespace, identity, or credentials;
 3. adapt `ReactAgent.stream()` messages and updates to `AssistantSession` UI

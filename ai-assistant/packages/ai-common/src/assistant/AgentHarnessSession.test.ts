@@ -281,7 +281,9 @@ describe('AgentHarnessSession', () => {
           { id: 'strict-false-call', name: 'metrics__query', args: { query: 'up' } },
           { id: 'sibling-call', name: 'metrics__query', args: { query: 'down' } },
         ],
-        [],
+        // If the graph incorrectly continued past the strict-false result,
+        // the model would be invoked again and would request this call.
+        [{ id: 'unreachable-follow-up-call', name: 'metrics__query', args: { query: 'never' } }],
       ],
     });
     const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
@@ -295,9 +297,21 @@ describe('AgentHarnessSession', () => {
     await session.userSend('Query metrics');
 
     expect(executeTool).toHaveBeenCalledTimes(2);
+    expect(executeTool).not.toHaveBeenCalledWith(
+      'metrics__query',
+      expect.anything(),
+      'unreachable-follow-up-call',
+      expect.anything()
+    );
     expect(session.history.filter(message => message.role === 'assistant')).toHaveLength(1);
     expect(session.history.map(message => message.toolCallId)).toEqual(
       expect.arrayContaining(['strict-false-call', 'sibling-call'])
+    );
+    // The genuine tool result content must be preserved in history, not
+    // replaced by a generic "please fix your mistakes" error message from
+    // the graph's default tool-error recovery.
+    expect(session.history.find(message => message.toolCallId === 'strict-false-call')).toEqual(
+      expect.objectContaining({ content: JSON.stringify({ value: 'strict-false-call' }) })
     );
   });
 
@@ -329,6 +343,46 @@ describe('AgentHarnessSession', () => {
 
     expect(response.content).toBe('{"value":3}');
     expect(session.history.find(message => message.toolCallId === 'mcp-output-call')).toBeTruthy();
+  });
+
+  it('combines parallel strict-false results instead of returning only the triggering call', async () => {
+    const toolManager = createMockToolManager({ enabledToolNames: ['metrics__query'] });
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => ({
+        content: JSON.stringify({ value: toolCallId }),
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: false,
+      })
+    );
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            { id: 'mcp-call-a', name: 'metrics__query', args: { query: 'up' } },
+            { id: 'mcp-call-b', name: 'metrics__query', args: { query: 'down' } },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+
+    const response = await session.userSend('Query metrics');
+
+    expect(response.content).toContain(JSON.stringify({ value: 'mcp-call-a' }));
+    expect(response.content).toContain(JSON.stringify({ value: 'mcp-call-b' }));
+    expect(session.history.find(message => message.toolCallId === 'mcp-call-a')).toBeTruthy();
+    expect(session.history.find(message => message.toolCallId === 'mcp-call-b')).toBeTruthy();
   });
 
   it('releases a strict-false run when a parallel sibling stalls and the run is aborted', async () => {

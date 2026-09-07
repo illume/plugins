@@ -16,8 +16,16 @@
 
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
-import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'child_process';
+import { FakeToolCallingModel } from 'langchain';
+import { describe, expect, it, vi } from 'vitest';
 import { createManager, query } from './chat.js';
+
+vi.mock('child_process', () => ({
+  execFileSync: vi.fn(() => {
+    throw new Error('real kubectl must not be invoked when --mock-tools is set');
+  }),
+}));
 
 describe('chat', () => {
   it('exports a query function', () => {
@@ -37,5 +45,23 @@ describe('chat', () => {
 
     expect(harness).toBeInstanceOf(AgentHarnessSession);
     expect(legacy).toBeInstanceOf(LangChainAssistantSession);
+  });
+
+  it('routes kubernetes_api_request to the mock fixture instead of the real kubectl tool when --mock-tools is set', async () => {
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [{ id: 'list-pods-call', name: 'kubernetes_api_request', args: { url: '/api/v1/pods', method: 'GET' } }],
+        [],
+      ],
+    });
+    const manager = await createManager('mock-testing-model', {}, { mockTools: true, model });
+
+    const response = await query(manager, 'List the pods');
+
+    // The real kubectl tool is also registered via enableDirectToolCalling,
+    // but the mock manager must win for the shared `kubernetes_api_request`
+    // name so the CLI's --mock-tools flag actually takes effect.
+    expect(execFileSync).not.toHaveBeenCalled();
+    expect(response).toContain('nginx');
   });
 });

@@ -14,9 +14,9 @@
       {
         "fact_id": "endpoints-present",
         "resource_ref": "endpointslice/web",
-        "field_path": "endpoints",
-        "observed_value": "[\"10.0.0.21\"]",
-        "description": "The EndpointSlice has one address, confirming traffic is routed."
+        "field_path": "endpoints.count",
+        "observed_value": "1",
+        "description": "The EndpointSlice has one address, confirming traffic is routed without depending on its cluster-assigned value."
       }
     ]
   ],

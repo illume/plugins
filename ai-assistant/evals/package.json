@@ -14,6 +14,8 @@
   "scripts": {
     "eval": "tsx src/cli.ts run",
     "eval:local:kwok": "tsx src/cli.ts run --profile local-kwok",
+    "eval:list-scenarios": "tsx src/cli.ts list-scenarios",
+    "eval:rerun": "tsx src/cli.ts rerun",
     "check": "npm run format && npm run tsc && npm run test",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "tsc": "tsc --noEmit",

@@ -1,4 +1,3 @@
-
 ## Current evaluation best practices
 
 This section synthesizes current official guidance and recent evaluation research. The sources converge on a practical point: an eval is not a leaderboard score or a collection of prompts. It is a maintained measurement system with a defined construct, representative tasks, controlled execution, validated graders, uncertainty estimates, and a feedback loop from production.

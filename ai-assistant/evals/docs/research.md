@@ -1,5 +1,3 @@
-
-
 ## Prioritized research backlog
 
 This backlog selects twenty-one high-leverage topics from three passes of candidates. The second pass added source discovery and provenance, user simulation, context and memory stress, MCP/tool conformance, provider drift, cost budgets, human trust, multilingual behavior, metamorphic generation, and data governance. A third pass against the best-practice guidance kept the deferred product questions but added four missing validity areas: eval integrity, ecosystem drift, concurrent operations, and offline-to-production validity.

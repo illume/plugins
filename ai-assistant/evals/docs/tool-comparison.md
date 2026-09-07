@@ -1,4 +1,3 @@
-
 ## Executive summary
 
 The strongest public evaluation systems found are:
@@ -13,6 +12,8 @@ The recommended Headlamp framework is a **hybrid of the first two**:
 - Use HolmesGPT-style expected criteria for root-cause identification, evidence, impact, and remediation quality.
 - Capture the agent trajectory, then score tool choice and evidence provenance separately from the prose answer.
 - Treat a correct fix with a wrong explanation, or a plausible explanation without evidence, as a partial result rather than a pass.
+
+For direct Phase 2 comparison, start with only **HolmesGPT and K8sGPT**. HolmesGPT provides a ready-to-run Compose service configured through provider environment variables and a mounted kubeconfig; K8sGPT publishes an official container image and exposes a small analyzer/authentication surface. Defer kubectl-ai, kagent, and DevOps AI Toolkit until the value of another comparison justifies their image-build, credential, runtime, or adapter setup.
 
 The existing plugin `test-files/` are a good seed corpus. Knative, kro, Volcano, and Strimzi already contain deterministic broken states. They should not be consumed directly as an unversioned glob: each should be wrapped in an eval manifest that identifies prerequisites, setup order, the hidden root cause, observable evidence, allowed mutations, cleanup, and hard verification.
 

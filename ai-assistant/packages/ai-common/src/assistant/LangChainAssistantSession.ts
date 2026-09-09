@@ -93,7 +93,6 @@ import {
   isRegularConversationMessage,
 } from '../tools/results/prepareToolResponse';
 import type { ToolCall } from '../tools/types';
-import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
 import AssistantSession from './AssistantSession';
 import {
   CacheEntry,
@@ -114,6 +113,7 @@ import {
   isMCPFormattedOutput,
   mapCorrectedResponseToolCalls,
 } from './responses/inspectResponse';
+import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
 
 /** Input required to invoke a prompt-template chain. */
 interface ChainInput {
@@ -302,26 +302,103 @@ export default class LangChainAssistantSession extends AssistantSession {
       response_metadata?: Record<string, unknown>;
     };
     const responseMetadata = value?.response_metadata;
+    const rawUsage = responseMetadata?.usage as Record<string, unknown> | undefined;
+    const normalizedUsage = value?.usage_metadata;
     const usage =
-      value?.usage_metadata ??
-      (responseMetadata?.usage as Record<string, unknown> | undefined) ??
+      normalizedUsage ??
+      rawUsage ??
       (responseMetadata?.tokenUsage as Record<string, unknown> | undefined);
     if (!usage) return;
 
-    const numberValue = (...keys: string[]): number | undefined => {
+    const metadataString = (...keys: string[]): string | undefined => {
       for (const key of keys) {
-        if (typeof usage[key] === 'number' && Number.isFinite(usage[key])) {
-          return usage[key] as number;
+        const metadataValue = responseMetadata?.[key] ?? rawUsage?.[key];
+        if (typeof metadataValue === 'string' && metadataValue.trim()) return metadataValue;
+      }
+      return undefined;
+    };
+
+    const numberValue = (source: Record<string, unknown> | undefined, ...keys: string[]) => {
+      for (const key of keys) {
+        if (typeof source?.[key] === 'number' && Number.isFinite(source[key])) {
+          return source[key] as number;
         }
       }
       return undefined;
     };
+    const usageNumber = (...keys: string[]) => numberValue(usage, ...keys);
+    const rawNumber = (...keys: string[]) => numberValue(rawUsage, ...keys);
+    const objectValue = (
+      source: Record<string, unknown> | undefined,
+      key: string
+    ): Record<string, unknown> | undefined =>
+      typeof source?.[key] === 'object' && source[key] !== null
+        ? (source[key] as Record<string, unknown>)
+        : undefined;
+    const inputTokenDetails =
+      objectValue(usage, 'input_token_details') ?? objectValue(usage, 'input_tokens_details');
+    const rawInputTokenDetails =
+      objectValue(rawUsage, 'input_token_details') ?? objectValue(rawUsage, 'input_tokens_details');
+    const promptTokenDetails = objectValue(usage, 'prompt_tokens_details');
+    const rawPromptTokenDetails = objectValue(rawUsage, 'prompt_tokens_details');
+    const outputTokenDetails =
+      objectValue(usage, 'output_token_details') ?? objectValue(usage, 'output_tokens_details');
+    const rawOutputTokenDetails =
+      objectValue(rawUsage, 'output_token_details') ??
+      objectValue(rawUsage, 'output_tokens_details');
+    const cacheCreation = objectValue(rawUsage ?? usage, 'cache_creation');
+    const detailValue = (key: string, rawKey = key): number | undefined =>
+      numberValue(inputTokenDetails, key) ?? numberValue(rawInputTokenDetails, rawKey);
     const event: AssistantTelemetryEvent = {
       type: 'model_usage',
-      input_tokens: numberValue('input_tokens', 'prompt_tokens', 'promptTokens'),
-      output_tokens: numberValue('output_tokens', 'completion_tokens', 'completionTokens'),
-      total_tokens: numberValue('total_tokens', 'totalTokens'),
+      provider: this.providerId,
+      input_token_semantics:
+        normalizedUsage || this.providerId !== 'anthropic'
+          ? 'total_including_cache'
+          : 'uncached_only',
+      model: metadataString('model_name', 'model', 'model_id'),
+      service_tier: metadataString('service_tier'),
+      inference_geo: metadataString('inference_geo', 'inference_geography'),
+      input_tokens: usageNumber('input_tokens', 'prompt_tokens', 'promptTokens'),
+      output_tokens: usageNumber('output_tokens', 'completion_tokens', 'completionTokens'),
+      total_tokens: usageNumber('total_tokens', 'totalTokens'),
+      cache_read_input_tokens:
+        detailValue('cache_read') ??
+        numberValue(promptTokenDetails, 'cached_tokens') ??
+        numberValue(rawPromptTokenDetails, 'cached_tokens') ??
+        usageNumber('cache_read_input_tokens', 'cached_tokens') ??
+        rawNumber('cache_read_input_tokens', 'cached_tokens'),
+      cache_creation_input_tokens:
+        detailValue('cache_creation') ??
+        usageNumber('cache_creation_input_tokens') ??
+        rawNumber('cache_creation_input_tokens'),
+      cache_write_input_tokens:
+        detailValue('cache_write', 'cache_write_tokens') ??
+        usageNumber('cache_write_input_tokens') ??
+        rawNumber('cache_write_input_tokens'),
+      cache_write_5m_input_tokens: numberValue(cacheCreation, 'ephemeral_5m_input_tokens'),
+      cache_write_1h_input_tokens: numberValue(cacheCreation, 'ephemeral_1h_input_tokens'),
+      reasoning_output_tokens:
+        numberValue(outputTokenDetails, 'reasoning', 'reasoning_tokens', 'thinking_tokens') ??
+        numberValue(rawOutputTokenDetails, 'reasoning', 'reasoning_tokens', 'thinking_tokens'),
     };
+    if (
+      event.total_tokens === undefined &&
+      event.input_tokens !== undefined &&
+      event.output_tokens !== undefined
+    ) {
+      const ttlCacheWrite =
+        (event.cache_write_5m_input_tokens ?? 0) + (event.cache_write_1h_input_tokens ?? 0);
+      const cacheWrite =
+        ttlCacheWrite > 0
+          ? ttlCacheWrite
+          : event.cache_write_input_tokens ?? event.cache_creation_input_tokens ?? 0;
+      const normalizedInput =
+        event.input_token_semantics === 'uncached_only'
+          ? event.input_tokens + (event.cache_read_input_tokens ?? 0) + cacheWrite
+          : event.input_tokens;
+      event.total_tokens = normalizedInput + event.output_tokens;
+    }
     if (
       event.input_tokens !== undefined ||
       event.output_tokens !== undefined ||
@@ -482,6 +559,7 @@ export default class LangChainAssistantSession extends AssistantSession {
           ? (accumulatedChunk.concat(chunk) as AIMessageChunk)
           : chunk;
       }
+      if (accumulatedChunk) this.recordModelUsage(accumulatedChunk);
 
       // Read tool calls from the fully-accumulated message.
       // This correctly handles providers (e.g. Claude via Copilot) that send
@@ -2165,6 +2243,7 @@ Please analyze this data and provide a specific, detailed response that directly
       });
 
       let fullContent = '';
+      let accumulatedChunk: AIMessageChunk | undefined;
 
       for await (const chunk of stream) {
         const content = this.extractTextContent(chunk.content);
@@ -2172,7 +2251,11 @@ Please analyze this data and provide a specific, detailed response that directly
           fullContent += content;
           yield content;
         }
+        accumulatedChunk = accumulatedChunk
+          ? (accumulatedChunk.concat(chunk) as AIMessageChunk)
+          : chunk;
       }
+      if (accumulatedChunk) this.recordModelUsage(accumulatedChunk);
 
       // Create the complete response prompt
       const assistantPrompt: ConversationMessage = {

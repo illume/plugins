@@ -1,0 +1,14 @@
+schema_version: '1.0.0'
+profile_name: local-kwok
+cluster:
+  kind: kwok
+  credential_env_vars: []
+model:
+  kind: copilot-auto
+  credential_env_vars:
+    - HEADLAMP_AI_PROVIDER
+    - HEADLAMP_AI_API_KEY
+    - HEADLAMP_AI_MODEL
+    - HEADLAMP_AI_BASE_URL
+    - HEADLAMP_AI_ENDPOINT
+    - HEADLAMP_AI_DEPLOYMENT_NAME

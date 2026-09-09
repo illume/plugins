@@ -46,6 +46,7 @@ import {
 import type { CacheEntry } from './cache/responseCache';
 import type { LangChainToolRuntime as ToolManagerAdapter } from './langchain/LangChainToolBinding';
 import LangChainAssistantSession from './LangChainAssistantSession';
+import type { AssistantTelemetryEvent } from './telemetry';
 
 interface TestExtraTool {
   name: string;
@@ -53,7 +54,14 @@ interface TestExtraTool {
 }
 
 interface TestModel {
-  invoke?(input: unknown, options?: unknown): Promise<{ content: unknown; tool_calls?: unknown[] }>;
+  invoke?(
+    input: unknown,
+    options?: unknown
+  ): Promise<{
+    content: unknown;
+    tool_calls?: unknown[];
+    usage_metadata?: unknown;
+  }>;
   stream?(input: unknown, options?: unknown): AsyncIterable<unknown> | Promise<unknown>;
   bindTools?(tools: unknown[]): TestModel;
 }
@@ -861,6 +869,81 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
     );
     expect(toolResponse).toBeDefined();
     expect(toolResponse?.content).toContain('PodList');
+  });
+
+  it('emits sanitized model usage and tool completion telemetry', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        usage_metadata: { input_tokens: 8, output_tokens: 2, total_tokens: 10 },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => JSON.stringify({ kind: 'PodList', items: [] }),
+    });
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+    await privateManager(manager).processToolCalls(
+      [
+        {
+          type: 'function',
+          id: 'call_telemetry',
+          function: {
+            name: 'kubernetes_api_request',
+            arguments: JSON.stringify({ url: '/api/v1/pods', method: 'GET' }),
+          },
+        },
+      ],
+      { role: 'assistant', content: 'Checking...' }
+    );
+
+    expect(events).toEqual([
+      { type: 'model_usage', input_tokens: 8, output_tokens: 2, total_tokens: 10 },
+      {
+        type: 'tool_call',
+        tool_name: 'kubernetes_api_request',
+        mutating: false,
+        status: 'success',
+        duration_ns: expect.stringMatching(/^\d+$/),
+      },
+    ]);
+    expect(JSON.stringify(events)).not.toContain('/api/v1/pods');
+  });
+
+  it('classifies a non-Kubernetes tool without an HTTP method as read-only', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).extraTools.set('search_documentation', {
+      name: 'search_documentation',
+      invoke: async () => 'result',
+    });
+
+    await privateManager(manager).processToolCalls(
+      [
+        {
+          type: 'function',
+          id: 'call_search',
+          function: { name: 'search_documentation', arguments: JSON.stringify({ query: 'pods' }) },
+        },
+      ],
+      { role: 'assistant', content: 'Searching...' }
+    );
+
+    expect(events).toContainEqual({
+      type: 'tool_call',
+      tool_name: 'search_documentation',
+      mutating: false,
+      status: 'success',
+      duration_ns: expect.stringMatching(/^\d+$/),
+    });
   });
 });
 

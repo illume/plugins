@@ -12,6 +12,7 @@
     "./agents/scripted/types": "./src/agents/scripted/types.ts",
     "./assistant/AssistantSession": "./src/assistant/AssistantSession.ts",
     "./assistant/LangChainAssistantSession": "./src/assistant/LangChainAssistantSession.ts",
+    "./assistant/telemetry": "./src/assistant/telemetry.ts",
     "./conversation/content": "./src/conversation/content.ts",
     "./conversation/context": "./src/conversation/context.ts",
     "./conversation/history": "./src/conversation/history.ts",

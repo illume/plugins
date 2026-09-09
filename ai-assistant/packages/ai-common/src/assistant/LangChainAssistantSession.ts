@@ -93,6 +93,7 @@ import {
   isRegularConversationMessage,
 } from '../tools/results/prepareToolResponse';
 import type { ToolCall } from '../tools/types';
+import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
 import AssistantSession from './AssistantSession';
 import {
   CacheEntry,
@@ -186,6 +187,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   private useDirectToolCalling: boolean = false;
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
   private extraTools: Map<string, ExtraTool> = new Map();
+  private telemetryObserver?: AssistantTelemetryObserver;
 
   // Skills system
   private skillManager: SkillManager | null = null;
@@ -230,10 +232,13 @@ export default class LangChainAssistantSession extends AssistantSession {
       toolManager?: LangChainToolRuntime;
       /** Host MCP bridge used to discover and execute MCP tools. */
       mcpClient?: ToolClient;
+      /** Receives sanitized model-usage and tool-completion events. */
+      telemetryObserver?: AssistantTelemetryObserver;
     }
   ) {
     super();
     this.providerId = providerId;
+    this.telemetryObserver = options?.telemetryObserver;
     const enabledToolIds = enabledTools ?? [];
     console.debug(
       'AI Assistant: Initializing with enabled tools:',
@@ -281,6 +286,54 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.skillsConfig = skillsConfig;
     this.currentSkillsPromptText = '';
     this.responseCache.clear();
+  }
+
+  private recordTelemetry(event: AssistantTelemetryEvent): void {
+    try {
+      this.telemetryObserver?.(event);
+    } catch {
+      // Telemetry must never change assistant behavior.
+    }
+  }
+
+  private recordModelUsage(response: unknown): void {
+    const value = response as {
+      usage_metadata?: Record<string, unknown>;
+      response_metadata?: Record<string, unknown>;
+    };
+    const responseMetadata = value?.response_metadata;
+    const usage =
+      value?.usage_metadata ??
+      (responseMetadata?.usage as Record<string, unknown> | undefined) ??
+      (responseMetadata?.tokenUsage as Record<string, unknown> | undefined);
+    if (!usage) return;
+
+    const numberValue = (...keys: string[]): number | undefined => {
+      for (const key of keys) {
+        if (typeof usage[key] === 'number' && Number.isFinite(usage[key])) {
+          return usage[key] as number;
+        }
+      }
+      return undefined;
+    };
+    const event: AssistantTelemetryEvent = {
+      type: 'model_usage',
+      input_tokens: numberValue('input_tokens', 'prompt_tokens', 'promptTokens'),
+      output_tokens: numberValue('output_tokens', 'completion_tokens', 'completionTokens'),
+      total_tokens: numberValue('total_tokens', 'totalTokens'),
+    };
+    if (
+      event.input_tokens !== undefined ||
+      event.output_tokens !== undefined ||
+      event.total_tokens !== undefined
+    ) {
+      this.recordTelemetry(event);
+    }
+  }
+
+  private isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
+    if (toolName !== 'kubernetes_api_request') return false;
+    return typeof args.method !== 'string' || args.method.toUpperCase() !== 'GET';
   }
 
   /**
@@ -922,6 +975,7 @@ export default class LangChainAssistantSession extends AssistantSession {
         signal: this.currentAbortController?.signal,
         callbacks: [capture.callback],
       });
+      this.recordModelUsage(result);
 
       this.currentAbortController = null;
 
@@ -1065,6 +1119,7 @@ export default class LangChainAssistantSession extends AssistantSession {
       signal: this.currentAbortController?.signal,
       callbacks: [capture.callback],
     });
+    this.recordModelUsage(response);
 
     this.currentAbortController = null;
 
@@ -1408,6 +1463,7 @@ Please analyze this data and provide a specific, detailed response that directly
       const response = await model.invoke(messages, {
         signal: this.currentAbortController?.signal,
       });
+      this.recordModelUsage(response);
 
       this.currentAbortController = null;
 
@@ -1765,6 +1821,16 @@ Please analyze this data and provide a specific, detailed response that directly
       // Add denied tool responses to history
       const deniedToolCalls = enabledToolCalls.filter(tc => !approvedToolIds.includes(tc.id));
       for (const deniedTool of deniedToolCalls) {
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: deniedTool.function.name,
+          mutating: this.isMutatingToolCall(
+            deniedTool.function.name,
+            parseSerializedToolArguments(deniedTool.function.arguments)
+          ),
+          status: 'denied',
+          duration_ns: '0',
+        });
         this.history.push({
           role: 'tool',
           content: JSON.stringify({
@@ -1814,6 +1880,7 @@ Please analyze this data and provide a specific, detailed response that directly
 
     for (const toolCall of toolCalls) {
       const args = parseSerializedToolArguments(toolCall.function.arguments);
+      const startedAt = performance.now();
 
       try {
         // Try extra tools first (e.g. kubectl for CLI), then the tool runtime.
@@ -1845,6 +1912,13 @@ Please analyze this data and provide a specific, detailed response that directly
           const toolName = toolCall.function.name || 'unknown tool';
           failedOperations.push(`${toolName}: ${errorMsg}`);
         }
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: toolCall.function.name,
+          mutating: this.isMutatingToolCall(toolCall.function.name, args),
+          status: isError ? 'error' : 'success',
+          duration_ns: String(Math.round((performance.now() - startedAt) * 1_000_000)),
+        });
 
         // Only add to history if the tool response indicates we should
         if (toolResponse.shouldAddToHistory) {
@@ -1885,6 +1959,13 @@ Please analyze this data and provide a specific, detailed response that directly
           });
         }
       } catch (error) {
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: toolCall.function.name,
+          mutating: this.isMutatingToolCall(toolCall.function.name, args),
+          status: 'error',
+          duration_ns: String(Math.round((performance.now() - startedAt) * 1_000_000)),
+        });
         console.error('Error executing tool call:', error);
 
         const toolName = toolCall.function.name || 'unknown tool';
@@ -2137,8 +2218,14 @@ Please analyze this data and provide a specific, detailed response that directly
        * @param input - Specialized system prompt and analysis messages.
        * @returns Raw model response.
        */
-      invoke: (input: ToolResponseChainInput) =>
-        model.invoke([new SystemMessage(input.systemPrompt), ...input.messages]),
+      invoke: async (input: ToolResponseChainInput) => {
+        const response = await model.invoke([
+          new SystemMessage(input.systemPrompt),
+          ...input.messages,
+        ]);
+        this.recordModelUsage(response);
+        return response;
+      },
     };
   }
 

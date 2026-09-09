@@ -1,0 +1,68 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/scenario.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "family",
+    "mode",
+    "title",
+    "description",
+    "provenance",
+    "supported_cluster_profiles",
+    "required_mechanisms",
+    "declared_kwok_compatible",
+    "setup_manifest_path",
+    "namespace_prefix",
+    "artifact_policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "scenario_version": { "type": "string" },
+    "family": { "type": "string" },
+    "mode": { "type": "string", "enum": ["diagnose_only", "repair"] },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "owner",
+        "source",
+        "license",
+        "admission_date",
+        "last_review",
+        "review_due",
+        "lifecycle_state"
+      ],
+      "properties": {
+        "owner": { "type": "string" },
+        "source": {
+          "type": "string",
+          "enum": ["synthetic", "reference-implementation", "product-bug", "support-incident"]
+        },
+        "license": { "type": "string" },
+        "admission_date": { "type": "string" },
+        "last_review": { "type": "string" },
+        "review_due": { "type": "string" },
+        "lifecycle_state": {
+          "type": "string",
+          "enum": ["active", "draft", "quarantined", "retired"]
+        },
+        "quarantine": { "type": "object" }
+      }
+    },
+    "supported_cluster_profiles": { "type": "array", "items": { "type": "string" } },
+    "required_mechanisms": { "type": "array", "items": { "type": "string" } },
+    "declared_kwok_compatible": { "type": "boolean" },
+    "setup_manifest_path": { "type": "string" },
+    "namespace_prefix": { "type": "string" },
+    "artifact_policy": {
+      "type": "object",
+      "required": ["retain_raw_tool_output"],
+      "properties": { "retain_raw_tool_output": { "type": "boolean" } }
+    }
+  }
+}

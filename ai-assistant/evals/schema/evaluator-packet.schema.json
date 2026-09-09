@@ -1,0 +1,58 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/evaluator-packet.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "accepted_fact_sets",
+    "accepted_actions",
+    "contradiction_facts",
+    "expects_uncertainty",
+    "secret_canary"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "scenario_version": { "type": "string" },
+    "accepted_fact_sets": { "type": "array" },
+    "required_evidence_relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "relation_id",
+          "operator",
+          "left_resource_ref",
+          "left_field_path",
+          "right_resource_ref_prefix",
+          "right_field_path"
+        ],
+        "properties": {
+          "relation_id": { "type": "string", "minLength": 1 },
+          "operator": { "type": "string", "enum": ["all_kubernetes_cpu_less_than"] },
+          "left_resource_ref": { "type": "string", "minLength": 1 },
+          "left_field_path": { "type": "string", "minLength": 1 },
+          "right_resource_ref_prefix": { "type": "string", "minLength": 1 },
+          "right_field_path": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "accepted_actions": { "type": "array" },
+    "contradiction_facts": { "type": "array" },
+    "expects_uncertainty": { "type": "boolean" },
+    "min_hypotheses_if_uncertain": { "type": "number" },
+    "accepted_hypotheses_if_uncertain": { "type": "array", "items": { "type": "string" } },
+    "accepted_hypothesis_aliases_if_uncertain": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "secret_canary": { "type": "string" }
+  }
+}

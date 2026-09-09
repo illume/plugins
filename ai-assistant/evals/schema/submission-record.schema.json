@@ -1,0 +1,13 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/submission-record.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trial_id", "attempt_id", "raw_text_digest", "submission_text"],
+  "properties": {
+    "trial_id": { "type": "string" },
+    "attempt_id": { "type": "string" },
+    "raw_text_digest": { "type": "string" },
+    "submission_text": { "type": ["string", "null"] }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/candidate-packet.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "task_prompt",
+    "visible_resource_refs",
+    "allowed_observation_kinds",
+    "allow_additional_retrieval",
+    "allow_mutations",
+    "required_submission_schema"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "scenario_version": { "type": "string" },
+    "task_prompt": { "type": "string" },
+    "visible_resource_refs": { "type": "array", "items": { "type": "string" } },
+    "allowed_observation_kinds": { "type": "array", "items": { "type": "string" } },
+    "allow_additional_retrieval": { "type": "boolean" },
+    "allow_mutations": { "type": "boolean" },
+    "required_submission_schema": { "type": "string" }
+  },
+  "additionalProperties": false
+}

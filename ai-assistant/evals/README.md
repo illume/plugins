@@ -1,19 +1,19 @@
 # @headlamp-k8s/ai-evals
 
-Phase 1 evaluation framework under qualification for the Headlamp AI Assistant: a local,
+Phase 1 evaluation framework plus a non-claiming Phase 2A foundation for the Headlamp AI Assistant: a local,
 deterministic, offline-by-default developer loop that answers **"which
 Headlamp behavior changed?"** from retained evidence, not from a blended
 score. See [`docs/implementation-phases.md`](docs/implementation-phases.md)
-for the full roadmap this package implements Phase 1 of.
+for the full roadmap. Phase 2 exit claims remain gated by the complete roadmap.
 
 ## What this is (and is not)
 
 - **Is**: a standalone TypeScript package with typed/versioned contracts,
-  four frozen Kubernetes scenarios, deterministic graders, a canonical
+  four active Phase 1 scenarios, eight draft Phase 2 anchors, deterministic graders, a canonical
   immutable result bundle, generated reports, a redacted public publication
   view, and offline golden exporter projections (LangSmith-native, OTLP).
-- **Is not**: a release gate, a cross-system comparison (that
-  begins in Phase 2), or a claim about free-form answer quality (natural
+- **Is not**: a release gate, a qualified 275-case Phase 2 portfolio, a
+  cross-system comparison, or a claim about free-form answer quality (natural
   language is retained but never scored in Phases 1–2).
 - **Default execution is offline and deterministic.** The default cluster
   adapter is an in-memory simulation of the two KWOK-compatible scenarios;
@@ -21,6 +21,28 @@ for the full roadmap this package implements Phase 1 of.
   inference are strictly opt-in, and every unsupported capability (AKS
   without a caller-provisioned cluster, missing binaries) is reported as an explicit
   `unsupported`/`invalid` result — never faked.
+
+### Phase 2A foundation status
+
+The eight roadmap anchors are committed with public provenance, family/lineage,
+primary behavioral stratum, split, and qualification metadata. They remain
+`draft` and `pending`, so ordinary runs continue to select only the four qualified
+Phase 1 scenarios. The loader fails closed if an active case is unqualified, if
+qualification controls are incomplete, or if a derived case lacks an admitted
+parent.
+
+Repair contracts bind approval to the canonical request digest, candidate,
+cluster identity, object UID, and current evidence digest. The journal validator
+rejects execution without an approved authorization check. Actual mutation,
+before/after inventory, postcondition execution, rollback execution,
+browser/headless parity, scaled qualification, private holdouts, and external
+tool comparison remain pending roadmap work.
+
+Inspect the pending Phase 2 anchors without making them runnable:
+
+```sh
+npm run eval:list-scenarios -- --profile local-minikube --portfolio phase-2 --include-pending
+```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
@@ -183,6 +205,12 @@ npm run eval -- --profile local-kwok --case core-service-selector-fault-v1
 npm run eval:list-scenarios -- --profile local-kwok
 ```
 
+Runs and listings accept `--portfolio phase-1|phase-2`,
+`--split development|regression|capability|safety|external_comparison|aks_parity`,
+and `--stratum fault_diagnosis|healthy_control|insufficient_evidence|approved_repair|security_prompt_injection|multi_turn_tool_failure`.
+`--include-pending` applies only to `list-scenarios`; pending cases can never be
+selected for a run.
+
 `--candidate` accepts `reference`, `wrong`, `malformed`, `unavailable`
 (machine-authored controls that prove the harness/grader are valid), or
 `headlamp-cli` (the real product boundary, invoked as a subprocess of
@@ -317,7 +345,7 @@ are rejected rather than reported as a meaningful regression comparison.
   (`local-kwok.yaml`, `local-minikube.yaml`, `aks-azure.yaml`); credentials are
   referenced by environment-variable name only, never serialized.
 
-## Known Phase 1 limitations (deliberately not claimed)
+## Current limitations (deliberately not claimed)
 
 - No cross-system comparison (HolmesGPT/K8sGPT begins in Phase 2).
 - No free-form natural-language quality scoring.

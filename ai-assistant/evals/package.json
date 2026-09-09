@@ -1,7 +1,7 @@
 {
   "name": "@headlamp-k8s/ai-evals",
   "version": "0.1.0",
-  "description": "Headlamp AI Assistant evaluation framework (Phase 1: local developer loop)",
+  "description": "Headlamp AI Assistant evaluation framework (Phase 1 plus Phase 2A foundations)",
   "private": true,
   "type": "module",
   "main": "src/cli.ts",

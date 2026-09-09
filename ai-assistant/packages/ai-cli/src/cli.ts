@@ -51,6 +51,10 @@ async function main() {
   if (parsed.autoDetect) {
     console.error('Detecting available AI providers...\n');
     const found = await runAutoDetect();
+    if (parsed.json) {
+      console.log(JSON.stringify(found));
+      process.exit(0);
+    }
     if (found.length === 0) {
       console.log(
         'No providers detected.\n' +

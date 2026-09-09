@@ -56,6 +56,10 @@ describe('parseArgs', () => {
     expect(parseArgs([...base, '--autodetect']).autoDetect).toBe(true);
   });
 
+  it('parses --json', () => {
+    expect(parseArgs([...base, '--auto-detect', '--json']).json).toBe(true);
+  });
+
   it('parses --allow-mutations', () => {
     expect(parseArgs([...base, '--allow-mutations']).allowMutations).toBe(true);
   });

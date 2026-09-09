@@ -15,13 +15,13 @@
  */
 
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
+import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
-import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
-import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
 
 /**
  * Create a LangChain assistant session for the given provider and config.

@@ -19,9 +19,34 @@ import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assista
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
+import { execFileSync } from 'child_process';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
+
+interface KubectlContext {
+  cluster: string;
+  namespace: string;
+}
+
+/** Reads the active cluster and namespace without exposing kubeconfig credentials. */
+export function detectKubectlContext(
+  run: typeof execFileSync = execFileSync
+): KubectlContext | undefined {
+  try {
+    const output = run('kubectl', ['config', 'view', '--minify', '-o', 'json'], {
+      encoding: 'utf8',
+    });
+    const config = JSON.parse(String(output)) as {
+      contexts?: Array<{ context?: { cluster?: string; namespace?: string } }>;
+    };
+    const context = config.contexts?.[0]?.context;
+    if (!context?.cluster) return undefined;
+    return { cluster: context.cluster, namespace: context.namespace || 'default' };
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Create a LangChain assistant session for the given provider and config.
@@ -55,7 +80,17 @@ export async function createManager(
       ? { toolManager, telemetryObserver: options.telemetryObserver }
       : undefined
   );
-  const kubectlTool = createKubectlTool({ readOnly: !options.allowMutations });
+  const kubectlContext = options.mockTools ? undefined : detectKubectlContext();
+  if (kubectlContext) {
+    manager.setContext(
+      `Kubernetes cluster: ${kubectlContext.cluster}\nCurrent namespace: ${kubectlContext.namespace}\n` +
+        `Use ${kubectlContext.namespace} for namespaced Kubernetes API requests unless the user explicitly names another namespace.`
+    );
+  }
+  const kubectlTool = createKubectlTool({
+    readOnly: !options.allowMutations,
+    namespace: kubectlContext?.namespace,
+  });
   await manager.enableDirectToolCalling([kubectlTool]);
 
   // Inject mock skills when requested (no network needed — good for demos and tests)

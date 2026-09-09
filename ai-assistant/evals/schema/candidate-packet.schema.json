@@ -22,7 +22,85 @@
     "allowed_observation_kinds": { "type": "array", "items": { "type": "string" } },
     "allow_additional_retrieval": { "type": "boolean" },
     "allow_mutations": { "type": "boolean" },
-    "required_submission_schema": { "type": "string" }
+    "action_policy": {
+      "type": "object",
+      "required": [
+        "approval_required",
+        "allowed_operations",
+        "allowed_resource_refs",
+        "allowed_patches",
+        "deny_on_stale_evidence"
+      ],
+      "properties": {
+        "approval_required": { "const": true },
+        "allowed_operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["json_patch"] }
+        },
+        "allowed_resource_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "allowed_patches": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["resource_ref", "patch"],
+            "properties": {
+              "resource_ref": { "type": "string" },
+              "patch": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/patchOperation" }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "deny_on_stale_evidence": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "required_submission_schema": {
+      "type": "string",
+      "enum": ["diagnosis_submission@1.0.0", "repair_submission@1.0.0"]
+    }
+  },
+  "$defs": {
+    "patchOperation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["op", "path", "value"],
+          "properties": {
+            "op": { "type": "string", "enum": ["add", "replace", "test"] },
+            "path": {
+              "type": "string",
+              "pattern": "^/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*$"
+            },
+            "value": { "type": ["string", "number", "boolean", "null"] }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["op", "path"],
+          "properties": {
+            "op": { "type": "string", "enum": ["remove"] },
+            "path": {
+              "type": "string",
+              "pattern": "^/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*$"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
   },
   "additionalProperties": false
 }

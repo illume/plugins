@@ -1,0 +1,47 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/action-journal-event.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "trial_id",
+    "action_id",
+    "sequence",
+    "recorded_at",
+    "type",
+    "request_digest",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "event_id": { "type": "string", "minLength": 1 },
+    "trial_id": { "type": "string", "minLength": 1 },
+    "action_id": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "recorded_at": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "action_proposed",
+        "action_displayed",
+        "approval_decided",
+        "authorization_checked",
+        "action_executed",
+        "postcondition_checked",
+        "collateral_checked",
+        "rollback_executed"
+      ]
+    },
+    "request_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "effect_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "approval_id": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "approved", "denied", "success", "failed", "stale"]
+    },
+    "result_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}

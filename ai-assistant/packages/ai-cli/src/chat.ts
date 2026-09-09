@@ -21,6 +21,7 @@ import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
+import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
 
 /**
  * Create a LangChain assistant session for the given provider and config.
@@ -37,14 +38,22 @@ import { loadSkillsFromUrls } from './skills.js';
 export async function createManager(
   providerId: string,
   config: Record<string, any>,
-  options: { allowMutations?: boolean; skillSources?: string[]; mockSkills?: boolean; mockTools?: boolean } = {}
+  options: {
+    allowMutations?: boolean;
+    skillSources?: string[];
+    mockSkills?: boolean;
+    mockTools?: boolean;
+    telemetryObserver?: AssistantTelemetryObserver;
+  } = {}
 ): Promise<LangChainAssistantSession> {
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
   const manager = new LangChainAssistantSession(
     providerId,
     config,
     [],
-    toolManager ? { toolManager } : undefined
+    toolManager || options.telemetryObserver
+      ? { toolManager, telemetryObserver: options.telemetryObserver }
+      : undefined
   );
   const kubectlTool = createKubectlTool({ readOnly: !options.allowMutations });
   await manager.enableDirectToolCalling([kubectlTool]);

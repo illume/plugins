@@ -26,6 +26,7 @@ export interface ParsedArgs {
   endpoint?: string;
   deploymentName?: string;
   systemPrompt?: string;
+  telemetryFile?: string;
   interactive: boolean;
   autoDetect: boolean;
   json: boolean;
@@ -89,6 +90,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--system-prompt':
         result.systemPrompt = args[++i];
         break;
+      case '--telemetry-file':
+        result.telemetryFile = args[++i];
+        break;
       case '--skill-source':
         result.skillSources.push(args[++i]);
         break;
@@ -145,6 +149,7 @@ Options:
   --api-key <key>       API key for the provider
   --base-url <url>      Base URL for local/custom providers
   --system-prompt <p>   Custom system prompt
+  --telemetry-file <p>  Write sanitized model/tool telemetry as private JSONL
   --interactive, -i     Start interactive chat session
   --skill-source <url>  Git repo URL to load skills from (repeatable, e.g. https://github.com/microsoft/azure-skills)
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1

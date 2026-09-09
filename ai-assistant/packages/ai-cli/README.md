@@ -25,35 +25,41 @@ echo "show me all failing pods" | headlamp-ai --provider gemini --api-key ...
 
 ## Options
 
-| Flag | Description |
-|---|---|
-| `--provider <id>` | AI provider to use (see [Providers](#providers)) |
-| `--api-key <key>` | API key for the provider |
-| `--base-url <url>` | Base URL for `local` / `vllm` providers |
-| `--model <name>` | Override the model name |
-| `-i` / `--interactive` | Start an interactive REPL session |
-| `--allow-mutations` | Allow POST/PUT/DELETE kubectl operations. Default: read-only |
-| `--auto-approve` | Approve all tool calls without prompting (see [Tool approval](#tool-approval)) |
-| `--auto-detect` | Detect available providers (Copilot, Azure, Ollama) and use the first one |
-| `--save` | With `--auto-detect`: save the detected provider to `headlamp-ai.json` |
-| `--skill-source <url>` | Git URL of a skills repo (repeatable) |
-| `--mock-skills` | Inject a built-in mock skill set instead of loading from Git (no network needed) |
-| `--mock-tools` | Inject mock Kubernetes tool results — no real cluster needed |
-| `--config <path>` | Path to a JSON config file |
-| `-h` / `--help` | Print usage |
+| Flag                      | Description                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| `--provider <id>`         | AI provider to use (see [Providers](#providers))                                 |
+| `--api-key <key>`         | API key for the provider                                                         |
+| `--base-url <url>`        | Base URL for `local` / `vllm` providers                                          |
+| `--model <name>`          | Override the model name                                                          |
+| `-i` / `--interactive`    | Start an interactive REPL session                                                |
+| `--allow-mutations`       | Allow POST/PUT/DELETE kubectl operations. Default: read-only                     |
+| `--auto-approve`          | Approve all tool calls without prompting (see [Tool approval](#tool-approval))   |
+| `--auto-detect`           | Detect available providers (Copilot, Azure, Ollama) and use the first one        |
+| `--save`                  | With `--auto-detect`: save the detected provider to `headlamp-ai.json`           |
+| `--skill-source <url>`    | Git URL of a skills repo (repeatable)                                            |
+| `--mock-skills`           | Inject a built-in mock skill set instead of loading from Git (no network needed) |
+| `--mock-tools`            | Inject mock Kubernetes tool results — no real cluster needed                     |
+| `--telemetry-file <path>` | Write private metadata-only JSONL for model usage and tool calls                 |
+| `--config <path>`         | Path to a JSON config file                                                       |
+| `-h` / `--help`           | Print usage                                                                      |
+
+Telemetry is opt-in and written with owner-only permissions. Events contain
+token counts and tool name, mutation classification, status, and duration.
+Prompts, responses, tool arguments/results, URLs, errors, credentials,
+endpoints, and kubeconfig data are never written.
 
 ## Providers
 
-| ID | Notes |
-|---|---|
-| `openai` | Requires `--api-key` |
-| `anthropic` | Requires `--api-key` |
-| `gemini` | Requires `--api-key` |
-| `mistral` | Requires `--api-key` |
-| `deepseek` | Requires `--api-key` |
-| `copilot` | Uses `gh auth token` — no separate key needed |
-| `azure` | Requires `--api-key`, `--base-url`, `--model` (deployment name) |
-| `local` | Ollama or any OpenAI-compatible server at `--base-url` |
+| ID                   | Notes                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `openai`             | Requires `--api-key`                                                                           |
+| `anthropic`          | Requires `--api-key`                                                                           |
+| `gemini`             | Requires `--api-key`                                                                           |
+| `mistral`            | Requires `--api-key`                                                                           |
+| `deepseek`           | Requires `--api-key`                                                                           |
+| `copilot`            | Uses `gh auth token` — no separate key needed                                                  |
+| `azure`              | Requires `--api-key`, `--base-url`, `--model` (deployment name)                                |
+| `local`              | Ollama or any OpenAI-compatible server at `--base-url`                                         |
 | `mock-testing-model` | No API key or network needed — returns canned responses (see [Mock mode](#mock--offline-mode)) |
 
 ## Configuration
@@ -141,13 +147,13 @@ headlamp-ai -i --provider mock-testing-model --mock-tools --auto-approve
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
-| `HEADLAMP_AI_PROVIDER` | Provider ID (e.g. `openai`, `copilot`) |
-| `HEADLAMP_AI_API_KEY` | API key |
-| `HEADLAMP_AI_BASE_URL` | Base URL for local/custom providers |
-| `HEADLAMP_AI_MODEL` | Model name |
-| `HEADLAMP_AI_AUTO_APPROVE` | Set to `1` to auto-approve all tool calls (same as `--auto-approve`) |
-| `HEADLAMP_AI_MOCK_SKILLS` | Set to `1` to inject the built-in mock skill set (same as `--mock-skills`) |
-| `HEADLAMP_AI_MOCK_TOOLS` | Set to `1` to inject mock Kubernetes tool results (same as `--mock-tools`) |
-| `HEADLAMP_AI_MOCK_ALL` | Set to `1` to enable full offline/demo mode: mock model + mock skills + mock tools + auto-approve |
+| Variable                   | Description                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `HEADLAMP_AI_PROVIDER`     | Provider ID (e.g. `openai`, `copilot`)                                                            |
+| `HEADLAMP_AI_API_KEY`      | API key                                                                                           |
+| `HEADLAMP_AI_BASE_URL`     | Base URL for local/custom providers                                                               |
+| `HEADLAMP_AI_MODEL`        | Model name                                                                                        |
+| `HEADLAMP_AI_AUTO_APPROVE` | Set to `1` to auto-approve all tool calls (same as `--auto-approve`)                              |
+| `HEADLAMP_AI_MOCK_SKILLS`  | Set to `1` to inject the built-in mock skill set (same as `--mock-skills`)                        |
+| `HEADLAMP_AI_MOCK_TOOLS`   | Set to `1` to inject mock Kubernetes tool results (same as `--mock-tools`)                        |
+| `HEADLAMP_AI_MOCK_ALL`     | Set to `1` to enable full offline/demo mode: mock model + mock skills + mock tools + auto-approve |

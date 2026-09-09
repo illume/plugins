@@ -95,6 +95,12 @@ describe('parseArgs', () => {
     );
   });
 
+  it('parses --telemetry-file', () => {
+    expect(parseArgs([...base, '--telemetry-file', '/tmp/events.jsonl']).telemetryFile).toBe(
+      '/tmp/events.jsonl'
+    );
+  });
+
   it('captures positional words after unknown flags as query', () => {
     // Unknown flags are skipped but their value (non-flag word) is captured as query
     const result = parseArgs([...base, '--unknown-flag', 'value', 'real query']);

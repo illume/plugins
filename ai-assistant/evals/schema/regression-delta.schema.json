@@ -1,0 +1,29 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/regression-delta.schema.json",
+  "schema_version": "2.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "record_id",
+    "scenario_id",
+    "dimension",
+    "baseline_trial_id",
+    "candidate_trial_id",
+    "baseline_value",
+    "candidate_value",
+    "direction"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["2.0.0"] },
+    "record_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "dimension": { "type": "string" },
+    "baseline_trial_id": { "type": "string" },
+    "candidate_trial_id": { "type": "string" },
+    "baseline_value": { "type": ["string", "number", "boolean", "null"] },
+    "candidate_value": { "type": ["string", "number", "boolean", "null"] },
+    "direction": { "type": "string", "enum": ["improved", "regressed", "unchanged", "undefined"] },
+    "named_change": { "type": "string" }
+  }
+}

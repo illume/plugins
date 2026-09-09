@@ -1,0 +1,15 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/grader-result.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": ["grader_result_id", "grader_name", "grader_version", "applicable", "dimension"],
+  "properties": {
+    "grader_result_id": { "type": "string" },
+    "grader_name": { "type": "string" },
+    "grader_version": { "type": "string" },
+    "applicable": { "type": "boolean" },
+    "dimension": { "type": "string" },
+    "outcome": { "type": "string" },
+    "invalidity_reason": { "type": ["string", "null"] }
+  }
+}

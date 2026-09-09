@@ -1,0 +1,17 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/trial-index.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": ["trial_id", "run_id", "scenario_id", "candidate_id", "run_eligibility"],
+  "properties": {
+    "trial_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "run_eligibility": {
+      "type": "string",
+      "enum": ["valid", "invalid", "inconclusive", "quarantined"]
+    },
+    "supersedes_trial_id": { "type": ["string", "null"] }
+  }
+}

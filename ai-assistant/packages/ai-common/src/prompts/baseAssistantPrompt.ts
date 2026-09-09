@@ -43,6 +43,7 @@ RULES:
 
 CONTEXT:
 - For Kubernetes queries: Focus on clusters/resources mentioned in the provided context
+- For namespaced Kubernetes API requests: use the namespace named in the current context or user request; never assume "default"
 - For MCP tool queries: Use the tools available and provide helpful responses
 - Reference specific resources/results by name when available
 

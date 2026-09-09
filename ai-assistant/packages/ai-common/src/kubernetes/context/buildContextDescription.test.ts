@@ -134,6 +134,28 @@ describe('contextGenerator', () => {
       expect(result).toContain('⚠️ 2 pod(s) may need attention');
     });
 
+    it('identifies the current namespace when all visible list items agree', () => {
+      const result = generateContextDescription({
+        items: [
+          { kind: 'Pod', metadata: { name: 'api', namespace: 'prod' } },
+          { kind: 'Pod', metadata: { name: 'worker', namespace: 'prod' } },
+        ],
+      });
+
+      expect(result).toContain('Current namespace: prod');
+    });
+
+    it('does not claim one current namespace for a mixed-namespace view', () => {
+      const result = generateContextDescription({
+        items: [
+          { kind: 'Pod', metadata: { name: 'api', namespace: 'prod' } },
+          { kind: 'Pod', metadata: { name: 'worker', namespace: 'staging' } },
+        ],
+      });
+
+      expect(result).not.toContain('Current namespace:');
+    });
+
     it('summarizes unhealthy deployments from a resources list', () => {
       const result = generateContextDescription(
         {

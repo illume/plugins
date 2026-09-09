@@ -43,5 +43,24 @@
     "result_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "reason": { "type": "string" }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "action_executed" } },
+        "required": ["type"]
+      },
+      "then": { "required": ["effect_digest"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "action_executed" },
+          "status": { "const": "success" }
+        },
+        "required": ["type", "status"]
+      },
+      "then": { "required": ["result_digest"] }
+    }
+  ]
 }

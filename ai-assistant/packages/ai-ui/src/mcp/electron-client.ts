@@ -27,6 +27,19 @@ interface ElectronMCPTool extends MCPTool {
   server?: string;
 }
 
+let nextToolCallId = 0;
+
+function createToolCallId(): string {
+  nextToolCallId += 1;
+  return `ai-assistant-mcp-${Date.now()}-${nextToolCallId}`;
+}
+
+function createAbortError(): Error {
+  const error = new Error('MCP tool execution was aborted');
+  error.name = 'AbortError';
+  return error;
+}
+
 /**
  * Returns the Electron MCP bridge when running in the desktop environment.
  *
@@ -87,21 +100,51 @@ class ElectronMCPClient implements ToolClient {
    * @param toolName - Qualified name of the tool to execute.
    * @param args - Arguments supplied to the tool.
    * @param toolCallId - Optional correlation identifier for the tool call.
+   * @param signal - Optional signal that cancels the corresponding main-process call.
    * @returns Raw result supplied by the Electron bridge.
    * @throws When the bridge is unavailable or execution fails.
    */
   async executeTool(
     toolName: string,
     args: Record<string, unknown>,
-    toolCallId?: string
+    toolCallId?: string,
+    signal?: AbortSignal
   ): Promise<unknown> {
     const mcpApi = getDesktopMCPApi();
     if (!mcpApi) {
       throw new Error('MCP client not available - not running in Electron environment');
     }
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
 
     try {
-      const response = await mcpApi.executeTool(toolName, args, toolCallId);
+      const requestId = toolCallId ?? createToolCallId();
+      const execution = mcpApi.executeTool(toolName, args, requestId);
+      let removeAbortListener: (() => void) | undefined;
+      const response = await (signal
+        ? Promise.race([
+            execution,
+            new Promise<never>((_resolve, reject) => {
+              let aborted = false;
+              const onAbort = () => {
+                if (aborted) return;
+                aborted = true;
+                reject(createAbortError());
+                if (mcpApi.cancelTool) {
+                  try {
+                    void mcpApi.cancelTool(requestId).catch(() => undefined);
+                  } catch {
+                    // The local abort still settles if a host bridge throws synchronously.
+                  }
+                }
+              };
+              signal.addEventListener('abort', onAbort, { once: true });
+              removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+              if (signal.aborted) onAbort();
+            }),
+          ]).finally(() => removeAbortListener?.())
+        : execution);
 
       if (response.success) {
         return response.result;

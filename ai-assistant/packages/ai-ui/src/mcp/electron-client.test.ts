@@ -7,6 +7,7 @@ function makeMCPApi(overrides: Partial<ElectronMCPApi> = {}): ElectronMCPApi {
   return {
     getTools: vi.fn(async () => ({ success: true, tools: [] })),
     executeTool: vi.fn(async () => ({ success: true, result: null })),
+    cancelTool: vi.fn(async () => ({ success: true })),
     getStatus: vi.fn(async () => ({ isInitialized: true, hasClient: true })),
     resetClient: vi.fn(async () => ({ success: true })),
     getConfig: vi.fn(async () => ({ success: true, config: { enabled: true, servers: [] } })),
@@ -105,6 +106,73 @@ describe('ElectronMCPClient', () => {
       new ElectronMCPClient().executeTool('cluster__pods', { namespace: 'default' }, 'call-1')
     ).resolves.toEqual({ pods: 2 });
     expect(executeTool).toHaveBeenCalledWith('cluster__pods', { namespace: 'default' }, 'call-1');
+  });
+
+  it('cancels the correlated main-process call when aborted', async () => {
+    const executeTool = vi.fn(() => new Promise<never>(() => undefined));
+    const cancelTool = vi.fn(async () => ({ success: true }));
+    installDesktopApi(makeMCPApi({ executeTool, cancelTool }));
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const controller = new AbortController();
+
+    const pending = new ElectronMCPClient().executeTool(
+      'cluster__pods',
+      { namespace: 'default' },
+      'call-2',
+      controller.signal
+    );
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(executeTool).toHaveBeenCalledWith('cluster__pods', { namespace: 'default' }, 'call-2');
+    expect(cancelTool).toHaveBeenCalledWith('call-2');
+  });
+
+  it('settles locally without resetting an unrelated legacy bridge call', async () => {
+    const mcp = makeMCPApi({
+      executeTool: vi.fn(() => new Promise<never>(() => undefined)),
+      resetClient: vi.fn(async () => ({ success: true })),
+    });
+    delete mcp.cancelTool;
+    installDesktopApi(mcp);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const controller = new AbortController();
+
+    const pending = new ElectronMCPClient().executeTool(
+      'cluster__pods',
+      {},
+      'legacy-call',
+      controller.signal
+    );
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(mcp.resetClient).not.toHaveBeenCalled();
+  });
+
+  it('still settles when the cancellation bridge throws synchronously', async () => {
+    const cancelTool = vi.fn(() => {
+      throw new Error('bridge unavailable');
+    });
+    installDesktopApi(
+      makeMCPApi({
+        executeTool: vi.fn(() => new Promise<never>(() => undefined)),
+        cancelTool,
+      })
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const controller = new AbortController();
+
+    const pending = new ElectronMCPClient().executeTool(
+      'cluster__pods',
+      {},
+      'throwing-call',
+      controller.signal
+    );
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(cancelTool).toHaveBeenCalledWith('throwing-call');
   });
 
   it('rejects tool execution without a bridge', async () => {

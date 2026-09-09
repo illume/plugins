@@ -108,6 +108,7 @@ const DEBUG = process.env.NODE_ENV !== 'production';
 export class MCPClient {
   private mcpToolState: ToolStateStore | null = null;
   private clientTools: DynamicStructuredTool[] = [];
+  private activeToolCalls = new Map<string, AbortController>();
   private client: MultiServerMCPClient | null = null;
   private isClientInitialized = false;
   private initializationPromise: Promise<void> | null = null;
@@ -140,6 +141,11 @@ export class MCPClient {
    * @returns No value after close is attempted.
    */
   private async closeAndReset(): Promise<void> {
+    for (const controller of this.activeToolCalls.values()) {
+      controller.abort();
+    }
+    this.activeToolCalls.clear();
+
     if (this.client) {
       try {
         await this.client.close();
@@ -377,8 +383,20 @@ export class MCPClient {
     if (!this.mcpToolState) {
       return undefined;
     }
+    const controller = new AbortController();
+    this.activeToolCalls.get(toolCallId)?.abort();
+    this.activeToolCalls.set(toolCallId, controller);
+
     try {
-      await this.initializeClient();
+      await new Promise<void>((resolve, reject) => {
+        const onAbort = () => reject(new Error('MCP tool execution cancelled'));
+        controller.signal.addEventListener('abort', onAbort, { once: true });
+        void this.initializeClient()
+          .then(resolve, reject)
+          .finally(() => {
+            controller.signal.removeEventListener('abort', onAbort);
+          });
+      });
       if (!this.client || this.clientTools.length === 0) {
         throw new Error('MCP client not initialized or no tools available');
       }
@@ -398,7 +416,7 @@ export class MCPClient {
         throw new Error(`Parameter validation failed: ${validation.error}`);
       }
       if (DEBUG) console.debug(`MCPClient: Executing tool: ${toolName}`);
-      const result = await tool.invoke(args);
+      const result = await tool.invoke(args, { signal: controller.signal });
       if (DEBUG) console.debug(`MCPClient: tool ${toolName} executed successfully`);
       this.mcpToolState.recordToolUsage(serverName, actualToolName);
       return { success: true, result, toolCallId };
@@ -408,7 +426,27 @@ export class MCPClient {
         error: error instanceof Error ? error.message : 'Unknown error',
         toolCallId,
       };
+    } finally {
+      if (this.activeToolCalls.get(toolCallId) === controller) {
+        this.activeToolCalls.delete(toolCallId);
+      }
     }
+  }
+
+  /**
+   * Cancels an active MCP tool invocation by its correlation ID.
+   *
+   * @param toolCallId - Correlation ID supplied to `executeTool`.
+   * @returns Whether an active invocation was found and cancellation was requested.
+   */
+  cancelTool(toolCallId: string): { success: boolean; error?: string } {
+    const controller = this.activeToolCalls.get(toolCallId);
+    if (!controller) {
+      return { success: false, error: `No active MCP tool call found for ${toolCallId}` };
+    }
+
+    controller.abort();
+    return { success: true };
   }
 
   /**

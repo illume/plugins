@@ -53,6 +53,28 @@ test('selectScenarios: explicitly requesting an unknown case is a hard error', (
   );
 });
 
+test('selectScenarios: portfolio, split, and stratum filters compose', () => {
+  const scenarios = selectScenarios('local-minikube', undefined, undefined, {
+    phase: 1,
+    split: 'capability',
+    stratum: 'fault_diagnosis',
+  });
+  assert.deepEqual(scenarios.map(scenario => scenario.manifest.scenario_id).sort(), [
+    'core-service-selector-fault-v1',
+    'core-unschedulable-capacity-v1',
+  ]);
+});
+
+test('selectScenarios: explicit IDs must match portfolio filters', () => {
+  assert.throws(
+    () =>
+      selectScenarios('local-minikube', ['core-service-selector-fault-v1'], undefined, {
+        phase: 2,
+      }),
+    /does not match the requested portfolio selection/
+  );
+});
+
 test('isCandidateSpec: recognizes every valid spec and rejects anything else', () => {
   assert.equal(isCandidateSpec('reference'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
@@ -79,7 +101,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
     assert.equal(
       bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      30
+      38
     );
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),

@@ -18,6 +18,14 @@ export interface ToolResult {
   content?: string;
   /** General-purpose success flag. */
   success?: boolean;
+  /**
+   * Truthy when this tool call was still running when the assistant decided
+   * to respond without waiting for it further (e.g. an optional/"nice to
+   * have" tool that was slower than the tools the response actually needed).
+   * The underlying call may still complete in the background; this result
+   * merely records that its data was not available in time for this turn.
+   */
+  pending?: boolean;
   /** Additional tool-specific result fields included in raw output. */
   [key: string]: unknown;
 }
@@ -37,7 +45,11 @@ export function aggregateToolResults(results: Record<string, ToolResult>): strin
   for (const [toolName, result] of Object.entries(results)) {
     aggregation += `### ${toolName}\n`;
 
-    if (result.error) {
+    if (result.pending) {
+      aggregation += `**Status**: ⏳ Still running (not waited on)\n${
+        result.message ? `${result.message}\n` : ''
+      }\n`;
+    } else if (result.error) {
       aggregation += `**Error**: ${result.message}\n\n`;
     } else if (result.success) {
       aggregation += '**Status**: Successfully executed\n';
@@ -77,7 +89,13 @@ export function formatToolResultsForLLM(results: Record<string, ToolResult>): st
   for (const [toolName, result] of Object.entries(results)) {
     formatted += `### ${toolName}\n`;
 
-    if (result.error || result.isError) {
+    if (result.pending) {
+      formatted += '**Status**: ⏳ Still running\n';
+      formatted += `${
+        result.message ??
+        'This tool had not finished yet when the response was generated; its data was not included. Mention that this information is still being gathered if the user needs it.'
+      }\n\n`;
+    } else if (result.error || result.isError) {
       formatted += '**Status**: ❌ Error\n';
       formatted += `**Error Message**: ${result.message ?? 'Unknown error'}\n\n`;
     } else {

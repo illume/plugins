@@ -73,7 +73,9 @@ import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
   filterApprovedOrchestrationTools,
+  OrchestrationTask,
   shouldCacheResponse,
+  waitForOrchestrationResults,
 } from '../tools/orchestration/prepareToolPlan';
 import {
   assembleFallbackResponseContent,
@@ -151,9 +153,10 @@ interface ExtraTool {
    * Executes the tool with model-generated input.
    *
    * @param input - Untrusted input supplied by the model.
+   * @param config - Optional invocation config; `signal` propagates run cancellation.
    * @returns Tool-specific result synchronously or asynchronously.
    */
-  invoke(input: unknown): Promise<unknown> | unknown;
+  invoke(input: unknown, config?: { signal?: AbortSignal }): Promise<unknown> | unknown;
 }
 
 /**
@@ -175,23 +178,23 @@ function parseSerializedToolArguments(serialized: string): Record<string, unknow
 
 /** Coordinates model calls, tool execution, and chat history for the AI assistant. */
 export default class LangChainAssistantSession extends AssistantSession {
-  private model: BaseChatModel;
+  protected model: BaseChatModel;
   private boundModel: InvokableChatModel | null = null;
-  private providerId: string;
-  private toolManager: LangChainToolRuntime;
-  private kubernetesContext: KubernetesToolContext | undefined;
-  private currentAbortController: AbortController | null = null;
+  protected providerId: string;
+  protected toolManager: LangChainToolRuntime;
+  protected kubernetesContext: KubernetesToolContext | undefined;
+  protected currentAbortController: AbortController | null = null;
   private promptTemplate: ChatPromptTemplate;
   private outputParser: StringOutputParser;
   private useDirectToolCalling: boolean = false;
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
-  private extraTools: Map<string, ExtraTool> = new Map();
+  protected extraTools: Map<string, ExtraTool> = new Map();
 
   // Skills system
-  private skillManager: SkillManager | null = null;
-  private skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
+  protected skillManager: SkillManager | null = null;
+  protected skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
   /** Skills prompt text for the current request (computed per-message, transient). */
-  private currentSkillsPromptText: string = '';
+  protected currentSkillsPromptText: string = '';
 
   // Response cache for common queries (in-memory)
   private responseCache: Map<string, CacheEntry<ConversationMessage>> = new Map();
@@ -230,6 +233,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       toolManager?: LangChainToolRuntime;
       /** Host MCP bridge used to discover and execute MCP tools. */
       mcpClient?: ToolClient;
+      /** Optional model supplied by an embedded host or deterministic test. */
+      model?: BaseChatModel;
     }
   ) {
     super();
@@ -242,7 +247,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.toolManager =
       options?.toolManager ??
       new LangChainToolManager({ enabledToolIds, mcpClient: options?.mcpClient });
-    this.model = this.createModel(providerId, config);
+    this.model = options?.model ?? this.createModel(providerId, config);
 
     // Initialize prompt template and output parser
     this.promptTemplate = this.createPromptTemplate();
@@ -293,7 +298,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param query - User query used for skill routing.
    * @returns Routed skill prompt text, or an empty string when unavailable or failed.
    */
-  private async getSkillsPromptForQuery(query: string): Promise<string> {
+  protected async getSkillsPromptForQuery(query: string): Promise<string> {
     if (!this.skillManager) return '';
 
     try {
@@ -349,7 +354,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param content - Model or message content to normalize.
    * @returns Extracted text, or an empty string for unsupported content.
    */
-  private extractTextContent(content: unknown): string {
+  protected extractTextContent(content: unknown): string {
     return extractTextContent(content);
   }
 
@@ -747,7 +752,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns LangChain messages safe for prompt invocation.
    */
-  private prepareChatHistory(): BaseMessage[] {
+  protected prepareChatHistory(): BaseMessage[] {
     // Filter out system messages and display-only messages to avoid conflicts with the system message in the prompt template
     const filteredHistory = this.history.filter(
       prompt => prompt.role !== 'system' && !prompt.isDisplayOnly
@@ -770,7 +775,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns System prompt text.
    */
-  private createSystemPrompt(): string {
+  protected createSystemPrompt(): string {
     return buildSystemPrompt({
       availableTools: [...this.toolManager.getToolNames(), ...this.extraTools.keys()],
       mcpTools: this.toolManager.getMCPTools(),
@@ -1274,29 +1279,34 @@ export default class LangChainAssistantSession extends AssistantSession {
       const { parallel, sequential } = ToolPlanner.groupToolsByExecutionStrategy(approvedTools);
 
       // Execute parallel tools first
-      const toolResults: Record<string, ToolResult> = {};
       const toolExecutionIds: Record<string, string> = {};
 
+      let toolResults: Record<string, ToolResult> = {};
+
       if (parallel.length > 0) {
-        const parallelPromises = parallel.map(async tool => {
+        const tasks: OrchestrationTask[] = parallel.map(tool => {
           const approvalData = toolsForApproval.find(t => t.name === tool.name);
           const toolCallId = approvalData?.id || `orchestrated-${tool.name}-${Date.now()}`;
           toolExecutionIds[tool.name] = toolCallId;
 
-          try {
-            const result = await this.toolManager.executeTool(
-              tool.name,
-              approvalData?.arguments || tool.arguments || {}
-            );
-            toolResults[tool.name] = result;
-            return result;
-          } catch (error) {
-            toolResults[tool.name] = buildOrchestrationToolError(tool.name, error as Error | null);
-          }
+          return {
+            name: tool.name,
+            // Undefined (older/mocked recommendations) defaults to required,
+            // preserving the original "wait for everything" behavior.
+            required: tool.required !== false,
+            run: () =>
+              this.toolManager.executeTool(
+                tool.name,
+                approvalData?.arguments || tool.arguments || {},
+                toolCallId,
+                undefined,
+                this.currentAbortController?.signal
+              ),
+          };
         });
 
         try {
-          await Promise.all(parallelPromises);
+          toolResults = await waitForOrchestrationResults(tasks);
         } catch (error) {
           console.error('Error executing parallel tools:', error);
           // Continue with sequential tools even if some parallel tools fail
@@ -1312,7 +1322,10 @@ export default class LangChainAssistantSession extends AssistantSession {
         try {
           const result = await this.toolManager.executeTool(
             tool.name,
-            approvalData?.arguments || tool.arguments || {}
+            approvalData?.arguments || tool.arguments || {},
+            toolCallId,
+            undefined,
+            this.currentAbortController?.signal
           );
           toolResults[tool.name] = result;
         } catch (error) {
@@ -1822,7 +1835,9 @@ Please analyze this data and provide a specific, detailed response that directly
 
         if (extraTool) {
           // Execute the extra LangChain tool directly
-          const result = await extraTool.invoke(args);
+          const result = await extraTool.invoke(args, {
+            signal: this.currentAbortController?.signal,
+          });
           const content = typeof result === 'string' ? result : JSON.stringify(result);
           toolResponse = {
             content,
@@ -1835,7 +1850,8 @@ Please analyze this data and provide a specific, detailed response that directly
             toolCall.function.name,
             args,
             toolCall.id,
-            assistantPrompt
+            assistantPrompt,
+            this.currentAbortController?.signal
           );
         }
 
@@ -1946,7 +1962,7 @@ Please analyze this data and provide a specific, detailed response that directly
    * @param error - Request failure of any shape.
    * @returns Error message added to history.
    */
-  private async handleUserSendError(error: unknown): Promise<ConversationMessage> {
+  protected async handleUserSendError(error: unknown): Promise<ConversationMessage> {
     // Clear abort controller in case of error
     this.currentAbortController = null;
 

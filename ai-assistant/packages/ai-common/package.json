@@ -6,11 +6,13 @@
   "exports": {
     "./agents/holmes/client": "./src/agents/holmes/client.ts",
     "./agents/holmes/MockHolmesAgent": "./src/agents/holmes/MockHolmesAgent.ts",
+    "./agents/langchain/createAgentHarness": "./src/agents/langchain/createAgentHarness.ts",
     "./agents/types": "./src/agents/types.ts",
     "./agents/scripted/ScriptedAgent": "./src/agents/scripted/ScriptedAgent.ts",
     "./agents/scripted/fixtures": "./src/agents/scripted/fixtures.ts",
     "./agents/scripted/types": "./src/agents/scripted/types.ts",
     "./assistant/AssistantSession": "./src/assistant/AssistantSession.ts",
+    "./assistant/AgentHarnessSession": "./src/assistant/AgentHarnessSession.ts",
     "./assistant/LangChainAssistantSession": "./src/assistant/LangChainAssistantSession.ts",
     "./conversation/content": "./src/conversation/content.ts",
     "./conversation/context": "./src/conversation/context.ts",

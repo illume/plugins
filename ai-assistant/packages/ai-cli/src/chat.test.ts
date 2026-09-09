@@ -14,11 +14,66 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { query } from './chat.js';
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import { execFile } from 'child_process';
+import { FakeToolCallingModel } from 'langchain';
+import { describe, expect, it, vi } from 'vitest';
+import { createManager, query } from './chat.js';
+
+vi.mock('child_process', () => ({
+  // kubectl.ts no longer uses execFileSync (see kubectl.ts), but other
+  // callers such as model.ts's provider detection still do, so this guards
+  // against any of them unexpectedly shelling out during these tests.
+  execFileSync: vi.fn(() => {
+    throw new Error('real kubectl must not be invoked when --mock-tools is set');
+  }),
+  execFile: vi.fn(() => {
+    throw new Error('real kubectl must not be invoked when --mock-tools is set');
+  }),
+}));
 
 describe('chat', () => {
   it('exports a query function', () => {
     expect(typeof query).toBe('function');
+  });
+
+  it('uses the agent harness by default and supports the legacy session explicitly', async () => {
+    const harness = await createManager('mock-testing-model', {}, { mockTools: true });
+    const legacy = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        mockTools: true,
+        legacySession: true,
+      }
+    );
+
+    expect(harness).toBeInstanceOf(AgentHarnessSession);
+    expect(legacy).toBeInstanceOf(LangChainAssistantSession);
+  });
+
+  it('routes kubernetes_api_request to the mock fixture instead of the real kubectl tool when --mock-tools is set', async () => {
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          {
+            id: 'list-pods-call',
+            name: 'kubernetes_api_request',
+            args: { url: '/api/v1/pods', method: 'GET' },
+          },
+        ],
+        [],
+      ],
+    });
+    const manager = await createManager('mock-testing-model', {}, { mockTools: true, model });
+
+    const response = await query(manager, 'List the pods');
+
+    // The real kubectl tool is also registered via enableDirectToolCalling,
+    // but the mock manager must win for the shared `kubernetes_api_request`
+    // name so the CLI's --mock-tools flag actually takes effect.
+    expect(execFile).not.toHaveBeenCalled();
+    expect(response).toContain('nginx');
   });
 });

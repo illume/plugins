@@ -22,7 +22,8 @@
  * It provides the runtime surface used by `LangChainAssistantSession`:
  * - `executeTool` — returns a configurable canned `ToolExecutionResult`
  * - `getToolNames` — returns configured names
- * - `getMCPTools` / `getLangChainTools` — return empty lists
+ * - `getMCPTools` — returns an empty list
+ * - `getLangChainTools` — returns model-facing definitions for enabled tools
  * - `bindToModelAsync` / `waitForMCPToolsInitialization` — resolve immediately
  *
  * ### Usage
@@ -50,6 +51,8 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';
 import type { LangChainToolRuntime } from '../../assistant/langchain/LangChainToolBinding';
 import type { ConversationMessage as Prompt } from '../../conversation/types';
 import type { ToolExecutionResult } from '../ToolRuntime';
@@ -134,19 +137,33 @@ export class MockToolManager implements LangChainToolRuntime {
    * - If the configured result is an `Error`, it is thrown.
    * - Otherwise the result is JSON-serialised and returned as a successful
    *   `ToolExecutionResult` with history and follow-up processing enabled.
+   * - An already-aborted `signal` short-circuits before `onExecute` runs, and a
+   *   function-based result receives the signal so tests can simulate
+   *   mid-flight cancellation.
    *
    * @param toolName - Tool result key to execute.
    * @param args - Arguments passed to functional results and the execution spy.
    * @param _toolCallId - Optional call ID passed to functional results.
    * @param _pendingPrompt - Pending prompt accepted for runtime compatibility and ignored.
+   * @param signal - Optional abort signal; propagated to function-based results.
    * @returns Serialized configured data or the default success object.
    */
   async executeTool(
     toolName: string,
     args: Record<string, unknown>,
     _toolCallId?: string,
-    _pendingPrompt?: Prompt
+    _pendingPrompt?: Prompt,
+    signal?: AbortSignal
   ): Promise<ToolExecutionResult> {
+    if (signal?.aborted) {
+      return {
+        content: JSON.stringify({ error: true, message: 'Tool execution cancelled.', toolName }),
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: false,
+        metadata: { error: 'cancelled', toolName, isError: true },
+      };
+    }
+
     this.onExecute?.(toolName, args);
 
     const result = this.toolResults[toolName];
@@ -158,10 +175,9 @@ export class MockToolManager implements LangChainToolRuntime {
     // Function-based result: call with args to get the data
     const data =
       typeof result === 'function'
-        ? await (result as (args: Record<string, unknown>, id?: string) => unknown)(
-            args,
-            _toolCallId
-          )
+        ? await (
+            result as (args: Record<string, unknown>, id?: string, signal?: AbortSignal) => unknown
+          )(args, _toolCallId, signal)
         : result !== undefined
         ? result
         : { result: 'ok', toolName };
@@ -199,12 +215,25 @@ export class MockToolManager implements LangChainToolRuntime {
   }
 
   /**
-   * Returns no LangChain tool adapters.
+   * Returns model-facing definitions for enabled mock tools. The adapter
+   * invokes `executeTool`, so these definitions never access a real cluster.
    *
-   * @returns Always an empty array.
+   * @returns One model-facing definition for each enabled tool.
    */
   getLangChainTools(): StructuredToolInterface[] {
-    return [];
+    return this.enabledNames.map(toolName =>
+      tool(
+        async args => {
+          const result = await this.executeTool(toolName, args as Record<string, unknown>);
+          return result.content;
+        },
+        {
+          name: toolName,
+          description: `Mock ${toolName} tool`,
+          schema: z.object({}).passthrough(),
+        }
+      )
+    );
   }
 
   /**

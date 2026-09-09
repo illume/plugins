@@ -117,6 +117,33 @@ describe('buildKubectlArgs', () => {
       'contains disallowed characters'
     );
   });
+
+  it('allows query-string URLs such as container-scoped log requests', () => {
+    const result = buildKubectlArgs(
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+      'GET'
+    );
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+    ]);
+  });
+
+  it('allows query-string URLs with label selectors and multiple parameters', () => {
+    const result = buildKubectlArgs('/api/v1/pods?labelSelector=app%3Dnginx&limit=10', 'GET');
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/pods?labelSelector=app%3Dnginx&limit=10',
+    ]);
+  });
+
+  it('rejects URLs with more than one query-string delimiter', () => {
+    expect(() => buildKubectlArgs('/api/v1/pods?foo=1?bar=2', 'GET')).toThrow(
+      'contains disallowed characters'
+    );
+  });
 });
 
 describe('buildKubectlArgs read-only enforcement', () => {

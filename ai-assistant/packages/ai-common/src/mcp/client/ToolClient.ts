@@ -56,12 +56,15 @@ export interface ToolClient {
    * @param toolName - Qualified `<server>__<tool>` name.
    * @param args - Arguments supplied to the MCP tool.
    * @param toolCallId - Optional caller correlation identifier.
+   * @param signal - Optional abort signal; bridge implementations that
+   *   support cancellation should stop the in-flight call when it fires.
    * @returns Bridge-specific tool result.
    */
   executeTool(
     toolName: string,
     args: Record<string, unknown>,
-    toolCallId?: string
+    toolCallId?: string,
+    signal?: AbortSignal
   ): Promise<unknown>;
   /**
    * Checks the enabled state of a qualified tool name.

@@ -15,13 +15,49 @@
  */
 
 import { tool } from '@langchain/core/tools';
-import { execFileSync } from 'child_process';
+import { execFile } from 'child_process';
 import { z } from 'zod';
 
 /** Allowed HTTP methods for read-only mode. */
 const READ_ONLY_METHODS = new Set(['GET']);
 /** All allowed HTTP methods when write access is enabled. */
 const ALL_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']);
+
+/**
+ * Runs `kubectl` asynchronously so an `AbortSignal` can kill the subprocess
+ * mid-flight, unlike the previous `execFileSync`-based implementation which
+ * could not be interrupted once started.
+ *
+ * @param args - Arguments passed to the `kubectl` binary.
+ * @param input - Optional stdin payload (e.g. a JSON body for `-f -`).
+ * @param signal - Optional abort signal; aborting kills the child process.
+ * @returns Captured stdout on success.
+ */
+function runKubectl(
+  args: string[],
+  input: string | undefined,
+  signal?: AbortSignal
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(
+      'kubectl',
+      args,
+      { encoding: 'utf-8', timeout: 30_000, maxBuffer: 4 * 1024 * 1024, signal },
+      (error, stdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(stdout);
+      }
+    );
+    if (input !== undefined) {
+      child.stdin?.end(input);
+    } else {
+      child.stdin?.end();
+    }
+  });
+}
 
 export interface KubectlToolOptions {
   /**
@@ -54,18 +90,21 @@ Use standard Kubernetes API URL paths like /api/v1/pods or /api/v1/namespaces/de
 Supported methods: ${methodList}.`;
 
   return tool(
-    async ({ url, method, body }) => {
+    async ({ url, method, body }, config) => {
       try {
         const { args, input } = buildKubectlArgs(url, method, body, allowedMethods);
-        const output = execFileSync('kubectl', args, {
-          encoding: 'utf-8',
-          timeout: 30_000,
-          maxBuffer: 4 * 1024 * 1024,
-          input,
-        });
-        return output;
+        const stdout = await runKubectl(args, input, config?.signal);
+        return stdout;
       } catch (err: unknown) {
         const commandError = err as Error & { stderr?: unknown; stdout?: unknown };
+        if (config?.signal?.aborted) {
+          // LangChain's `tool()` wrapper races this callback against
+          // `config.signal`: if the callback resolves (rather than rejects)
+          // while the signal is already aborted, its promise never settles
+          // at all. Rethrow here so the tool call rejects promptly instead
+          // of returning a JSON payload the signal race would never deliver.
+          throw commandError;
+        }
         const stderr = commandError.stderr ? String(commandError.stderr).trim() : '';
         const stdout = commandError.stdout ? String(commandError.stdout).trim() : '';
         return JSON.stringify({
@@ -108,9 +147,16 @@ export function buildKubectlArgs(
     throw new Error(`Invalid API path: must start with "/", got "${url}"`);
   }
   // Reject paths with characters that could be used for injection or path traversal.
-  if (!/^\/[a-zA-Z0-9\/_.:@%~-]+$/.test(url)) {
+  // A single, optional query string (?key=value&key2=value2) is allowed since
+  // legitimate requests use it for selectors, pagination, and container-scoped
+  // log queries; the argument is passed to `execFile` (no shell), so these
+  // characters carry no injection risk. Restricting `?` to appear at most once,
+  // separating the path from the query string, keeps the path portion itself
+  // unambiguous.
+  if (!/^\/[a-zA-Z0-9\/_.:@%~-]+(\?[a-zA-Z0-9%=&._~-]*)?$/.test(url)) {
     throw new Error(
-      `Invalid API path: contains disallowed characters. Path must match /[a-zA-Z0-9/_.:@%~-]+`
+      'Invalid API path: contains disallowed characters. Path must match ' +
+        '/[a-zA-Z0-9/_.:@%~-]+(\\?[a-zA-Z0-9%=&._~-]*)?'
     );
   }
 

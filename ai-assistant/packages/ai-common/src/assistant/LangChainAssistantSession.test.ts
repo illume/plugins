@@ -97,6 +97,7 @@ interface LangChainManagerTestHarness {
   handleDirectToolCallingRequest(message: string): Promise<Prompt>;
   cleanResponseCache(): void;
   buildUserContext(): UserContext;
+  prepareMessagesForToolResponse(): BaseMessage[];
   validateToolCallAlignment(): void;
   handleToolEnabledRequest(
     input: { systemPrompt: string; chatHistory: BaseMessage[]; input: string },
@@ -968,6 +969,21 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
     });
   });
 
+  it('emits turn_complete after a handled user turn with no tool calls', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).model = {
+      invoke: async () => ({ content: 'done' }),
+    };
+
+    await manager.userSend('hello');
+
+    expect(events.at(-1)).toEqual({ type: 'turn_complete' });
+    expect(events.filter(event => event.type === 'tool_call')).toHaveLength(0);
+  });
+
   it('normalizes cached tokens from raw provider usage metadata', async () => {
     const events: AssistantTelemetryEvent[] = [];
     const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
@@ -1597,6 +1613,33 @@ describe('MockApprovalManager + MCP tool flow', () => {
 // =============================================================================
 
 describe('kubectl correction via processToolResponses', () => {
+  it('repeats the original user request after tool data for final synthesis', () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).history.push(
+      { role: 'user', content: 'Return the required JSON schema and remain read-only.' },
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          {
+            type: 'function',
+            id: 'tc1',
+            function: { name: 'kubernetes_api_request', arguments: '{}' },
+          },
+        ],
+      },
+      { role: 'tool', content: '{"pods":[]}', toolCallId: 'tc1', name: 'kubernetes_api_request' }
+    );
+
+    const messages = privateManager(manager).prepareMessagesForToolResponse();
+    const synthesisRequest = messages.at(-1)?.content;
+
+    expect(synthesisRequest).toContain('{"pods":[]}');
+    expect(synthesisRequest).toContain(
+      'Original user request (authoritative):\nReturn the required JSON schema and remain read-only.'
+    );
+  });
+
   it('getCorrectedResponse triggers when model suggests kubectl', async () => {
     const manager = createIntegrationManager();
 

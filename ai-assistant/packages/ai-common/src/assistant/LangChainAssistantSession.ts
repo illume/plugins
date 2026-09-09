@@ -963,6 +963,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
       // Cache hit - return cached response
       this.history.push(cached.value);
+      this.recordTelemetry({ type: 'turn_complete' });
       return cached.value;
     }
 
@@ -1012,6 +1013,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       return response;
     } catch (error) {
       return this.handleUserSendError(error);
+    } finally {
+      this.recordTelemetry({ type: 'turn_complete' });
     }
   }
 
@@ -2364,7 +2367,10 @@ Please analyze this data and provide a specific, detailed response that directly
 
       const toolData = toolDataParts.join('\n\n');
       if (toolData) {
-        messages.push(new HumanMessage(buildToolDataAnalysisRequest(toolData)));
+        const originalRequest = [...this.history]
+          .reverse()
+          .find(prompt => prompt.role === 'user' && !prompt.isDisplayOnly)?.content;
+        messages.push(new HumanMessage(buildToolDataAnalysisRequest(toolData, originalRequest)));
       }
     }
 

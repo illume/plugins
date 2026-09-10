@@ -33,6 +33,19 @@ describe('KubernetesTool config', () => {
 
     expect(schema.properties?.method?.description).toContain('PATCH');
   });
+
+  it('uses a namespace placeholder instead of assuming the default namespace', () => {
+    const tool = new KubernetesTool();
+    const schema = z.toJSONSchema(tool.config.schema) as {
+      properties?: { url?: { description?: string } };
+    };
+
+    expect(tool.config.description).toContain('/namespaces/<namespace>/');
+    expect(tool.config.description).toContain('never assume "default"');
+    expect(tool.config.description).not.toContain('/namespaces/default/');
+    expect(schema.properties?.url?.description).toContain('/namespaces/<namespace>/');
+    expect(schema.properties?.url?.description).not.toContain('/namespaces/default/');
+  });
 });
 
 describe('tools/kubernetes/context', () => {

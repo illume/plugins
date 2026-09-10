@@ -26,8 +26,10 @@ export interface ParsedArgs {
   endpoint?: string;
   deploymentName?: string;
   systemPrompt?: string;
+  telemetryFile?: string;
   interactive: boolean;
   autoDetect: boolean;
+  json: boolean;
   allowMutations: boolean;
   /** Auto-approve all tool calls without prompting. */
   autoApprove: boolean;
@@ -46,14 +48,18 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const result: ParsedArgs = {
     interactive: false,
     autoDetect: false,
+    json: false,
     allowMutations: false,
-    autoApprove: process.env.HEADLAMP_AI_AUTO_APPROVE === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
+    autoApprove:
+      process.env.HEADLAMP_AI_AUTO_APPROVE === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
     save: false,
     help: false,
     query: '',
     skillSources: [],
-    mockSkills: process.env.HEADLAMP_AI_MOCK_SKILLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
-    mockTools: process.env.HEADLAMP_AI_MOCK_TOOLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
+    mockSkills:
+      process.env.HEADLAMP_AI_MOCK_SKILLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
+    mockTools:
+      process.env.HEADLAMP_AI_MOCK_TOOLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
   };
   const args = argv.slice(2);
   const queryParts: string[] = [];
@@ -84,6 +90,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--system-prompt':
         result.systemPrompt = args[++i];
         break;
+      case '--telemetry-file':
+        result.telemetryFile = args[++i];
+        break;
       case '--skill-source':
         result.skillSources.push(args[++i]);
         break;
@@ -100,6 +109,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--auto-detect':
       case '--autodetect':
         result.autoDetect = true;
+        break;
+      case '--json':
+        result.json = true;
         break;
       case '--allow-mutations':
         result.allowMutations = true;
@@ -137,6 +149,7 @@ Options:
   --api-key <key>       API key for the provider
   --base-url <url>      Base URL for local/custom providers
   --system-prompt <p>   Custom system prompt
+  --telemetry-file <p>  Write sanitized model/tool telemetry as private JSONL
   --interactive, -i     Start interactive chat session
   --skill-source <url>  Git repo URL to load skills from (repeatable, e.g. https://github.com/microsoft/azure-skills)
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1

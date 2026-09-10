@@ -103,6 +103,18 @@ jobs:
       - name: Test ${{ matrix.dir }}
         run: npm run test
 
+      - name: Install AI Assistant eval dependencies
+        if: matrix.dir == 'ai-assistant'
+        run: npm ci --prefix evals
+
+      - name: Typecheck AI Assistant evals
+        if: matrix.dir == 'ai-assistant'
+        run: npm --prefix evals run tsc
+
+      - name: Test AI Assistant evals
+        if: matrix.dir == 'ai-assistant'
+        run: npm --prefix evals run test
+
   ai-assistant-e2e:
     needs: find_changed_plugin_dirs
     if: contains(fromJson(needs.find_changed_plugin_dirs.outputs.dirs), 'ai-assistant')

@@ -1,0 +1,15 @@
+schema_version: '1.0.0'
+profile_name: aks
+cluster:
+  kind: aks
+  # `aks:setup` provisions a dedicated non-production cluster and writes its
+  # kubeconfig to the eval runner's private default path.
+  credential_env_vars: []
+model:
+  kind: azure
+  credential_env_vars:
+    - HEADLAMP_AI_PROVIDER
+    - HEADLAMP_AI_API_KEY
+    - HEADLAMP_AI_ENDPOINT
+    - HEADLAMP_AI_DEPLOYMENT_NAME
+    - HEADLAMP_AI_MODEL

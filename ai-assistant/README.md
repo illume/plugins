@@ -12,6 +12,10 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 `npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create the KWOK cluster. See [e2e/README.md](e2e/README.md) for setup and configuration.
 
+## Evaluation results
+
+[Evaluation results](evals/results/README.md) — the Phase 1 local developer evaluation loop's redacted, GitHub-rendered report. See [evals/README.md](evals/README.md) for how to reproduce it and [evals/docs/implementation-phases.md](evals/docs/implementation-phases.md) for the roadmap.
+
 ## Key Features
 
 - **Conversational Kubernetes Management**: Interact with your cluster using natural language. Ask questions, get explanations, and issue commands.

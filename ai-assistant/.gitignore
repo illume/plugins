@@ -29,3 +29,23 @@ dist
 
 /e2e/test-results
 /e2e/screenshots
+
+# Unredacted canonical eval bundles. These may contain prompts, model output,
+# Kubernetes observations, and other audit evidence; only redacted projections
+# under evals/results/ are reviewed and committed.
+/.eval-runs
+
+# Immutable eval contract archive. This includes protected evaluator truth,
+# fixtures, grader/policy implementations, and schema snapshots referenced by
+# canonical bundles, so it remains outside Git and may use an external store.
+/.eval-contracts
+
+# Dependencies installed for the standalone ai-assistant/evals package.
+/evals/node_modules
+
+# Generated cluster credentials for local and AKS evaluation profiles.
+/evals/.private
+
+# Disposable bundles, contract stores, and fixtures created by eval unit and
+# CLI tests. Tests remove these normally; interrupted runs may leave them here.
+/evals/.test-scratch

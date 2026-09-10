@@ -1,0 +1,51 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/contract-refs.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "contracts"],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "run_id": { "type": "string" },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario_id",
+          "scenario_version",
+          "role",
+          "uri",
+          "digest",
+          "visibility_class",
+          "access_domain"
+        ],
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "scenario_version": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": [
+              "manifest",
+              "candidate_packet",
+              "evaluator_packet",
+              "fixture",
+              "grader",
+              "verifier",
+              "policy",
+              "schema"
+            ]
+          },
+          "uri": { "type": "string" },
+          "digest": { "type": "string" },
+          "visibility_class": {
+            "type": "string",
+            "enum": ["candidate_visible", "eval_confidential"]
+          },
+          "access_domain": { "type": "string" }
+        }
+      }
+    }
+  }
+}

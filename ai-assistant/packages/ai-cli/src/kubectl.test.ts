@@ -28,6 +28,14 @@ describe('createKubectlTool', () => {
     const tool = createKubectlTool();
     expect(tool.description).toContain('Only GET is supported');
     expect(tool.description).not.toContain('delete');
+    expect(tool.description).toContain('<current-namespace>');
+    expect(tool.description).not.toContain('/namespaces/default/');
+  });
+
+  it('uses the active namespace in namespaced API examples', () => {
+    const tool = createKubectlTool({ namespace: 'eval-selector-fault' });
+    expect(tool.description).toContain('/namespaces/eval-selector-fault/pods/my-pod');
+    expect(tool.description).toContain('current namespace (eval-selector-fault)');
   });
 
   it('allows mutations when readOnly is false', () => {

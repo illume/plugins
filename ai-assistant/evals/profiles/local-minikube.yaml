@@ -1,0 +1,8 @@
+schema_version: '1.0.0'
+profile_name: local-minikube
+cluster:
+  kind: minikube
+  credential_env_vars: []
+model:
+  kind: local
+  credential_env_vars: []

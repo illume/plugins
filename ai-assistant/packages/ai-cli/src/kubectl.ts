@@ -29,6 +29,8 @@ export interface KubectlToolOptions {
    * POST, PUT, PATCH, and DELETE are rejected before reaching kubectl.
    */
   readOnly?: boolean;
+  /** Active namespace to use in namespaced API path examples. */
+  namespace?: string;
 }
 
 /**
@@ -41,16 +43,23 @@ export interface KubectlToolOptions {
  * Pass `{ readOnly: false }` to enable mutating operations.
  */
 export function createKubectlTool(options: KubectlToolOptions = {}) {
-  const { readOnly = true } = options;
+  const { readOnly = true, namespace } = options;
   const allowedMethods = readOnly ? READ_ONLY_METHODS : ALL_METHODS;
+  const namespacedPodPath = `/api/v1/namespaces/${namespace ?? '<current-namespace>'}/pods/my-pod`;
 
   const methodList = [...allowedMethods].join(', ');
   const description = readOnly
     ? `Make read-only GET requests to the Kubernetes API server to inspect resources.
-Use standard Kubernetes API URL paths like /api/v1/pods or /api/v1/namespaces/default/pods/my-pod.
+Use standard Kubernetes API URL paths like /api/v1/pods or ${namespacedPodPath}.
+For namespaced resources, use the current namespace${
+        namespace ? ` (${namespace})` : ''
+      }; do not assume "default".
 Only GET is supported. Mutating operations are not permitted.`
     : `Make requests to the Kubernetes API server to fetch, create, update or delete resources.
-Use standard Kubernetes API URL paths like /api/v1/pods or /api/v1/namespaces/default/pods/my-pod.
+Use standard Kubernetes API URL paths like /api/v1/pods or ${namespacedPodPath}.
+For namespaced resources, use the current namespace${
+        namespace ? ` (${namespace})` : ''
+      }; do not assume "default".
 Supported methods: ${methodList}.`;
 
   return tool(
@@ -81,9 +90,7 @@ Supported methods: ${methodList}.`;
       schema: z.object({
         url: z
           .string()
-          .describe(
-            'Kubernetes API URL path, e.g. /api/v1/pods or /api/v1/namespaces/default/pods/my-pod'
-          ),
+          .describe(`Kubernetes API URL path, e.g. /api/v1/pods or ${namespacedPodPath}`),
         method: z.string().describe(`HTTP method: ${methodList}`),
         body: z.string().optional().describe('Optional JSON request body for POST/PUT/PATCH'),
       }),
@@ -105,12 +112,12 @@ export function buildKubectlArgs(
   // kubectl --raw expects a path like /api/v1/pods — reject anything that
   // doesn't start with "/" to prevent argument injection (e.g. "--kubeconfig=...").
   if (!url.startsWith('/')) {
-    throw new Error(`Invalid API path: must start with "/", got "${url}"`);
+    throw new Error('Invalid API path: must start with "/", got "' + url + '"');
   }
   // Reject paths with characters that could be used for injection or path traversal.
   if (!/^\/[a-zA-Z0-9\/_.:@%~-]+$/.test(url)) {
     throw new Error(
-      `Invalid API path: contains disallowed characters. Path must match /[a-zA-Z0-9/_.:@%~-]+`
+      'Invalid API path: contains disallowed characters. Path must match /[a-zA-Z0-9/_.:@%~-]+'
     );
   }
 

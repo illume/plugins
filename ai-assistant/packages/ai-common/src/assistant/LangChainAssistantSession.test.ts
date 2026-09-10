@@ -46,6 +46,7 @@ import {
 import type { CacheEntry } from './cache/responseCache';
 import type { LangChainToolRuntime as ToolManagerAdapter } from './langchain/LangChainToolBinding';
 import LangChainAssistantSession from './LangChainAssistantSession';
+import type { AssistantTelemetryEvent } from './telemetry';
 
 interface TestExtraTool {
   name: string;
@@ -53,7 +54,14 @@ interface TestExtraTool {
 }
 
 interface TestModel {
-  invoke?(input: unknown, options?: unknown): Promise<{ content: unknown; tool_calls?: unknown[] }>;
+  invoke?(
+    input: unknown,
+    options?: unknown
+  ): Promise<{
+    content: unknown;
+    tool_calls?: unknown[];
+    usage_metadata?: unknown;
+  }>;
   stream?(input: unknown, options?: unknown): AsyncIterable<unknown> | Promise<unknown>;
   bindTools?(tools: unknown[]): TestModel;
 }
@@ -63,6 +71,7 @@ type TestToolManager = Partial<ToolManagerAdapter>;
 /** Private LangChainManager surface exercised by integration tests. */
 interface LangChainManagerTestHarness {
   model: TestModel | null;
+  providerId: string;
   history: Prompt[];
   toolManager: TestToolManager;
   useDirectToolCalling: boolean;
@@ -88,6 +97,7 @@ interface LangChainManagerTestHarness {
   handleDirectToolCallingRequest(message: string): Promise<Prompt>;
   cleanResponseCache(): void;
   buildUserContext(): UserContext;
+  prepareMessagesForToolResponse(): BaseMessage[];
   validateToolCallAlignment(): void;
   handleToolEnabledRequest(
     input: { systemPrompt: string; chatHistory: BaseMessage[]; input: string },
@@ -862,6 +872,302 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
     expect(toolResponse).toBeDefined();
     expect(toolResponse?.content).toContain('PodList');
   });
+
+  it('emits sanitized model usage and tool completion telemetry', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        usage_metadata: {
+          input_tokens: 8,
+          output_tokens: 2,
+          total_tokens: 10,
+          input_token_details: { cache_read: 3, cache_creation: 1 },
+        },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => JSON.stringify({ kind: 'PodList', items: [] }),
+    });
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+    await privateManager(manager).processToolCalls(
+      [
+        {
+          type: 'function',
+          id: 'call_telemetry',
+          function: {
+            name: 'kubernetes_api_request',
+            arguments: JSON.stringify({ url: '/api/v1/pods', method: 'GET' }),
+          },
+        },
+      ],
+      { role: 'assistant', content: 'Checking...' }
+    );
+
+    expect(events).toEqual([
+      {
+        type: 'model_usage',
+        provider: 'mock-testing-model',
+        input_token_semantics: 'total_including_cache',
+        model: undefined,
+        service_tier: undefined,
+        inference_geo: undefined,
+        input_tokens: 8,
+        output_tokens: 2,
+        total_tokens: 10,
+        cache_read_input_tokens: 3,
+        cache_creation_input_tokens: 1,
+        cache_write_input_tokens: undefined,
+        cache_write_5m_input_tokens: undefined,
+        cache_write_1h_input_tokens: undefined,
+        reasoning_output_tokens: undefined,
+      },
+      {
+        type: 'tool_call',
+        tool_name: 'kubernetes_api_request',
+        mutating: false,
+        status: 'success',
+        duration_ns: expect.stringMatching(/^\d+$/),
+      },
+    ]);
+    expect(JSON.stringify(events)).not.toContain('/api/v1/pods');
+  });
+
+  it('classifies a non-Kubernetes tool without an HTTP method as read-only', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).extraTools.set('search_documentation', {
+      name: 'search_documentation',
+      invoke: async () => 'result',
+    });
+
+    await privateManager(manager).processToolCalls(
+      [
+        {
+          type: 'function',
+          id: 'call_search',
+          function: { name: 'search_documentation', arguments: JSON.stringify({ query: 'pods' }) },
+        },
+      ],
+      { role: 'assistant', content: 'Searching...' }
+    );
+
+    expect(events).toContainEqual({
+      type: 'tool_call',
+      tool_name: 'search_documentation',
+      mutating: false,
+      status: 'success',
+      duration_ns: expect.stringMatching(/^\d+$/),
+    });
+  });
+
+  it('emits turn_complete after a handled user turn with no tool calls', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).model = {
+      invoke: async () => ({ content: 'done' }),
+    };
+
+    await manager.userSend('hello');
+
+    expect(events.at(-1)).toEqual({ type: 'turn_complete' });
+    expect(events.filter(event => event.type === 'tool_call')).toHaveLength(0);
+  });
+
+  it('normalizes cached tokens from raw provider usage metadata', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        response_metadata: {
+          usage: {
+            prompt_tokens: 8,
+            completion_tokens: 2,
+            total_tokens: 10,
+            prompt_tokens_details: { cached_tokens: 3 },
+          },
+        },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+
+    expect(events).toEqual([
+      {
+        type: 'model_usage',
+        provider: 'mock-testing-model',
+        input_token_semantics: 'total_including_cache',
+        model: undefined,
+        service_tier: undefined,
+        inference_geo: undefined,
+        input_tokens: 8,
+        output_tokens: 2,
+        total_tokens: 10,
+        cache_read_input_tokens: 3,
+        cache_creation_input_tokens: undefined,
+        cache_write_input_tokens: undefined,
+        cache_write_5m_input_tokens: undefined,
+        cache_write_1h_input_tokens: undefined,
+        reasoning_output_tokens: undefined,
+      },
+    ]);
+  });
+
+  it('preserves OpenAI cache writes and actual response metadata', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).providerId = 'openai';
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        usage_metadata: {
+          input_tokens: 20,
+          output_tokens: 4,
+          total_tokens: 24,
+          input_token_details: { cache_read: 8 },
+          output_token_details: { reasoning: 2 },
+        },
+        response_metadata: {
+          model_name: 'gpt-5',
+          service_tier: 'flex',
+          usage: {
+            input_tokens: 20,
+            output_tokens: 4,
+            total_tokens: 24,
+            input_tokens_details: { cached_tokens: 8, cache_write_tokens: 3 },
+          },
+        },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+
+    expect(events[0]).toMatchObject({
+      provider: 'openai',
+      input_token_semantics: 'total_including_cache',
+      model: 'gpt-5',
+      service_tier: 'flex',
+      cache_read_input_tokens: 8,
+      cache_write_input_tokens: 3,
+      reasoning_output_tokens: 2,
+    });
+  });
+
+  it('preserves Anthropic exclusive input and TTL-specific cache writes', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).providerId = 'anthropic';
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        response_metadata: {
+          model: 'claude-sonnet-4-5',
+          service_tier: 'standard_only',
+          inference_geo: 'us',
+          usage: {
+            input_tokens: 9,
+            output_tokens: 2,
+            cache_read_input_tokens: 7,
+            cache_creation_input_tokens: 5,
+            cache_creation: {
+              ephemeral_5m_input_tokens: 3,
+              ephemeral_1h_input_tokens: 2,
+            },
+          },
+        },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+
+    expect(events[0]).toMatchObject({
+      provider: 'anthropic',
+      input_token_semantics: 'uncached_only',
+      model: 'claude-sonnet-4-5',
+      service_tier: 'standard_only',
+      inference_geo: 'us',
+      input_tokens: 9,
+      total_tokens: 23,
+      cache_read_input_tokens: 7,
+      cache_creation_input_tokens: 5,
+      cache_write_5m_input_tokens: 3,
+      cache_write_1h_input_tokens: 2,
+    });
+  });
+
+  it('treats LangChain Anthropic usage metadata as inclusive without losing raw details', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      telemetryObserver: event => events.push(event),
+    });
+    privateManager(manager).providerId = 'anthropic';
+    privateManager(manager).model = {
+      invoke: async () => ({
+        content: 'done',
+        usage_metadata: {
+          input_tokens: 21,
+          output_tokens: 4,
+          total_tokens: 25,
+          input_token_details: { cache_read: 7, cache_creation: 5 },
+        },
+        response_metadata: {
+          model: 'claude-sonnet-4-5',
+          usage: {
+            input_tokens: 9,
+            output_tokens: 4,
+            cache_read_input_tokens: 7,
+            cache_creation_input_tokens: 5,
+            cache_creation: {
+              ephemeral_5m_input_tokens: 3,
+              ephemeral_1h_input_tokens: 2,
+            },
+            inference_geo: 'us',
+            service_tier: 'standard',
+            output_tokens_details: { thinking_tokens: 2 },
+          },
+        },
+      }),
+    };
+    privateManager(manager).boundModel = privateManager(manager).model;
+
+    await privateManager(manager).handleDirectToolCallingRequest('done');
+
+    expect(events[0]).toMatchObject({
+      provider: 'anthropic',
+      input_token_semantics: 'total_including_cache',
+      model: 'claude-sonnet-4-5',
+      service_tier: 'standard',
+      inference_geo: 'us',
+      input_tokens: 21,
+      output_tokens: 4,
+      total_tokens: 25,
+      cache_read_input_tokens: 7,
+      cache_creation_input_tokens: 5,
+      cache_write_5m_input_tokens: 3,
+      cache_write_1h_input_tokens: 2,
+      reasoning_output_tokens: 2,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1307,6 +1613,33 @@ describe('MockApprovalManager + MCP tool flow', () => {
 // =============================================================================
 
 describe('kubectl correction via processToolResponses', () => {
+  it('repeats the original user request after tool data for final synthesis', () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).history.push(
+      { role: 'user', content: 'Return the required JSON schema and remain read-only.' },
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          {
+            type: 'function',
+            id: 'tc1',
+            function: { name: 'kubernetes_api_request', arguments: '{}' },
+          },
+        ],
+      },
+      { role: 'tool', content: '{"pods":[]}', toolCallId: 'tc1', name: 'kubernetes_api_request' }
+    );
+
+    const messages = privateManager(manager).prepareMessagesForToolResponse();
+    const synthesisRequest = messages.at(-1)?.content;
+
+    expect(synthesisRequest).toContain('{"pods":[]}');
+    expect(synthesisRequest).toContain(
+      'Original user request (authoritative):\nReturn the required JSON schema and remain read-only.'
+    );
+  });
+
   it('getCorrectedResponse triggers when model suggests kubectl', async () => {
     const manager = createIntegrationManager();
 

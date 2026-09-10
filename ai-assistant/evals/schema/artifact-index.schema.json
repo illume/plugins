@@ -1,0 +1,11 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/artifact-index.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": ["schema_version", "trial_id", "artifacts"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "trial_id": { "type": "string" },
+    "artifacts": { "type": "array" }
+  }
+}

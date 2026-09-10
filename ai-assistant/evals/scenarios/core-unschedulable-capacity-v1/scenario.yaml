@@ -1,0 +1,31 @@
+schema_version: '1.0.0'
+scenario_id: core-unschedulable-capacity-v1
+scenario_version: '2.0.0'
+family: scheduling
+mode: diagnose_only
+title: Pod requests more CPU than any eligible node can provide
+description: >
+  A single Pod requests one million CPU, so no node in the dedicated cluster
+  can place it. Scored truth
+  depends on an actual scheduler decision, which the simulated in-memory
+  adapter cannot independently prove (see contracts/kwokCompatibility.ts);
+  this scenario supports the `local-minikube` and `aks` profiles.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2025-01-06'
+  last_review: '2025-01-06'
+  review_due: '2025-04-06'
+  lifecycle_state: active
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - scheduler
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-capacity
+artifact_policy:
+  retain_raw_tool_output: true

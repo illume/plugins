@@ -113,6 +113,7 @@ import {
   isMCPFormattedOutput,
   mapCorrectedResponseToolCalls,
 } from './responses/inspectResponse';
+import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
 
 /** Input required to invoke a prompt-template chain. */
 interface ChainInput {
@@ -186,6 +187,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   private useDirectToolCalling: boolean = false;
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
   private extraTools: Map<string, ExtraTool> = new Map();
+  private telemetryObserver?: AssistantTelemetryObserver;
 
   // Skills system
   private skillManager: SkillManager | null = null;
@@ -230,10 +232,13 @@ export default class LangChainAssistantSession extends AssistantSession {
       toolManager?: LangChainToolRuntime;
       /** Host MCP bridge used to discover and execute MCP tools. */
       mcpClient?: ToolClient;
+      /** Receives sanitized model-usage and tool-completion events. */
+      telemetryObserver?: AssistantTelemetryObserver;
     }
   ) {
     super();
     this.providerId = providerId;
+    this.telemetryObserver = options?.telemetryObserver;
     const enabledToolIds = enabledTools ?? [];
     console.debug(
       'AI Assistant: Initializing with enabled tools:',
@@ -281,6 +286,131 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.skillsConfig = skillsConfig;
     this.currentSkillsPromptText = '';
     this.responseCache.clear();
+  }
+
+  private recordTelemetry(event: AssistantTelemetryEvent): void {
+    try {
+      this.telemetryObserver?.(event);
+    } catch {
+      // Telemetry must never change assistant behavior.
+    }
+  }
+
+  private recordModelUsage(response: unknown): void {
+    const value = response as {
+      usage_metadata?: Record<string, unknown>;
+      response_metadata?: Record<string, unknown>;
+    };
+    const responseMetadata = value?.response_metadata;
+    const rawUsage = responseMetadata?.usage as Record<string, unknown> | undefined;
+    const normalizedUsage = value?.usage_metadata;
+    const usage =
+      normalizedUsage ??
+      rawUsage ??
+      (responseMetadata?.tokenUsage as Record<string, unknown> | undefined);
+    if (!usage) return;
+
+    const metadataString = (...keys: string[]): string | undefined => {
+      for (const key of keys) {
+        const metadataValue = responseMetadata?.[key] ?? rawUsage?.[key];
+        if (typeof metadataValue === 'string' && metadataValue.trim()) return metadataValue;
+      }
+      return undefined;
+    };
+
+    const numberValue = (source: Record<string, unknown> | undefined, ...keys: string[]) => {
+      for (const key of keys) {
+        if (typeof source?.[key] === 'number' && Number.isFinite(source[key])) {
+          return source[key] as number;
+        }
+      }
+      return undefined;
+    };
+    const usageNumber = (...keys: string[]) => numberValue(usage, ...keys);
+    const rawNumber = (...keys: string[]) => numberValue(rawUsage, ...keys);
+    const objectValue = (
+      source: Record<string, unknown> | undefined,
+      key: string
+    ): Record<string, unknown> | undefined =>
+      typeof source?.[key] === 'object' && source[key] !== null
+        ? (source[key] as Record<string, unknown>)
+        : undefined;
+    const inputTokenDetails =
+      objectValue(usage, 'input_token_details') ?? objectValue(usage, 'input_tokens_details');
+    const rawInputTokenDetails =
+      objectValue(rawUsage, 'input_token_details') ?? objectValue(rawUsage, 'input_tokens_details');
+    const promptTokenDetails = objectValue(usage, 'prompt_tokens_details');
+    const rawPromptTokenDetails = objectValue(rawUsage, 'prompt_tokens_details');
+    const outputTokenDetails =
+      objectValue(usage, 'output_token_details') ?? objectValue(usage, 'output_tokens_details');
+    const rawOutputTokenDetails =
+      objectValue(rawUsage, 'output_token_details') ??
+      objectValue(rawUsage, 'output_tokens_details');
+    const cacheCreation = objectValue(rawUsage ?? usage, 'cache_creation');
+    const detailValue = (key: string, rawKey = key): number | undefined =>
+      numberValue(inputTokenDetails, key) ?? numberValue(rawInputTokenDetails, rawKey);
+    const event: AssistantTelemetryEvent = {
+      type: 'model_usage',
+      provider: this.providerId,
+      input_token_semantics:
+        normalizedUsage || this.providerId !== 'anthropic'
+          ? 'total_including_cache'
+          : 'uncached_only',
+      model: metadataString('model_name', 'model', 'model_id'),
+      service_tier: metadataString('service_tier'),
+      inference_geo: metadataString('inference_geo', 'inference_geography'),
+      input_tokens: usageNumber('input_tokens', 'prompt_tokens', 'promptTokens'),
+      output_tokens: usageNumber('output_tokens', 'completion_tokens', 'completionTokens'),
+      total_tokens: usageNumber('total_tokens', 'totalTokens'),
+      cache_read_input_tokens:
+        detailValue('cache_read') ??
+        numberValue(promptTokenDetails, 'cached_tokens') ??
+        numberValue(rawPromptTokenDetails, 'cached_tokens') ??
+        usageNumber('cache_read_input_tokens', 'cached_tokens') ??
+        rawNumber('cache_read_input_tokens', 'cached_tokens'),
+      cache_creation_input_tokens:
+        detailValue('cache_creation') ??
+        usageNumber('cache_creation_input_tokens') ??
+        rawNumber('cache_creation_input_tokens'),
+      cache_write_input_tokens:
+        detailValue('cache_write', 'cache_write_tokens') ??
+        usageNumber('cache_write_input_tokens') ??
+        rawNumber('cache_write_input_tokens'),
+      cache_write_5m_input_tokens: numberValue(cacheCreation, 'ephemeral_5m_input_tokens'),
+      cache_write_1h_input_tokens: numberValue(cacheCreation, 'ephemeral_1h_input_tokens'),
+      reasoning_output_tokens:
+        numberValue(outputTokenDetails, 'reasoning', 'reasoning_tokens', 'thinking_tokens') ??
+        numberValue(rawOutputTokenDetails, 'reasoning', 'reasoning_tokens', 'thinking_tokens'),
+    };
+    if (
+      event.total_tokens === undefined &&
+      event.input_tokens !== undefined &&
+      event.output_tokens !== undefined
+    ) {
+      const ttlCacheWrite =
+        (event.cache_write_5m_input_tokens ?? 0) + (event.cache_write_1h_input_tokens ?? 0);
+      const cacheWrite =
+        ttlCacheWrite > 0
+          ? ttlCacheWrite
+          : event.cache_write_input_tokens ?? event.cache_creation_input_tokens ?? 0;
+      const normalizedInput =
+        event.input_token_semantics === 'uncached_only'
+          ? event.input_tokens + (event.cache_read_input_tokens ?? 0) + cacheWrite
+          : event.input_tokens;
+      event.total_tokens = normalizedInput + event.output_tokens;
+    }
+    if (
+      event.input_tokens !== undefined ||
+      event.output_tokens !== undefined ||
+      event.total_tokens !== undefined
+    ) {
+      this.recordTelemetry(event);
+    }
+  }
+
+  private isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
+    if (toolName !== 'kubernetes_api_request') return false;
+    return typeof args.method !== 'string' || args.method.toUpperCase() !== 'GET';
   }
 
   /**
@@ -429,6 +559,7 @@ export default class LangChainAssistantSession extends AssistantSession {
           ? (accumulatedChunk.concat(chunk) as AIMessageChunk)
           : chunk;
       }
+      if (accumulatedChunk) this.recordModelUsage(accumulatedChunk);
 
       // Read tool calls from the fully-accumulated message.
       // This correctly handles providers (e.g. Claude via Copilot) that send
@@ -832,6 +963,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
       // Cache hit - return cached response
       this.history.push(cached.value);
+      this.recordTelemetry({ type: 'turn_complete' });
       return cached.value;
     }
 
@@ -881,6 +1013,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       return response;
     } catch (error) {
       return this.handleUserSendError(error);
+    } finally {
+      this.recordTelemetry({ type: 'turn_complete' });
     }
   }
 
@@ -922,6 +1056,7 @@ export default class LangChainAssistantSession extends AssistantSession {
         signal: this.currentAbortController?.signal,
         callbacks: [capture.callback],
       });
+      this.recordModelUsage(result);
 
       this.currentAbortController = null;
 
@@ -1065,6 +1200,7 @@ export default class LangChainAssistantSession extends AssistantSession {
       signal: this.currentAbortController?.signal,
       callbacks: [capture.callback],
     });
+    this.recordModelUsage(response);
 
     this.currentAbortController = null;
 
@@ -1408,6 +1544,7 @@ Please analyze this data and provide a specific, detailed response that directly
       const response = await model.invoke(messages, {
         signal: this.currentAbortController?.signal,
       });
+      this.recordModelUsage(response);
 
       this.currentAbortController = null;
 
@@ -1765,6 +1902,16 @@ Please analyze this data and provide a specific, detailed response that directly
       // Add denied tool responses to history
       const deniedToolCalls = enabledToolCalls.filter(tc => !approvedToolIds.includes(tc.id));
       for (const deniedTool of deniedToolCalls) {
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: deniedTool.function.name,
+          mutating: this.isMutatingToolCall(
+            deniedTool.function.name,
+            parseSerializedToolArguments(deniedTool.function.arguments)
+          ),
+          status: 'denied',
+          duration_ns: '0',
+        });
         this.history.push({
           role: 'tool',
           content: JSON.stringify({
@@ -1814,6 +1961,7 @@ Please analyze this data and provide a specific, detailed response that directly
 
     for (const toolCall of toolCalls) {
       const args = parseSerializedToolArguments(toolCall.function.arguments);
+      const startedAt = performance.now();
 
       try {
         // Try extra tools first (e.g. kubectl for CLI), then the tool runtime.
@@ -1845,6 +1993,13 @@ Please analyze this data and provide a specific, detailed response that directly
           const toolName = toolCall.function.name || 'unknown tool';
           failedOperations.push(`${toolName}: ${errorMsg}`);
         }
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: toolCall.function.name,
+          mutating: this.isMutatingToolCall(toolCall.function.name, args),
+          status: isError ? 'error' : 'success',
+          duration_ns: String(Math.round((performance.now() - startedAt) * 1_000_000)),
+        });
 
         // Only add to history if the tool response indicates we should
         if (toolResponse.shouldAddToHistory) {
@@ -1885,6 +2040,13 @@ Please analyze this data and provide a specific, detailed response that directly
           });
         }
       } catch (error) {
+        this.recordTelemetry({
+          type: 'tool_call',
+          tool_name: toolCall.function.name,
+          mutating: this.isMutatingToolCall(toolCall.function.name, args),
+          status: 'error',
+          duration_ns: String(Math.round((performance.now() - startedAt) * 1_000_000)),
+        });
         console.error('Error executing tool call:', error);
 
         const toolName = toolCall.function.name || 'unknown tool';
@@ -2084,6 +2246,7 @@ Please analyze this data and provide a specific, detailed response that directly
       });
 
       let fullContent = '';
+      let accumulatedChunk: AIMessageChunk | undefined;
 
       for await (const chunk of stream) {
         const content = this.extractTextContent(chunk.content);
@@ -2091,7 +2254,11 @@ Please analyze this data and provide a specific, detailed response that directly
           fullContent += content;
           yield content;
         }
+        accumulatedChunk = accumulatedChunk
+          ? (accumulatedChunk.concat(chunk) as AIMessageChunk)
+          : chunk;
       }
+      if (accumulatedChunk) this.recordModelUsage(accumulatedChunk);
 
       // Create the complete response prompt
       const assistantPrompt: ConversationMessage = {
@@ -2137,8 +2304,14 @@ Please analyze this data and provide a specific, detailed response that directly
        * @param input - Specialized system prompt and analysis messages.
        * @returns Raw model response.
        */
-      invoke: (input: ToolResponseChainInput) =>
-        model.invoke([new SystemMessage(input.systemPrompt), ...input.messages]),
+      invoke: async (input: ToolResponseChainInput) => {
+        const response = await model.invoke([
+          new SystemMessage(input.systemPrompt),
+          ...input.messages,
+        ]);
+        this.recordModelUsage(response);
+        return response;
+      },
     };
   }
 
@@ -2194,7 +2367,10 @@ Please analyze this data and provide a specific, detailed response that directly
 
       const toolData = toolDataParts.join('\n\n');
       if (toolData) {
-        messages.push(new HumanMessage(buildToolDataAnalysisRequest(toolData)));
+        const originalRequest = [...this.history]
+          .reverse()
+          .find(prompt => prompt.role === 'user' && !prompt.isDisplayOnly)?.content;
+        messages.push(new HumanMessage(buildToolDataAnalysisRequest(toolData, originalRequest)));
       }
     }
 

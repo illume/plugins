@@ -25,6 +25,7 @@ describe('ai/prompts', () => {
 
   it('basePrompt includes Kubernetes capabilities section', () => {
     expect(basePrompt).toContain('Kubernetes');
+    expect(basePrompt).toContain('never assume "default"');
   });
 
   it('basePrompt includes MCP tool usage guidance', () => {

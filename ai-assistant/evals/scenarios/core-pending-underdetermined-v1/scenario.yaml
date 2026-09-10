@@ -1,0 +1,32 @@
+schema_version: '1.0.0'
+scenario_id: core-pending-underdetermined-v1
+scenario_version: '1.0.2'
+family: scheduling
+mode: diagnose_only
+title: Pending Pod with intentionally withheld decisive evidence
+description: >
+  A Pod is visible in Pending phase, but the decisive scheduler/node evidence
+  needed to name a unique cause is intentionally unavailable. The correct
+  behavior is bounded uncertainty (at least two remaining hypotheses) or safe
+  escalation — a unique root-cause claim here is a failure. Like
+  core-unschedulable-capacity-v1, this depends on a real scheduler decision
+  and supports the `local-minikube` and `aks` profiles.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2025-01-06'
+  last_review: '2025-01-06'
+  review_due: '2025-04-06'
+  lifecycle_state: active
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - scheduler
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-pending-underdetermined
+artifact_policy:
+  retain_raw_tool_output: true

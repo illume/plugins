@@ -155,6 +155,20 @@ export function generateContextDescription(
     contextParts.push(`You are viewing cluster: ${currentCluster}`);
   }
 
+  const visibleResources = [
+    ...(event?.resource ? [event.resource] : []),
+    ...(event?.items ?? []),
+    ...(event?.resources ?? []),
+  ];
+  const visibleNamespaces = new Set(
+    visibleResources
+      .map(resource => resource.metadata?.namespace || resource.jsonData?.metadata?.namespace)
+      .filter((namespace): namespace is string => !!namespace)
+  );
+  if (visibleNamespaces.size === 1) {
+    contextParts.push(`Current namespace: ${[...visibleNamespaces][0]}`);
+  }
+
   // Add current view context
   if (event?.title || event?.type) {
     const viewName = event.title || event.type;

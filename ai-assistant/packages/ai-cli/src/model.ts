@@ -23,7 +23,6 @@ import {
   detectProviders,
   GH_CLI_AUTH_SENTINEL,
 } from '@headlamp-k8s/ai-common/providers/detectProvider';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { execFileSync } from 'child_process';
 
 /** Creates a Node.js CommandRunner backed by execFileSync (for ai-common APIs). */
@@ -54,7 +53,7 @@ export function makeNodeCommandRunner(): CommandRunner {
 export async function createModel(
   providerId: string,
   config: Record<string, any>
-): Promise<BaseChatModel> {
+): Promise<ReturnType<typeof createChatModel>> {
   let resolvedConfig = config;
 
   if (providerId === 'copilot' && config.apiKey === GH_CLI_AUTH_SENTINEL) {

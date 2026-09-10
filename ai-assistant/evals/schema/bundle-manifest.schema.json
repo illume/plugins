@@ -1,0 +1,48 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/bundle-manifest.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_format_version",
+    "run_id",
+    "generated_at",
+    "producer",
+    "capabilities",
+    "candidate_configurations",
+    "files",
+    "supported_files",
+    "unsupported_files",
+    "closed"
+  ],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "bundle_format_version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "producer": { "type": "string" },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "candidate_configurations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "kind", "configuration_digest"]
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "digest"],
+        "properties": {
+          "path": { "type": "string" },
+          "digest": { "type": "string" }
+        }
+      }
+    },
+    "supported_files": { "type": "array", "items": { "type": "string" } },
+    "unsupported_files": { "type": "array", "items": { "type": "string" } },
+    "closed": { "type": "boolean" }
+  }
+}

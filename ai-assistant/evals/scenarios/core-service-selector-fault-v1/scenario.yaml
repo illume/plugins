@@ -1,0 +1,32 @@
+schema_version: '1.0.0'
+scenario_id: core-service-selector-fault-v1
+scenario_version: '1.0.0'
+family: service-discovery
+mode: diagnose_only
+title: Service selector does not match any running Pod
+description: >
+  A Service named "web" exists alongside a Running Pod labeled app=web, but the
+  Service's selector requires tier=frontend while the Pod is labeled
+  tier=backend, so the EndpointSlice has zero addresses. The candidate must
+  diagnose the selector mismatch using only observations it actually
+  retrieves.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2025-01-06'
+  last_review: '2025-01-06'
+  review_due: '2025-04-06'
+  lifecycle_state: active
+supported_cluster_profiles:
+  - local-kwok
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - endpointslice-controller
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-selector-fault
+artifact_policy:
+  retain_raw_tool_output: true

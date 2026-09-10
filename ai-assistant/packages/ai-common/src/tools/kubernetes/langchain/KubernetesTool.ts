@@ -35,15 +35,16 @@ RESOURCE UPDATE GUIDELINES:
 - The system automatically merges patches with current resources before making PUT requests
 
 LOG HANDLING FOR MULTI-CONTAINER PODS:
+- Replace <namespace> in every example with the namespace from the current context or user request; never assume "default"
 - When a user asks for logs from a pod, ALWAYS first check the pod specification to determine the number of containers
-- If the pod has only one container, directly fetch logs: kubernetes_api_request(url="/api/v1/namespaces/default/pods/pod-name/log", method="GET")
+- If the pod has only one container, directly fetch logs: kubernetes_api_request(url="/api/v1/namespaces/<namespace>/pods/pod-name/log", method="GET")
 - If the pod has multiple containers, you MUST ask the user which container they want logs from
 - List the available container names and ask the user to specify
-- Once the user specifies a container, fetch logs with the container parameter: kubernetes_api_request(url="/api/v1/namespaces/default/pods/pod-name/log?container=container-name", method="GET")
+- Once the user specifies a container, fetch logs with the container parameter: kubernetes_api_request(url="/api/v1/namespaces/<namespace>/pods/pod-name/log?container=container-name", method="GET")
 - NEVER attempt to fetch logs from a multi-container pod without specifying the container name
 - Examples of user requests that specify containers:
-  - "get logs from pod-name container nginx" → kubernetes_api_request(url="/api/v1/namespaces/default/pods/pod-name/log?container=nginx", method="GET")
-  - "show logs for container sidecar in pod-name" → kubernetes_api_request(url="/api/v1/namespaces/default/pods/pod-name/log?container=sidecar", method="GET")
+  - "get logs from pod-name container nginx" → kubernetes_api_request(url="/api/v1/namespaces/<namespace>/pods/pod-name/log?container=nginx", method="GET")
+  - "show logs for container sidecar in pod-name" → kubernetes_api_request(url="/api/v1/namespaces/<namespace>/pods/pod-name/log?container=sidecar", method="GET")
 - If you encounter an error about "container name must be specified", the error handler will automatically provide guidance to the user
 - IMPORTANT: Parse user requests carefully to detect if they're specifying a container name in their request:
   - Look for patterns like "container [name]", "from container [name]", "[pod-name] [container-name]"
@@ -52,7 +53,9 @@ LOG HANDLING FOR MULTI-CONTAINER PODS:
     schema: z.object({
       url: z
         .string()
-        .describe('URL to request, e.g., /api/v1/pods or /api/v1/namespaces/default/pods/pod-name'),
+        .describe(
+          'URL to request, e.g., /api/v1/pods or /api/v1/namespaces/<namespace>/pods/pod-name. Use the namespace from the current context or user request; never assume "default".'
+        ),
       method: z
         .string()
         .describe(

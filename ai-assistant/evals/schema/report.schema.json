@@ -1,0 +1,172 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/report.schema.json",
+  "schema_version": "2.0.0",
+  "type": "object",
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "generator_version",
+    "as_of_bundle_digest",
+    "source_bundle_digests",
+    "phase_capabilities",
+    "summary",
+    "populations",
+    "slices",
+    "failures",
+    "trials",
+    "provenance",
+    "decision",
+    "limitations",
+    "best_practice_gap_analysis",
+    "exporter_coverage"
+  ],
+  "properties": {
+    "report_id": { "type": "string" },
+    "schema_version": { "type": "string", "enum": ["2.0.0"] },
+    "generated_at": { "type": "string" },
+    "generator_version": { "type": "string" },
+    "as_of_bundle_digest": { "type": "string" },
+    "source_bundle_digests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "phase_capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "run_id",
+        "total_trials",
+        "assigned",
+        "started",
+        "run_eligibility",
+        "run_eligibility_denominator",
+        "task_outcomes_root_cause",
+        "task_outcomes_root_cause_denominator",
+        "safety_outcomes",
+        "safety_outcomes_denominator",
+        "lifecycle_validity",
+        "lifecycle_validity_denominator"
+      ],
+      "properties": {
+        "run_id": { "type": "string" },
+        "total_trials": { "type": "integer", "minimum": 0 },
+        "assigned": { "type": "integer", "minimum": 0 },
+        "started": { "type": "integer", "minimum": 0 },
+        "run_eligibility": { "$ref": "#/definitions/countMap" },
+        "run_eligibility_denominator": { "type": "integer", "minimum": 0 },
+        "task_outcomes_root_cause": { "$ref": "#/definitions/countMap" },
+        "task_outcomes_root_cause_denominator": { "type": "integer", "minimum": 0 },
+        "safety_outcomes": { "$ref": "#/definitions/countMap" },
+        "safety_outcomes_denominator": { "type": "integer", "minimum": 0 },
+        "lifecycle_validity": { "$ref": "#/definitions/countMap" },
+        "lifecycle_validity_denominator": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "populations": {
+      "type": "object",
+      "required": ["by_scenario"],
+      "properties": { "by_scenario": { "$ref": "#/definitions/countMap" } },
+      "additionalProperties": false
+    },
+    "slices": {
+      "type": "object",
+      "required": ["by_cluster_profile", "by_candidate"],
+      "properties": {
+        "by_cluster_profile": { "$ref": "#/definitions/countMap" },
+        "by_candidate": { "$ref": "#/definitions/countMap" }
+      },
+      "additionalProperties": false
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "trial_id",
+          "scenario_id",
+          "first_failure_owner",
+          "root_cause_outcome",
+          "safety_outcome"
+        ],
+        "properties": {
+          "trial_id": { "type": "string" },
+          "scenario_id": { "type": "string" },
+          "first_failure_owner": { "type": ["string", "null"] },
+          "root_cause_outcome": { "type": "string" },
+          "safety_outcome": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "trials": { "type": "array", "items": { "type": "object" } },
+    "provenance": {
+      "type": "object",
+      "required": ["ownership", "health_summary", "regression_deltas"],
+      "properties": {
+        "ownership": { "type": "array", "items": { "type": "object" } },
+        "health_summary": { "type": "object" },
+        "regression_deltas": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "decision": { "type": "string", "enum": ["development_diagnostic"] },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "best_practice_gap_analysis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "best_practice",
+          "disposition",
+          "evidence_artifact_links",
+          "owner",
+          "next_review_date"
+        ],
+        "properties": {
+          "best_practice": { "type": "string" },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "implemented",
+              "qualification_pending",
+              "deferred_to_phase_2",
+              "deferred_to_phase_3",
+              "deferred_to_phase_4",
+              "deferred_to_phase_5",
+              "not_applicable"
+            ]
+          },
+          "evidence_artifact_links": { "type": "array", "items": { "type": "string" } },
+          "owner": { "type": "string" },
+          "next_review_date": { "type": "string" },
+          "expansion_phase": { "type": "integer", "minimum": 2 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "exporter_coverage": {
+      "type": "object",
+      "required": ["status", "mappings", "deferred", "losses_declared"],
+      "properties": {
+        "status": { "type": "string" },
+        "mappings": { "type": "array", "items": { "type": "string" } },
+        "deferred": { "type": "array", "items": { "type": "string" } },
+        "losses_declared": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "countMap": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    }
+  },
+  "additionalProperties": false
+}

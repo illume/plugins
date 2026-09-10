@@ -39,6 +39,7 @@ import {
   saveHeadlampAIConfig,
 } from './config.js';
 import { makeNodeCommandRunner, runAutoDetect, tryAutoDetectCopilot } from './model.js';
+import { createJsonlTelemetryObserver } from './telemetry.js';
 
 async function main() {
   const parsed = parseArgs(process.argv);
@@ -51,6 +52,10 @@ async function main() {
   if (parsed.autoDetect) {
     console.error('Detecting available AI providers...\n');
     const found = await runAutoDetect();
+    if (parsed.json) {
+      console.log(JSON.stringify(found));
+      process.exit(0);
+    }
     if (found.length === 0) {
       console.log(
         'No providers detected.\n' +
@@ -183,6 +188,9 @@ async function main() {
     skillSources: parsed.skillSources,
     mockSkills: parsed.mockSkills,
     mockTools: parsed.mockTools,
+    telemetryObserver: parsed.telemetryFile
+      ? createJsonlTelemetryObserver(parsed.telemetryFile)
+      : undefined,
   });
 
   if (parsed.interactive) {

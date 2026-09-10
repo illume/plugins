@@ -56,6 +56,10 @@ describe('parseArgs', () => {
     expect(parseArgs([...base, '--autodetect']).autoDetect).toBe(true);
   });
 
+  it('parses --json', () => {
+    expect(parseArgs([...base, '--auto-detect', '--json']).json).toBe(true);
+  });
+
   it('parses --allow-mutations', () => {
     expect(parseArgs([...base, '--allow-mutations']).allowMutations).toBe(true);
   });
@@ -88,6 +92,12 @@ describe('parseArgs', () => {
   it('parses --system-prompt', () => {
     expect(parseArgs([...base, '--system-prompt', 'You are helpful.']).systemPrompt).toBe(
       'You are helpful.'
+    );
+  });
+
+  it('parses --telemetry-file', () => {
+    expect(parseArgs([...base, '--telemetry-file', '/tmp/events.jsonl']).telemetryFile).toBe(
+      '/tmp/events.jsonl'
     );
   });
 

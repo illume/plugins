@@ -42,7 +42,7 @@ import {
   gradeForbiddenMutation,
   gradeSecretLeakage,
 } from '../grading/safetyGrader.js';
-import { sha256OfText, type JsonValue } from '../canonicalJson.js';
+import { sha256OfJson, sha256OfText, type JsonValue } from '../canonicalJson.js';
 import {
   attemptId as generateAttemptId,
   eventId as generateEventId,
@@ -186,8 +186,8 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
 
   /**
    * Converts one candidate-visible observation into evidence. This mutates
-  * the trial-wide sequence and appends the corresponding non-mutating event
-  * to `trajectory.jsonl`. Harness observations do not enter candidate counters.
+   * the trial-wide sequence and appends the corresponding non-mutating event
+   * to `trajectory.jsonl`. Harness observations do not enter candidate counters.
    *
    * @param step - Scenario observation represented by the tool event.
    * @param durationNs - Elapsed observation time in nanoseconds.
@@ -361,6 +361,19 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
           value: evidence.value,
         }));
       });
+      const evidenceDigest = sha256OfJson(retrievedObservations as unknown as JsonValue);
+      const actionTargets =
+        scenario.candidatePacket.required_submission_schema === 'repair_submission@1.0.0'
+          ? await Promise.all(
+              scenario.candidatePacket.action_policy!.allowed_resource_refs.map(
+                async resourceRef => {
+                  const target = await clusterAdapter.getResourceIdentity(namespace, resourceRef);
+                  if (!target) throw new Error(`repair target ${resourceRef} was not found`);
+                  return target;
+                }
+              )
+            )
+          : undefined;
       if (scenario.manifest.artifact_policy.retain_raw_tool_output) {
         artifacts.push(
           trialWriter.writeArtifact(
@@ -376,6 +389,8 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       const invocation = await candidateAdapter.invoke({
         packet: scenario.candidatePacket,
         observations: retrievedObservations,
+        evidence_digest: evidenceDigest,
+        ...(actionTargets ? { action_targets: actionTargets } : {}),
         environment: await clusterAdapter.candidateEnvironment?.(
           namespace,
           scenario.candidatePacket.allowed_observation_kinds
@@ -396,7 +411,9 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       artifacts.push(
         trialWriter.writeArtifact('candidate-output.txt', invocation.raw_text),
         trialWriter.writeArtifact(
-          'diagnosis-submission.json',
+          scenario.candidatePacket.required_submission_schema === 'repair_submission@1.0.0'
+            ? 'repair-submission.json'
+            : 'diagnosis-submission.json',
           invocation.submission_text ?? 'null',
           'application/json'
         ),
@@ -452,7 +469,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       if (!aborted) {
         // --- Grader ---
         currentStage = 'grader';
-        const parsed = parseSubmission(invocation.submission_text);
+        const parsed = parseSubmission(
+          invocation.submission_text,
+          scenario.candidatePacket.required_submission_schema
+        );
         submissionStatusResult = parsed.status;
         if (parsed.status !== 'valid' || !parsed.submission) {
           stageStatus.grader = 'ok';
@@ -483,22 +503,28 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
             invalidity_reason: rootCauseDimension.invalidity_reason ?? null,
           });
 
-          const fixGraderId = generateRecordId();
-          const fixResult = gradeRecommendedFix({
-            submission: parsed.submission,
-            graderResultId: fixGraderId,
-          });
-          recommendedFixDimension = fixResult.dimension;
-          unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
-          trialWriter.graderResults.append({
-            grader_result_id: fixGraderId,
-            grader_name: 'deterministic-diagnosis-grader',
-            grader_version: SCHEMA_VERSION,
-            applicable: recommendedFixDimension.applicable,
-            dimension: 'recommended_fix',
-            outcome: recommendedFixDimension.outcome,
-            invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
-          });
+          if (parsed.repairSubmission) {
+            recommendedFixDimension = noApplicableDimension(
+              'repair proposal execution grading is deferred until the approval stage'
+            );
+          } else {
+            const fixGraderId = generateRecordId();
+            const fixResult = gradeRecommendedFix({
+              submission: parsed.submission,
+              graderResultId: fixGraderId,
+            });
+            recommendedFixDimension = fixResult.dimension;
+            unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
+            trialWriter.graderResults.append({
+              grader_result_id: fixGraderId,
+              grader_name: 'deterministic-diagnosis-grader',
+              grader_version: SCHEMA_VERSION,
+              applicable: recommendedFixDimension.applicable,
+              dimension: 'recommended_fix',
+              outcome: recommendedFixDimension.outcome,
+              invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
+            });
+          }
           stageStatus.grader = 'ok';
         }
 

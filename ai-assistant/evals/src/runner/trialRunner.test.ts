@@ -69,6 +69,32 @@ test('runTrial: a reference candidate on the fault scenario passes root_cause an
   }
 });
 
+test('runTrial: a repair anchor receives target identity and accepts a repair sidecar', async () => {
+  const dir = makeScratchDir('trial-repair');
+  try {
+    const scenario = loadScenario('core-service-selector-repair-v1');
+    const adapter = new SimulatedKwokAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_repair');
+    const result = await runTrial({
+      runId: 'run_repair',
+      trialId: 'trial_repair',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: createScriptedCandidate('reference', scenario.evaluatorPacket),
+      bundleWriter,
+      executionMode: 'dry-run',
+    });
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.submission_status, 'valid');
+    assert.equal(result.dimensions.root_cause.outcome, 'pass');
+    assert.equal(result.dimensions.recommended_fix.applicable, false);
+    assert.match(result.dimensions.recommended_fix.invalidity_reason ?? '', /approval stage/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
 test('runTrial: persists sanitized candidate telemetry in the result and trajectory', async () => {
   const dir = makeScratchDir('trial-telemetry');
   try {

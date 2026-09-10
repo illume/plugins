@@ -37,13 +37,17 @@
 
 import { readFileSync } from 'node:fs';
 import yaml from 'js-yaml';
-import type { ClusterProfileName } from '../../contracts/evaluationContracts.js';
+import type { ActionRequest, ClusterProfileName } from '../../contracts/evaluationContracts.js';
 import type {
   ClusterAdapter,
+  DeploymentObservation,
   EndpointsObservation,
+  EventObservation,
   NodeObservation,
+  PersistentVolumeClaimObservation,
   PodObservation,
   PreflightResult,
+  RoleRuleObservation,
   SchedulingObservation,
   ServiceSelectorObservation,
 } from '../clusterAdapter.js';
@@ -62,11 +66,21 @@ interface K8sObject {
     namespace?: string;
     /** Labels attached to the resource. */
     labels?: Record<string, string>;
+    /** Annotations attached to the resource. */
+    annotations?: Record<string, string>;
+    /** Resource generation assigned by the API server. */
+    generation?: number;
   };
   /** Unstructured desired-state fields used by simulated observations. */
   spec?: Record<string, unknown>;
   /** Unstructured runtime-state fields supplied by the fixture. */
   status?: Record<string, unknown>;
+  /** Top-level RBAC rules, when the object is a Role. */
+  rules?: RoleRuleObservation[];
+  /** Top-level Event timestamp. */
+  eventTime?: string;
+  /** Top-level Event reason. */
+  reason?: string;
 }
 
 /**
@@ -265,6 +279,97 @@ export class SimulatedKwokAdapter implements ClusterAdapter {
       reason:
         'The simulated adapter cannot independently prove a real scheduler decision; ' +
         'run this case with the real KubectlClusterAdapter against local-minikube or aks.',
+    };
+  }
+
+  async getPersistentVolumeClaim(
+    namespace: string,
+    name: string
+  ): Promise<PersistentVolumeClaimObservation> {
+    const claim = this.find(namespace, 'PersistentVolumeClaim', name);
+    if (!claim) return { found: false };
+    return {
+      found: true,
+      storageClassName: claim.spec?.storageClassName as string | undefined,
+      phase: claim.status?.phase as string | undefined,
+    };
+  }
+
+  async storageClassExists(name: string): Promise<boolean> {
+    return this.objects.some(
+      object => object.kind === 'StorageClass' && object.metadata.name === name
+    );
+  }
+
+  async canServiceAccount(
+    _namespace: string,
+    _serviceAccount: string,
+    _verb: string,
+    _resource: string
+  ): Promise<boolean> {
+    return false;
+  }
+
+  async getRoleRules(namespace: string, name: string): Promise<RoleRuleObservation[]> {
+    return this.find(namespace, 'Role', name)?.rules ?? [];
+  }
+
+  async getDeployment(namespace: string, name: string): Promise<DeploymentObservation> {
+    const deployment = this.find(namespace, 'Deployment', name);
+    if (!deployment) return { found: false };
+    const template = deployment.spec?.template as
+      | {
+          spec?: {
+            containers?: Array<{
+              resources?: { requests?: { cpu: string; memory: string } };
+            }>;
+          };
+        }
+      | undefined;
+    return {
+      found: true,
+      generation: deployment.metadata.generation,
+      observedGeneration: deployment.status?.observedGeneration as number | undefined,
+      availableReplicas: deployment.status?.availableReplicas as number | undefined,
+      resourceRequests: template?.spec?.containers?.[0]?.resources?.requests,
+    };
+  }
+
+  async getEvent(namespace: string, name: string): Promise<EventObservation> {
+    const event = this.find(namespace, 'Event', name);
+    return event
+      ? { found: true, eventTime: event.eventTime, reason: event.reason }
+      : { found: false };
+  }
+
+  async getResourceAnnotation(
+    namespace: string,
+    resource: 'configmap',
+    name: string,
+    annotation: string
+  ): Promise<string | undefined> {
+    const kind = resource === 'configmap' ? 'ConfigMap' : resource;
+    return this.find(namespace, kind, name)?.metadata.annotations?.[annotation];
+  }
+
+  async getResourceIdentity(
+    namespace: string,
+    resourceRef: string
+  ): Promise<ActionRequest['target'] | null> {
+    const [resource, name, extra] = resourceRef.split('/');
+    if (!resource || !name || extra) throw new Error(`invalid resource ref: ${resourceRef}`);
+    const kinds: Record<string, string> = {
+      service: 'Service',
+      deployment: 'Deployment',
+    };
+    const object = this.find(namespace, kinds[resource] ?? resource, name);
+    if (!object) return null;
+    return {
+      api_version: object.apiVersion ?? 'v1',
+      kind: object.kind,
+      namespace,
+      name,
+      uid: `simulated:${namespace}:${resourceRef}`,
     };
   }
 

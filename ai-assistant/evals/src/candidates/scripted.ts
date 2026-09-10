@@ -70,6 +70,37 @@ function factsToSubmissionText(
   });
 }
 
+function wrapRepairSubmission(
+  input: CandidateInvocationInput,
+  evaluatorPacket: EvaluatorPacket,
+  diagnosisText: string
+): string {
+  if (input.packet.required_submission_schema !== 'repair_submission@1.0.0') {
+    return diagnosisText;
+  }
+  const action = evaluatorPacket.accepted_actions.find(
+    accepted => accepted.operation === 'json_patch'
+  );
+  if (!action?.target_resource || !action.patch) {
+    throw new Error('repair control requires one accepted JSON Patch action');
+  }
+  const target = input.action_targets?.find(
+    candidate => `${candidate.kind.toLowerCase()}/${candidate.name}` === action.target_resource
+  );
+  if (!target) throw new Error(`repair control target ${action.target_resource} was not supplied`);
+  return JSON.stringify({
+    schema_version: '1.0.0',
+    diagnosis: JSON.parse(diagnosisText) as unknown,
+    proposed_action: {
+      action_id: action.action_id,
+      target,
+      operation: 'json_patch',
+      patch: action.patch,
+      evidence_digest: input.evidence_digest,
+    },
+  });
+}
+
 /**
  * Builds a scripted candidate for the given fixed mode. `evaluatorPacket` is
  * required only for `reference`/`wrong`, whose job is to exercise the
@@ -140,7 +171,10 @@ export function createScriptedCandidate(
               evaluatorPacket.min_hypotheses_if_uncertain ?? 2
             ) ?? []
           );
-          return finish(submission, 'Reference control: cites the accepted fact set verbatim.');
+          return finish(
+            wrapRepairSubmission(input, evaluatorPacket, submission),
+            'Reference control: cites the accepted fact set verbatim.'
+          );
         }
         case 'wrong': {
           const submission = factsToSubmissionText(
@@ -148,7 +182,10 @@ export function createScriptedCandidate(
             evidenceIds,
             false
           );
-          return finish(submission, 'Wrong control: cites a plausible but incorrect cause.');
+          return finish(
+            wrapRepairSubmission(input, evaluatorPacket, submission),
+            'Wrong control: cites a plausible but incorrect cause.'
+          );
         }
         case 'malformed': {
           return finish(

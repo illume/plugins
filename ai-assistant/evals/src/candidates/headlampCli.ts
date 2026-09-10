@@ -461,7 +461,7 @@ export function estimateConfiguredUsage(
   };
 }
 
-const SIDECAR_INSTRUCTION =
+const DIAGNOSIS_SIDECAR_INSTRUCTION =
   '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
   'exactly these keys: schema_version ("1.0.0"), cause_facts (array of {resource_ref, field_path, ' +
   'observed_value}), resource_refs (string array), evidence_refs (string array), ' +
@@ -471,6 +471,16 @@ const SIDECAR_INSTRUCTION =
   'from the observed-context JSON; do not add prefixes, extract sub-fields, or reformat values. Include ' +
   'only the smallest set of facts needed to support the diagnosis. This is read-only: never propose a ' +
   'mutating operation.';
+
+const REPAIR_SIDECAR_INSTRUCTION =
+  '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
+  'exactly these keys: schema_version ("1.0.0"), diagnosis, and proposed_action. diagnosis must use ' +
+  'exactly these keys: schema_version, cause_facts, resource_refs, evidence_refs, ' +
+  'alternative_dispositions, uncertainty, and proposed_actions; nested proposed_actions remain ' +
+  'read-only, and the JSON Patch belongs only in proposed_action. Copy exact observed-context values. ' +
+  'proposed_action must contain action_id, the exact supplied target, operation ("json_patch"), the ' +
+  'exact allowed policy patch, and the supplied canonical evidence_digest. Propose the action only; ' +
+  'do not execute it.';
 
 /**
  * Builds a candidate adapter around the product Headlamp CLI process. Each
@@ -539,7 +549,20 @@ export function createHeadlampCliCandidate(
         null,
         2
       );
-      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${SIDECAR_INSTRUCTION}`;
+      const repair = input.packet.required_submission_schema === 'repair_submission@1.0.0';
+      const repairContext = repair
+        ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
+            input.packet.action_policy,
+            null,
+            2
+          )}\n\nAction targets (JSON):\n${JSON.stringify(
+            input.action_targets ?? [],
+            null,
+            2
+          )}\n\nCanonical evidence digest: ${input.evidence_digest}`
+        : '';
+      const instruction = repair ? REPAIR_SIDECAR_INSTRUCTION : DIAGNOSIS_SIDECAR_INSTRUCTION;
+      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${repairContext}${instruction}`;
 
       const start = process.hrtime.bigint();
       let result: ProcessRunResult;

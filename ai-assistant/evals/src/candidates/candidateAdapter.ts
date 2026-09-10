@@ -15,7 +15,7 @@
  */
 
 import { sha256OfJson, type JsonValue } from '../canonicalJson.js';
-import type { CandidatePacket } from '../contracts/evaluationContracts.js';
+import type { ActionRequest, CandidatePacket } from '../contracts/evaluationContracts.js';
 
 /** Candidate implementation families supported by the shared trial pipeline. */
 export type CandidateKind = 'scripted' | 'headlamp-cli' | 'reference-system';
@@ -124,6 +124,7 @@ export interface RetrievedObservation {
  *       value: '{"app":"web","tier":"frontend"}',
  *     },
  *   ],
+ *   evidence_digest: '4b8c...64 lowercase hexadecimal characters...',
  *   environment: { KUBECONFIG: '/tmp/headlamp-eval-candidate/kubeconfig' },
  * } satisfies CandidateInvocationInput;
  * ```
@@ -133,6 +134,10 @@ export interface CandidateInvocationInput {
   packet: CandidatePacket;
   /** Facts retrieved by the harness before invocation. */
   observations: RetrievedObservation[];
+  /** Canonical digest of the complete retrieved observation array. */
+  evidence_digest: string;
+  /** Live identities for the exact policy targets available to a repair proposal. */
+  action_targets?: ActionRequest['target'][];
   /** Ephemeral values such as a restricted kubeconfig path; never retained. */
   environment?: Record<string, string>;
 }

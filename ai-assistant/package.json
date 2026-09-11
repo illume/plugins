@@ -28,6 +28,9 @@
     "eval:list-scenarios": "npm --prefix evals run eval:list-scenarios --",
     "eval:local:kwok": "npm --prefix evals run eval:local:kwok --",
     "eval:local:minikube": "npm --prefix evals run eval:local:minikube --",
+    "eval:generate:phase2": "npm --prefix evals run eval:generate:phase2",
+    "eval:qualify:minikube": "npm --prefix evals run eval:qualify:minikube",
+    "eval:qualify:aks": "npm --prefix evals run eval:qualify:aks",
     "eval:rerun": "npm --prefix evals run eval:rerun --",
     "eval:report:publish": "npm --prefix evals run report:publish --",
     "eval:report:overall": "npm --prefix evals run report:overall --"

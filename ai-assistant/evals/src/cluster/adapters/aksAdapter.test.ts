@@ -17,7 +17,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createFakeCommandRunner } from '../commandRunner.js';
+import { defaultAksKubeconfigPath } from '../provisioning/aks.js';
 import { AksAdapter } from './aksAdapter.js';
+
+const expectKubeconfig = process.env.AKS_KUBECONFIG_PATH ?? defaultAksKubeconfigPath;
 
 test('AksAdapter runtime preflight requires kubectl but not az', async () => {
   const { runner, calls } = createFakeCommandRunner([
@@ -26,8 +29,18 @@ test('AksAdapter runtime preflight requires kubectl but not az', async () => {
       result: { status: 0, stdout: '/usr/local/bin/kubectl\n', stderr: '' },
     },
     {
-      match: ['kubectl'],
+      match: ['kubectl', '--kubeconfig', expectKubeconfig, 'version'],
       result: { status: 0, stdout: 'ok', stderr: '' },
+    },
+    {
+      match: ['kubectl', '--kubeconfig', expectKubeconfig, 'get', 'nodes', '-o', 'json'],
+      result: {
+        status: 0,
+        stdout: JSON.stringify({
+          items: [{ status: { conditions: [{ type: 'Ready', status: 'True' }] } }],
+        }),
+        stderr: '',
+      },
     },
   ]);
 
@@ -37,4 +50,33 @@ test('AksAdapter runtime preflight requires kubectl but not az', async () => {
     calls.some(call => call.args.includes('az')),
     false
   );
+});
+
+test('AksAdapter runtime preflight rejects a cluster without a Ready schedulable node', async () => {
+  const { runner } = createFakeCommandRunner([
+    {
+      match: ['which', 'kubectl'],
+      result: { status: 0, stdout: '/usr/local/bin/kubectl\n', stderr: '' },
+    },
+    {
+      match: ['kubectl', '--kubeconfig', expectKubeconfig, 'version'],
+      result: { status: 0, stdout: 'ok', stderr: '' },
+    },
+    {
+      match: ['kubectl', '--kubeconfig', expectKubeconfig, 'get', 'nodes', '-o', 'json'],
+      result: {
+        status: 0,
+        stdout: JSON.stringify({
+          items: [{ status: { conditions: [{ type: 'Ready', status: 'Unknown' }] } }],
+        }),
+        stderr: '',
+      },
+    },
+  ]);
+
+  const adapter = new AksAdapter([], runner);
+  assert.deepEqual(await adapter.preflight(), {
+    supported: false,
+    reason: 'AKS has no Ready schedulable nodes',
+  });
 });

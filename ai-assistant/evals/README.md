@@ -44,6 +44,29 @@ Inspect the pending Phase 2 anchors without making them runnable:
 npm run eval:list-scenarios -- --profile local-minikube --portfolio phase-2 --include-pending
 ```
 
+Regenerate the public Phase 2 draft portfolio and exercise every fixture on a
+supported non-production cluster without grading or promoting it:
+
+```sh
+npm run eval:generate:phase2
+npm run eval:qualify:minikube
+npm run eval:qualify:aks
+```
+
+Generation produces exactly 275 public contracts across 25 proposed families
+and the six registered behavioral strata. Generated variants remain `draft`
+and `pending`; the qualification commands check schema admission, setup,
+mechanism oracle, observation capture, and namespace cleanup only. The AKS
+command requires the dedicated non-production cluster and kubeconfig described
+below.
+Independent provenance, rights, family, security, and leakage review is still
+required before any draft may be marked qualified or selected by a scored run.
+Mechanism qualification alone does not support a best-in-class claim. That
+claim remains gated by the Phase 2A-2E exits in
+[`docs/implementation-phases.md`](docs/implementation-phases.md), including
+independently reviewed families, private holdouts, repair and browser parity,
+registered repeated comparisons, and qualified HolmesGPT and K8sGPT adapters.
+
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
 
@@ -283,7 +306,9 @@ export HEADLAMP_AI_MODEL='<model>'
 npm run eval -- --profile aks --execute real --candidate headlamp-cli
 ```
 
-The AKS profile runs all four Phase 1 scenarios. Never point
+Ordinary scored AKS runs select active, qualified scenarios that declare AKS
+support. The non-scoring `eval:qualify:aks` command also exercises every
+AKS-declared draft fixture without promoting it. Never point
 `AKS_KUBECONFIG_PATH` at a production cluster.
 
 ## Results, reruns, and publication
@@ -395,8 +420,8 @@ are rejected rather than reported as a meaningful regression comparison.
   `unknown`, never silently passed. Prompts, responses, arguments, results,
   URLs, errors, credentials, endpoints, and kubeconfig data are excluded.
 - The currently committed four-case Azure-model-on-Minukube publication is
-  diagnostic-only; AKS parity remains blocked, so it does not satisfy the
-  Phase 1 exit gate.
+  diagnostic-only. Fixture qualification on AKS does not substitute for a
+  scored, immutable AKS parity run.
 - Required `contract-refs.json` entries archive each scenario manifest,
   candidate packet, protected evaluator packet, and setup fixture by digest.
   The exact deterministic grader, verifier, safety policy, and complete schema

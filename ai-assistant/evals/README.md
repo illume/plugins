@@ -38,6 +38,11 @@ before/after inventory, postcondition execution, rollback execution,
 browser/headless parity, scaled qualification, private holdouts, and external
 tool comparison remain pending roadmap work.
 
+Phase 2B now has a neutral, fail-closed reference-adapter qualification contract
+for startup, health, lossless fixed-submission parity, non-mutation, and cleanup.
+Concrete pinned HolmesGPT and K8sGPT adapters have not yet passed that contract,
+so both systems remain unqualified and no comparison eligibility is implied.
+
 Inspect the pending Phase 2 anchors without making them runnable:
 
 ```sh

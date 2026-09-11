@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scenario_id": "core-pvc-storageclass-healthy-v1",
-  "scenario_version": "1.0.0",
+  "scenario_version": "1.0.1",
   "task_prompt": "Check whether the `archive` PVC currently has a provisioning fault. Cite its current phase and assigned StorageClass evidence and avoid unnecessary changes.",
   "visible_resource_refs": ["persistentvolumeclaim/archive"],
   "allowed_observation_kinds": [

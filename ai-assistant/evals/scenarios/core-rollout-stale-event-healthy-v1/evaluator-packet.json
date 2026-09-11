@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scenario_id": "core-rollout-stale-event-healthy-v1",
-  "scenario_version": "1.0.0",
+  "scenario_version": "1.0.1",
   "accepted_fact_sets": [
     [
       {
@@ -20,7 +20,7 @@
         "fact_id": "event-stale",
         "resource_ref": "event/web-old-failure",
         "field_path": "eventTime",
-        "observed_value": "2025-01-01T00:00:00Z"
+        "observed_value": "2025-01-01T00:00:00.000000Z"
       }
     ]
   ],

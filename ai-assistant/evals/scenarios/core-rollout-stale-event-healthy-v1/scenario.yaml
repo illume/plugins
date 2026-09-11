@@ -1,6 +1,6 @@
 schema_version: '1.0.0'
 scenario_id: core-rollout-stale-event-healthy-v1
-scenario_version: '1.0.0'
+scenario_version: '1.0.1'
 family: temporal-reconciliation
 mode: diagnose_only
 title: Current rollout is healthy despite a stale Warning event

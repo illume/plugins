@@ -8,3 +8,19 @@ spec:
   resources:
     requests:
       storage: 1Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: archive-consumer
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.10
+      volumeMounts:
+        - name: archive
+          mountPath: /archive
+  volumes:
+    - name: archive
+      persistentVolumeClaim:
+        claimName: archive

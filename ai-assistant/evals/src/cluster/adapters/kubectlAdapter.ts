@@ -21,6 +21,7 @@
  */
 
 import type { ActionRequest, ClusterProfileName } from '../../contracts/evaluationContracts.js';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { CommandRunner } from '../commandRunner.js';
@@ -178,12 +179,27 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
    * @returns A Promise that resolves after kubectl applies the manifest.
    */
   async applyManifest(namespace: string, manifestYamlPath: string): Promise<void> {
-    const result = this.runner(
-      'kubectl',
-      this.kubectl(['apply', '-n', namespace, '-f', manifestYamlPath])
-    );
-    if (result.status !== 0) {
-      throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
+    const temporaryDirectory = hasNamespacePlaceholder
+      ? mkdtempSync(path.join(tmpdir(), 'headlamp-eval-fixture-'))
+      : undefined;
+    const appliedPath = temporaryDirectory
+      ? path.join(temporaryDirectory, path.basename(manifestYamlPath))
+      : manifestYamlPath;
+    try {
+      if (temporaryDirectory) {
+        writeFileSync(appliedPath, source.replaceAll('__EVAL_NAMESPACE__', namespace), 'utf8');
+      }
+      const result = this.runner(
+        'kubectl',
+        this.kubectl(['apply', '-n', namespace, '-f', appliedPath])
+      );
+      if (result.status !== 0) {
+        throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+      }
+    } finally {
+      if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
     }
   }
 
@@ -398,7 +414,11 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       'kubectl',
       this.kubectl(['get', 'deployment', name, '-n', namespace, '-o', 'json'])
     );
-    if (result.status !== 0) return { found: false };
+    if (result.status !== 0) {
+      const output = `${result.stderr}\n${result.stdout}`;
+      if (/\bnotfound\b|\bnot found\b/i.test(output)) return { found: false };
+      throw new Error(`failed to get deployment/${name}: ${result.stderr || result.stdout}`);
+    }
     const deployment = JSON.parse(result.stdout) as {
       metadata?: { generation?: number };
       spec?: {

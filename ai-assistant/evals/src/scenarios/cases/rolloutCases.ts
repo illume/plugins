@@ -29,7 +29,7 @@ export const staleEventHealthyCase: ScenarioCaseLogic = {
     const event = await adapter.getEvent(namespace, 'web-old-failure');
     return deployment.observedGeneration === deployment.generation &&
       deployment.availableReplicas === 1 &&
-      event.eventTime === '2025-01-01T00:00:00Z'
+      event.eventTime === '2025-01-01T00:00:00.000000Z'
       ? { ok: true }
       : { ok: false, reason: 'current rollout and stale Event did not reach the qualified state' };
   },

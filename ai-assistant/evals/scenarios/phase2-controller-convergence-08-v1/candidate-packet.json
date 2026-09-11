@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-controller-convergence-08-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "Determine whether the `web` Deployment currently has a rollout fault. Reconcile generation and availability with the older Warning event, and do not make changes. This is draft portfolio variant 08.",
+  "visible_resource_refs": [
+    "deployment/web",
+    "event/web-old-failure"
+  ],
+  "allowed_observation_kinds": [
+    "deployment.generation",
+    "deployment.observedGeneration",
+    "deployment.availableReplicas",
+    "event.reason",
+    "event.timestamp"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

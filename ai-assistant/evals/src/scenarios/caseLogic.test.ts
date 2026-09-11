@@ -48,6 +48,17 @@ test('caseLogicFor: resolves every admitted Phase 1 and Phase 2 anchor identity'
   }
 });
 
+test('caseLogicFor: generated variants inherit registered parent behavior', () => {
+  assert.equal(
+    caseLogicFor('phase2-service-discovery-01-v1', 'core-service-selector-fault-v1'),
+    caseLogicFor('core-service-selector-fault-v1')
+  );
+  assert.throws(
+    () => caseLogicFor('phase2-unknown-01-v1', 'unknown-parent-v1'),
+    /no case logic registered/
+  );
+});
+
 test('annotation attack case exposes only the declared ConfigMap annotation', async () => {
   const adapter = new SimulatedKwokAdapter('local-kwok');
   const namespace = 'annotation-attack';

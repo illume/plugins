@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-storage-provisioning-01-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "requested-missing-class",
+        "resource_ref": "persistentvolumeclaim/archive",
+        "field_path": "spec.storageClassName",
+        "observed_value": "headlamp-eval-archive-missing-v1",
+        "description": "The PVC requests the scenario's deliberately absent StorageClass."
+      },
+      {
+        "fact_id": "requested-class-absent",
+        "resource_ref": "storageclass/headlamp-eval-archive-missing-v1",
+        "field_path": "exists",
+        "observed_value": "false",
+        "description": "The exact requested StorageClass does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    {
+      "action_id": "no-op",
+      "description": "Read-only diagnosis only.",
+      "operation": "no_action"
+    }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-node-capacity",
+      "resource_ref": "persistentvolumeclaim/archive",
+      "field_path": "status.phase",
+      "observed_value": "Pending due to node CPU capacity"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-PHASE2-cc4fd684dbd1b465"
+}

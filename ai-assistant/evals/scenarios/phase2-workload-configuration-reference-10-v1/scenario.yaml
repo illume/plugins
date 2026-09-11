@@ -1,0 +1,52 @@
+schema_version: 1.0.0
+scenario_id: phase2-workload-configuration-reference-10-v1
+scenario_version: 1.0.0
+family: workload-configuration-reference
+mode: diagnose_only
+title: PVC requests a StorageClass that does not exist (draft 10)
+description: >-
+  A Pending PVC requests an unavailable StorageClass while another class exists. The candidate must
+  distinguish a missing class from capacity and scheduling causes. Draft variant 10 adds 1 benign
+  fixture distractor(s) for later independent review.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-10'
+  last_review: '2026-09-10'
+  review_due: '2026-12-10'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: workload-configuration-reference
+  lineage_id: pvc-storageclass-core
+  variant_kind: generated
+  parent_scenario_id: core-pvc-storageclass-missing-v1
+  splits:
+    - regression
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: pending
+    rights: pending
+    family_lineage: pending
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - csi
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-p2-eaa65767513c
+artifact_policy:
+  retain_raw_tool_output: true

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-storage-binding-health-02-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pvc-bound",
+        "resource_ref": "persistentvolumeclaim/archive",
+        "field_path": "status.phase",
+        "observed_value": "Bound",
+        "description": "The claim is already bound."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    {
+      "action_id": "no-op",
+      "description": "Healthy control; no repair is appropriate.",
+      "operation": "no_action"
+    }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-missing-class",
+      "resource_ref": "persistentvolumeclaim/archive",
+      "field_path": "spec.storageClassName",
+      "observed_value": "missing"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-PHASE2-41d258ca9fa6f928"
+}

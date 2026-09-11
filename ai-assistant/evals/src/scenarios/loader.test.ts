@@ -23,13 +23,18 @@ import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js'
 import { PHASE_ONE_SCENARIO_IDS, PHASE_TWO_ANCHOR_IDS } from '../contracts/evaluationContracts.js';
 import { buildPortfolioCensus } from './admission.js';
 
-test('lists the four Phase 1 cases and eight Phase 2 anchors', () => {
-  assert.deepEqual(listScenarioIds(), [...PHASE_ONE_SCENARIO_IDS, ...PHASE_TWO_ANCHOR_IDS].sort());
+test('lists the four Phase 1 cases, eight Phase 2 anchors, and 263 draft variants', () => {
+  const ids = listScenarioIds();
+  assert.equal(ids.length, 275);
+  for (const scenarioId of [...PHASE_ONE_SCENARIO_IDS, ...PHASE_TWO_ANCHOR_IDS]) {
+    assert.ok(ids.includes(scenarioId));
+  }
+  assert.equal(ids.filter(id => id.startsWith('phase2-')).length, 263);
 });
 
 test('loads and validates every scenario against its schemas', () => {
   const scenarios = loadAllScenarios();
-  assert.equal(scenarios.length, 12);
+  assert.equal(scenarios.length, 275);
   for (const scenario of scenarios) {
     assert.equal(scenario.manifest.scenario_id, scenario.candidatePacket.scenario_id);
     assert.equal(scenario.manifest.scenario_id, scenario.evaluatorPacket.scenario_id);
@@ -37,19 +42,33 @@ test('loads and validates every scenario against its schemas', () => {
   }
 });
 
-test('portfolio census keeps unqualified Phase 2 anchors out of eligible evidence', () => {
+test('portfolio census enforces the Phase 2 draft inventory and stratum targets', () => {
   const scenarios = loadAllScenarios();
   const census = buildPortfolioCensus(scenarios);
-  assert.equal(census.total, 12);
+  assert.equal(census.total, 275);
   assert.equal(census.qualified, 4);
-  assert.equal(census.pending, 8);
-  assert.equal(census.families, 7);
-  assert.equal(census.by_stratum.approved_repair, 2);
-  assert.equal(census.by_stratum.security_prompt_injection, 2);
+  assert.equal(census.pending, 271);
+  assert.equal(census.families, 25);
+  assert.deepEqual(census.by_stratum, {
+    fault_diagnosis: 100,
+    healthy_control: 50,
+    insufficient_evidence: 35,
+    approved_repair: 40,
+    security_prompt_injection: 30,
+    multi_turn_tool_failure: 20,
+  });
   for (const scenarioId of PHASE_TWO_ANCHOR_IDS) {
     const scenario = scenarios.find(item => item.manifest.scenario_id === scenarioId);
     assert.equal(scenario?.manifest.provenance.lifecycle_state, 'draft');
     assert.equal(scenario?.manifest.portfolio.qualification_status, 'pending');
+  }
+  for (const scenario of scenarios.filter(item =>
+    item.manifest.scenario_id.startsWith('phase2-')
+  )) {
+    assert.equal(scenario.manifest.provenance.lifecycle_state, 'draft');
+    assert.equal(scenario.manifest.portfolio.qualification_status, 'pending');
+    assert.deepEqual(scenario.manifest.supported_cluster_profiles, ['local-minikube', 'aks']);
+    assert.ok(scenario.manifest.portfolio.parent_scenario_id);
   }
 });
 

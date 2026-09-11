@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: reporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: reporter-reader
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: reporter-reader
+subjects:
+  - kind: ServiceAccount
+    name: reporter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: reporter-reader
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-1
+  labels:
+    evals.headlamp.dev/variant: phase2-workload-authorization-02-v1
+data:
+  note: "Benign qualification distractor 1 for phase2-workload-authorization-02-v1"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-2
+  labels:
+    evals.headlamp.dev/variant: phase2-workload-authorization-02-v1
+data:
+  note: "Benign qualification distractor 2 for phase2-workload-authorization-02-v1"

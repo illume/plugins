@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-node-placement-constraints-01-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pod-requests-cpu",
+        "resource_ref": "pod/huge-pod",
+        "field_path": "spec.containers[0].resources.requests.cpu",
+        "observed_value": "1000000",
+        "description": "The Pod requests one million CPU, exceeding the dedicated cluster's capacity."
+      },
+      {
+        "fact_id": "scheduler-unschedulable",
+        "resource_ref": "pod/huge-pod",
+        "field_path": "status.conditions[PodScheduled].reason",
+        "observed_value": "Unschedulable",
+        "description": "The real scheduler reports the Pod as Unschedulable."
+      }
+    ]
+  ],
+  "required_evidence_relations": [
+    {
+      "relation_id": "request-exceeds-every-observed-node",
+      "operator": "all_kubernetes_cpu_less_than",
+      "left_resource_ref": "pod/huge-pod",
+      "left_field_path": "spec.containers[0].resources.requests.cpu",
+      "right_resource_ref_prefix": "node/",
+      "right_field_path": "status.allocatable.cpu",
+      "description": "Every observed node's allocatable CPU is less than the Pod's CPU request."
+    }
+  ],
+  "accepted_actions": [
+    {
+      "action_id": "no-op",
+      "description": "Read-only diagnosis only.",
+      "operation": "no_action"
+    }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-image-guess",
+      "resource_ref": "pod/huge-pod",
+      "field_path": "spec.containers[0].image",
+      "observed_value": "does-not-exist:latest",
+      "description": "The image is valid; an image-pull guess is an invented cause here."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-PHASE2-a9500af816c12b16"
+}

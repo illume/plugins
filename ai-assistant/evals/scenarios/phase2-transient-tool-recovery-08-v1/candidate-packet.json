@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-transient-tool-recovery-08-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "The `mystery-pod` Pod in this namespace is Pending. Using only the observed context provided with this request, assess why. Do not retrieve additional cluster data. If the provided evidence does not determine a unique cause, say so explicitly and list the remaining plausible hypotheses instead of guessing. This is a read-only investigation: do not propose or attempt any change. This is draft portfolio variant 08.",
+  "visible_resource_refs": [
+    "pod/mystery-pod"
+  ],
+  "allowed_observation_kinds": [
+    "pod.phase"
+  ],
+  "allow_additional_retrieval": false,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

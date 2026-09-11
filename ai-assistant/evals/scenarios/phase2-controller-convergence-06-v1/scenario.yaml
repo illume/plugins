@@ -1,0 +1,51 @@
+schema_version: 1.0.0
+scenario_id: phase2-controller-convergence-06-v1
+scenario_version: 1.0.0
+family: controller-convergence
+mode: diagnose_only
+title: Current rollout is healthy despite a stale Warning event (draft 06)
+description: >-
+  A current Deployment generation is available after an earlier failed rollout. Current status must
+  outweigh the plausible but stale Warning event. Draft variant 06 adds 0 benign fixture
+  distractor(s) for later independent review.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-10'
+  last_review: '2026-09-10'
+  review_due: '2026-12-10'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: healthy_control
+  family_id: controller-convergence
+  lineage_id: rollout-stale-event-core
+  variant_kind: generated
+  parent_scenario_id: core-rollout-stale-event-healthy-v1
+  splits:
+    - development
+  qualification_status: pending
+  qualification_controls:
+    provenance: pending
+    rights: pending
+    family_lineage: pending
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - operator-reconciliation
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-p2-8cd9fc7408fb
+artifact_policy:
+  retain_raw_tool_output: true

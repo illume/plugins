@@ -1,0 +1,54 @@
+schema_version: 1.0.0
+scenario_id: phase2-node-placement-constraints-05-v1
+scenario_version: 1.0.0
+family: node-placement-constraints
+mode: diagnose_only
+title: Pod requests more CPU than any eligible node can provide (draft 05)
+description: >-
+  A single Pod requests one million CPU, so no node in the dedicated cluster can place it. Scored
+  truth depends on an actual scheduler decision, which the simulated in-memory adapter cannot
+  independently prove (see contracts/kwokCompatibility.ts); this scenario supports the
+  `local-minikube` and `aks` profiles. Draft variant 05 adds 2 benign fixture distractor(s) for
+  later independent review.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-10'
+  last_review: '2026-09-10'
+  review_due: '2026-12-10'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: node-placement-constraints
+  lineage_id: unschedulable-capacity-core
+  variant_kind: generated
+  parent_scenario_id: core-unschedulable-capacity-v1
+  splits:
+    - regression
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: pending
+    rights: pending
+    family_lineage: pending
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - scheduler
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-p2-2009bb0f62d4
+artifact_policy:
+  retain_raw_tool_output: true

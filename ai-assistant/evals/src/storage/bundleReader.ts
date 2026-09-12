@@ -37,6 +37,7 @@ import type {
   TrialResult,
 } from '../contracts/evaluationContracts.js';
 import type { TrialIndexRow } from './bundleWriter.js';
+import type { ExploratoryAttempt } from '../comparisons/repeatTargeting.js';
 import { loadSchema, schemaUri, type SchemaName } from '../contracts/schemas.js';
 import { assertValid } from '../contracts/validate.js';
 import {
@@ -62,6 +63,8 @@ export interface ClosedBundle {
   trials: TrialResult[];
   /** Validated baseline-to-candidate regression deltas. */
   regressionDeltas: RegressionDelta[];
+  /** Validated matched exploratory attempt pairs used for repeat targeting. */
+  exploratoryAttempts: ExploratoryAttempt[];
   /** Validated references whose archived content passed digest verification. */
   contractReferences: ContractReference[];
   /** Validated scenario manifests loaded from the verified contract archive. */
@@ -244,6 +247,10 @@ export function readClosedBundle(
     path.join(bundleDir, 'regression-deltas.jsonl'),
     'regression-delta'
   ) as unknown as RegressionDelta[];
+  const exploratoryAttempts = validateJsonl<ExploratoryAttempt & Record<string, JsonValue>>(
+    path.join(bundleDir, 'exploratory-attempts.jsonl'),
+    'exploratory-attempt'
+  ) as unknown as ExploratoryAttempt[];
 
   return {
     runDir,
@@ -253,6 +260,7 @@ export function readClosedBundle(
     trialIndex,
     trials,
     regressionDeltas,
+    exploratoryAttempts,
     contractReferences: contractReferences.contracts,
     scenarioManifests,
   };

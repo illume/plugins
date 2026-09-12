@@ -107,7 +107,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
     assert.equal(
       bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      40
+      42
     );
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),

@@ -69,6 +69,31 @@ test('runTrial: a reference candidate on the fault scenario passes root_cause an
   }
 });
 
+test('runTrial: a generated variant executes its registered parent case logic', async () => {
+  const dir = makeScratchDir('trial-generated');
+  try {
+    const scenario = loadScenario('phase2-service-discovery-01-v1');
+    const adapter = new SimulatedKwokAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_generated');
+    const result = await runTrial({
+      runId: 'run_generated',
+      trialId: 'trial_generated',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: createScriptedCandidate('reference', scenario.evaluatorPacket),
+      bundleWriter,
+      executionMode: 'dry-run',
+    });
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.stage_status.setup, 'ok');
+    assert.equal(result.stage_status.candidate, 'ok');
+    assert.equal(result.stage_status.cleanup, 'ok');
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
 test('runTrial: a repair anchor receives target identity and accepts a repair sidecar', async () => {
   const dir = makeScratchDir('trial-repair');
   try {

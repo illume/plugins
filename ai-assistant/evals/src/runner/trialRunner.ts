@@ -340,7 +340,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       path.join(scenario.directory, scenario.manifest.setup_manifest_path)
     );
     stageStatus.setup = 'ok';
-    const caseLogic = caseLogicFor(scenario.manifest.scenario_id);
+    const caseLogic = caseLogicFor(
+      scenario.manifest.scenario_id,
+      scenario.manifest.portfolio.parent_scenario_id
+    );
     const preflightOutcome = await caseLogic.preflight(clusterAdapter, namespace);
     if (!preflightOutcome.ok) {
       stageStatus.setup = 'error';

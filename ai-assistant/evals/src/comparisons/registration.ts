@@ -36,7 +36,7 @@ export interface ComparisonRosterEntry {
 }
 
 export interface ComparisonRegistration {
-  schema_version: '1.0.0';
+  schema_version: '1.1.0';
   registration_id: string;
   authored_at: string;
   design_status: 'draft' | 'locked';
@@ -53,8 +53,21 @@ export interface ComparisonRegistration {
   practical_margin: number | null;
   dependence_unit: 'lineage_id';
   resampling_unit: 'lineage_id';
-  missing_pair_rule: string;
-  multiplicity_policy: string;
+  missing_pair_rule: {
+    valid_pair: 'include_task_quality_and_reliability';
+    invalid_pair: 'exclude_task_quality_retain_reliability';
+    censored_pair: 'exclude_task_quality_retain_reliability';
+    missing_pair: 'exclude_task_quality_retain_reliability';
+    unsupported_assignment: 'terminal_exclusion';
+    ineligible_assignment: 'terminal_exclusion';
+    pending_assignment: 'block_execution';
+  };
+  multiplicity_policy: {
+    method: 'fixed_sequence';
+    familywise_alpha: number;
+    primary_contrasts: ['headlamp_cli_vs_holmesgpt', 'headlamp_cli_vs_k8sgpt'];
+    secondary_analyses: 'descriptive_only';
+  };
   dataset_splits: string[];
   private_holdouts: {
     target_count: 25;

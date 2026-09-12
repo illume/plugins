@@ -17,6 +17,12 @@ test('loads the frozen 30-case roster with explicit pending dispositions', () =>
   assert.equal(loaded.registration.roster.length, 30);
   assert.equal(loaded.registration.design_status, 'draft');
   assert.equal(loaded.registration.confirmatory_execution, 'blocked');
+  assert.equal(loaded.registration.multiplicity_policy.method, 'fixed_sequence');
+  assert.equal(loaded.registration.multiplicity_policy.familywise_alpha, 0.05);
+  assert.equal(
+    loaded.registration.missing_pair_rule.invalid_pair,
+    'exclude_task_quality_retain_reliability'
+  );
   assert.equal(loaded.family_count, 22);
   assert.equal(loaded.lineage_count, 7);
   assert.equal(loaded.jointly_eligible_count, 0);

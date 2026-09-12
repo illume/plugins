@@ -1,6 +1,6 @@
 # @headlamp-k8s/ai-evals
 
-Phase 1 evaluation framework plus a non-claiming Phase 2A foundation for the Headlamp AI Assistant: a local,
+Phase 1 evaluation framework plus a non-claiming Phase 2 foundation for the Headlamp AI Assistant: a local,
 deterministic, offline-by-default developer loop that answers **"which
 Headlamp behavior changed?"** from retained evidence, not from a blended
 score. See [`docs/implementation-phases.md`](docs/implementation-phases.md)
@@ -9,10 +9,10 @@ for the full roadmap. Phase 2 exit claims remain gated by the complete roadmap.
 ## What this is (and is not)
 
 - **Is**: a standalone TypeScript package with typed/versioned contracts,
-  four active Phase 1 scenarios, eight draft Phase 2 anchors, deterministic graders, a canonical
+  275 active, qualified public scenarios, deterministic graders, a canonical
   immutable result bundle, generated reports, a redacted public publication
   view, and offline golden exporter projections (LangSmith-native, OTLP).
-- **Is not**: a release gate, a qualified 275-case Phase 2 portfolio, a
+- **Is not**: a release gate, a completed Phase 2 comparison, or a
   cross-system comparison, or a claim about free-form answer quality (natural
   language is retained but never scored in Phases 1–2).
 - **Default execution is offline and deterministic.** The default cluster
@@ -52,9 +52,12 @@ npm run eval:comparison:status
 ```
 
 The roster is frozen, but the comparison design remains `draft` and
-confirmatory execution is blocked. Repeat targets, the practical margin,
-adapter/scenario qualification, and private-holdout access verification must be
-completed before the loader permits a `locked` design. The status reports 22
+confirmatory execution is blocked. Missing, invalid, censored, unsupported,
+ineligible, and pending pairs now have typed, executable dispositions; the two
+primary contrasts use a registered fixed-sequence multiplicity policy.
+Repeat targets, the practical margin, adapter qualification, assignment
+dispositions, and private-holdout access verification must be completed before
+the loader permits a `locked` design. The status reports 22
 declared families but only seven inherited lineages; those generated family
 labels are not represented as independent incidents.
 

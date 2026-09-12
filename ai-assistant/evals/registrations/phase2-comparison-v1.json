@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "registration_id": "phase2-comparison-v1",
   "authored_at": "2026-09-12",
   "design_status": "draft",
@@ -28,8 +28,21 @@
   "practical_margin": null,
   "dependence_unit": "lineage_id",
   "resampling_unit": "lineage_id",
-  "missing_pair_rule": "Exclude a pair from the task-quality denominator when either trial is invalid, missing, or censored; retain both assignment rows and the exclusion reason in reliability evidence.",
-  "multiplicity_policy": "Primary Headlamp-versus-HolmesGPT and Headlamp-versus-K8sGPT decisions use a fixed sequence; secondary dimensions and strata are descriptive until a locked design specifies alpha allocation.",
+  "missing_pair_rule": {
+    "valid_pair": "include_task_quality_and_reliability",
+    "invalid_pair": "exclude_task_quality_retain_reliability",
+    "censored_pair": "exclude_task_quality_retain_reliability",
+    "missing_pair": "exclude_task_quality_retain_reliability",
+    "unsupported_assignment": "terminal_exclusion",
+    "ineligible_assignment": "terminal_exclusion",
+    "pending_assignment": "block_execution"
+  },
+  "multiplicity_policy": {
+    "method": "fixed_sequence",
+    "familywise_alpha": 0.05,
+    "primary_contrasts": ["headlamp_cli_vs_holmesgpt", "headlamp_cli_vs_k8sgpt"],
+    "secondary_analyses": "descriptive_only"
+  },
   "dataset_splits": ["external_comparison"],
   "private_holdouts": {
     "target_count": 25,

@@ -326,6 +326,16 @@ function isTokenCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+function isProviderFailure(stdout: string, stderr: string): boolean {
+  const output = `${stdout}\n${stderr}`;
+  return (
+    /(?:^|\n)Error:\s/.test(stderr) ||
+    /\b(?:400|401|403|404|429|5\d\d)\b[^\n]*(?:requested model is not supported|provider|authentication|rate limit)/i.test(
+      output
+    )
+  );
+}
+
 /** Runtime, provider, and credential-boundary options for the Headlamp CLI candidate. */
 export interface HeadlampCliCandidateOptions {
   /** Environment variable names to forward from the parent process, if set. */
@@ -609,7 +619,7 @@ export function createHeadlampCliCandidate(
             : {}),
         };
       }
-      if (result.exitCode !== 0 || /(?:^|\n)Error:\s/.test(result.stderr)) {
+      if (result.exitCode !== 0 || isProviderFailure(result.stdout, result.stderr)) {
         return {
           raw_text: [result.stdout, result.stderr].filter(Boolean).join('\n'),
           submission_text: null,

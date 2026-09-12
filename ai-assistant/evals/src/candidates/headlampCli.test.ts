@@ -407,6 +407,24 @@ test('createHeadlampCliCandidate: an explicit CLI error with exit code zero is u
   assert.match(result.raw_text, /No AI provider configured/);
 });
 
+test('createHeadlampCliCandidate: a provider rejection on stdout is unavailable', async () => {
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async () => ({
+      stdout: 'Sorry, your request failed: 400 The requested model is not supported.',
+      stderr: '',
+      exitCode: 0,
+      timedOut: false,
+    }),
+  });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+  assert.equal(result.status, 'unavailable');
+  assert.match(result.raw_text, /requested model is not supported/);
+});
+
 test('createHeadlampCliCandidate: preserves successful diagnostic prose beginning with Error', async () => {
   const candidate = createHeadlampCliCandidate({
     processRunner: async () => ({

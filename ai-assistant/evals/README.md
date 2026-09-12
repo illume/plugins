@@ -191,7 +191,7 @@ Specify a tested model explicitly when comparing providers or reproducing a run:
 
 ```sh
 # Claude Opus 4.6
-npm run eval:aks -- --model claude-opus-4.6
+npm run eval:aks -- --model claude-opus-4.7
 
 # GPT-5.4
 npm run eval:aks -- --model gpt-5.4

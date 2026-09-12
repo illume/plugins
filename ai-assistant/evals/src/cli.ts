@@ -53,6 +53,7 @@ import {
   comparisonRegistrationStatus,
   loadComparisonRegistration,
 } from './comparisons/registration.js';
+import { assertCopilotModelAvailable } from './candidates/copilotCatalog.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
@@ -340,6 +341,10 @@ async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
   }
   if (typeof apiKey !== 'string') {
     throw new Error(`--api-key <key> is required for provider ${flags.provider}`);
+  }
+
+  if (flags.provider === 'copilot' && typeof flags.model === 'string') {
+    await assertCopilotModelAvailable(apiKey, flags.model);
   }
 
   const args = ['--provider', flags.provider, '--api-key', apiKey];

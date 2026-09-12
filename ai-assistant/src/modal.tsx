@@ -881,13 +881,30 @@ export default function AIPrompt(props: {
     // Handle tool confirmation objects
     if (typeof content === 'object' && content && 'toolConfirmation' in content) {
       const confirmation = content as Partial<ConversationMessage>;
+      const requestId = confirmation.requestId;
+      const settleConfirmation = (message: string): void => {
+        setPromptHistory(previous =>
+          previous.map(prompt =>
+            prompt.requestId === requestId
+              ? { ...prompt, content: message, toolConfirmation: undefined }
+              : prompt
+          )
+        );
+      };
       newPrompt = {
         role: type,
         content: confirmation.content || '',
         error: hasError || false,
-        toolConfirmation: confirmation.toolConfirmation,
+        toolConfirmation: confirmation.toolConfirmation && {
+          ...confirmation.toolConfirmation,
+          onApprove: async approvedToolIds =>
+            settleConfirmation(
+              t('Approved {{count}} test tool', { count: approvedToolIds.length })
+            ),
+          onDeny: async () => settleConfirmation(t('Denied test tool execution')),
+        },
         isDisplayOnly: confirmation.isDisplayOnly,
-        requestId: confirmation.requestId,
+        requestId,
         ...(hasError && { contentFilterError: true }),
       };
     } else {

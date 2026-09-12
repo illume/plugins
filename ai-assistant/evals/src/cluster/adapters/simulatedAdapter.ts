@@ -37,7 +37,13 @@
 
 import { readFileSync } from 'node:fs';
 import yaml from 'js-yaml';
-import type { ActionRequest, ClusterProfileName } from '../../contracts/evaluationContracts.js';
+import jsonPatch from 'fast-json-patch';
+import type { JsonValue } from '../../canonicalJson.js';
+import type {
+  ActionRequest,
+  ClusterProfileName,
+  JsonPatchOperation,
+} from '../../contracts/evaluationContracts.js';
 import type {
   ClusterAdapter,
   DeploymentObservation,
@@ -371,6 +377,32 @@ export class SimulatedKwokAdapter implements ClusterAdapter {
       name,
       uid: `simulated:${namespace}:${resourceRef}`,
     };
+  }
+
+  async getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null> {
+    const object = this.find(target.namespace, target.kind, target.name);
+    if (!object) return null;
+    return structuredClone(object) as unknown as JsonValue;
+  }
+
+  async applyJsonPatch(
+    target: ActionRequest['target'],
+    patch: JsonPatchOperation[]
+  ): Promise<JsonValue> {
+    const index = this.objects.findIndex(
+      object =>
+        object.kind === target.kind &&
+        object.metadata.namespace === target.namespace &&
+        object.metadata.name === target.name
+    );
+    if (index < 0) throw new Error(`repair target ${target.kind}/${target.name} was not found`);
+    const expectedUid = `simulated:${target.namespace}:${target.kind.toLowerCase()}/${target.name}`;
+    if (target.uid !== expectedUid) throw new Error('repair target identity is stale');
+
+    const document = structuredClone(this.objects[index]!);
+    const result = jsonPatch.applyPatch(document, patch, true, true).newDocument as K8sObject;
+    this.objects[index] = result;
+    return structuredClone(result) as unknown as JsonValue;
   }
 
   /**

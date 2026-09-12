@@ -11,7 +11,7 @@ function cloneRegistration(): ComparisonRegistration {
   return structuredClone(loadComparisonRegistration().registration);
 }
 
-test('loads the frozen 30-case roster with explicit pending dispositions', () => {
+test('loads the frozen 30-case roster with terminal capability dispositions', () => {
   const loaded = loadComparisonRegistration();
 
   assert.equal(loaded.registration.roster.length, 30);
@@ -25,7 +25,7 @@ test('loads the frozen 30-case roster with explicit pending dispositions', () =>
   );
   assert.equal(loaded.family_count, 22);
   assert.equal(loaded.lineage_count, 7);
-  assert.equal(loaded.jointly_eligible_count, 0);
+  assert.equal(loaded.jointly_eligible_count, 12);
   assert.match(loaded.digest, /^[a-f0-9]{64}$/);
   assert.deepEqual(
     new Set(loaded.registration.roster.map(entry => entry.behavioral_stratum)).size,
@@ -35,7 +35,7 @@ test('loads the frozen 30-case roster with explicit pending dispositions', () =>
 
 test('rejects an eligible cell while scenario or adapter qualification is pending', () => {
   const registration = cloneRegistration();
-  registration.roster[0]!.assignments.headlamp_cli = 'eligible';
+  registration.adapter_qualification.headlamp_cli = 'pending';
 
   assert.throws(
     () => assertComparisonRegistration(registration),
@@ -61,16 +61,16 @@ test('rejects a locked design until every exit control is complete', () => {
   );
 });
 
-test('status projection preserves every pending and unsupported assignment', () => {
+test('status projection preserves every terminal eligible and unsupported assignment', () => {
   const status = comparisonRegistrationStatus(loadComparisonRegistration());
 
-  assert.equal(status.assignment_counts.headlamp_plugin.pending, 30);
-  assert.equal(status.assignment_counts.headlamp_cli.pending, 30);
-  assert.equal(status.assignment_counts.holmesgpt.pending, 30);
-  assert.equal(status.assignment_counts.k8sgpt.pending, 25);
-  assert.equal(status.assignment_counts.k8sgpt.unsupported, 5);
+  assert.equal(status.assignment_counts.headlamp_plugin.eligible, 30);
+  assert.equal(status.assignment_counts.headlamp_cli.eligible, 30);
+  assert.equal(status.assignment_counts.holmesgpt.eligible, 25);
+  assert.equal(status.assignment_counts.holmesgpt.unsupported, 5);
+  assert.equal(status.assignment_counts.k8sgpt.eligible, 12);
+  assert.equal(status.assignment_counts.k8sgpt.unsupported, 18);
   assert.deepEqual(status.blockers, [
-    'adapter qualification incomplete',
     'practical margin unset',
     'repeat targets unset',
     'private holdout access controls unverified',

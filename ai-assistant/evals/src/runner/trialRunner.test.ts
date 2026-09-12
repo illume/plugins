@@ -113,8 +113,60 @@ test('runTrial: a repair anchor receives target identity and accepts a repair si
     assert.equal(result.run_eligibility, 'valid');
     assert.equal(result.submission_status, 'valid');
     assert.equal(result.dimensions.root_cause.outcome, 'pass');
-    assert.equal(result.dimensions.recommended_fix.applicable, false);
-    assert.match(result.dimensions.recommended_fix.invalidity_reason ?? '', /approval stage/);
+    assert.equal(result.dimensions.recommended_fix.outcome, 'pass');
+    assert.equal(result.dimensions.executed_repair.outcome, 'abstain');
+    assert.match(result.dimensions.executed_repair.invalidity_reason ?? '', /approval_denied/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runTrial: an approved repair executes, verifies, and persists its action journal', async () => {
+  const dir = makeScratchDir('trial-approved-repair');
+  class ControllerBackedAdapter extends SimulatedKwokAdapter {
+    override async computeEndpoints(namespace: string, serviceName: string) {
+      const selector = await this.getServiceSelector(namespace, serviceName);
+      return { addresses: selector.selector?.tier === 'backend' ? ['10.0.0.10'] : [] };
+    }
+  }
+  try {
+    const scenario = loadScenario('core-service-selector-repair-v1');
+    const adapter = new ControllerBackedAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_approved_repair');
+    const result = await runTrial({
+      runId: 'run_approved_repair',
+      trialId: 'trial_approved_repair',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: createScriptedCandidate('reference', scenario.evaluatorPacket),
+      bundleWriter,
+      executionMode: 'dry-run',
+      requestRepairApproval: async () => ({ decision: 'approved' }),
+    });
+
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.dimensions.recommended_fix.outcome, 'pass');
+    assert.equal(
+      result.dimensions.executed_repair.outcome,
+      'pass',
+      result.dimensions.executed_repair.invalidity_reason
+    );
+    const journal = readJsonlPayloads(
+      `${bundleWriter.bundleDir}/trials/trial_approved_repair/action-journal.jsonl`
+    ) as Array<Record<string, unknown>>;
+    assert.deepEqual(
+      journal.map(event => event.type),
+      [
+        'action_proposed',
+        'action_displayed',
+        'approval_decided',
+        'authorization_checked',
+        'action_executed',
+        'postcondition_checked',
+        'collateral_checked',
+      ]
+    );
   } finally {
     removeScratchDir(dir);
   }

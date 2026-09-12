@@ -72,6 +72,7 @@ import {
   SCHEMA_VERSION,
 } from '../contracts/evaluationContracts.js';
 import type {
+  ActionJournalEvent,
   RegressionDelta,
   TrajectoryToolEvent,
   TrialResult,
@@ -111,6 +112,7 @@ export interface TrialIndexRow extends Record<string, JsonValue> {
 export class TrialBundleWriter {
   readonly trialDir: string;
   readonly trajectory: JsonlWriter<TrajectoryToolEvent & Record<string, JsonValue>>;
+  readonly actionJournal: JsonlWriter<ActionJournalEvent & Record<string, JsonValue>>;
   readonly submissions: JsonlWriter<Record<string, JsonValue>>;
   readonly graderResults: JsonlWriter<Record<string, JsonValue>>;
 
@@ -126,6 +128,12 @@ export class TrialBundleWriter {
     this.trajectory = new JsonlWriter(
       path.join(this.trialDir, 'trajectory.jsonl'),
       schemaUri('trajectory-event'),
+      SCHEMA_VERSION,
+      PRODUCER
+    );
+    this.actionJournal = new JsonlWriter(
+      path.join(this.trialDir, 'action-journal.jsonl'),
+      schemaUri('action-journal-event'),
       SCHEMA_VERSION,
       PRODUCER
     );

@@ -77,3 +77,32 @@ test('getDeployment distinguishes absence from operational failures', async () =
     /no such host/
   );
 });
+
+test('applyJsonPatch passes an exact RFC 6902 document and verifies target identity', async () => {
+  let invokedArgs: string[] = [];
+  const runner: CommandRunner = (_command, args) => {
+    invokedArgs = args;
+    return {
+      status: 0,
+      stdout: JSON.stringify({ metadata: { uid: 'uid-1' }, spec: { replicas: 2 } }),
+      stderr: '',
+    };
+  };
+  const patch = [
+    { op: 'test' as const, path: '/spec/replicas', value: 1 },
+    { op: 'replace' as const, path: '/spec/replicas', value: 2 },
+  ];
+  const result = await new TestKubectlAdapter(runner).applyJsonPatch(
+    {
+      api_version: 'apps/v1',
+      kind: 'Deployment',
+      namespace: 'trial',
+      name: 'web',
+      uid: 'uid-1',
+    },
+    patch
+  );
+
+  assert.equal(invokedArgs[invokedArgs.indexOf('--patch') + 1], JSON.stringify(patch));
+  assert.equal((result as { spec: { replicas: number } }).spec.replicas, 2);
+});

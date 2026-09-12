@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import type { ActionRequest, ClusterProfileName } from '../contracts/evaluationContracts.js';
+import type {
+  ActionRequest,
+  ClusterProfileName,
+  JsonPatchOperation,
+} from '../contracts/evaluationContracts.js';
+import type { JsonValue } from '../canonicalJson.js';
 
 /**
  * Cluster-facing port used by the evaluation state machine.
@@ -258,6 +263,10 @@ export interface ClusterAdapter {
     namespace: string,
     resourceRef: string
   ): Promise<ActionRequest['target'] | null>;
+  /** Reads one complete resource for repair diffing at the trusted harness boundary. */
+  getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null>;
+  /** Applies an authorized RFC 6902 patch and returns the resulting resource. */
+  applyJsonPatch(target: ActionRequest['target'], patch: JsonPatchOperation[]): Promise<JsonValue>;
   /**
    * Deletes a trial namespace and verifies cleanup where possible.
    *

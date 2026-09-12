@@ -20,7 +20,12 @@
  * preventing one cluster type from inheriting another type's lifecycle.
  */
 
-import type { ActionRequest, ClusterProfileName } from '../../contracts/evaluationContracts.js';
+import type { JsonValue } from '../../canonicalJson.js';
+import type {
+  ActionRequest,
+  ClusterProfileName,
+  JsonPatchOperation,
+} from '../../contracts/evaluationContracts.js';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -491,6 +496,50 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       name: object.metadata.name,
       uid: object.metadata.uid,
     };
+  }
+
+  async getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', target.kind, target.name, '-n', target.namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) {
+      const output = `${result.stderr}\n${result.stdout}`;
+      if (/\bnotfound\b|\bnot found\b/i.test(output)) return null;
+      throw new Error(`failed to snapshot ${target.kind}/${target.name}: ${result.stderr}`);
+    }
+    return JSON.parse(result.stdout) as JsonValue;
+  }
+
+  async applyJsonPatch(
+    target: ActionRequest['target'],
+    patch: JsonPatchOperation[]
+  ): Promise<JsonValue> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl([
+        'patch',
+        target.kind,
+        target.name,
+        '-n',
+        target.namespace,
+        '--type=json',
+        '--patch',
+        JSON.stringify(patch),
+        '-o',
+        'json',
+      ])
+    );
+    if (result.status !== 0) {
+      throw new Error(
+        `failed to patch ${target.kind}/${target.name}: ${result.stderr || result.stdout}`
+      );
+    }
+    const object = JSON.parse(result.stdout) as {
+      metadata?: { uid?: string };
+    };
+    if (object.metadata?.uid !== target.uid) throw new Error('patched resource identity changed');
+    return object as JsonValue;
   }
 
   /**

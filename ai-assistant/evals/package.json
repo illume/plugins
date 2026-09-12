@@ -19,6 +19,7 @@
     "eval:qualify:minikube": "tsx src/scenarios/qualifyMinikubePortfolio.ts",
     "eval:qualify:aks": "tsx src/scenarios/qualifyMinikubePortfolio.ts --profile aks",
     "eval:comparison:status": "tsx src/cli.ts comparison:status",
+    "eval:holdout:verify": "tsx src/cli.ts holdout:verify",
     "eval:aks": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider copilot",
     "eval:aks:azure": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider azure-auto",
     "eval:aks:setup": "tsx src/cli.ts aks:setup",

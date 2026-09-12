@@ -53,6 +53,7 @@ export type SchemaName =
   | 'grader-result'
   | 'exploratory-attempt'
   | 'comparison-registration'
+  | 'private-holdout-manifest'
   | 'report';
 
 /**

@@ -51,6 +51,20 @@ CLI, HolmesGPT, and K8sGPT in every cell. Inspect its validated status with:
 npm run eval:comparison:status
 ```
 
+Custodians can verify a private holdout manifest without copying its identities
+into the checkout or ordinary logs:
+
+```sh
+npm run eval:holdout:verify -- --manifest /absolute/private/path/manifest.json
+```
+
+The private manifest contains `schema_version`, `created_at`, and exactly 25
+unique `scenario_ids`. Its directory and file must be owner-only and outside
+the checkout. Verification scans ordinary eval storage for exact identity
+leaks and emits only counts, digests, checks, and leaked public paths. A passing
+command is necessary before changing the registration's access-control status;
+it does not change the registration automatically.
+
 The roster is frozen, but the comparison design remains `draft` and
 confirmatory execution is blocked. Missing, invalid, censored, unsupported,
 ineligible, and pending pairs now have typed, executable dispositions; the two

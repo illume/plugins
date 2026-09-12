@@ -54,6 +54,7 @@ import {
   loadComparisonRegistration,
 } from './comparisons/registration.js';
 import { assertCopilotModelAvailable } from './candidates/copilotCatalog.js';
+import { verifyPrivateHoldoutAccess } from './operations/privateHoldoutAccess.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
@@ -557,6 +558,25 @@ async function main(): Promise<void> {
         JSON.stringify(comparisonRegistrationStatus(loadComparisonRegistration()), null, 2)
       );
       break;
+    case 'holdout:verify': {
+      if (typeof flags.manifest !== 'string') {
+        throw new Error('holdout:verify requires --manifest <outside-checkout-path>');
+      }
+      const registration = loadComparisonRegistration().registration;
+      const checkoutRoot =
+        typeof flags['checkout-root'] === 'string' ? flags['checkout-root'] : evalsRoot;
+      const publicRoot =
+        typeof flags['public-root'] === 'string' ? flags['public-root'] : evalsRoot;
+      const verification = verifyPrivateHoldoutAccess({
+        manifestPath: flags.manifest,
+        checkoutRoot,
+        publicRoots: [publicRoot],
+        expectedCount: registration.private_holdouts.target_count,
+      });
+      console.log(JSON.stringify(verification, null, 2));
+      if (verification.access_control_verification !== 'passed') process.exitCode = 1;
+      break;
+    }
     case 'rerun':
       await commandRerun(flags);
       break;
@@ -602,7 +622,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|comparison:status|rerun|list-scenarios> [--flags...]'
+        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|comparison:status|holdout:verify|rerun|list-scenarios> [--flags...]'
       );
       process.exit(command ? 1 : 0);
   }

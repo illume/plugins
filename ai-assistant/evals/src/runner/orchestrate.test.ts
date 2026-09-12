@@ -17,7 +17,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { isCandidateSpec, runEvaluation, selectScenarios } from './orchestrate.js';
 import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 import { readClosedBundle } from '../storage/bundleReader.js';
@@ -106,10 +107,19 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     assert.equal(passing.length, 2);
     assert.ok(passing.every(t => t.dimensions.root_cause.outcome === 'pass'));
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
-    assert.equal(
-      bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      42
+    const schemaReferences = bundle.contractReferences.filter(
+      reference => reference.role === 'schema'
     );
+    const schemaFileNames = readdirSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'schema')
+    )
+      .filter(fileName => fileName.endsWith('.schema.json'))
+      .sort();
+    assert.deepEqual(
+      [...new Set(schemaReferences.map(reference => path.basename(reference.uri)))].sort(),
+      schemaFileNames
+    );
+    assert.equal(schemaReferences.length, schemaFileNames.length * passing.length);
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),
       [

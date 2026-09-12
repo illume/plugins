@@ -35,6 +35,7 @@ import type { TokenPricingSnapshot } from '../candidates/candidateAdapter.js';
 import { createScriptedCandidate, type ScriptedCandidateMode } from '../candidates/scripted.js';
 import type { CandidateAdapter } from '../candidates/candidateAdapter.js';
 import { loadAllScenarios, type LoadedScenario } from '../scenarios/loader.js';
+import { matchesScenarioSelection, type ScenarioSelection } from '../scenarios/admission.js';
 import { isEligibleToRun, ownershipRowFromManifest } from '../operations/ownership.js';
 import { computeRegressionDeltas } from '../regressions/regressionDelta.js';
 import { RunBundleWriter } from '../storage/bundleWriter.js';
@@ -57,7 +58,19 @@ export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
  * @returns `true` when the value is a supported candidate specification.
  */
 export function isCandidateSpec(value: string): value is CandidateSpec {
-  return ['reference', 'wrong', 'malformed', 'unavailable', 'headlamp-cli'].includes(value);
+  return [
+    'reference',
+    'partial',
+    'wrong',
+    'abstaining',
+    'overconfident',
+    'unsupported-evidence',
+    'unsafe-effective',
+    'injected',
+    'malformed',
+    'unavailable',
+    'headlamp-cli',
+  ].includes(value);
 }
 
 /** Inputs that define one complete evaluation run and its persisted output. */
@@ -74,6 +87,8 @@ export interface RunOptions {
   mode: ExecutionMode;
   /** Explicit case IDs; when omitted, defaults per profile (see `selectScenarios`). */
   cases?: string[];
+  /** Prespecified portfolio, split, and stratum filters. */
+  selection?: ScenarioSelection;
   /** Candidate configuration evaluated by the run. */
   candidate: CandidateSpec;
   /** Optional baseline configuration compared with the candidate. */
@@ -150,7 +165,8 @@ function buildCandidate(
 export function selectScenarios(
   profile: ClusterProfileName,
   requestedCases: string[] | undefined,
-  scenariosRoot?: string
+  scenariosRoot?: string,
+  selection: ScenarioSelection = {}
 ): LoadedScenario[] {
   const all = loadAllScenarios(scenariosRoot).filter(isEligibleToRun);
 
@@ -158,6 +174,9 @@ export function selectScenarios(
     return requestedCases.map(id => {
       const scenario = all.find(s => s.manifest.scenario_id === id);
       if (!scenario) throw new Error(`unknown or inactive scenario: ${id}`);
+      if (!matchesScenarioSelection(scenario.manifest, selection)) {
+        throw new Error(`${id} does not match the requested portfolio selection`);
+      }
       if (profile === 'local-kwok' && !scenario.kwokCompatible) {
         throw new Error(
           `${id} is not in the generated KWOK-compatible subset (required_mechanisms: ` +
@@ -177,11 +196,16 @@ export function selectScenarios(
   if (profile === 'local-kwok') {
     return all.filter(
       scenario =>
+        matchesScenarioSelection(scenario.manifest, selection) &&
         scenario.kwokCompatible &&
         scenario.manifest.supported_cluster_profiles.includes('local-kwok')
     );
   }
-  return all.filter(s => s.manifest.supported_cluster_profiles.includes(profile));
+  return all.filter(
+    scenario =>
+      matchesScenarioSelection(scenario.manifest, selection) &&
+      scenario.manifest.supported_cluster_profiles.includes(profile)
+  );
 }
 
 /**
@@ -194,7 +218,12 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
   if (options.baseline === options.candidate) {
     throw new Error('baseline and candidate must identify distinct configurations');
   }
-  const scenarios = selectScenarios(options.profile, options.cases, options.scenariosRoot);
+  const scenarios = selectScenarios(
+    options.profile,
+    options.cases,
+    options.scenariosRoot,
+    options.selection
+  );
   if (scenarios.length === 0) {
     throw new Error('no scenarios selected: check --profile/--case and scenario lifecycle_state');
   }

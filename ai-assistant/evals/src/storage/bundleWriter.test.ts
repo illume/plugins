@@ -140,12 +140,27 @@ test('a trial written through TrialBundleWriter round-trips through readClosedBu
       first_failure_owner: null,
       supersedes_trial_id: null,
     });
+    writer.recordExploratoryAttempt({
+      schema_version: '1.0.0',
+      attempt_pair_id: 'pair-1',
+      scenario_id: 'core-service-selector-fault-v1',
+      lineage_id: 'service-selector-core',
+      behavioral_stratum: 'fault_diagnosis',
+      system: 'holmesgpt',
+      baseline_trial_id: 'baseline-1',
+      candidate_trial_id: 'trial_1',
+      baseline_outcome: 'partial',
+      candidate_outcome: 'pass',
+      pair_eligibility: 'valid',
+    });
     writer.close('scripted-reference', 'local-kwok');
 
     const bundle = readClosedBundle(dir, 'run_2', contractStoreRoot);
     assert.equal(bundle.trials.length, 1);
     assert.equal(bundle.trials[0]?.trial_id, 'trial_1');
     assert.equal(bundle.trials[0]?.dimensions.root_cause.outcome, 'pass');
+    assert.equal(bundle.exploratoryAttempts.length, 1);
+    assert.equal(bundle.exploratoryAttempts[0]?.attempt_pair_id, 'pair-1');
     assert.equal(bundle.scenarioManifests[0]?.scenario_id, 'core-service-selector-fault-v1');
     assert.equal(bundle.scenarioManifests[0]?.provenance.owner, 'ai-assistant-evals-team');
     assert.ok(bundle.bundleDigest.length > 0);

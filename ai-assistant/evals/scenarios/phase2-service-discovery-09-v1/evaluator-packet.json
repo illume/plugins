@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-service-discovery-09-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "selector-value",
+        "resource_ref": "service/web",
+        "field_path": "spec.selector",
+        "observed_value": "{\"app\":\"web\",\"tier\":\"frontend\"}",
+        "description": "The Service's selector requires tier=frontend."
+      },
+      {
+        "fact_id": "pod-labels",
+        "resource_ref": "pod/web-1",
+        "field_path": "metadata.labels",
+        "observed_value": "{\"app\":\"web\",\"tier\":\"backend\"}",
+        "description": "The running Pod is labeled tier=backend, which the selector does not match."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    {
+      "action_id": "no-op",
+      "description": "Read-only diagnosis only.",
+      "operation": "no_action"
+    }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-crashloop-guess",
+      "resource_ref": "pod/web-1",
+      "field_path": "status.phase",
+      "observed_value": "CrashLoopBackOff",
+      "description": "The Pod is actually Running; claiming it is crash-looping is an invented cause."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-PHASE2-47035dcb3c48b929"
+}

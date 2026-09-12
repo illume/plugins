@@ -271,4 +271,75 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await expect(page).toHaveURL(/\/c\/main\/deployments\/demo\/web$/);
     await expect.poll(() => context.pages().length).toBe(pageCount);
   });
+
+  test('shows exact mutating arguments and settles approval decisions', async ({ page }) => {
+    await page.goto('/c/main/nodes');
+
+    const tokenLogin = page.getByRole('button', { name: 'Use A Token' });
+    if (await tokenLogin.isVisible()) {
+      const token = process.env.HEADLAMP_TOKEN;
+      expect(
+        token,
+        'HEADLAMP_TOKEN must be set when Headlamp requires authentication'
+      ).toBeTruthy();
+      await tokenLogin.click();
+      await page.getByRole('textbox', { name: 'ID token' }).fill(token!);
+      await page.getByRole('button', { name: 'Authenticate' }).click();
+    }
+
+    await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
+    await page.getByText('Developer Options', { exact: true }).click();
+    await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
+    await page.getByRole('checkbox', { name: /Test Mode/ }).check();
+    await page.getByRole('button', { name: 'AI Assistant' }).click();
+
+    const injectPatchConfirmation = async (requestId: string): Promise<void> => {
+      await page.getByRole('button', { name: 'Add Test Response' }).click();
+      await page.getByRole('textbox', { name: 'Response Content' }).fill(
+        JSON.stringify({
+          role: 'assistant',
+          content: '',
+          toolConfirmation: {
+            tools: [
+              {
+                id: `call-${requestId}`,
+                name: 'kubernetes_api_request',
+                description: 'Scale the approved deployment',
+                arguments: {
+                  url: '/apis/apps/v1/namespaces/ai-e2e/deployments/web',
+                  method: 'PATCH',
+                  body: { spec: { replicas: 2 } },
+                },
+                type: 'regular',
+              },
+            ],
+            loading: false,
+            requestId,
+          },
+          isDisplayOnly: true,
+          requestId,
+        })
+      );
+      await page.getByRole('button', { name: 'Add Response' }).click();
+      await page
+        .getByRole('button', { name: 'Toggle details for kubernetes_api_request' })
+        .last()
+        .click();
+      await expect(page.getByText('PATCH', { exact: true }).last()).toBeVisible();
+      await expect(
+        page.getByText('/apis/apps/v1/namespaces/ai-e2e/deployments/web', { exact: true }).last()
+      ).toBeVisible();
+      await expect(page.getByText(/"replicas": 2/).last()).toBeVisible();
+    };
+
+    await injectPatchConfirmation('approve-patch');
+    await page.getByRole('button', { name: 'Execute 1 Tool' }).click();
+    await expect(page.getByText('Approved 1 test tool', { exact: true })).toBeVisible();
+    await expect(page.getByText('Tool Execution Required')).toHaveCount(0);
+
+    await injectPatchConfirmation('deny-patch');
+    await page.getByRole('button', { name: 'Deny', exact: true }).click();
+    await expect(page.getByText('Denied test tool execution', { exact: true })).toBeVisible();
+    await expect(page.getByText('Tool Execution Required')).toHaveCount(0);
+  });
 });

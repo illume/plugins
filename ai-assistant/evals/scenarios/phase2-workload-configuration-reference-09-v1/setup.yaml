@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: archive
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: headlamp-eval-archive-missing-v1
+  resources:
+    requests:
+      storage: 1Mi

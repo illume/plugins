@@ -1,0 +1,55 @@
+schema_version: '1.0.0'
+scenario_id: core-service-selector-repair-v1
+scenario_version: '1.0.0'
+family: service-discovery
+mode: repair
+title: Repair an approved Service selector mismatch
+description: >
+  The Service selector mismatch is known. The candidate must propose the exact
+  bounded patch, wait for approval, verify EndpointSlice recovery, and retain rollback.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-09'
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: approved_repair
+  family_id: service-discovery
+  lineage_id: service-selector-core
+  variant_kind: anchor
+  splits:
+    - development
+    - capability
+    - external_comparison
+    - aks_parity
+  qualification_status: qualified
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
+supported_cluster_profiles:
+  - local-kwok
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - endpointslice-controller
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-selector-repair
+artifact_policy:
+  retain_raw_tool_output: true

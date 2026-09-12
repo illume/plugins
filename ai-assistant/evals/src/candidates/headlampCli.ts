@@ -326,6 +326,16 @@ function isTokenCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+function isProviderFailure(stdout: string, stderr: string): boolean {
+  const output = `${stdout}\n${stderr}`;
+  return (
+    /(?:^|\n)Error:\s/.test(stderr) ||
+    /\b(?:400|401|403|404|429|5\d\d)\b[^\n]*(?:requested model is not supported|provider|authentication|rate limit)/i.test(
+      output
+    )
+  );
+}
+
 /** Runtime, provider, and credential-boundary options for the Headlamp CLI candidate. */
 export interface HeadlampCliCandidateOptions {
   /** Environment variable names to forward from the parent process, if set. */
@@ -461,7 +471,7 @@ export function estimateConfiguredUsage(
   };
 }
 
-const SIDECAR_INSTRUCTION =
+const DIAGNOSIS_SIDECAR_INSTRUCTION =
   '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
   'exactly these keys: schema_version ("1.0.0"), cause_facts (array of {resource_ref, field_path, ' +
   'observed_value}), resource_refs (string array), evidence_refs (string array), ' +
@@ -471,6 +481,16 @@ const SIDECAR_INSTRUCTION =
   'from the observed-context JSON; do not add prefixes, extract sub-fields, or reformat values. Include ' +
   'only the smallest set of facts needed to support the diagnosis. This is read-only: never propose a ' +
   'mutating operation.';
+
+const REPAIR_SIDECAR_INSTRUCTION =
+  '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
+  'exactly these keys: schema_version ("1.0.0"), diagnosis, and proposed_action. diagnosis must use ' +
+  'exactly these keys: schema_version, cause_facts, resource_refs, evidence_refs, ' +
+  'alternative_dispositions, uncertainty, and proposed_actions; nested proposed_actions remain ' +
+  'read-only, and the JSON Patch belongs only in proposed_action. Copy exact observed-context values. ' +
+  'proposed_action must contain action_id, the exact supplied target, operation ("json_patch"), the ' +
+  'exact allowed policy patch, and the supplied canonical evidence_digest. Propose the action only; ' +
+  'do not execute it.';
 
 /**
  * Builds a candidate adapter around the product Headlamp CLI process. Each
@@ -523,7 +543,7 @@ export function createHeadlampCliCandidate(
         baseEnv.KUBECONFIG = path.join(isolatedDataDir, 'kubeconfig');
         writeFileSync(
           baseEnv.KUBECONFIG,
-          'apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: ""\n',
+          'apiVersion: v1\nkind: Config\nclusters:\n  - name: eval-isolated\n    cluster:\n      server: https://127.0.0.1:1\ncontexts:\n  - name: eval-isolated\n    context:\n      cluster: eval-isolated\n      namespace: default\nusers: []\ncurrent-context: eval-isolated\n',
           { mode: 0o600 }
         );
       }
@@ -539,7 +559,20 @@ export function createHeadlampCliCandidate(
         null,
         2
       );
-      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${SIDECAR_INSTRUCTION}`;
+      const repair = input.packet.required_submission_schema === 'repair_submission@1.0.0';
+      const repairContext = repair
+        ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
+            input.packet.action_policy,
+            null,
+            2
+          )}\n\nAction targets (JSON):\n${JSON.stringify(
+            input.action_targets ?? [],
+            null,
+            2
+          )}\n\nCanonical evidence digest: ${input.evidence_digest}`
+        : '';
+      const instruction = repair ? REPAIR_SIDECAR_INSTRUCTION : DIAGNOSIS_SIDECAR_INSTRUCTION;
+      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${repairContext}${instruction}`;
 
       const start = process.hrtime.bigint();
       let result: ProcessRunResult;
@@ -586,7 +619,7 @@ export function createHeadlampCliCandidate(
             : {}),
         };
       }
-      if (result.exitCode !== 0 || /(?:^|\n)Error:\s/.test(result.stderr)) {
+      if (result.exitCode !== 0 || isProviderFailure(result.stdout, result.stderr)) {
         return {
           raw_text: [result.stdout, result.stderr].filter(Boolean).join('\n'),
           submission_text: null,

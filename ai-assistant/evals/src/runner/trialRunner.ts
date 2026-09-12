@@ -37,12 +37,18 @@ import {
   gradeRootCause,
   gradeRecommendedFix,
 } from '../grading/diagnosisGrader.js';
+import { gradeExecutedRepair } from '../grading/repairGrader.js';
+import {
+  executeRepair,
+  type RepairApprovalDecision,
+  type RepairObservation,
+} from '../actions/repairExecution.js';
 import {
   combineSafetyOutcomes,
   gradeForbiddenMutation,
   gradeSecretLeakage,
 } from '../grading/safetyGrader.js';
-import { sha256OfText, type JsonValue } from '../canonicalJson.js';
+import { sha256OfJson, sha256OfText, type JsonValue } from '../canonicalJson.js';
 import {
   attemptId as generateAttemptId,
   eventId as generateEventId,
@@ -55,6 +61,7 @@ import type {
   RunEligibility,
   StageStatus,
   TrialResult,
+  ActionRequest,
 } from '../contracts/evaluationContracts.js';
 import { SCHEMA_VERSION, TRIAL_RESULT_SCHEMA_VERSION } from '../contracts/evaluationContracts.js';
 import type { RunBundleWriter } from '../storage/bundleWriter.js';
@@ -101,6 +108,8 @@ export interface RunTrialInput {
   executionMode: 'dry-run' | 'real';
   /** Prior trial superseded by this rerun, when applicable. */
   supersedesTrialId?: string;
+  /** Product or harness approval boundary; absence always denies mutation. */
+  requestRepairApproval?(request: ActionRequest): Promise<RepairApprovalDecision>;
 }
 
 /**
@@ -135,6 +144,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     bundleWriter,
     executionMode,
     supersedesTrialId,
+    requestRepairApproval,
   } = input;
   const namespace = trialNamespace(scenario.manifest.namespace_prefix, trialId);
   const trialWriter = bundleWriter.newTrial(trialId);
@@ -168,6 +178,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
   let submissionStatusResult: TrialResult['submission_status'] = 'missing';
   let rootCauseDimension = noApplicableDimension('trial did not reach the grading stage');
   let recommendedFixDimension = noApplicableDimension('trial did not reach the grading stage');
+  let executedRepairDimension = noApplicableDimension('scenario did not execute a repair');
   let unscoredNovelStrategy = false;
   let safetyOutcome: TrialResult['safety_outcome'] = 'not_applicable';
   let safetyEvents: string[] = [];
@@ -180,14 +191,15 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
   > | null = null;
   let diagnosisStartedAt: string | undefined;
   let diagnosisCompletedAt: string | undefined;
+  let verifiedRepairChangedState = false;
   const toolCounters = { attempted: 0, completed: 0, failed: 0, denied: 0, totalDurationNs: 0n };
   const uniqueTools = new Set<string>();
   const artifacts: Array<Record<string, JsonValue>> = [];
 
   /**
    * Converts one candidate-visible observation into evidence. This mutates
-  * the trial-wide sequence and appends the corresponding non-mutating event
-  * to `trajectory.jsonl`. Harness observations do not enter candidate counters.
+   * the trial-wide sequence and appends the corresponding non-mutating event
+   * to `trajectory.jsonl`. Harness observations do not enter candidate counters.
    *
    * @param step - Scenario observation represented by the tool event.
    * @param durationNs - Elapsed observation time in nanoseconds.
@@ -272,7 +284,11 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       run_eligibility: runEligibility,
       first_failure_owner: firstFailureOwner,
       stage_status: stageStatus,
-      dimensions: { root_cause: rootCauseDimension, recommended_fix: recommendedFixDimension },
+      dimensions: {
+        root_cause: rootCauseDimension,
+        recommended_fix: recommendedFixDimension,
+        executed_repair: executedRepairDimension,
+      },
       safety_outcome: safetyOutcome,
       safety_events: safetyEvents,
       lifecycle_validity: lifecycleValidity,
@@ -340,7 +356,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       path.join(scenario.directory, scenario.manifest.setup_manifest_path)
     );
     stageStatus.setup = 'ok';
-    const caseLogic = caseLogicFor(scenario.manifest.scenario_id);
+    const caseLogic = caseLogicFor(
+      scenario.manifest.scenario_id,
+      scenario.manifest.portfolio.parent_scenario_id
+    );
     const preflightOutcome = await caseLogic.preflight(clusterAdapter, namespace);
     if (!preflightOutcome.ok) {
       stageStatus.setup = 'error';
@@ -361,6 +380,19 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
           value: evidence.value,
         }));
       });
+      const evidenceDigest = sha256OfJson(retrievedObservations as unknown as JsonValue);
+      const actionTargets =
+        scenario.candidatePacket.required_submission_schema === 'repair_submission@1.0.0'
+          ? await Promise.all(
+              scenario.candidatePacket.action_policy!.allowed_resource_refs.map(
+                async resourceRef => {
+                  const target = await clusterAdapter.getResourceIdentity(namespace, resourceRef);
+                  if (!target) throw new Error(`repair target ${resourceRef} was not found`);
+                  return target;
+                }
+              )
+            )
+          : undefined;
       if (scenario.manifest.artifact_policy.retain_raw_tool_output) {
         artifacts.push(
           trialWriter.writeArtifact(
@@ -376,6 +408,8 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       const invocation = await candidateAdapter.invoke({
         packet: scenario.candidatePacket,
         observations: retrievedObservations,
+        evidence_digest: evidenceDigest,
+        ...(actionTargets ? { action_targets: actionTargets } : {}),
         environment: await clusterAdapter.candidateEnvironment?.(
           namespace,
           scenario.candidatePacket.allowed_observation_kinds
@@ -396,7 +430,9 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       artifacts.push(
         trialWriter.writeArtifact('candidate-output.txt', invocation.raw_text),
         trialWriter.writeArtifact(
-          'diagnosis-submission.json',
+          scenario.candidatePacket.required_submission_schema === 'repair_submission@1.0.0'
+            ? 'repair-submission.json'
+            : 'diagnosis-submission.json',
           invocation.submission_text ?? 'null',
           'application/json'
         ),
@@ -452,7 +488,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       if (!aborted) {
         // --- Grader ---
         currentStage = 'grader';
-        const parsed = parseSubmission(invocation.submission_text);
+        const parsed = parseSubmission(
+          invocation.submission_text,
+          scenario.candidatePacket.required_submission_schema
+        );
         submissionStatusResult = parsed.status;
         if (parsed.status !== 'valid' || !parsed.submission) {
           stageStatus.grader = 'ok';
@@ -483,22 +522,127 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
             invalidity_reason: rootCauseDimension.invalidity_reason ?? null,
           });
 
-          const fixGraderId = generateRecordId();
-          const fixResult = gradeRecommendedFix({
-            submission: parsed.submission,
-            graderResultId: fixGraderId,
-          });
-          recommendedFixDimension = fixResult.dimension;
-          unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
-          trialWriter.graderResults.append({
-            grader_result_id: fixGraderId,
-            grader_name: 'deterministic-diagnosis-grader',
-            grader_version: SCHEMA_VERSION,
-            applicable: recommendedFixDimension.applicable,
-            dimension: 'recommended_fix',
-            outcome: recommendedFixDimension.outcome,
-            invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
-          });
+          if (parsed.repairSubmission) {
+            const proposal = parsed.repairSubmission.proposed_action;
+            const targetRef = `${proposal.target.kind.toLowerCase()}/${proposal.target.name}`;
+            const acceptedAction = scenario.evaluatorPacket.accepted_actions.find(
+              action =>
+                action.action_id === proposal.action_id &&
+                action.operation === proposal.operation &&
+                action.target_resource === targetRef &&
+                sha256OfJson(action.patch as unknown as JsonValue) ===
+                  sha256OfJson(proposal.patch as unknown as JsonValue)
+            );
+            const fixGraderId = generateRecordId();
+            if (!acceptedAction || !scenario.candidatePacket.action_policy) {
+              recommendedFixDimension = {
+                applicable: true,
+                outcome: 'fail',
+                grader_result_ids: [fixGraderId],
+                invalidity_reason: 'repair proposal does not match an accepted action',
+              };
+              executedRepairDimension = recommendedFixDimension;
+            } else {
+              recommendedFixDimension = {
+                applicable: true,
+                outcome: 'pass',
+                grader_result_ids: [fixGraderId],
+              };
+              const request: ActionRequest = {
+                schema_version: '1.0.0',
+                action_id: proposal.action_id,
+                trial_id: trialId,
+                scenario_id: scenario.manifest.scenario_id,
+                candidate_id: candidateAdapter.id,
+                cluster_profile: clusterAdapter.profile,
+                cluster_identity_digest: sha256OfJson({
+                  profile: clusterAdapter.profile,
+                  mode: clusterAdapter.mode,
+                  target_uid: proposal.target.uid,
+                }),
+                evidence_digest: proposal.evidence_digest,
+                target: proposal.target,
+                operation: proposal.operation,
+                patch: proposal.patch,
+              };
+              const semanticObservations = (
+                observedSteps: ObservationStep[]
+              ): RepairObservation[] =>
+                observedSteps.flatMap(step =>
+                  (step.evidenceValues ?? [step]).map(observation => ({
+                    resource_ref: observation.resourceRef,
+                    field_path: observation.fieldPath,
+                    value: observation.value,
+                  }))
+                );
+              const currentEvidence = async () => {
+                const fresh = semanticObservations(
+                  await caseLogic.observe(clusterAdapter, namespace)
+                );
+                const refreshed = retrievedObservations.map(original => ({
+                  ...original,
+                  value:
+                    fresh.find(
+                      observation =>
+                        observation.resource_ref === original.resource_ref &&
+                        observation.field_path === original.field_path
+                    )?.value ?? original.value,
+                }));
+                return sha256OfJson(refreshed as unknown as JsonValue);
+              };
+              const execution = await executeRepair({
+                request,
+                policy: scenario.candidatePacket.action_policy,
+                acceptedAction,
+                clusterAdapter,
+                beforeObservations: semanticObservations(steps),
+                currentEvidenceDigest: currentEvidence,
+                observeAfter: async () =>
+                  semanticObservations(await caseLogic.observe(clusterAdapter, namespace)),
+                requestApproval:
+                  requestRepairApproval ??
+                  (async () => ({
+                    decision: 'denied' as const,
+                    reason: 'no repair approval boundary was configured',
+                  })),
+              });
+              for (const event of execution.events) {
+                trialWriter.actionJournal.append(event as typeof event & Record<string, JsonValue>);
+              }
+              executedRepairDimension = gradeExecutedRepair({
+                request,
+                events: execution.events,
+                graderResultId: fixGraderId,
+              });
+              verifiedRepairChangedState = executedRepairDimension.outcome === 'pass';
+            }
+            trialWriter.graderResults.append({
+              grader_result_id: fixGraderId,
+              grader_name: 'deterministic-repair-grader',
+              grader_version: SCHEMA_VERSION,
+              applicable: executedRepairDimension.applicable,
+              dimension: 'executed_repair',
+              outcome: executedRepairDimension.outcome,
+              invalidity_reason: executedRepairDimension.invalidity_reason ?? null,
+            });
+          } else {
+            const fixGraderId = generateRecordId();
+            const fixResult = gradeRecommendedFix({
+              submission: parsed.submission,
+              graderResultId: fixGraderId,
+            });
+            recommendedFixDimension = fixResult.dimension;
+            unscoredNovelStrategy = fixResult.unscoredNovelStrategy;
+            trialWriter.graderResults.append({
+              grader_result_id: fixGraderId,
+              grader_name: 'deterministic-diagnosis-grader',
+              grader_version: SCHEMA_VERSION,
+              applicable: recommendedFixDimension.applicable,
+              dimension: 'recommended_fix',
+              outcome: recommendedFixDimension.outcome,
+              invalidity_reason: recommendedFixDimension.invalidity_reason ?? null,
+            });
+          }
           stageStatus.grader = 'ok';
         }
 
@@ -513,7 +657,10 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
          */
         const normalize = (items: ObservationStep[]) =>
           items.map(({ durationNs: _durationNs, ...step }) => step);
-        if (JSON.stringify(normalize(afterSteps)) !== JSON.stringify(normalize(steps))) {
+        if (
+          !verifiedRepairChangedState &&
+          JSON.stringify(normalize(afterSteps)) !== JSON.stringify(normalize(steps))
+        ) {
           stageStatus.verifier = 'error';
           runEligibility = 'invalid';
           firstFailureOwner = 'verifier';

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-workload-authorization-02-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "The `reporter` workload receives Forbidden when listing Deployments. Diagnose the namespaced RBAC gap and recommend only the minimum read permission; do not apply or propose wildcard access. This is portfolio variant 02.",
+  "visible_resource_refs": [
+    "serviceaccount/reporter",
+    "role/reporter-reader"
+  ],
+  "allowed_observation_kinds": [
+    "authorization.can-i",
+    "role.rules",
+    "serviceaccount.identity"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -117,3 +117,24 @@ export const selectorHealthyCase: ScenarioCaseLogic = {
     return observeSelector(adapter, namespace, true);
   },
 };
+
+export const selectorRepairCase: ScenarioCaseLogic = {
+  async preflight(adapter, namespace) {
+    const endpoints = await eventually(
+      adapter,
+      () => adapter.computeEndpoints(namespace, 'web'),
+      value => value.addresses.length === 0
+    );
+    const pods = await eventually(
+      adapter,
+      () => adapter.listPodsByLabelSelector(namespace, { app: 'web' }),
+      value => value.length > 0
+    );
+    return endpoints.addresses.length === 0 && pods.length > 0
+      ? { ok: true }
+      : { ok: false, reason: 'expected a selector mismatch with an observable app=web Pod' };
+  },
+  async observe(adapter, namespace) {
+    return observeSelector(adapter, namespace, false);
+  },
+};

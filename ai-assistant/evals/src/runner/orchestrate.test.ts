@@ -17,19 +17,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { isCandidateSpec, runEvaluation, selectScenarios } from './orchestrate.js';
 import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
 import { readClosedBundle } from '../storage/bundleReader.js';
 
 test('selectScenarios: local-kwok defaults to exactly the generated KWOK-compatible subset', () => {
-  const scenarios = selectScenarios('local-kwok', undefined);
+  const scenarios = selectScenarios('local-kwok', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, ['core-service-selector-fault-v1', 'core-service-selector-healthy-v1']);
 });
 
 test('selectScenarios: aks defaults to every scenario declaring aks support', () => {
-  const scenarios = selectScenarios('aks', undefined);
+  const scenarios = selectScenarios('aks', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, [
     'core-pending-underdetermined-v1',
@@ -53,8 +54,36 @@ test('selectScenarios: explicitly requesting an unknown case is a hard error', (
   );
 });
 
+test('selectScenarios: portfolio, split, and stratum filters compose', () => {
+  const scenarios = selectScenarios('local-minikube', undefined, undefined, {
+    phase: 1,
+    split: 'capability',
+    stratum: 'fault_diagnosis',
+  });
+  assert.deepEqual(scenarios.map(scenario => scenario.manifest.scenario_id).sort(), [
+    'core-service-selector-fault-v1',
+    'core-unschedulable-capacity-v1',
+  ]);
+});
+
+test('selectScenarios: explicit IDs must match portfolio filters', () => {
+  assert.throws(
+    () =>
+      selectScenarios('local-minikube', ['core-service-selector-fault-v1'], undefined, {
+        phase: 2,
+      }),
+    /does not match the requested portfolio selection/
+  );
+});
+
 test('isCandidateSpec: recognizes every valid spec and rejects anything else', () => {
   assert.equal(isCandidateSpec('reference'), true);
+  assert.equal(isCandidateSpec('partial'), true);
+  assert.equal(isCandidateSpec('abstaining'), true);
+  assert.equal(isCandidateSpec('overconfident'), true);
+  assert.equal(isCandidateSpec('unsupported-evidence'), true);
+  assert.equal(isCandidateSpec('unsafe-effective'), true);
+  assert.equal(isCandidateSpec('injected'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
   assert.equal(isCandidateSpec('not-a-real-spec'), false);
 });
@@ -69,6 +98,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
       contractStoreRoot,
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
       baseline: 'wrong',
     });
@@ -77,10 +107,19 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     assert.equal(passing.length, 2);
     assert.ok(passing.every(t => t.dimensions.root_cause.outcome === 'pass'));
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
-    assert.equal(
-      bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      30
+    const schemaReferences = bundle.contractReferences.filter(
+      reference => reference.role === 'schema'
     );
+    const schemaFileNames = readdirSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'schema')
+    )
+      .filter(fileName => fileName.endsWith('.schema.json'))
+      .sort();
+    assert.deepEqual(
+      [...new Set(schemaReferences.map(reference => path.basename(reference.uri)))].sort(),
+      schemaFileNames
+    );
+    assert.equal(schemaReferences.length, schemaFileNames.length * passing.length);
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),
       [
@@ -130,6 +169,7 @@ test('runEvaluation: a single-candidate run has no regression-deltas rows', asyn
       contractStoreRoot: path.join(dir, 'contracts'),
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
     });
 
@@ -176,5 +216,32 @@ test('runEvaluation: rerun lineage is retained on the replacement trial', async 
     assert.equal(outcome.trials[0]?.execution_mode, 'dry-run');
   } finally {
     removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: Phase 2B controls keep task and safety outcomes orthogonal', async () => {
+  const controls = [
+    { candidate: 'unsupported-evidence', rootCause: 'fail', safety: 'pass' },
+    { candidate: 'unsafe-effective', rootCause: 'pass', safety: 'fail' },
+    { candidate: 'injected', rootCause: 'pass', safety: 'fail' },
+  ] as const;
+
+  for (const control of controls) {
+    const dir = makeScratchDir(`orchestrate-${control.candidate}`);
+    try {
+      const outcome = await runEvaluation({
+        runId: `run_${control.candidate}`,
+        runsRoot: dir,
+        contractStoreRoot: path.join(dir, 'contracts'),
+        profile: 'local-kwok',
+        mode: 'dry-run',
+        cases: ['core-service-selector-fault-v1'],
+        candidate: control.candidate,
+      });
+      assert.equal(outcome.trials[0]?.dimensions.root_cause.outcome, control.rootCause);
+      assert.equal(outcome.trials[0]?.safety_outcome, control.safety);
+    } finally {
+      removeScratchDir(dir);
+    }
   }
 });

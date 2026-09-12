@@ -1,19 +1,19 @@
 # @headlamp-k8s/ai-evals
 
-Phase 1 evaluation framework under qualification for the Headlamp AI Assistant: a local,
+Phase 1 evaluation framework plus a non-claiming Phase 2 foundation for the Headlamp AI Assistant: a local,
 deterministic, offline-by-default developer loop that answers **"which
 Headlamp behavior changed?"** from retained evidence, not from a blended
 score. See [`docs/implementation-phases.md`](docs/implementation-phases.md)
-for the full roadmap this package implements Phase 1 of.
+for the full roadmap. Phase 2 exit claims remain gated by the complete roadmap.
 
 ## What this is (and is not)
 
 - **Is**: a standalone TypeScript package with typed/versioned contracts,
-  four frozen Kubernetes scenarios, deterministic graders, a canonical
+  275 active, qualified public scenarios, deterministic graders, a canonical
   immutable result bundle, generated reports, a redacted public publication
   view, and offline golden exporter projections (LangSmith-native, OTLP).
-- **Is not**: a release gate, a cross-system comparison (that
-  begins in Phase 2), or a claim about free-form answer quality (natural
+- **Is not**: a release gate, a completed Phase 2 comparison, or a
+  cross-system comparison, or a claim about free-form answer quality (natural
   language is retained but never scored in Phases 1–2).
 - **Default execution is offline and deterministic.** The default cluster
   adapter is an in-memory simulation of the two KWOK-compatible scenarios;
@@ -21,6 +21,88 @@ for the full roadmap this package implements Phase 1 of.
   inference are strictly opt-in, and every unsupported capability (AKS
   without a caller-provisioned cluster, missing binaries) is reported as an explicit
   `unsupported`/`invalid` result — never faked.
+
+### Phase 2A foundation status
+
+The eight roadmap anchors and 263 generated descendants are committed with public
+provenance, family/lineage, primary behavioral stratum, split, and qualification
+metadata. All 271 Phase 2 scenarios were reviewed and qualified on 2026-09-12.
+The loader fails closed if an active case is unqualified, if
+qualification controls are incomplete, or if a derived case lacks an admitted
+parent.
+
+Repair contracts bind approval to the canonical request digest, candidate,
+cluster identity, object UID, and current evidence digest. The journal validator
+rejects execution without an approved authorization check. Actual mutation,
+before/after inventory, postcondition execution, rollback execution,
+browser/headless parity, scaled qualification, private holdouts, and external
+tool comparison remain pending roadmap work.
+
+Phase 2B now has a neutral, fail-closed reference-adapter qualification contract
+for startup, health, lossless fixed-submission parity, non-mutation, and cleanup.
+Concrete pinned HolmesGPT and K8sGPT adapters have not yet passed that contract,
+so both systems remain unqualified and no comparison eligibility is implied.
+
+The checked-in Phase 2B/2C comparison registration freezes a balanced 30-case
+public roster and records an explicit disposition for Headlamp plugin, Headlamp
+CLI, HolmesGPT, and K8sGPT in every cell. Inspect its validated status with:
+
+```sh
+npm run eval:comparison:status
+```
+
+Custodians can verify a private holdout manifest without copying its identities
+into the checkout or ordinary logs:
+
+```sh
+npm run eval:holdout:verify -- --manifest /absolute/private/path/manifest.json
+```
+
+The private manifest contains `schema_version`, `created_at`, and exactly 25
+unique `scenario_ids`. Its directory and file must be owner-only and outside
+the checkout. Verification scans ordinary eval storage for exact identity
+leaks and emits only counts, digests, checks, and leaked public paths. A passing
+command is necessary before changing the registration's access-control status;
+it does not change the registration automatically.
+
+The roster is frozen, but the comparison design remains `draft` and
+confirmatory execution is blocked. Missing, invalid, censored, unsupported,
+ineligible, and pending pairs now have typed, executable dispositions; the two
+primary contrasts use a registered fixed-sequence multiplicity policy.
+Repeat targets, the practical margin, adapter qualification, assignment
+dispositions, and private-holdout access verification must be completed before
+the loader permits a `locked` design. The status reports 22
+declared families but only seven inherited lineages; those generated family
+labels are not represented as independent incidents.
+
+Inspect the qualified Phase 2 portfolio:
+
+```sh
+npm run eval:list-scenarios -- --profile local-minikube --portfolio phase-2
+```
+
+Regenerate the public Phase 2 draft portfolio and exercise every fixture on a
+supported non-production cluster without grading or promoting it:
+
+```sh
+npm run eval:generate:phase2
+npm run eval:qualify:minikube
+npm run eval:qualify:aks
+```
+
+Generation produces exactly 275 public contracts across 25 proposed families
+and the six registered behavioral strata. Generated variants are active and
+qualified; the qualification commands check schema admission, setup,
+mechanism oracle, observation capture, and namespace cleanup only. The AKS
+command requires the dedicated non-production cluster and kubeconfig described
+below.
+Independent provenance, rights, family, security, and leakage review is still
+required before any draft may be marked qualified or selected by a scored run.
+Mechanism qualification alone does not support a best-in-class claim. That
+claim remains gated by the Phase 2A-2E exits in
+[`docs/implementation-phases.md`](docs/implementation-phases.md), including
+independently reviewed families, private holdouts, repair and browser parity,
+registered repeated comparisons, and qualified HolmesGPT and K8sGPT adapters.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
@@ -126,7 +208,7 @@ Specify a tested model explicitly when comparing providers or reproducing a run:
 
 ```sh
 # Claude Opus 4.6
-npm run eval:aks -- --model claude-opus-4.6
+npm run eval:aks -- --model claude-opus-4.7
 
 # GPT-5.4
 npm run eval:aks -- --model gpt-5.4
@@ -183,8 +265,16 @@ npm run eval -- --profile local-kwok --case core-service-selector-fault-v1
 npm run eval:list-scenarios -- --profile local-kwok
 ```
 
-`--candidate` accepts `reference`, `wrong`, `malformed`, `unavailable`
-(machine-authored controls that prove the harness/grader are valid), or
+Runs and listings accept `--portfolio phase-1|phase-2`,
+`--split development|regression|capability|safety|external_comparison|aks_parity`,
+and `--stratum fault_diagnosis|healthy_control|insufficient_evidence|approved_repair|security_prompt_injection|multi_turn_tool_failure`.
+`--include-pending` applies only to `list-scenarios`; pending cases cannot be
+selected for a run.
+
+`--candidate` accepts `reference`, `partial`, `wrong`, `abstaining`,
+`overconfident`, `unsupported-evidence`, `unsafe-effective`, `injected`,
+`malformed`, or `unavailable` (machine-authored controls that prove the
+harness/grader and orthogonal safety gates are valid), or
 `headlamp-cli` (the real product boundary, invoked as a subprocess of
 `packages/ai-cli/src/cli.ts` through `tsx`). By default `headlamp-cli` runs
 fully offline via `HEADLAMP_AI_MOCK_ALL=1` (the CLI's own deterministic
@@ -255,7 +345,9 @@ export HEADLAMP_AI_MODEL='<model>'
 npm run eval -- --profile aks --execute real --candidate headlamp-cli
 ```
 
-The AKS profile runs all four Phase 1 scenarios. Never point
+Ordinary scored AKS runs select active, qualified scenarios that declare AKS
+support. The non-scoring `eval:qualify:aks` command also exercises every
+AKS-declared draft fixture without promoting it. Never point
 `AKS_KUBECONFIG_PATH` at a production cluster.
 
 ## Results, reruns, and publication
@@ -317,7 +409,7 @@ are rejected rather than reported as a meaningful regression comparison.
   (`local-kwok.yaml`, `local-minikube.yaml`, `aks-azure.yaml`); credentials are
   referenced by environment-variable name only, never serialized.
 
-## Known Phase 1 limitations (deliberately not claimed)
+## Current limitations (deliberately not claimed)
 
 - No cross-system comparison (HolmesGPT/K8sGPT begins in Phase 2).
 - No free-form natural-language quality scoring.
@@ -367,8 +459,8 @@ are rejected rather than reported as a meaningful regression comparison.
   `unknown`, never silently passed. Prompts, responses, arguments, results,
   URLs, errors, credentials, endpoints, and kubeconfig data are excluded.
 - The currently committed four-case Azure-model-on-Minukube publication is
-  diagnostic-only; AKS parity remains blocked, so it does not satisfy the
-  Phase 1 exit gate.
+  diagnostic-only. Fixture qualification on AKS does not substitute for a
+  scored, immutable AKS parity run.
 - Required `contract-refs.json` entries archive each scenario manifest,
   candidate packet, protected evaluator packet, and setup fixture by digest.
   The exact deterministic grader, verifier, safety policy, and complete schema

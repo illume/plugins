@@ -8,5 +8,10 @@ Start with:
 - [`headlampCli.ts`](headlampCli.ts) for the real CLI subprocess boundary and sanitized telemetry ingestion.
 - [`scripted.ts`](scripted.ts) for deterministic reference, failure, and malformed controls.
 - [`providerDetection.ts`](providerDetection.ts) for parsing provider discovery output.
+- [`referenceQualification.ts`](referenceQualification.ts) for fail-closed startup, health,
+  fixed-submission parity, and cleanup controls shared by external reference adapters.
 
 Candidates receive the candidate packet, retrieved observations, and explicitly supplied ephemeral environment only. Protected evaluator truth must never cross this boundary.
+
+The reference qualification harness is not evidence that HolmesGPT or K8sGPT is qualified.
+Each pinned implementation remains ineligible until its concrete adapter passes every control.

@@ -31,6 +31,7 @@ import type {
   DimensionResult,
   EvaluatorPacket,
   RequiredEvidenceRelation,
+  RepairSubmission,
   SubmissionParseStatus,
 } from '../contracts/evaluationContracts.js';
 import { assertValid } from '../contracts/validate.js';
@@ -43,6 +44,8 @@ export interface ParsedSubmission {
   status: SubmissionParseStatus;
   /** Valid typed submission, or `null` when unavailable or malformed. */
   submission: DiagnosisSubmission | null;
+  /** Complete repair sidecar when the requested contract is repair_submission. */
+  repairSubmission?: RepairSubmission;
   /** Diagnostic text describing malformed input. */
   parseError?: string;
 }
@@ -53,7 +56,12 @@ export interface ParsedSubmission {
  * @param submissionText - Raw submission JSON, or `null` when none was supplied.
  * @returns The typed submission and its parse disposition.
  */
-export function parseSubmission(submissionText: string | null): ParsedSubmission {
+export function parseSubmission(
+  submissionText: string | null,
+  requiredSchema:
+    | 'diagnosis_submission@1.0.0'
+    | 'repair_submission@1.0.0' = 'diagnosis_submission@1.0.0'
+): ParsedSubmission {
   if (submissionText === null) {
     return { status: 'missing', submission: null };
   }
@@ -64,7 +72,20 @@ export function parseSubmission(submissionText: string | null): ParsedSubmission
     return { status: 'malformed', submission: null, parseError: String(err) };
   }
   try {
-    assertValid(loadSchema('diagnosis-submission'), parsed, 'diagnosis submission');
+    const repair = requiredSchema === 'repair_submission@1.0.0';
+    assertValid(
+      loadSchema(repair ? 'repair-submission' : 'diagnosis-submission'),
+      parsed,
+      repair ? 'repair submission' : 'diagnosis submission'
+    );
+    if (repair) {
+      const repairSubmission = parsed as RepairSubmission;
+      return {
+        status: 'valid',
+        submission: repairSubmission.diagnosis,
+        repairSubmission,
+      };
+    }
   } catch (err) {
     return { status: 'malformed', submission: null, parseError: String(err) };
   }

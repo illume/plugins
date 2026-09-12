@@ -14,14 +14,45 @@
  * limitations under the License.
  */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { SimulatedKwokAdapter } from './simulatedAdapter.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const scenariosRoot = path.resolve(here, '..', '..', '..', 'scenarios');
+
+test('applyJsonPatch enforces tests and changes the retained resource', async () => {
+  const adapter = new SimulatedKwokAdapter('local-kwok');
+  const namespace = 'repair-test';
+  await adapter.applyManifest(
+    namespace,
+    path.join(scenariosRoot, 'core-service-selector-repair-v1', 'setup.yaml')
+  );
+  const target = await adapter.getResourceIdentity(namespace, 'service/web');
+  assert.ok(target);
+
+  const before = await adapter.getResourceSnapshot(target);
+  const after = await adapter.applyJsonPatch(target, [
+    { op: 'test', path: '/spec/selector/tier', value: 'frontend' },
+    { op: 'replace', path: '/spec/selector/tier', value: 'backend' },
+  ]);
+
+  assert.equal((before as { spec: { selector: { tier: string } } }).spec.selector.tier, 'frontend');
+  assert.equal((after as { spec: { selector: { tier: string } } }).spec.selector.tier, 'backend');
+  assert.deepEqual(await adapter.getServiceSelector(namespace, 'web'), {
+    found: true,
+    selector: { app: 'web', tier: 'backend' },
+  });
+  await assert.rejects(
+    () =>
+      adapter.applyJsonPatch(target, [
+        { op: 'test', path: '/spec/selector/tier', value: 'frontend' },
+      ]),
+    /TEST_OPERATION_FAILED/
+  );
+});
 
 test('SimulatedKwokAdapter: computes empty endpoints when the Service selector does not match any Pod', async () => {
   const adapter = new SimulatedKwokAdapter('local-kwok');

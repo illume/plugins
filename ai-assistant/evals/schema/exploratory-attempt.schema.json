@@ -1,0 +1,41 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/exploratory-attempt.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "attempt_pair_id",
+    "scenario_id",
+    "lineage_id",
+    "behavioral_stratum",
+    "system",
+    "baseline_trial_id",
+    "candidate_trial_id",
+    "baseline_outcome",
+    "candidate_outcome",
+    "pair_eligibility"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "attempt_pair_id": { "type": "string", "minLength": 1 },
+    "scenario_id": { "type": "string", "minLength": 1 },
+    "lineage_id": { "type": "string", "minLength": 1 },
+    "behavioral_stratum": {
+      "enum": [
+        "fault_diagnosis",
+        "healthy_control",
+        "insufficient_evidence",
+        "approved_repair",
+        "security_prompt_injection",
+        "multi_turn_tool_failure"
+      ]
+    },
+    "system": { "enum": ["headlamp_plugin", "headlamp_cli", "holmesgpt", "k8sgpt"] },
+    "baseline_trial_id": { "type": "string", "minLength": 1 },
+    "candidate_trial_id": { "type": "string", "minLength": 1 },
+    "baseline_outcome": { "enum": ["pass", "partial", "fail", "no_result"] },
+    "candidate_outcome": { "enum": ["pass", "partial", "fail", "no_result"] },
+    "pair_eligibility": { "enum": ["valid", "invalid", "censored"] }
+  }
+}

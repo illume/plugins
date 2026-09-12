@@ -39,12 +39,25 @@ export const PHASE_ONE_SCENARIO_IDS = [
   'core-unschedulable-capacity-v1',
 ] as const;
 
+/** Hand-authored anchors that establish every Phase 2 behavioral mode. */
+export const PHASE_TWO_ANCHOR_IDS = [
+  'core-pvc-storageclass-missing-v1',
+  'core-pvc-storageclass-healthy-v1',
+  'core-workload-rbac-denied-v1',
+  'core-rollout-stale-event-healthy-v1',
+  'core-service-selector-repair-v1',
+  'core-unschedulable-capacity-repair-v1',
+  'core-annotation-injection-v1',
+  'core-annotation-benign-v1',
+] as const;
+
 /** Breaking version for regression deltas whose dimension values are canonical outcomes. */
 export const REGRESSION_DELTA_SCHEMA_VERSION = '2.0.0';
 
 /** Cluster mechanisms a scenario's scored truth may depend on. */
 export type RequiredMechanism =
   | 'api-server'
+  | 'authorization'
   | 'endpointslice-controller'
   | 'scheduler'
   | 'kubelet'
@@ -97,6 +110,65 @@ export interface ScenarioProvenance {
   quarantine?: QuarantineMetadata;
 }
 
+/** Primary Phase 2 denominator assigned to a public scenario variant. */
+export type BehavioralStratum =
+  | 'fault_diagnosis'
+  | 'healthy_control'
+  | 'insufficient_evidence'
+  | 'approved_repair'
+  | 'security_prompt_injection'
+  | 'multi_turn_tool_failure';
+
+/** Prespecified use of a scenario; one variant may participate in several uses. */
+export type DatasetSplit =
+  | 'development'
+  | 'regression'
+  | 'capability'
+  | 'safety'
+  | 'external_comparison'
+  | 'aks_parity';
+
+/** Qualification controls that must all pass before a scenario becomes active. */
+export interface ScenarioQualificationControls {
+  provenance: 'passed' | 'pending' | 'failed';
+  rights: 'passed' | 'pending' | 'failed';
+  family_lineage: 'passed' | 'pending' | 'failed';
+  mechanism_oracle: 'passed' | 'pending' | 'failed';
+  candidate_view: 'passed' | 'pending' | 'failed';
+  setup: 'passed' | 'pending' | 'failed';
+  observation_capture: 'passed' | 'pending' | 'failed';
+  cleanup: 'passed' | 'pending' | 'failed';
+  leakage: 'passed' | 'pending' | 'failed';
+}
+
+/** Public portfolio identity and admission evidence for one scenario variant. */
+export interface ScenarioPortfolioMetadata {
+  /** Roadmap phase that introduced this scenario. */
+  phase: 1 | 2;
+  /** Private holdout identities are never stored in this public registry. */
+  visibility: 'public';
+  /** Exactly one primary behavioral denominator. */
+  behavioral_stratum: BehavioralStratum;
+  /** Independently reviewed causal/evidence family identity. */
+  family_id: string;
+  /** Dependence unit shared by twins and derived variants. */
+  lineage_id: string;
+  /** How this variant entered the portfolio. */
+  variant_kind: 'anchor' | 'adapted' | 'transformed' | 'generated';
+  /** Parent required for generated or transformed descendants. */
+  parent_scenario_id?: string;
+  /** Prespecified dataset uses; repeats and environment cells are not splits. */
+  splits: DatasetSplit[];
+  /** Admission state separate from authoring lifecycle. */
+  qualification_status: 'qualified' | 'pending' | 'rejected';
+  /** Evidence-producing controls used by the qualification factory. */
+  qualification_controls: ScenarioQualificationControls;
+  /** Independent reviewers who approved qualification. */
+  reviewed_by: string[];
+  /** ISO timestamp at which every qualification control passed. */
+  qualified_at?: string;
+}
+
 /**
  * Versioned scenario metadata and cluster execution requirements.
  *
@@ -145,6 +217,8 @@ export interface ScenarioManifest {
   description: string;
   /** Ownership, origin, review, and lifecycle metadata. */
   provenance: ScenarioProvenance;
+  /** Portfolio identity, split assignment, lineage, and qualification state. */
+  portfolio: ScenarioPortfolioMetadata;
   /** Cluster profiles admitted to execute this scenario. */
   supported_cluster_profiles: ClusterProfileName[];
   /** Kubernetes mechanisms required for trustworthy scoring. */
@@ -212,8 +286,10 @@ export interface CandidatePacket {
   allow_additional_retrieval: boolean;
   /** Read-only in Phase 1; always false until Phase 2 introduces repair mode. */
   allow_mutations: boolean;
+  /** Exact repair boundary required whenever mutations are permitted. */
+  action_policy?: CandidateActionPolicy;
   /** Structured sidecar the candidate must emit alongside natural-language prose. */
-  required_submission_schema: 'diagnosis_submission@1.0.0';
+  required_submission_schema: 'diagnosis_submission@1.0.0' | 'repair_submission@1.0.0';
 }
 
 /** One grader-accepted observation that can support a diagnosis. */
@@ -248,14 +324,112 @@ export interface RequiredEvidenceRelation {
   description?: string;
 }
 
+/** Exact runtime policy applied to every candidate repair request. */
+export interface CandidateActionPolicy {
+  approval_required: true;
+  allowed_operations: Array<'json_patch'>;
+  allowed_resource_refs: string[];
+  allowed_patches: Array<{
+    resource_ref: string;
+    patch: JsonPatchOperation[];
+  }>;
+  deny_on_stale_evidence: true;
+}
+
+/** JSON value supported by the bounded repair submission contract. */
+export type JsonPatchValue = string | number | boolean | null;
+
+/** RFC 6902 operation used by approved Phase 2 repairs. */
+export type JsonPatchOperation =
+  | {
+      op: 'add' | 'replace' | 'test';
+      path: string;
+      value: JsonPatchValue;
+    }
+  | {
+      op: 'remove';
+      path: string;
+    };
+
 /** One action that the evaluator accepts for the scenario. */
 export interface AcceptedAction {
   /** Stable identifier for the accepted action. */
   action_id: string;
   /** Human explanation of why the action is acceptable. */
   description: string;
-  /** Phase 1 is read-only; `no_action` is the only accepted action id. */
-  operation: 'no_action';
+  /** Canonical action operation. */
+  operation: 'no_action' | 'json_patch';
+  /** Exact target for an approved repair. */
+  target_resource?: string;
+  /** RFC 6902 operations accepted for this repair. */
+  patch?: JsonPatchOperation[];
+  /** Paths allowed to differ after execution. */
+  allowed_diff_paths?: string[];
+  /** Deterministic postconditions required for repair success. */
+  postconditions?: AcceptedFact[];
+  /** Exact rollback patch for the approved action. */
+  rollback_patch?: JsonPatchOperation[];
+}
+
+/** Exact repair request presented for approval. */
+export interface ActionRequest {
+  schema_version: '1.0.0';
+  action_id: string;
+  trial_id: string;
+  scenario_id: string;
+  candidate_id: string;
+  cluster_profile: ClusterProfileName;
+  cluster_identity_digest: string;
+  evidence_digest: string;
+  target: {
+    api_version: string;
+    kind: string;
+    namespace: string;
+    name: string;
+    uid: string;
+  };
+  operation: 'json_patch';
+  patch: JsonPatchOperation[];
+}
+
+/** Decision bound to the complete canonical repair request. */
+export interface ActionApproval {
+  schema_version: '1.0.0';
+  approval_id: string;
+  action_id: string;
+  request_digest: string;
+  candidate_id: string;
+  cluster_identity_digest: string;
+  evidence_digest: string;
+  target_uid: string;
+  decision: 'approved' | 'denied';
+  decided_at: string;
+  reason?: string;
+}
+
+/** Append-only repair lifecycle record persisted in the trajectory. */
+export interface ActionJournalEvent {
+  schema_version: '1.0.0';
+  event_id: string;
+  trial_id: string;
+  action_id: string;
+  sequence: number;
+  recorded_at: string;
+  type:
+    | 'action_proposed'
+    | 'action_displayed'
+    | 'approval_decided'
+    | 'authorization_checked'
+    | 'action_executed'
+    | 'postcondition_checked'
+    | 'collateral_checked'
+    | 'rollback_executed';
+  request_digest: string;
+  effect_digest?: string;
+  approval_id?: string;
+  status: 'pending' | 'approved' | 'denied' | 'success' | 'failed' | 'stale';
+  result_digest?: string;
+  reason?: string;
 }
 
 /**
@@ -363,6 +537,19 @@ export interface DiagnosisSubmission {
     /** Human explanation of the proposed action. */
     description: string;
   }>;
+}
+
+/** Phase 2 sidecar containing a diagnosis and one exact repair proposal. */
+export interface RepairSubmission {
+  schema_version: '1.0.0';
+  diagnosis: DiagnosisSubmission;
+  proposed_action: {
+    action_id: string;
+    target: ActionRequest['target'];
+    operation: 'json_patch';
+    patch: JsonPatchOperation[];
+    evidence_digest: string;
+  };
 }
 
 /** Parser disposition for a candidate's structured sidecar. */
@@ -669,12 +856,14 @@ export interface TrialResult {
   first_failure_owner?: 'setup' | 'candidate' | 'grader' | 'verifier' | 'cleanup' | 'harness';
   /** Completion state for each trial stage. */
   stage_status: StageStatus;
-  /** Scores for diagnosis and recommended-action dimensions. */
+  /** Scores for diagnosis, recommendation, and executed-repair dimensions. */
   dimensions: {
     /** Score for identifying the scenario's root cause. */
     root_cause: DimensionResult;
     /** Score for the candidate's recommended fix. */
     recommended_fix: DimensionResult;
+    /** Score derived only from an approval-bound repair action journal. */
+    executed_repair: DimensionResult;
   };
   /** Safety grader disposition for the trial. */
   safety_outcome: SafetyOutcome;

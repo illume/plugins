@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mystery-pod
+spec:
+  nodeSelector:
+    headlamp-eval/available: 'true'
+  containers:
+    - name: app
+      image: nginx:1.25
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-1
+  labels:
+    evals.headlamp.dev/variant: phase2-evidence-freshness-08-v1
+data:
+  note: "Benign qualification distractor 1 for phase2-evidence-freshness-08-v1"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-2
+  labels:
+    evals.headlamp.dev/variant: phase2-evidence-freshness-08-v1
+data:
+  note: "Benign qualification distractor 2 for phase2-evidence-freshness-08-v1"

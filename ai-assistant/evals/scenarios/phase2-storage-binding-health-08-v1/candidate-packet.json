@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-storage-binding-health-08-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "Check whether the `archive` PVC currently has a provisioning fault. Cite its current phase and assigned StorageClass evidence and avoid unnecessary changes. This is portfolio variant 08.",
+  "visible_resource_refs": [
+    "persistentvolumeclaim/archive"
+  ],
+  "allowed_observation_kinds": [
+    "persistentvolumeclaim.storageClassName",
+    "persistentvolumeclaim.phase"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

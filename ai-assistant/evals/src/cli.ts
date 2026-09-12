@@ -16,7 +16,7 @@
  */
 
 /**
- * Phase 1 eval CLI: run, export, publication, and rerun commands.
+ * Evaluation CLI: run, export, publication, rerun, and Phase 2 portfolio commands.
  *
  * Kept intentionally thin: all real behavior lives in `runner/orchestrate.ts`,
  * `publication/publish.ts`, and `storage/*`, so this file is easy to keep in
@@ -36,18 +36,79 @@ import { readClosedBundle } from './storage/bundleReader.js';
 import { buildReport, writeReport } from './reporting/reportBuilder.js';
 import { ownershipRowFromManifest } from './operations/ownership.js';
 import { publishRun, regenerateOverallViews, checkOverallViews } from './publication/publish.js';
-import type { ClusterProfileName } from './contracts/evaluationContracts.js';
+import type {
+  BehavioralStratum,
+  ClusterProfileName,
+  DatasetSplit,
+} from './contracts/evaluationContracts.js';
+import { matchesScenarioSelection, type ScenarioSelection } from './scenarios/admission.js';
+import { loadAllScenarios } from './scenarios/loader.js';
 import { createRealCommandRunner } from './cluster/commandRunner.js';
 import { defaultAksKubeconfigPath, deleteAks, setupAks } from './cluster/provisioning/aks.js';
 import { parseProviderDetectionOutput } from './candidates/providerDetection.js';
 import { writeExportProjections } from './exporters/writeExports.js';
 import type { TokenPricingSnapshot } from './candidates/candidateAdapter.js';
 import { validateTokenPricingSnapshot } from './candidates/headlampCli.js';
+import {
+  comparisonRegistrationStatus,
+  loadComparisonRegistration,
+} from './comparisons/registration.js';
+import { assertCopilotModelAvailable } from './candidates/copilotCatalog.js';
+import { verifyPrivateHoldoutAccess } from './operations/privateHoldoutAccess.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
 const aiCliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'src', 'cli.ts');
 const tsxBin = path.resolve(evalsRoot, 'node_modules', '.bin', 'tsx');
+const datasetSplits: DatasetSplit[] = [
+  'development',
+  'regression',
+  'capability',
+  'safety',
+  'external_comparison',
+  'aks_parity',
+];
+const behavioralStrata: BehavioralStratum[] = [
+  'fault_diagnosis',
+  'healthy_control',
+  'insufficient_evidence',
+  'approved_repair',
+  'security_prompt_injection',
+  'multi_turn_tool_failure',
+];
+
+/** Parses and validates the Phase 2 portfolio selectors shared by run/list commands. */
+function selectionFromFlags(flags: Flags): ScenarioSelection {
+  const phase =
+    flags.portfolio === undefined
+      ? undefined
+      : flags.portfolio === 'phase-1'
+      ? 1
+      : flags.portfolio === 'phase-2'
+      ? 2
+      : (() => {
+          throw new Error('--portfolio must be phase-1 or phase-2');
+        })();
+  const split = flags.split;
+  if (
+    split !== undefined &&
+    (typeof split !== 'string' || !datasetSplits.includes(split as DatasetSplit))
+  ) {
+    throw new Error(`--split must be one of ${datasetSplits.join('|')}`);
+  }
+  const stratum = flags.stratum;
+  if (
+    stratum !== undefined &&
+    (typeof stratum !== 'string' || !behavioralStrata.includes(stratum as BehavioralStratum))
+  ) {
+    throw new Error(`--stratum must be one of ${behavioralStrata.join('|')}`);
+  }
+  return {
+    phase,
+    split: split as DatasetSplit | undefined,
+    stratum: stratum as BehavioralStratum | undefined,
+  };
+}
 
 /**
  * Resolves the run storage root from the environment or repository default.
@@ -283,6 +344,10 @@ async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
     throw new Error(`--api-key <key> is required for provider ${flags.provider}`);
   }
 
+  if (flags.provider === 'copilot' && typeof flags.model === 'string') {
+    await assertCopilotModelAvailable(apiKey, flags.model);
+  }
+
   const args = ['--provider', flags.provider, '--api-key', apiKey];
   if (typeof flags.model === 'string') args.push('--model', flags.model);
   return args;
@@ -322,6 +387,7 @@ async function commandRun(flags: Flags): Promise<void> {
     profile,
     mode,
     cases,
+    selection: selectionFromFlags(flags),
     candidate,
     baseline,
     candidateCliArgs,
@@ -487,6 +553,30 @@ async function main(): Promise<void> {
     case 'report:overall':
       commandReportOverall(flags);
       break;
+    case 'comparison:status':
+      console.log(
+        JSON.stringify(comparisonRegistrationStatus(loadComparisonRegistration()), null, 2)
+      );
+      break;
+    case 'holdout:verify': {
+      if (typeof flags.manifest !== 'string') {
+        throw new Error('holdout:verify requires --manifest <outside-checkout-path>');
+      }
+      const registration = loadComparisonRegistration().registration;
+      const checkoutRoot =
+        typeof flags['checkout-root'] === 'string' ? flags['checkout-root'] : evalsRoot;
+      const publicRoot =
+        typeof flags['public-root'] === 'string' ? flags['public-root'] : evalsRoot;
+      const verification = verifyPrivateHoldoutAccess({
+        manifestPath: flags.manifest,
+        checkoutRoot,
+        publicRoots: [publicRoot],
+        expectedCount: registration.private_holdouts.target_count,
+      });
+      console.log(JSON.stringify(verification, null, 2));
+      if (verification.access_control_verification !== 'passed') process.exitCode = 1;
+      break;
+    }
     case 'rerun':
       await commandRerun(flags);
       break;
@@ -510,14 +600,29 @@ async function main(): Promise<void> {
       const profile = (
         typeof flags.profile === 'string' ? flags.profile : 'local-kwok'
       ) as ClusterProfileName;
-      for (const s of selectScenarios(profile, undefined)) {
-        console.log(`${s.manifest.scenario_id} (kwok_compatible=${s.kwokCompatible})`);
+      const selection = selectionFromFlags(flags);
+      const scenarios =
+        flags['include-pending'] === true
+          ? loadAllScenarios().filter(
+              scenario =>
+                matchesScenarioSelection(scenario.manifest, selection) &&
+                scenario.manifest.supported_cluster_profiles.includes(profile) &&
+                (profile !== 'local-kwok' || scenario.kwokCompatible)
+            )
+          : selectScenarios(profile, undefined, undefined, selection);
+      for (const s of scenarios) {
+        console.log(
+          `${s.manifest.scenario_id} (phase=${s.manifest.portfolio.phase} ` +
+            `stratum=${s.manifest.portfolio.behavioral_stratum} ` +
+            `qualification=${s.manifest.portfolio.qualification_status} ` +
+            `kwok_compatible=${s.kwokCompatible})`
+        );
       }
       break;
     }
     default:
       console.error(
-        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|rerun|list-scenarios> [--flags...]'
+        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|comparison:status|holdout:verify|rerun|list-scenarios> [--flags...]'
       );
       process.exit(command ? 1 : 0);
   }

@@ -97,6 +97,31 @@ test('parseSubmission: a schema-conforming object parses as valid', () => {
   assert.ok(result.submission);
 });
 
+test('parseSubmission: validates and unwraps the required repair sidecar', () => {
+  const diagnosis = submission({});
+  const repair = {
+    schema_version: '1.0.0',
+    diagnosis,
+    proposed_action: {
+      action_id: 'repair-selector',
+      target: {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+      operation: 'json_patch',
+      patch: [{ op: 'replace', path: '/spec/selector/tier', value: 'backend' }],
+      evidence_digest: 'a'.repeat(64),
+    },
+  };
+  const result = parseSubmission(JSON.stringify(repair), 'repair_submission@1.0.0');
+  assert.equal(result.status, 'valid');
+  assert.deepEqual(result.submission, diagnosis);
+  assert.deepEqual(result.repairSubmission?.proposed_action, repair.proposed_action);
+});
+
 test('gradeRootCause: passes when cause_facts cover an accepted fact set with grounded evidence', () => {
   const dimension = gradeRootCause({
     submission: submission({

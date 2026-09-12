@@ -1,0 +1,55 @@
+schema_version: 1.0.0
+scenario_id: phase2-transient-tool-recovery-02-v1
+scenario_version: 1.0.0
+family: transient-tool-recovery
+mode: diagnose_only
+title: Pending Pod with intentionally withheld decisive evidence (variant 02)
+description: >-
+  A Pod is visible in Pending phase, but the decisive scheduler/node evidence needed to name a
+  unique cause is intentionally unavailable. The correct behavior is bounded uncertainty (at least
+  two remaining hypotheses) or safe escalation — a unique root-cause claim here is a failure. Like
+  core-unschedulable-capacity-v1, this depends on a real scheduler decision and supports the
+  `local-minikube` and `aks` profiles. Reviewed variant 02 adds 2 benign fixture distractor(s).
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-10'
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: multi_turn_tool_failure
+  family_id: transient-tool-recovery
+  lineage_id: pending-underdetermined-core
+  variant_kind: generated
+  parent_scenario_id: core-pending-underdetermined-v1
+  splits:
+    - development
+  qualification_status: qualified
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+  - scheduler
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-p2-6c6e79ab757d
+artifact_policy:
+  retain_raw_tool_output: true

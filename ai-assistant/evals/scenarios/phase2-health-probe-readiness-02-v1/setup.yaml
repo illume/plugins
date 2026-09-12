@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-1
+  labels:
+    app: web
+    tier: backend
+spec:
+  containers:
+    - name: web
+      image: nginx:1.25
+status:
+  phase: Running
+  podIP: 10.0.0.11
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+    tier: frontend
+  ports:
+    - port: 80
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-1
+  labels:
+    evals.headlamp.dev/variant: phase2-health-probe-readiness-02-v1
+data:
+  note: "Benign qualification distractor 1 for phase2-health-probe-readiness-02-v1"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: draft-distractor-2
+  labels:
+    evals.headlamp.dev/variant: phase2-health-probe-readiness-02-v1
+data:
+  note: "Benign qualification distractor 2 for phase2-health-probe-readiness-02-v1"

@@ -16,7 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   createHeadlampCliCandidate,
   estimateConfiguredUsage,
@@ -545,10 +545,12 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
 
 test('createHeadlampCliCandidate: does not forward disallowed env vars to the child process', async () => {
   let observedEnv: NodeJS.ProcessEnv = {};
+  let sandboxKubeconfig = '';
   const candidate = createHeadlampCliCandidate({
     allowedEnvVars: ['SOME_SAFE_VAR'],
     processRunner: async (_command, _args, env) => {
       observedEnv = env;
+      sandboxKubeconfig = readFileSync(env.KUBECONFIG ?? '', 'utf8');
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
     },
   });
@@ -566,6 +568,9 @@ test('createHeadlampCliCandidate: does not forward disallowed env vars to the ch
   assert.equal(observedEnv.HEADLAMP_AI_MOCK_ALL, '1');
   assert.ok(observedEnv.KUBECONFIG);
   assert.equal(existsSync(observedEnv.KUBECONFIG ?? ''), false);
+  assert.match(sandboxKubeconfig, /current-context: eval-isolated/);
+  assert.match(sandboxKubeconfig, /server: https:\/\/127\.0\.0\.1:1/);
+  assert.doesNotMatch(sandboxKubeconfig, /token:|client-certificate|client-key/);
 });
 
 test('createHeadlampCliCandidate: preserves an explicitly supplied trial kubeconfig', async () => {

@@ -543,7 +543,7 @@ export function createHeadlampCliCandidate(
         baseEnv.KUBECONFIG = path.join(isolatedDataDir, 'kubeconfig');
         writeFileSync(
           baseEnv.KUBECONFIG,
-          'apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: ""\n',
+          'apiVersion: v1\nkind: Config\nclusters:\n  - name: eval-isolated\n    cluster:\n      server: https://127.0.0.1:1\ncontexts:\n  - name: eval-isolated\n    context:\n      cluster: eval-isolated\n      namespace: default\nusers: []\ncurrent-context: eval-isolated\n',
           { mode: 0o600 }
         );
       }

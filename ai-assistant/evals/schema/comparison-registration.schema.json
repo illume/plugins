@@ -1,0 +1,173 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/comparison-registration.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "registration_id",
+    "authored_at",
+    "design_status",
+    "confirmatory_execution",
+    "roster_status",
+    "adapter_qualification",
+    "estimand",
+    "repeat_targets_by_stratum",
+    "practical_margin",
+    "dependence_unit",
+    "resampling_unit",
+    "missing_pair_rule",
+    "multiplicity_policy",
+    "dataset_splits",
+    "private_holdouts",
+    "roster",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "registration_id": { "type": "string", "minLength": 1 },
+    "authored_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "design_status": { "type": "string", "enum": ["draft", "locked"] },
+    "confirmatory_execution": { "type": "string", "enum": ["blocked", "allowed"] },
+    "roster_status": { "type": "string", "enum": ["frozen"] },
+    "adapter_qualification": { "$ref": "#/$defs/adapterQualification" },
+    "estimand": {
+      "type": "object",
+      "required": ["population", "outcome", "effect_measure", "direction"],
+      "additionalProperties": false,
+      "properties": {
+        "population": { "type": "string", "minLength": 1 },
+        "outcome": { "type": "string", "minLength": 1 },
+        "effect_measure": { "type": "string", "enum": ["matched_risk_difference"] },
+        "direction": { "type": "string", "enum": ["higher_is_better"] }
+      }
+    },
+    "repeat_targets_by_stratum": { "$ref": "#/$defs/repeatTargets" },
+    "practical_margin": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "dependence_unit": { "type": "string", "enum": ["lineage_id"] },
+    "resampling_unit": { "type": "string", "enum": ["lineage_id"] },
+    "missing_pair_rule": { "type": "string", "minLength": 1 },
+    "multiplicity_policy": { "type": "string", "minLength": 1 },
+    "dataset_splits": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["development", "regression", "capability", "safety", "external_comparison"]
+      }
+    },
+    "private_holdouts": {
+      "type": "object",
+      "required": [
+        "target_count",
+        "identities_in_public_registration",
+        "storage",
+        "access_policy",
+        "access_control_verification"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target_count": { "type": "integer", "enum": [25] },
+        "identities_in_public_registration": { "type": "boolean", "enum": [false] },
+        "storage": { "type": "string", "enum": ["outside_checkout"] },
+        "access_policy": { "type": "string", "minLength": 1 },
+        "access_control_verification": {
+          "type": "string",
+          "enum": ["pending", "passed", "failed"]
+        }
+      }
+    },
+    "roster": {
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": { "$ref": "#/$defs/rosterEntry" }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "stratum": {
+      "type": "string",
+      "enum": [
+        "fault_diagnosis",
+        "healthy_control",
+        "insufficient_evidence",
+        "approved_repair",
+        "security_prompt_injection",
+        "multi_turn_tool_failure"
+      ]
+    },
+    "adapterStatus": { "type": "string", "enum": ["pending", "passed", "failed"] },
+    "assignmentStatus": {
+      "type": "string",
+      "enum": ["pending", "eligible", "ineligible", "unsupported"]
+    },
+    "adapterQualification": {
+      "type": "object",
+      "required": ["headlamp_plugin", "headlamp_cli", "holmesgpt", "k8sgpt"],
+      "additionalProperties": false,
+      "properties": {
+        "headlamp_plugin": { "$ref": "#/$defs/adapterStatus" },
+        "headlamp_cli": { "$ref": "#/$defs/adapterStatus" },
+        "holmesgpt": { "$ref": "#/$defs/adapterStatus" },
+        "k8sgpt": { "$ref": "#/$defs/adapterStatus" }
+      }
+    },
+    "assignments": {
+      "type": "object",
+      "required": ["headlamp_plugin", "headlamp_cli", "holmesgpt", "k8sgpt"],
+      "additionalProperties": false,
+      "properties": {
+        "headlamp_plugin": { "$ref": "#/$defs/assignmentStatus" },
+        "headlamp_cli": { "$ref": "#/$defs/assignmentStatus" },
+        "holmesgpt": { "$ref": "#/$defs/assignmentStatus" },
+        "k8sgpt": { "$ref": "#/$defs/assignmentStatus" }
+      }
+    },
+    "repeatTargets": {
+      "type": "object",
+      "required": [
+        "fault_diagnosis",
+        "healthy_control",
+        "insufficient_evidence",
+        "approved_repair",
+        "security_prompt_injection",
+        "multi_turn_tool_failure"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fault_diagnosis": { "type": ["integer", "null"], "minimum": 1 },
+        "healthy_control": { "type": ["integer", "null"], "minimum": 1 },
+        "insufficient_evidence": { "type": ["integer", "null"], "minimum": 1 },
+        "approved_repair": { "type": ["integer", "null"], "minimum": 1 },
+        "security_prompt_injection": { "type": ["integer", "null"], "minimum": 1 },
+        "multi_turn_tool_failure": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "rosterEntry": {
+      "type": "object",
+      "required": [
+        "scenario_id",
+        "behavioral_stratum",
+        "family_id",
+        "lineage_id",
+        "assignments",
+        "disposition_basis"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "scenario_id": { "type": "string", "minLength": 1 },
+        "behavioral_stratum": { "$ref": "#/$defs/stratum" },
+        "family_id": { "type": "string", "minLength": 1 },
+        "lineage_id": { "type": "string", "minLength": 1 },
+        "assignments": { "$ref": "#/$defs/assignments" },
+        "disposition_basis": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

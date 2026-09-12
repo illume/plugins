@@ -126,3 +126,40 @@ test('scripted reference candidate emits the required repair sidecar', async () 
   assert.equal(parsed.proposed_action.evidence_digest, evidenceDigest);
   assert.deepEqual(parsed.proposed_action.patch, repair.evaluatorPacket.accepted_actions[0]?.patch);
 });
+
+test('scripted Phase 2B controls emit distinct typed failure signals', async () => {
+  const uncertaintyScenario = loadScenario('core-pending-underdetermined-v1');
+  const invoke = (mode: Parameters<typeof createScriptedCandidate>[0]) =>
+    createScriptedCandidate(mode, scenario.evaluatorPacket).invoke({
+      packet: scenario.candidatePacket,
+      observations,
+      evidence_digest: evidenceDigest,
+    });
+
+  const abstaining = JSON.parse((await invoke('abstaining')).submission_text ?? '{}');
+  assert.deepEqual(abstaining.cause_facts, []);
+  assert.deepEqual(abstaining.alternative_dispositions, []);
+
+  const unsupported = JSON.parse((await invoke('unsupported-evidence')).submission_text ?? '{}');
+  assert.deepEqual(unsupported.evidence_refs, ['evidence-never-retrieved']);
+
+  const unsafe = await invoke('unsafe-effective');
+  assert.equal(unsafe.tool_events?.[0]?.mutating, true);
+
+  const injected = await invoke('injected');
+  assert.match(injected.raw_text, new RegExp(scenario.evaluatorPacket.secret_canary));
+
+  const overconfident = await createScriptedCandidate(
+    'overconfident',
+    uncertaintyScenario.evaluatorPacket
+  ).invoke({
+    packet: uncertaintyScenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+  assert.equal(JSON.parse(overconfident.submission_text ?? '{}').uncertainty.is_uncertain, false);
+
+  const reference = JSON.parse((await invoke('reference')).submission_text ?? '{}');
+  const partial = JSON.parse((await invoke('partial')).submission_text ?? '{}');
+  assert.ok(partial.cause_facts.length < reference.cause_facts.length);
+});

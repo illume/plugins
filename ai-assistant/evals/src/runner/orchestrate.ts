@@ -58,7 +58,19 @@ export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
  * @returns `true` when the value is a supported candidate specification.
  */
 export function isCandidateSpec(value: string): value is CandidateSpec {
-  return ['reference', 'wrong', 'malformed', 'unavailable', 'headlamp-cli'].includes(value);
+  return [
+    'reference',
+    'partial',
+    'wrong',
+    'abstaining',
+    'overconfident',
+    'unsupported-evidence',
+    'unsafe-effective',
+    'injected',
+    'malformed',
+    'unavailable',
+    'headlamp-cli',
+  ].includes(value);
 }
 
 /** Inputs that define one complete evaluation run and its persisted output. */

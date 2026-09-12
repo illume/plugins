@@ -31,6 +31,7 @@
     "eval:generate:phase2": "npm --prefix evals run eval:generate:phase2",
     "eval:qualify:minikube": "npm --prefix evals run eval:qualify:minikube",
     "eval:qualify:aks": "npm --prefix evals run eval:qualify:aks",
+    "eval:comparison:status": "npm --prefix evals run eval:comparison:status",
     "eval:rerun": "npm --prefix evals run eval:rerun --",
     "eval:report:publish": "npm --prefix evals run report:publish --",
     "eval:report:overall": "npm --prefix evals run report:overall --"

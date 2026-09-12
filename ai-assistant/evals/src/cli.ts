@@ -49,6 +49,10 @@ import { parseProviderDetectionOutput } from './candidates/providerDetection.js'
 import { writeExportProjections } from './exporters/writeExports.js';
 import type { TokenPricingSnapshot } from './candidates/candidateAdapter.js';
 import { validateTokenPricingSnapshot } from './candidates/headlampCli.js';
+import {
+  comparisonRegistrationStatus,
+  loadComparisonRegistration,
+} from './comparisons/registration.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
@@ -543,6 +547,11 @@ async function main(): Promise<void> {
     case 'report:overall':
       commandReportOverall(flags);
       break;
+    case 'comparison:status':
+      console.log(
+        JSON.stringify(comparisonRegistrationStatus(loadComparisonRegistration()), null, 2)
+      );
+      break;
     case 'rerun':
       await commandRerun(flags);
       break;
@@ -588,7 +597,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|rerun|list-scenarios> [--flags...]'
+        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|comparison:status|rerun|list-scenarios> [--flags...]'
       );
       process.exit(command ? 1 : 0);
   }

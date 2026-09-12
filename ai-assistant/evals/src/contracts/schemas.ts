@@ -51,6 +51,7 @@ export type SchemaName =
   | 'regression-delta'
   | 'environment-manifest'
   | 'grader-result'
+  | 'comparison-registration'
   | 'report';
 
 /**

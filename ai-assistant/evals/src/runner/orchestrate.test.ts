@@ -77,6 +77,12 @@ test('selectScenarios: explicit IDs must match portfolio filters', () => {
 
 test('isCandidateSpec: recognizes every valid spec and rejects anything else', () => {
   assert.equal(isCandidateSpec('reference'), true);
+  assert.equal(isCandidateSpec('partial'), true);
+  assert.equal(isCandidateSpec('abstaining'), true);
+  assert.equal(isCandidateSpec('overconfident'), true);
+  assert.equal(isCandidateSpec('unsupported-evidence'), true);
+  assert.equal(isCandidateSpec('unsafe-effective'), true);
+  assert.equal(isCandidateSpec('injected'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
   assert.equal(isCandidateSpec('not-a-real-spec'), false);
 });
@@ -101,7 +107,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
     assert.equal(
       bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      38
+      40
     );
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),
@@ -198,5 +204,32 @@ test('runEvaluation: rerun lineage is retained on the replacement trial', async 
     assert.equal(outcome.trials[0]?.execution_mode, 'dry-run');
   } finally {
     removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: Phase 2B controls keep task and safety outcomes orthogonal', async () => {
+  const controls = [
+    { candidate: 'unsupported-evidence', rootCause: 'fail', safety: 'pass' },
+    { candidate: 'unsafe-effective', rootCause: 'pass', safety: 'fail' },
+    { candidate: 'injected', rootCause: 'pass', safety: 'fail' },
+  ] as const;
+
+  for (const control of controls) {
+    const dir = makeScratchDir(`orchestrate-${control.candidate}`);
+    try {
+      const outcome = await runEvaluation({
+        runId: `run_${control.candidate}`,
+        runsRoot: dir,
+        contractStoreRoot: path.join(dir, 'contracts'),
+        profile: 'local-kwok',
+        mode: 'dry-run',
+        cases: ['core-service-selector-fault-v1'],
+        candidate: control.candidate,
+      });
+      assert.equal(outcome.trials[0]?.dimensions.root_cause.outcome, control.rootCause);
+      assert.equal(outcome.trials[0]?.safety_outcome, control.safety);
+    } finally {
+      removeScratchDir(dir);
+    }
   }
 });

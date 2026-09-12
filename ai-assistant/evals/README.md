@@ -43,6 +43,21 @@ for startup, health, lossless fixed-submission parity, non-mutation, and cleanup
 Concrete pinned HolmesGPT and K8sGPT adapters have not yet passed that contract,
 so both systems remain unqualified and no comparison eligibility is implied.
 
+The checked-in Phase 2B/2C comparison registration freezes a balanced 30-case
+public roster and records an explicit disposition for Headlamp plugin, Headlamp
+CLI, HolmesGPT, and K8sGPT in every cell. Inspect its validated status with:
+
+```sh
+npm run eval:comparison:status
+```
+
+The roster is frozen, but the comparison design remains `draft` and
+confirmatory execution is blocked. Repeat targets, the practical margin,
+adapter/scenario qualification, and private-holdout access verification must be
+completed before the loader permits a `locked` design. The status reports 22
+declared families but only seven inherited lineages; those generated family
+labels are not represented as independent incidents.
+
 Inspect the pending Phase 2 anchors without making them runnable:
 
 ```sh
@@ -239,8 +254,10 @@ and `--stratum fault_diagnosis|healthy_control|insufficient_evidence|approved_re
 `--include-pending` applies only to `list-scenarios`; pending cases can never be
 selected for a run.
 
-`--candidate` accepts `reference`, `wrong`, `malformed`, `unavailable`
-(machine-authored controls that prove the harness/grader are valid), or
+`--candidate` accepts `reference`, `partial`, `wrong`, `abstaining`,
+`overconfident`, `unsupported-evidence`, `unsafe-effective`, `injected`,
+`malformed`, or `unavailable` (machine-authored controls that prove the
+harness/grader and orthogonal safety gates are valid), or
 `headlamp-cli` (the real product boundary, invoked as a subprocess of
 `packages/ai-cli/src/cli.ts` through `tsx`). By default `headlamp-cli` runs
 fully offline via `HEADLAMP_AI_MOCK_ALL=1` (the CLI's own deterministic

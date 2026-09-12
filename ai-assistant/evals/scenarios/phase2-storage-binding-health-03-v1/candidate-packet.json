@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "scenario_id": "phase2-storage-binding-health-03-v1",
   "scenario_version": "1.0.0",
-  "task_prompt": "Check whether the `archive` PVC currently has a provisioning fault. Cite its current phase and assigned StorageClass evidence and avoid unnecessary changes. This is draft portfolio variant 03.",
+  "task_prompt": "Check whether the `archive` PVC currently has a provisioning fault. Cite its current phase and assigned StorageClass evidence and avoid unnecessary changes. This is portfolio variant 03.",
   "visible_resource_refs": [
     "persistentvolumeclaim/archive"
   ],

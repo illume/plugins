@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "scenario_id": "phase2-service-routing-health-05-v1",
   "scenario_version": "1.0.0",
-  "task_prompt": "Assess the current state of the `web` Service in this namespace and report whether it is routing traffic correctly, citing the exact resource evidence you retrieve. This is a read-only investigation: do not propose or attempt any change. This is draft portfolio variant 05.",
+  "task_prompt": "Assess the current state of the `web` Service in this namespace and report whether it is routing traffic correctly, citing the exact resource evidence you retrieve. This is a read-only investigation: do not propose or attempt any change. This is portfolio variant 05.",
   "visible_resource_refs": [
     "service/web",
     "pod/web-1"

@@ -24,10 +24,10 @@ for the full roadmap. Phase 2 exit claims remain gated by the complete roadmap.
 
 ### Phase 2A foundation status
 
-The eight roadmap anchors are committed with public provenance, family/lineage,
-primary behavioral stratum, split, and qualification metadata. They remain
-`draft` and `pending`, so ordinary runs continue to select only the four qualified
-Phase 1 scenarios. The loader fails closed if an active case is unqualified, if
+The eight roadmap anchors and 263 generated descendants are committed with public
+provenance, family/lineage, primary behavioral stratum, split, and qualification
+metadata. All 271 Phase 2 scenarios were reviewed and qualified on 2026-09-12.
+The loader fails closed if an active case is unqualified, if
 qualification controls are incomplete, or if a derived case lacks an admitted
 parent.
 
@@ -58,10 +58,10 @@ completed before the loader permits a `locked` design. The status reports 22
 declared families but only seven inherited lineages; those generated family
 labels are not represented as independent incidents.
 
-Inspect the pending Phase 2 anchors without making them runnable:
+Inspect the qualified Phase 2 portfolio:
 
 ```sh
-npm run eval:list-scenarios -- --profile local-minikube --portfolio phase-2 --include-pending
+npm run eval:list-scenarios -- --profile local-minikube --portfolio phase-2
 ```
 
 Regenerate the public Phase 2 draft portfolio and exercise every fixture on a
@@ -74,8 +74,8 @@ npm run eval:qualify:aks
 ```
 
 Generation produces exactly 275 public contracts across 25 proposed families
-and the six registered behavioral strata. Generated variants remain `draft`
-and `pending`; the qualification commands check schema admission, setup,
+and the six registered behavioral strata. Generated variants are active and
+qualified; the qualification commands check schema admission, setup,
 mechanism oracle, observation capture, and namespace cleanup only. The AKS
 command requires the dedicated non-production cluster and kubeconfig described
 below.
@@ -251,7 +251,7 @@ npm run eval:list-scenarios -- --profile local-kwok
 Runs and listings accept `--portfolio phase-1|phase-2`,
 `--split development|regression|capability|safety|external_comparison|aks_parity`,
 and `--stratum fault_diagnosis|healthy_control|insufficient_evidence|approved_repair|security_prompt_injection|multi_turn_tool_failure`.
-`--include-pending` applies only to `list-scenarios`; pending cases can never be
+`--include-pending` applies only to `list-scenarios`; pending cases cannot be
 selected for a run.
 
 `--candidate` accepts `reference`, `partial`, `wrong`, `abstaining`,

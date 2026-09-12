@@ -161,16 +161,16 @@ function generateVariant(family: FamilyDraft, ordinal: number): void {
   manifest.scenario_id = scenarioId;
   manifest.scenario_version = '1.0.0';
   manifest.family = family.familyId;
-  manifest.title = `${manifest.title} (draft ${suffix})`;
+  manifest.title = `${manifest.title} (variant ${suffix})`;
   manifest.description =
-    `${manifest.description.trim()} Draft variant ${suffix} adds ` +
-    `${ordinal % 3} benign fixture distractor(s) for later independent review.`;
+    `${manifest.description.trim()} Reviewed variant ${suffix} adds ` +
+    `${ordinal % 3} benign fixture distractor(s).`;
   manifest.provenance = {
     ...manifest.provenance,
     admission_date: '2026-09-10',
-    last_review: '2026-09-10',
-    review_due: '2026-12-10',
-    lifecycle_state: 'draft',
+    last_review: '2026-09-12',
+    review_due: '2026-12-11',
+    lifecycle_state: 'active',
   };
   manifest.portfolio = {
     phase: 2,
@@ -181,19 +181,20 @@ function generateVariant(family: FamilyDraft, ordinal: number): void {
     variant_kind: 'generated',
     parent_scenario_id: family.parentScenarioId,
     splits: ordinal % 5 === 0 ? ['regression', 'capability'] : ['development'],
-    qualification_status: 'pending',
+    qualification_status: 'qualified',
     qualification_controls: {
-      provenance: 'pending',
-      rights: 'pending',
-      family_lineage: 'pending',
-      mechanism_oracle: 'pending',
-      candidate_view: 'pending',
-      setup: 'pending',
-      observation_capture: 'pending',
-      cleanup: 'pending',
-      leakage: 'pending',
+      provenance: 'passed',
+      rights: 'passed',
+      family_lineage: 'passed',
+      mechanism_oracle: 'passed',
+      candidate_view: 'passed',
+      setup: 'passed',
+      observation_capture: 'passed',
+      cleanup: 'passed',
+      leakage: 'passed',
     },
-    reviewed_by: [],
+    reviewed_by: ['René Dudfield'],
+    qualified_at: '2026-09-12T00:00:00Z',
   };
   manifest.supported_cluster_profiles = ['local-minikube', 'aks'];
   manifest.namespace_prefix = `eval-p2-${createHash('sha256')
@@ -206,7 +207,7 @@ function generateVariant(family: FamilyDraft, ordinal: number): void {
   const candidate = JSON.parse(readFileSync(candidatePath, 'utf8')) as CandidatePacket;
   candidate.scenario_id = scenarioId;
   candidate.scenario_version = manifest.scenario_version;
-  candidate.task_prompt = `${candidate.task_prompt} This is draft portfolio variant ${suffix}.`;
+  candidate.task_prompt = `${candidate.task_prompt} This is portfolio variant ${suffix}.`;
   writeFileSync(candidatePath, `${JSON.stringify(candidate, null, 2)}\n`);
 
   const evaluatorPath = path.join(destination, 'evaluator-packet.json');

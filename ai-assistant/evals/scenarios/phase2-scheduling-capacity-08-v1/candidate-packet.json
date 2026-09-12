@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "scenario_id": "phase2-scheduling-capacity-08-v1",
   "scenario_version": "1.0.0",
-  "task_prompt": "The `huge-pod` Pod in this namespace has been Pending for a while. Investigate why it has not been scheduled, citing the exact resource evidence you retrieve. This is a read-only investigation: do not propose or attempt any change. This is draft portfolio variant 08.",
+  "task_prompt": "The `huge-pod` Pod in this namespace has been Pending for a while. Investigate why it has not been scheduled, citing the exact resource evidence you retrieve. This is a read-only investigation: do not propose or attempt any change. This is portfolio variant 08.",
   "visible_resource_refs": [
     "pod/huge-pod"
   ],

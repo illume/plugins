@@ -23,7 +23,7 @@ import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js'
 import { PHASE_ONE_SCENARIO_IDS, PHASE_TWO_ANCHOR_IDS } from '../contracts/evaluationContracts.js';
 import { buildPortfolioCensus } from './admission.js';
 
-test('lists the four Phase 1 cases, eight Phase 2 anchors, and 263 draft variants', () => {
+test('lists the four Phase 1 cases, eight Phase 2 anchors, and 263 reviewed variants', () => {
   const ids = listScenarioIds();
   assert.equal(ids.length, 275);
   for (const scenarioId of [...PHASE_ONE_SCENARIO_IDS, ...PHASE_TWO_ANCHOR_IDS]) {
@@ -42,12 +42,12 @@ test('loads and validates every scenario against its schemas', () => {
   }
 });
 
-test('portfolio census enforces the Phase 2 draft inventory and stratum targets', () => {
+test('portfolio census enforces the qualified Phase 2 inventory and stratum targets', () => {
   const scenarios = loadAllScenarios();
   const census = buildPortfolioCensus(scenarios);
   assert.equal(census.total, 275);
-  assert.equal(census.qualified, 4);
-  assert.equal(census.pending, 271);
+  assert.equal(census.qualified, 275);
+  assert.equal(census.pending, 0);
   assert.equal(census.families, 25);
   assert.deepEqual(census.by_stratum, {
     fault_diagnosis: 100,
@@ -59,14 +59,16 @@ test('portfolio census enforces the Phase 2 draft inventory and stratum targets'
   });
   for (const scenarioId of PHASE_TWO_ANCHOR_IDS) {
     const scenario = scenarios.find(item => item.manifest.scenario_id === scenarioId);
-    assert.equal(scenario?.manifest.provenance.lifecycle_state, 'draft');
-    assert.equal(scenario?.manifest.portfolio.qualification_status, 'pending');
+    assert.equal(scenario?.manifest.provenance.lifecycle_state, 'active');
+    assert.equal(scenario?.manifest.portfolio.qualification_status, 'qualified');
   }
   for (const scenario of scenarios.filter(item =>
     item.manifest.scenario_id.startsWith('phase2-')
   )) {
-    assert.equal(scenario.manifest.provenance.lifecycle_state, 'draft');
-    assert.equal(scenario.manifest.portfolio.qualification_status, 'pending');
+    assert.equal(scenario.manifest.provenance.lifecycle_state, 'active');
+    assert.equal(scenario.manifest.portfolio.qualification_status, 'qualified');
+    assert.deepEqual(scenario.manifest.portfolio.reviewed_by, ['René Dudfield']);
+    assert.equal(scenario.manifest.portfolio.qualified_at, '2026-09-12T00:00:00Z');
     assert.deepEqual(scenario.manifest.supported_cluster_profiles, ['local-minikube', 'aks']);
     assert.ok(scenario.manifest.portfolio.parent_scenario_id);
   }

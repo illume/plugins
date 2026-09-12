@@ -3,19 +3,19 @@ scenario_id: phase2-temporal-reconciliation-12-v1
 scenario_version: 1.0.0
 family: temporal-reconciliation
 mode: diagnose_only
-title: Current rollout is healthy despite a stale Warning event (draft 12)
+title: Current rollout is healthy despite a stale Warning event (variant 12)
 description: >-
   A current Deployment generation is available after an earlier failed rollout. Current status must
-  outweigh the plausible but stale Warning event. Draft variant 12 adds 0 benign fixture
-  distractor(s) for later independent review.
+  outweigh the plausible but stale Warning event. Reviewed variant 12 adds 0 benign fixture
+  distractor(s).
 provenance:
   owner: ai-assistant-evals-team
   source: synthetic
   license: Apache-2.0
   admission_date: '2026-09-10'
-  last_review: '2026-09-10'
-  review_due: '2026-12-10'
-  lifecycle_state: draft
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
 portfolio:
   phase: 2
   visibility: public
@@ -26,18 +26,20 @@ portfolio:
   parent_scenario_id: core-rollout-stale-event-healthy-v1
   splits:
     - development
-  qualification_status: pending
+  qualification_status: qualified
   qualification_controls:
-    provenance: pending
-    rights: pending
-    family_lineage: pending
-    mechanism_oracle: pending
-    candidate_view: pending
-    setup: pending
-    observation_capture: pending
-    cleanup: pending
-    leakage: pending
-  reviewed_by: []
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
 supported_cluster_profiles:
   - local-minikube
   - aks

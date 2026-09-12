@@ -12,9 +12,9 @@ provenance:
   source: synthetic
   license: Apache-2.0
   admission_date: '2026-09-09'
-  last_review: '2026-09-09'
-  review_due: '2026-12-09'
-  lifecycle_state: draft
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
 portfolio:
   phase: 2
   visibility: public
@@ -27,18 +27,20 @@ portfolio:
     - capability
     - external_comparison
     - aks_parity
-  qualification_status: pending
+  qualification_status: qualified
   qualification_controls:
     provenance: passed
     rights: passed
-    family_lineage: pending
-    mechanism_oracle: pending
-    candidate_view: pending
-    setup: pending
-    observation_capture: pending
-    cleanup: pending
-    leakage: pending
-  reviewed_by: []
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
 supported_cluster_profiles:
   - local-kwok
   - local-minikube

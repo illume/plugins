@@ -3,20 +3,20 @@ scenario_id: phase2-health-probe-readiness-09-v1
 scenario_version: 1.0.0
 family: health-probe-readiness
 mode: diagnose_only
-title: Service selector does not match any running Pod (draft 09)
+title: Service selector does not match any running Pod (variant 09)
 description: >-
   A Service named "web" exists alongside a Running Pod labeled app=web, but the Service's selector
   requires tier=frontend while the Pod is labeled tier=backend, so the EndpointSlice has zero
   addresses. The candidate must diagnose the selector mismatch using only observations it actually
-  retrieves. Draft variant 09 adds 0 benign fixture distractor(s) for later independent review.
+  retrieves. Reviewed variant 09 adds 0 benign fixture distractor(s).
 provenance:
   owner: ai-assistant-evals-team
   source: synthetic
   license: Apache-2.0
   admission_date: '2026-09-10'
-  last_review: '2026-09-10'
-  review_due: '2026-12-10'
-  lifecycle_state: draft
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
 portfolio:
   phase: 2
   visibility: public
@@ -27,18 +27,20 @@ portfolio:
   parent_scenario_id: core-service-selector-fault-v1
   splits:
     - development
-  qualification_status: pending
+  qualification_status: qualified
   qualification_controls:
-    provenance: pending
-    rights: pending
-    family_lineage: pending
-    mechanism_oracle: pending
-    candidate_view: pending
-    setup: pending
-    observation_capture: pending
-    cleanup: pending
-    leakage: pending
-  reviewed_by: []
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
 supported_cluster_profiles:
   - local-minikube
   - aks

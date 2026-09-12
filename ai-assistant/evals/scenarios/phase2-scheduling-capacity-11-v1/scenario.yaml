@@ -3,21 +3,20 @@ scenario_id: phase2-scheduling-capacity-11-v1
 scenario_version: 1.0.0
 family: scheduling-capacity
 mode: diagnose_only
-title: Pod requests more CPU than any eligible node can provide (draft 11)
+title: Pod requests more CPU than any eligible node can provide (variant 11)
 description: >-
   A single Pod requests one million CPU, so no node in the dedicated cluster can place it. Scored
   truth depends on an actual scheduler decision, which the simulated in-memory adapter cannot
   independently prove (see contracts/kwokCompatibility.ts); this scenario supports the
-  `local-minikube` and `aks` profiles. Draft variant 11 adds 2 benign fixture distractor(s) for
-  later independent review.
+  `local-minikube` and `aks` profiles. Reviewed variant 11 adds 2 benign fixture distractor(s).
 provenance:
   owner: ai-assistant-evals-team
   source: synthetic
   license: Apache-2.0
   admission_date: '2026-09-10'
-  last_review: '2026-09-10'
-  review_due: '2026-12-10'
-  lifecycle_state: draft
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
 portfolio:
   phase: 2
   visibility: public
@@ -28,18 +27,20 @@ portfolio:
   parent_scenario_id: core-unschedulable-capacity-v1
   splits:
     - development
-  qualification_status: pending
+  qualification_status: qualified
   qualification_controls:
-    provenance: pending
-    rights: pending
-    family_lineage: pending
-    mechanism_oracle: pending
-    candidate_view: pending
-    setup: pending
-    observation_capture: pending
-    cleanup: pending
-    leakage: pending
-  reviewed_by: []
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
 supported_cluster_profiles:
   - local-minikube
   - aks

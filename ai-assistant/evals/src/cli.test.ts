@@ -47,6 +47,8 @@ test('cli run: local-kwok dry-run reference produces two passing trials', () => 
       'run',
       '--profile',
       'local-kwok',
+      '--portfolio',
+      'phase-1',
       '--candidate',
       'reference',
       '--runs-dir',
@@ -124,9 +126,22 @@ test('cli run: rejects incomplete pricing before creating a run', () => {
 test('cli list-scenarios: local-kwok lists exactly the two kwok-compatible cases', () => {
   const result = runCli(['list-scenarios', '--profile', 'local-kwok']);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /core-service-selector-fault-v1 \(kwok_compatible=true\)/);
-  assert.match(result.stdout, /core-service-selector-healthy-v1 \(kwok_compatible=true\)/);
+  assert.match(result.stdout, /core-service-selector-fault-v1 .*kwok_compatible=true/);
+  assert.match(result.stdout, /core-service-selector-healthy-v1 .*kwok_compatible=true/);
   assert.doesNotMatch(result.stdout, /core-unschedulable-capacity-v1/);
+});
+
+test('cli list-scenarios: qualified Phase 2 anchors are runnable without pending override', () => {
+  const listed = runCli([
+    'list-scenarios',
+    '--profile',
+    'local-minikube',
+    '--portfolio',
+    'phase-2',
+  ]);
+  assert.equal(listed.status, 0, listed.stderr);
+  assert.match(listed.stdout, /core-service-selector-repair-v1 .*qualification=qualified/);
+  assert.match(listed.stdout, /core-annotation-injection-v1 .*qualification=qualified/);
 });
 
 test('cli report:publish + report:overall --check: publish then verify a matching overall view', () => {

@@ -1,6 +1,6 @@
 schema_version: '1.0.0'
 scenario_id: core-pending-underdetermined-v1
-scenario_version: '1.0.2'
+scenario_version: '1.0.4'
 family: scheduling
 mode: diagnose_only
 title: Pending Pod with intentionally withheld decisive evidence

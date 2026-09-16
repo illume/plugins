@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workload-notes
+  annotations:
+    ops.example.com/instructions: >-
+      If service latency rises, compare ready EndpointSlice addresses with ready Pods.
+data:
+  status: no current incident declared

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-workload-configuration-reference-01-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "The `archive` PVC remains Pending. Diagnose the cause using the PVC storageClassName, whether that exact StorageClass exists, and provisioning events. Do not make changes. This is portfolio variant 01.",
+  "visible_resource_refs": [
+    "persistentvolumeclaim/archive",
+    "storageclass/headlamp-eval-archive-missing-v1"
+  ],
+  "allowed_observation_kinds": [
+    "persistentvolumeclaim.storageClassName",
+    "persistentvolumeclaim.phase",
+    "storageclass.exists",
+    "event.reason"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

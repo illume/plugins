@@ -24,13 +24,13 @@ import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js'
 import { readClosedBundle } from '../storage/bundleReader.js';
 
 test('selectScenarios: local-kwok defaults to exactly the generated KWOK-compatible subset', () => {
-  const scenarios = selectScenarios('local-kwok', undefined);
+  const scenarios = selectScenarios('local-kwok', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, ['core-service-selector-fault-v1', 'core-service-selector-healthy-v1']);
 });
 
 test('selectScenarios: aks defaults to every scenario declaring aks support', () => {
-  const scenarios = selectScenarios('aks', undefined);
+  const scenarios = selectScenarios('aks', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, [
     'core-pending-underdetermined-v1',
@@ -54,6 +54,28 @@ test('selectScenarios: explicitly requesting an unknown case is a hard error', (
   );
 });
 
+test('selectScenarios: portfolio, split, and stratum filters compose', () => {
+  const scenarios = selectScenarios('local-minikube', undefined, undefined, {
+    phase: 1,
+    split: 'capability',
+    stratum: 'fault_diagnosis',
+  });
+  assert.deepEqual(scenarios.map(scenario => scenario.manifest.scenario_id).sort(), [
+    'core-service-selector-fault-v1',
+    'core-unschedulable-capacity-v1',
+  ]);
+});
+
+test('selectScenarios: explicit IDs must match portfolio filters', () => {
+  assert.throws(
+    () =>
+      selectScenarios('local-minikube', ['core-service-selector-fault-v1'], undefined, {
+        phase: 2,
+      }),
+    /does not match the requested portfolio selection/
+  );
+});
+
 test('isCandidateSpec: recognizes every valid spec and rejects anything else', () => {
   assert.equal(isCandidateSpec('reference'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
@@ -70,6 +92,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
       contractStoreRoot,
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
       baseline: 'wrong',
     });
@@ -140,6 +163,7 @@ test('runEvaluation: a single-candidate run has no regression-deltas rows', asyn
       contractStoreRoot: path.join(dir, 'contracts'),
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
     });
 

@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-controller-convergence-06-v1",
+  "scenario_version": "1.0.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "generation-current",
+        "resource_ref": "deployment/web",
+        "field_path": "status.observedGeneration",
+        "observed_value": "1"
+      },
+      {
+        "fact_id": "replica-available",
+        "resource_ref": "deployment/web",
+        "field_path": "status.availableReplicas",
+        "observed_value": "1"
+      },
+      {
+        "fact_id": "event-stale",
+        "resource_ref": "event/web-old-failure",
+        "field_path": "eventTime",
+        "observed_value": "2025-01-01T00:00:00.000000Z"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    {
+      "action_id": "no-op",
+      "description": "The current rollout is healthy.",
+      "operation": "no_action"
+    }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "wrong-current-failure",
+      "resource_ref": "deployment/web",
+      "field_path": "status.availableReplicas",
+      "observed_value": "0"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-PHASE2-8cd9fc7408fb168a"
+}

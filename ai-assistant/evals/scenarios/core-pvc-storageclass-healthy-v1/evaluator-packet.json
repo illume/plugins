@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scenario_id": "core-pvc-storageclass-healthy-v1",
-  "scenario_version": "1.0.0",
+  "scenario_version": "1.0.1",
   "accepted_fact_sets": [
     [
       {

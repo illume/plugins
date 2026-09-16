@@ -1,6 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
@@ -16,8 +15,9 @@ const clusterName = process.env.E2E_CLUSTER_NAME || 'ai-assistant-e2e';
 const headlampUrl = process.env.HEADLAMP_URL || 'http://127.0.0.1:4466';
 const headlampPort = new URL(headlampUrl).port || '4466';
 const headlampContainerName = `${clusterName}-headlamp`;
-const kubeconfigPath = path.join(tmpdir(), `${clusterName}-kubeconfig`);
-const headlampKubeconfigPath = path.join(tmpdir(), `${clusterName}-headlamp-kubeconfig`);
+const runtimeDir = path.join(rootDir, '.tmp', 'e2e');
+const kubeconfigPath = path.join(runtimeDir, `${clusterName}-kubeconfig`);
+const headlampKubeconfigPath = path.join(runtimeDir, `${clusterName}-headlamp-kubeconfig`);
 const commandSuffix = process.platform === 'win32' ? '.cmd' : '';
 
 function executable(command: string): string {
@@ -92,6 +92,7 @@ async function waitForHeadlamp(): Promise<void> {
 
 async function main(): Promise<void> {
   ensureCommands();
+  mkdirSync(runtimeDir, { recursive: true });
 
   run('npm', ['run', 'build']);
   run('npx', ['playwright', 'install', 'chromium']);

@@ -6,7 +6,7 @@
  * inputs, keeping prompt composition deterministic and independently testable.
  */
 
-import { basePrompt } from './baseAssistantPrompt';
+import { basePrompt, cacheableReasoningInstructions } from './baseAssistantPrompt';
 
 /** Minimal shape of an MCP tool needed for the system-prompt listing. */
 export interface MCPToolSummary {
@@ -85,6 +85,8 @@ spec:
 \`\`\`
 
 Note: The YAML you provide will be displayed in a preview editor with an "Edit" button that allows users to modify the configuration before applying it to their cluster.
+
+${cacheableReasoningInstructions}
 
 RESPONSES:
 - Format responses in markdown

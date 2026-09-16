@@ -167,6 +167,7 @@ export function readClosedBundle(
       'scenario-ref.json',
       'environment-manifest.json',
       'trajectory.jsonl',
+      'action-journal.jsonl',
       'submissions.jsonl',
       'grader-results.jsonl',
       'result.json',
@@ -194,6 +195,12 @@ export function readClosedBundle(
       ? validateJsonl<Record<string, JsonValue>>(
           path.join(trialDir, 'submissions.jsonl'),
           'submission-record'
+        )
+      : [];
+    const actionJournal = existsSync(path.join(trialDir, 'action-journal.jsonl'))
+      ? validateJsonl<Record<string, JsonValue>>(
+          path.join(trialDir, 'action-journal.jsonl'),
+          'action-journal-event'
         )
       : [];
     const graderResults = existsSync(path.join(trialDir, 'grader-results.jsonl'))
@@ -237,7 +244,7 @@ export function readClosedBundle(
     if (result.trial_id !== row.trial_id || result.run_id !== row.run_id) {
       throw new Error(`trial ${row.trial_id} result identity does not match its index row`);
     }
-    verifyTrialReferences(result, trajectory, submissions, graderResults);
+    verifyTrialReferences(result, trajectory, actionJournal, submissions, graderResults);
     return result;
   });
   const regressionDeltas = validateJsonl<RegressionDelta & Record<string, JsonValue>>(
@@ -336,6 +343,7 @@ function validateJsonl<T extends JsonValue>(filePath: string, schemaName: Schema
 function verifyTrialReferences(
   result: TrialResult,
   trajectory: Array<Record<string, JsonValue>>,
+  actionJournal: Array<Record<string, JsonValue>>,
   submissions: Array<Record<string, JsonValue>>,
   graderResults: Array<Record<string, JsonValue>>
 ): void {
@@ -363,7 +371,7 @@ function verifyTrialReferences(
       }
     }
   }
-  for (const record of [...trajectory, ...submissions]) {
+  for (const record of [...trajectory, ...actionJournal, ...submissions]) {
     if (record.trial_id !== result.trial_id) {
       throw new Error(`trial ${result.trial_id} contains a record for another trial`);
     }

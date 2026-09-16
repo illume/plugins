@@ -33,6 +33,8 @@ export interface CandidatePassOptions {
   createCandidate: (scenario: LoadedScenario) => CandidateAdapter;
   createCluster?: (profile: ClusterProfileName, mode: ExecutionMode) => ClusterAdapter;
   supersedesTrialId?: string;
+  /** Explicitly approve repair requests that already match protected truth and candidate policy. */
+  approveRepairs?: boolean;
 }
 
 /**
@@ -61,6 +63,9 @@ export async function runCandidatePass(options: CandidatePassOptions): Promise<T
         bundleWriter: options.bundleWriter,
         executionMode: options.mode,
         supersedesTrialId: options.supersedesTrialId,
+        requestRepairApproval: options.approveRepairs
+          ? async () => ({ decision: 'approved', reason: 'approved by evaluation operator' })
+          : undefined,
       });
       results.push(result);
     }

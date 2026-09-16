@@ -155,7 +155,8 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
    */
   async candidateEnvironment(
     _namespace: string,
-    _allowedObservationKinds: string[]
+    _allowedObservationKinds: string[],
+    _candidateId: string
   ): Promise<Record<string, string>> {
     return {};
   }

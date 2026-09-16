@@ -61,9 +61,16 @@ const registry = {
   ScenarioCaseLogic
 >;
 
-/** Resolves the registered behavior for one scenario identity. */
-export function caseLogicFor(scenarioId: string): ScenarioCaseLogic {
-  const logic = (registry as Record<string, ScenarioCaseLogic>)[scenarioId];
-  if (!logic) throw new Error(`no case logic registered for scenario ${scenarioId}`);
+/** Resolves registered behavior directly or through a generated variant's parent. */
+export function caseLogicFor(scenarioId: string, parentScenarioId?: string): ScenarioCaseLogic {
+  const registered = registry as Record<string, ScenarioCaseLogic>;
+  const logic =
+    registered[scenarioId] ?? (parentScenarioId ? registered[parentScenarioId] : undefined);
+  if (!logic) {
+    throw new Error(
+      `no case logic registered for scenario ${scenarioId}` +
+        (parentScenarioId ? ` or parent ${parentScenarioId}` : '')
+    );
+  }
   return logic;
 }

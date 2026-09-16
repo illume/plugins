@@ -283,7 +283,8 @@ export interface ClusterAdapter {
    */
   candidateEnvironment?(
     namespace: string,
-    allowedObservationKinds: string[]
+    allowedObservationKinds: string[],
+    candidateId: string
   ): Promise<Record<string, string>>;
   /**
    * Releases profile-level resources such as an ephemeral local cluster.

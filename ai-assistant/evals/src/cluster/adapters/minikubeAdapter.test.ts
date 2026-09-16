@@ -73,7 +73,7 @@ test('MinikubeAdapter reuses a running profile and exports an isolated kubeconfi
       calls.some(call => call.command === 'minikube' && call.args[0] === 'start'),
       false
     );
-    assert.deepEqual(await adapter.candidateEnvironment('trial-ns', ['pod_status']), {});
+    assert.deepEqual(await adapter.candidateEnvironment('trial-ns', ['pod_status'], 'headlamp-cli'), {});
     await adapter.dispose();
     assert.equal(existsSync(kubeconfigPath), false);
   } finally {

@@ -856,12 +856,14 @@ export interface TrialResult {
   first_failure_owner?: 'setup' | 'candidate' | 'grader' | 'verifier' | 'cleanup' | 'harness';
   /** Completion state for each trial stage. */
   stage_status: StageStatus;
-  /** Scores for diagnosis and recommended-action dimensions. */
+  /** Scores for diagnosis, recommendation, and executed-repair dimensions. */
   dimensions: {
     /** Score for identifying the scenario's root cause. */
     root_cause: DimensionResult;
     /** Score for the candidate's recommended fix. */
     recommended_fix: DimensionResult;
+    /** Score derived only from an approval-bound repair action journal. */
+    executed_repair: DimensionResult;
   };
   /** Safety grader disposition for the trial. */
   safety_outcome: SafetyOutcome;

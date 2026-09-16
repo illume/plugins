@@ -60,10 +60,11 @@
     },
     "dimensions": {
       "type": "object",
-      "required": ["root_cause", "recommended_fix"],
+      "required": ["root_cause", "recommended_fix", "executed_repair"],
       "properties": {
         "root_cause": { "$ref": "#/$defs/dimensionResult" },
-        "recommended_fix": { "$ref": "#/$defs/dimensionResult" }
+        "recommended_fix": { "$ref": "#/$defs/dimensionResult" },
+        "executed_repair": { "$ref": "#/$defs/dimensionResult" }
       },
       "additionalProperties": false
     },

@@ -18,88 +18,156 @@ admission control passes. An active scenario must be qualified, and generated or
 transformed descendants must identify a qualified parent before they can enter
 eligible evidence.
 
-## Observability-only draft scenarios
+## Provisioned Observability Scenarios
 
-[`observabilityScenarios.ts`](observabilityScenarios.ts) defines a separate public,
-synthetic suite of twelve cases in six paired families. These are **draft, pending
-qualification**, not additions to the locked Phase 2 roster or its comparison
-denominator. The cluster-only manifest/profile contract cannot yet express
-external fixture services; these cases therefore use the dedicated
-[`observabilityEvaluation.ts`](../runner/observabilityEvaluation.ts) adapter,
-not `caseLogicFor` or the ordinary `list-scenarios` command.
+These scenarios create resources and cause an observable failure. The former
+canned-response suite is removed, including its Datadog and Splunk cases. Nothing
+in the execution path fabricates a healthy Kubernetes snapshot or provider response.
 
-The paired variants have byte-equivalent candidate packets and Kubernetes
-snapshots, but different provider responses and accepted facts. A Kubernetes-only
-candidate cannot distinguish the two causes. The synthetic environment explicitly
-keeps provider audit, metrics, dashboard configuration, spans, and ARM state out of
-Pod logs, events, ConfigMaps, and other Kubernetes objects. This is a controlled
-capability test, not a claim that every real deployment hides those signals.
+The dedicated [runner](../runner/observabilityEvaluation.ts) keeps these cases
+outside the locked Phase 2 roster and qualified comparison denominator. Use
+`npm run eval:observability -- list`, not the cluster-only `list-scenarios` command.
+All cases remain pending independent qualification. An offline unit-test pass
+does not count as Azure execution or a model diagnosis result.
 
-| Family | Production tool | External distinction between twins |
-| --- | --- | --- |
-| External queue lag | `prometheus_read` | Payments backlog versus inventory backlog |
-| Payment API rejection | `datadog_read` | Provider tenant quota versus suspended merchant account |
-| External gateway TLS | `splunk_read` | Expired partner certificate versus hostname mismatch |
-| Dashboard scope drift | `grafana_read` | Staging datasource versus a retired namespace filter |
-| Azure dependency failure | `azure_monitor_traces_read` | Cosmos DB 429 versus Azure SQL 40501 |
-| AKS effective route | `azure_network_config_read` | Blackhole route versus incorrect appliance next hop |
+### AKS Incidents
 
-All six tools are exercised by the observability browser E2E scenario. That E2E
-uses real local Prometheus/Grafana and mocked other APIs. This draft suite instead
-uses in-process synthetic responses for **all** providers, routed through the
-same production argument validation, request construction, response bounding,
-and tool-result code. It does not repeat the browser configuration/approval test.
+Each invocation creates a fresh tagged resource group, custom VNet, an AKS cluster
+with a dedicated managed node resource group, and an isolated kubeconfig. It never
+reuses the Phase 2 cluster or the current kubectl context.
 
-Run the offline fixture and grader controls from `ai-assistant/evals`:
+**`aks-private-backend-nsg-deny-v1`** provisions an Azure CNI Overlay AKS cluster,
+a private Ubuntu VM serving HTTP, a backend NIC, and its NSG. A Ready Pod must
+first reach the backend successfully on three consecutive probes. The runner
+then adds an NSG rule denying TCP 8080 from the AKS node subnet. Three failed
+requests, a still-Ready Pod, a backend-local successful HTTP probe, and the exact
+effective NSG deny must all be observed. The production `azure_network_config_read`
+tool reads the real NIC effective rules. Deleting the injected rule must restore
+three successful Pod requests. No public IP is attached to the backend VM.
+
+**`aks-autoscaler-max-count-v1`** provisions a separate autoscaling user pool
+with min/max/count all one. A BusyBox workload requests 60% of one node's
+allocatable CPU and must become Ready. Scaling the workload to two replicas
+induces a Pending replica with `Insufficient cpu` scheduler evidence. ARM must
+report that autoscaling is enabled and the pool has reached maxCount=1. The
+production `azure_cost_capacity_read` tool reads the live agent-pool settings.
+Increasing the maximum to two must result in automatic node scale-out and two
+Ready replicas; the runner never manually scales the node count.
+
+These are realistic AKS troubleshooting tasks, not claims that Kubernetes can
+never provide clues. Events can expose autoscaler limits; the Azure tool supplies
+authoritative pool settings or effective network policy that standard Kubernetes
+objects do not own. No events are hidden to force a favorable comparison.
+
+### Azure Prerequisites And Cost
+
+- Install dependencies in the parent AI Assistant and `evals` packages; install
+	Azure CLI, kubectl, and ssh-keygen. Sign into the intended public-Azure tenant.
+- Supply an explicit subscription ID, region, and **new** state directory whose
+	parent exists. Sovereign Azure clouds are rejected by this implementation.
+- Use a disposable non-production subscription with permission to create/delete
+	resource groups, AKS, networks, VMs, and the managed-identity role assignments
+	needed for a custom AKS VNet. Provider registrations and quota must already be
+	available. The runner does not grant the operator extra permissions.
+- Every run creates billable resources. Network case: one Standard_D2s_v5 AKS
+	node plus one Standard_B1s backend. Capacity case: one system node and a user
+	pool growing from one to two Standard_D2s_v5 nodes. Disks, load balancers,
+	outbound traffic, and other Azure resources can also incur charges. Region
+	prices and quota vary; there is no promised monetary cap.
+- `--accept-azure-costs` is mandatory before any provisioning. Commands and
+	convergence loops are bounded; cloud operations may continue after a local
+	timeout. A terminated process cannot guarantee cleanup, so retain the state
+	directory and retry cleanup. Never use this on a production cluster.
+
+From `ai-assistant/evals`, this command **creates real Azure resources**:
 
 ```sh
-npm run eval:observability:check
+npm run eval:observability -- verify \
+	--scenario aks-private-backend-nsg-deny-v1 \
+	--subscription "$AZURE_SUBSCRIPTION_ID" --location eastus2 \
+	--state-dir "$PWD/.private/aks-network-run" \
+	--workload-image busybox@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0 \
+	--accept-azure-costs
 ```
 
-Install the parent AI Assistant dependencies as well as the eval package before
-running: the adapter dynamically loads the product tools from `ai-common` without
-changing evals' Node module-resolution settings. No cloud credentials, cluster,
-containers, or model calls are needed. The transport has no network fallback.
+Use `aks-autoscaler-max-count-v1` with a different new state directory for the
+other case. Create the `.private` parent before running. The BusyBox image must
+provide `sh`, `httpd`, and `wget`; an immutable digest is required.
 
-The command exercises all cases in three conditions:
+`verify` runs the baseline, induced fault, real product-tool detection, recovery,
+and cleanup with **zero model calls**. A failed baseline or fault oracle aborts;
+it is not a solved incident. The private `lifecycle.json` records the completed
+stages, `azure-oracle.json` retains the live tool evidence, and `result.json` is
+written only after recovery and cleanup succeed. `state.json` stores exact
+ownership and cleanup status. Keep the 0700 directory and 0600 files private.
 
-- **Enabled:** a reference control reads Kubernetes and the required provider,
-	then echoes retrieved facts into the existing diagnosis submission schema.
-- **Kubernetes-only:** the same Kubernetes snapshot is available, but external
-	calls are disabled; the expected control disposition is insufficient evidence.
-- **Provider unavailable:** the tool exists but its exact request returns 403;
-	this must not be reported as a solved incident or a healthy provider.
+Cleanup runs in `finally`, even after partial setup or candidate failure. It checks
+the resource-group ownership tag, deletes only that group, then verifies both it
+and the AKS-managed node group are gone. Unowned groups and lingering node groups
+cause a failed cleanup result, never a silent pass. Retry after interruption:
 
-These results are explicitly `fixture-contract-verification` with zero model
-invocations. The reference echo control validates fixtures and grading, not model
-reasoning, and does not qualify a scenario or establish a capability advantage.
+```sh
+npm run eval:observability -- cleanup --state-dir "$PWD/.private/aks-network-run"
+```
 
-### Candidate adapter contract
+### Candidate Runs
 
-`runObservabilityTrial(scenario, mode, candidate)` accepts an asynchronous
-candidate callback. Give the candidate only its callback input, never the full
-scenario object or this evaluator documentation. The input contains a cloned
-candidate packet, enabled tool names, and `callTool(name, args)`. The packet
-includes bounded read requests so these cases test retrieval access and evidence
-interpretation, **not** query discovery or arbitrary PromQL/SPL/KQL execution.
-Kubernetes reads use `GET /eval/kubernetes-snapshot`; this is an in-memory fixture
-read, not a live Kubernetes endpoint.
+Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
+to evaluate a trusted model adapter during the induced-fault window. The module
+must default-export a `LiveObservabilityCandidate` callback. It is invoked twice,
+first with Azure reads enabled and then with Kubernetes-only reads. Create a
+fresh model session per callback. Provider selection and model credentials belong
+to that adapter; there is no default paid model invocation.
 
-Each successful read returns untrusted provider content and observations with
-fresh evidence IDs, `tool/<tool_name>` resource references, JSON Pointer field
-paths, and string-valued leaves. Return a JSON `diagnosis_submission@1.0.0` using
-the existing [submission schema](../../schema/diagnosis-submission.schema.json).
-The adapter reuses the existing exact-fact and no-action graders. A passing trial
-must cite actually retrieved external facts, remain read-only, and not claim a
-unique cause while uncertain. Guessing the gold values or replaying a citation
-from another trial cannot pass. Results retain the parsed submission, observations,
-call outcomes, and grading dispositions for inspection.
+The candidate receives the user task, provisioned resource IDs, bounded read
+requests, an AbortSignal, and a `callTool` function. It does **not** receive
+baseline/fault oracle data, expected facts, provisioning authority, or credentials.
+Kubernetes reads return actual Pods/events captured during the fault; Azure calls
+invoke the production tool against live ARM with a short-lived CLI token. The
+HTTP boundary permits only the fixed trial request and validated ARM continuation
+URLs. No raw command runner is exposed to the model.
 
-Unknown queries fail closed as unsupported fixture requests, rather than
-receiving the answer to a different query. Each trial permits at most eight tool
-calls. Mutating Kubernetes requests, disabled tools, and shell calls are rejected.
-The callback is a trusted in-process adapter, **not a sandbox**: it must not give
-the model filesystem access to the public fixtures, evaluator facts, or this
-process. No live-model CLI or canonical comparison-bundle integration is claimed
-by this draft suite. Live candidate runs, independent review, broader provider
-query semantics, and qualification remain follow-up work before scored admission.
+Return [diagnosis_submission@1.0.0](../../schema/diagnosis-submission.schema.json)
+with exact cause facts, JSON Pointer field paths, and fresh retrieved evidence IDs.
+The existing diagnosis and no-action graders reject uncited guesses and mutations.
+Candidate access is capped at eight calls and 120 seconds; a timeout fails the
+candidate and closes tool access. This trusted in-process callback is not an OS
+sandbox: it must honor cancellation and must not expose local files or its own
+shell to the model. `trials.json` keeps candidate dispositions separately from
+infrastructure success. Fixed enabled-first order is exploratory, not a registered
+statistical comparison. No canonical comparison-bundle integration is claimed.
+
+### Real Local Services
+
+`prometheus-scrape-outage-v1` starts a real Prometheus server and BusyBox exporter,
+proves `up=1`, stops the HTTP exporter process, observes `up=0` through
+`prometheus_read`, then restarts HTTP and proves `up=1` again.
+
+`grafana-dashboard-datasource-drift-v1` starts real Grafana and Prometheus,
+creates a working datasource and dashboard, then changes the saved datasource
+UID to a missing one. A proxy query must return 404 and `grafana_read` must see
+the incorrect UID. Restoring the UID must restore a successful query.
+
+These use the E2E-pinned Prometheus/Grafana images, random container names,
+loopback-only ephemeral host ports, a short-lived Viewer service-account token,
+and label-checked cleanup. Local verification does not need Azure or model calls:
+
+```sh
+npm run eval:observability -- verify-local \
+	--scenario prometheus-scrape-outage-v1 \
+	--state-dir "$PWD/.private/prometheus-run" \
+	--workload-image busybox@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+```
+
+Use the Grafana ID and a new directory for its case. `cleanup-local --state-dir
+<directory>` retries local cleanup. Local cases currently verify infrastructure
+and product-tool detection, not a model comparison. Their evidence is retained
+in `local-result.json`, with ownership and deletion status in `local-state.json`.
+
+### Offline Tests
+
+`npm run eval:observability:check` runs command-boundary and live-reader contract
+tests with fake process/HTTP dependencies. It **does not provision** anything.
+The provisioning commands above have no canned-response fallback. Keep live Azure
+execution, unit-test validation, local service verification, and model outcomes
+distinct when reporting results.

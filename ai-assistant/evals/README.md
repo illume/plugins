@@ -164,15 +164,18 @@ custodian access, and held-out evaluation evidence before private-case transfer 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
 
-### Observability retrieval drafts
+### Provisioned Observability Scenarios
 
-The [observability draft suite](src/scenarios/README.md#observability-only-draft-scenarios)
-adds twelve paired cases for Datadog, Splunk, Grafana, Prometheus, Azure Monitor,
-and AKS network reads. Each pair has identical Kubernetes evidence but different
-external causes. Run `npm run eval:observability:check` from this package to
-verify production-tool fixtures and enabled/Kubernetes-only/unavailable controls
-without model calls or external services. These pending cases are separate from
-the qualified portfolio and the locked Phase 2 comparison.
+The [observability suite](src/scenarios/README.md#provisioned-observability-scenarios)
+provisions real AKS network-policy and autoscaler-limit faults, plus local
+Prometheus scrape failures and Grafana datasource drift. Every case requires a
+healthy baseline, observed induced failure, recovery, and ownership-checked cleanup.
+The previous canned Datadog/Splunk and Azure responses are removed.
+`npm run eval:observability -- list` lists the cases; `verify` provisions billable
+Azure resources only with explicit subscription/region/cost consent, while
+`verify-local` starts Docker services. `eval:observability:check` is an offline
+unit-test command, not live verification. These cases remain separate from the
+qualified portfolio and locked Phase 2 comparison.
 
 ## Prerequisites
 

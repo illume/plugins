@@ -16,9 +16,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   createHeadlampCliCandidate,
+  createRealProcessRunner,
   estimateConfiguredUsage,
   extractJsonBlock,
   parseCliTelemetry,
@@ -28,6 +29,28 @@ import { loadScenario } from '../scenarios/loader.js';
 import type { ProcessRunResult } from './headlampCli.js';
 
 const scenario = loadScenario('core-service-selector-fault-v1');
+const evidenceDigest = 'a'.repeat(64);
+
+test(
+  'createRealProcessRunner terminates descendant processes on timeout',
+  { skip: process.platform === 'win32' },
+  async () => {
+    const runner = createRealProcessRunner();
+    const startedAt = Date.now();
+    const result = await runner(
+      process.execPath,
+      [
+        '-e',
+        `require('node:child_process').spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'inherit' }); setInterval(() => {}, 1000);`,
+      ],
+      process.env,
+      50
+    );
+
+    assert.equal(result.timedOut, true);
+    assert.ok(Date.now() - startedAt < 2_000);
+  }
+);
 
 test('extractJsonBlock: extracts a fenced json block from surrounding prose', () => {
   const text = 'Here is my answer.\nCODEFENCEjson\n{"a":1}\nCODEFENCE\nThanks.'.replace(
@@ -327,6 +350,7 @@ test('validateTokenPricingSnapshot rejects overlapping aggregate and TTL cache-w
 
 test('createHeadlampCliCandidate: invokes the injected process runner with the constructed prompt', async () => {
   let capturedArgs: string[] = [];
+  let capturedTimeoutMs = 0;
   const fakeResult: ProcessRunResult = {
     stdout: 'plain answer, no sidecar',
     stderr: '',
@@ -334,8 +358,9 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
     timedOut: false,
   };
   const candidate = createHeadlampCliCandidate({
-    processRunner: async (command, args) => {
+    processRunner: async (command, args, env, timeoutMs) => {
       capturedArgs = args;
+      capturedTimeoutMs = timeoutMs;
       return fakeResult;
     },
   });
@@ -344,15 +369,17 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
     observations: [
       { evidence_id: 'ev1', resource_ref: 'service/web', field_path: 'spec.selector', value: '{}' },
     ],
+    evidence_digest: evidenceDigest,
   });
   assert.equal(result.status, 'ok');
   assert.equal(result.submission_text, null);
   assert.ok(capturedArgs.some(arg => arg.includes(scenario.candidatePacket.task_prompt)));
   assert.ok(
     capturedArgs.some(arg =>
-      arg.includes('operation must be exactly "no_action" or "unscored_novel_strategy"')
+      arg.includes('return exactly one proposed action with operation "no_action"')
     )
   );
+  assert.equal(capturedTimeoutMs, 120_000);
 });
 
 test('createHeadlampCliCandidate: forwards provider configuration as CLI arguments', async () => {
@@ -364,7 +391,11 @@ test('createHeadlampCliCandidate: forwards provider configuration as CLI argumen
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
     },
   });
-  await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.deepEqual(capturedArgs.slice(1, 5), ['--provider', 'copilot', '--api-key', 'test-token']);
   assert.equal(candidate.identity?.provider, 'copilot');
   assert.equal(candidate.identity?.credential_configured, true);
@@ -375,7 +406,11 @@ test('createHeadlampCliCandidate: a non-zero exit code is reported as unavailabl
   const candidate = createHeadlampCliCandidate({
     processRunner: async () => ({ stdout: '', stderr: 'boom', exitCode: 1, timedOut: false }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.status, 'unavailable');
 });
 
@@ -388,9 +423,31 @@ test('createHeadlampCliCandidate: an explicit CLI error with exit code zero is u
       timedOut: false,
     }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.status, 'unavailable');
   assert.match(result.raw_text, /No AI provider configured/);
+});
+
+test('createHeadlampCliCandidate: a provider rejection on stdout is unavailable', async () => {
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async () => ({
+      stdout: 'Sorry, your request failed: 400 The requested model is not supported.',
+      stderr: '',
+      exitCode: 0,
+      timedOut: false,
+    }),
+  });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+  assert.equal(result.status, 'unavailable');
+  assert.match(result.raw_text, /requested model is not supported/);
 });
 
 test('createHeadlampCliCandidate: preserves successful diagnostic prose beginning with Error', async () => {
@@ -402,7 +459,11 @@ test('createHeadlampCliCandidate: preserves successful diagnostic prose beginnin
       timedOut: false,
     }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.status, 'ok');
 });
 
@@ -415,7 +476,11 @@ test('createHeadlampCliCandidate: a timeout is reported as status timeout', asyn
       timedOut: true,
     }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.status, 'timeout');
   assert.equal(result.raw_text, 'partial output EVAL-CANARY\ntimed out');
 });
@@ -439,7 +504,11 @@ test('createHeadlampCliCandidate: extracts and preserves a valid fenced json sid
       timedOut: false,
     }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.status, 'ok');
   assert.equal(JSON.parse(result.submission_text ?? '{}').schema_version, '1.0.0');
 });
@@ -462,25 +531,78 @@ test('createHeadlampCliCandidate: presents exact observation fields as JSON', as
         value: '{"app":"web"}',
       },
     ],
+    evidence_digest: evidenceDigest,
   });
   assert.match(prompt, /"evidence_id": "event_selector"/);
   assert.match(prompt, /"observed_value": "{\\"app\\":\\"web\\"}"/);
   assert.doesNotMatch(prompt, /evidence:event_selector/);
   assert.match(prompt, /do not add prefixes, extract sub-fields, or reformat values/);
+  assert.match(prompt, /return only a fenced ```json code block/);
+  assert.match(prompt, /return exactly one proposed action with operation "no_action"/);
+  assert.match(prompt, /rather than encoding investigation, escalation, or mutation as an action/);
+  assert.match(prompt, /including observations that rule out a cause/);
+  assert.match(prompt, /every observation used to establish or rule out the diagnosis/);
+  assert.match(prompt, /every evidence_ref exactly matches a supplied evidence_id/);
+  assert.match(prompt, /never reconstruct an ID/);
+  assert.match(prompt, /including each side of a comparison/);
+  assert.match(prompt, /separate concise alternatives/);
+  assert.match(prompt, /one independently testable mechanism/);
+  assert.match(prompt, /split causes joined by "or"/);
+});
+
+test('createHeadlampCliCandidate: supplies the canonical digest for repair submissions', async () => {
+  let prompt = '';
+  const repair = loadScenario('core-service-selector-repair-v1');
+  const candidate = createHeadlampCliCandidate({
+    processRunner: async (_command, args) => {
+      prompt = args.at(-1) ?? '';
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+  await candidate.invoke({
+    packet: repair.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+    action_targets: [
+      {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+    ],
+  });
+  assert.match(prompt, new RegExp(`Canonical evidence digest: ${evidenceDigest}`));
+  assert.match(prompt, /Allowed action policy/);
+  assert.match(prompt, /"uid": "service-uid"/);
+  assert.match(prompt, /exactly these keys: schema_version .* diagnosis, and proposed_action/);
+  assert.match(prompt, /uncertainty \(\{is_uncertain: boolean, optional reason string\}\)/);
+  assert.match(prompt, /proposed_actions \(array of \{operation, description\}\)/);
+  assert.match(prompt, /never put action_id, target, patch, or evidence_digest there/);
+  assert.match(prompt, /property named exactly evidence_digest whose value is the supplied digest/);
+  assert.match(prompt, /Do not rename or add properties/);
+  assert.match(prompt, /omit it rather than using null/);
 });
 
 test('createHeadlampCliCandidate: does not forward disallowed env vars to the child process', async () => {
   let observedEnv: NodeJS.ProcessEnv = {};
+  let sandboxKubeconfig = '';
   const candidate = createHeadlampCliCandidate({
     allowedEnvVars: ['SOME_SAFE_VAR'],
     processRunner: async (_command, _args, env) => {
       observedEnv = env;
+      sandboxKubeconfig = readFileSync(env.KUBECONFIG ?? '', 'utf8');
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
     },
   });
   process.env.HEADLAMP_AI_EVAL_TEST_SECRET = 'should-not-leak';
   try {
-    await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+    await candidate.invoke({
+      packet: scenario.candidatePacket,
+      observations: [],
+      evidence_digest: evidenceDigest,
+    });
   } finally {
     delete process.env.HEADLAMP_AI_EVAL_TEST_SECRET;
   }
@@ -488,6 +610,9 @@ test('createHeadlampCliCandidate: does not forward disallowed env vars to the ch
   assert.equal(observedEnv.HEADLAMP_AI_MOCK_ALL, '1');
   assert.ok(observedEnv.KUBECONFIG);
   assert.equal(existsSync(observedEnv.KUBECONFIG ?? ''), false);
+  assert.match(sandboxKubeconfig, /current-context: eval-isolated/);
+  assert.match(sandboxKubeconfig, /server: https:\/\/127\.0\.0\.1:1/);
+  assert.doesNotMatch(sandboxKubeconfig, /token:|client-certificate|client-key/);
 });
 
 test('createHeadlampCliCandidate: preserves an explicitly supplied trial kubeconfig', async () => {
@@ -502,6 +627,7 @@ test('createHeadlampCliCandidate: preserves an explicitly supplied trial kubecon
   await candidate.invoke({
     packet: scenario.candidatePacket,
     observations: [],
+    evidence_digest: evidenceDigest,
     environment: { KUBECONFIG: '/trial/kubeconfig' },
   });
   assert.equal(observedKubeconfig, '/trial/kubeconfig');
@@ -520,6 +646,7 @@ test('createHeadlampCliCandidate: isolates and removes the child Headlamp data d
   await candidate.invoke({
     packet: scenario.candidatePacket,
     observations: [],
+    evidence_digest: evidenceDigest,
     environment: { HEADLAMP_DATA_DIR: '/must-not-be-used' },
   });
   assert.equal(existsSync(isolatedDataDir), false);
@@ -561,7 +688,11 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
     },
   });
 
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.deepEqual(result.token_usage, {
     input_tokens: 12,
     uncached_input_tokens: 12,
@@ -620,7 +751,11 @@ test('createHeadlampCliCandidate keeps tool observability unknown without valid 
   const candidate = createHeadlampCliCandidate({
     processRunner: async () => ({ stdout: '', stderr: '', exitCode: 0, timedOut: false }),
   });
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.equal(result.tool_events, undefined);
   assert.equal(result.token_usage, undefined);
 });
@@ -645,7 +780,11 @@ test('createHeadlampCliCandidate does not infer tool observability from model us
     },
   });
 
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
   assert.deepEqual(result.token_usage, {
     input_tokens: 12,
     uncached_input_tokens: 12,
@@ -667,7 +806,11 @@ test('createHeadlampCliCandidate reports zero tool calls for a completed telemet
     },
   });
 
-  const result = await candidate.invoke({ packet: scenario.candidatePacket, observations: [] });
+  const result = await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
 
   assert.deepEqual(result.tool_events, []);
 });

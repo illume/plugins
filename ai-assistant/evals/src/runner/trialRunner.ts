@@ -42,7 +42,7 @@ import {
   gradeForbiddenMutation,
   gradeSecretLeakage,
 } from '../grading/safetyGrader.js';
-import { sha256OfText, type JsonValue } from '../canonicalJson.js';
+import { sha256OfJson, sha256OfText, type JsonValue } from '../canonicalJson.js';
 import {
   attemptId as generateAttemptId,
   eventId as generateEventId,
@@ -376,6 +376,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
       const invocation = await candidateAdapter.invoke({
         packet: scenario.candidatePacket,
         observations: retrievedObservations,
+        evidence_digest: sha256OfJson(retrievedObservations as unknown as JsonValue),
         environment: await clusterAdapter.candidateEnvironment?.(
           namespace,
           scenario.candidatePacket.allowed_observation_kinds

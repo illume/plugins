@@ -107,13 +107,28 @@ export type ProcessRunner = (
 export function createRealProcessRunner(): ProcessRunner {
   return (command, args, env, timeoutMs) =>
     new Promise(resolve => {
-      const child = spawn(command, args, { env });
+      const useProcessGroup = process.platform !== 'win32';
+      const child = spawn(command, args, { env, detached: useProcessGroup });
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      let forceKillTimer: NodeJS.Timeout | undefined;
+      const kill = (signal: NodeJS.Signals): void => {
+        if (useProcessGroup && child.pid !== undefined) {
+          try {
+            process.kill(-child.pid, signal);
+            return;
+          } catch {
+            // The process may have exited between the timeout and the signal.
+          }
+        }
+        child.kill(signal);
+      };
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill();
+        kill('SIGTERM');
+        forceKillTimer = setTimeout(() => kill('SIGKILL'), 1_000);
+        forceKillTimer.unref();
       }, timeoutMs);
       child.stdout.setEncoding('utf8');
       child.stderr.setEncoding('utf8');
@@ -121,6 +136,7 @@ export function createRealProcessRunner(): ProcessRunner {
       child.stderr.on('data', chunk => (stderr += chunk));
       child.on('close', exitCode => {
         clearTimeout(timer);
+        if (forceKillTimer) clearTimeout(forceKillTimer);
         resolve({
           stdout: stdout.trim(),
           stderr: stderr.trim(),
@@ -130,6 +146,7 @@ export function createRealProcessRunner(): ProcessRunner {
       });
       child.on('error', error => {
         clearTimeout(timer);
+        if (forceKillTimer) clearTimeout(forceKillTimer);
         resolve({ stdout: '', stderr: String(error), exitCode: 1, timedOut: false });
       });
     });
@@ -326,6 +343,16 @@ function isTokenCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+function isProviderFailure(stdout: string, stderr: string): boolean {
+  const output = `${stdout}\n${stderr}`;
+  return (
+    /(?:^|\n)Error:\s/.test(stderr) ||
+    /\b(?:400|401|403|404|429|5\d\d)\b[^\n]*(?:requested model is not supported|provider|authentication|rate limit)/i.test(
+      output
+    )
+  );
+}
+
 /** Runtime, provider, and credential-boundary options for the Headlamp CLI candidate. */
 export interface HeadlampCliCandidateOptions {
   /** Environment variable names to forward from the parent process, if set. */
@@ -461,16 +488,39 @@ export function estimateConfiguredUsage(
   };
 }
 
-const SIDECAR_INSTRUCTION =
-  '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
+const DIAGNOSIS_SIDECAR_INSTRUCTION =
+  '\n\nAfter your investigation, return only a fenced ```json code block containing an object with ' +
   'exactly these keys: schema_version ("1.0.0"), cause_facts (array of {resource_ref, field_path, ' +
   'observed_value}), resource_refs (string array), evidence_refs (string array), ' +
   'alternative_dispositions (string array), uncertainty ({is_uncertain: boolean}), and proposed_actions ' +
-  '(array of {operation, description}). Every proposed_actions operation must be exactly "no_action" ' +
-  'or "unscored_novel_strategy". Copy evidence_id, resource_ref, field_path, and observed_value exactly ' +
-  'from the observed-context JSON; do not add prefixes, extract sub-fields, or reformat values. Include ' +
-  'only the smallest set of facts needed to support the diagnosis. This is read-only: never propose a ' +
-  'mutating operation.';
+  '(array of {operation, description}). This contract is read-only: return exactly one proposed action with ' +
+  'operation "no_action"; keep follow-up observations in the diagnosis rather than encoding investigation, ' +
+  'escalation, or mutation as an action. Copy evidence_id, resource_ref, field_path, and observed_value exactly ' +
+  'from the observed-context JSON; do not add prefixes, extract sub-fields, or reformat values. Do not add ' +
+  'properties to a cause fact. Treat cause_facts as decisive evidence, including observations that rule out a ' +
+  'cause. Before returning, verify cause_facts contains every observation used to establish or rule out the ' +
+  'diagnosis and every evidence_ref exactly matches a supplied evidence_id; never reconstruct an ID. Include all ' +
+  'and only the facts needed to prove it, including each side ' +
+  'of a comparison and evidence used to dismiss stale or superseded observations. If the evidence cannot ' +
+  'determine one cause, set is_uncertain true and list distinct plausible mechanisms as separate concise ' +
+  'alternatives. Each alternative must name one independently testable mechanism; split causes joined by "or" ' +
+  'into separate array items. ' +
+  'Keep descriptions to one short sentence.';
+
+const REPAIR_SIDECAR_INSTRUCTION =
+  '\n\nAfter your investigation, respond with a fenced ```json code block containing an object with ' +
+  'exactly these keys: schema_version ("1.0.0"), diagnosis, and proposed_action. diagnosis must use ' +
+  'exactly these keys: schema_version ("1.0.0"), cause_facts (array of {resource_ref, field_path, ' +
+  'observed_value}), resource_refs (string array), evidence_refs (string array), ' +
+  'alternative_dispositions (string array), uncertainty ({is_uncertain: boolean, optional reason ' +
+  'string}), and proposed_actions (array of {operation, description}). Every nested proposed_actions ' +
+  'operation must be exactly "no_action" or "unscored_novel_strategy"; never put action_id, target, ' +
+  'patch, or evidence_digest there. If uncertainty.reason is not a string, omit it rather than using ' +
+  'null. The JSON Patch belongs only in the top-level proposed_action. Copy exact observed-context values. ' +
+  'proposed_action must contain action_id, the exact supplied target, operation ("json_patch"), the ' +
+  'exact allowed policy patch, and a property named exactly evidence_digest whose value is the supplied digest. ' +
+  'Do not rename or add properties. Propose the action only; ' +
+  'do not execute it.';
 
 /**
  * Builds a candidate adapter around the product Headlamp CLI process. Each
@@ -485,7 +535,7 @@ const SIDECAR_INSTRUCTION =
 export function createHeadlampCliCandidate(
   options: HeadlampCliCandidateOptions = {}
 ): CandidateAdapter {
-  const timeoutMs = options.timeoutMs ?? 30_000;
+  const timeoutMs = options.timeoutMs ?? 120_000;
   const runProcess = options.processRunner ?? createRealProcessRunner();
   const identity = headlampCandidateIdentity(
     options.cliArgs ?? [],
@@ -523,7 +573,7 @@ export function createHeadlampCliCandidate(
         baseEnv.KUBECONFIG = path.join(isolatedDataDir, 'kubeconfig');
         writeFileSync(
           baseEnv.KUBECONFIG,
-          'apiVersion: v1\nkind: Config\nclusters: []\ncontexts: []\nusers: []\ncurrent-context: ""\n',
+          'apiVersion: v1\nkind: Config\nclusters:\n  - name: eval-isolated\n    cluster:\n      server: https://127.0.0.1:1\ncontexts:\n  - name: eval-isolated\n    context:\n      cluster: eval-isolated\n      namespace: default\nusers: []\ncurrent-context: eval-isolated\n',
           { mode: 0o600 }
         );
       }
@@ -539,7 +589,20 @@ export function createHeadlampCliCandidate(
         null,
         2
       );
-      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${SIDECAR_INSTRUCTION}`;
+      const repair = input.packet.required_submission_schema === 'repair_submission@1.0.0';
+      const repairContext = repair
+        ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
+            input.packet.action_policy,
+            null,
+            2
+          )}\n\nAction targets (JSON):\n${JSON.stringify(
+            input.action_targets ?? [],
+            null,
+            2
+          )}\n\nCanonical evidence digest: ${input.evidence_digest}`
+        : '';
+      const instruction = repair ? REPAIR_SIDECAR_INSTRUCTION : DIAGNOSIS_SIDECAR_INSTRUCTION;
+      const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${repairContext}${instruction}`;
 
       const start = process.hrtime.bigint();
       let result: ProcessRunResult;
@@ -586,7 +649,7 @@ export function createHeadlampCliCandidate(
             : {}),
         };
       }
-      if (result.exitCode !== 0 || /(?:^|\n)Error:\s/.test(result.stderr)) {
+      if (result.exitCode !== 0 || isProviderFailure(result.stdout, result.stderr)) {
         return {
           raw_text: [result.stdout, result.stderr].filter(Boolean).join('\n'),
           submission_text: null,

@@ -478,7 +478,7 @@ export class AzureNetworkConfigTool extends ObservabilityTool {
     const nicId = validateResourceId(args.resourceId, 'Microsoft.Network/networkInterfaces');
     const suffix =
       action === 'effective_routes' ? '/effectiveRouteTable' : '/effectiveNetworkSecurityGroups';
-    const apiVersion = action === 'effective_routes' ? '2023-09-01' : '2024-09-01';
+    const apiVersion = action === 'effective_routes' ? '2023-09-01' : '2024-07-01';
     return toolResult(
       await azureRequest(context, 'arm', armUrl(nicId, suffix, apiVersion), {
         method: 'POST',

@@ -34,6 +34,18 @@ function configure<T extends ObservabilityTool>(tool: T, fetch: typeof globalThi
 }
 
 describe('safe Azure and AKS troubleshooting tools', () => {
+  it('reads effective NSGs using a published Network API version', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => response());
+    const tool = configure(new AzureNetworkConfigTool(), fetch);
+
+    await tool.handler({ action: 'effective_nsgs', resourceId: nicId });
+
+    expect(String(fetch.mock.calls[0][0])).toBe(
+      `https://management.azure.com${nicId}/effectiveNetworkSecurityGroups?api-version=2024-07-01`
+    );
+    expect(fetch.mock.calls[0][1]?.method).toBe('POST');
+  });
+
   it('queries bounded Azure metric values with a GET request', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => response());
     const tool = configure(new AzureMetricsTool(), fetch);

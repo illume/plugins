@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { randomUUID } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -23,18 +24,18 @@ import { KubectlClusterAdapter } from './kubectlAdapter.js';
 
 const profileName = 'headlamp-ai-evals';
 const here = path.dirname(fileURLToPath(import.meta.url));
-const defaultKubeconfigPath = path.resolve(
-  here,
-  '..',
-  '..',
-  '..',
-  '.private',
-  'evals-minikube.kubeconfig'
-);
+const defaultKubeconfigDirectory = path.resolve(here, '..', '..', '..', '.private');
+
+function createDefaultKubeconfigPath(): string {
+  return path.join(
+    defaultKubeconfigDirectory,
+    `evals-minikube-${process.pid}-${randomUUID()}.kubeconfig`
+  );
+}
 
 /** Real Kubernetes adapter backed by a dedicated local Minikube profile. */
 export class MinikubeAdapter extends KubectlClusterAdapter {
-  constructor(runner: CommandRunner, kubeconfigPath = defaultKubeconfigPath) {
+  constructor(runner: CommandRunner, kubeconfigPath = createDefaultKubeconfigPath()) {
     super('local-minikube', runner, { clusterName: profileName, kubeconfigPath });
   }
 

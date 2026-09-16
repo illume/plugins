@@ -68,13 +68,36 @@ export class AksAdapter extends KubectlClusterAdapter {
     if (!commandExists('kubectl', this.runner)) {
       return { supported: false, reason: 'required tool "kubectl" is not on PATH' };
     }
-    const result = this.runner('kubectl', this.kubectl(['version']));
-    return result.status === 0
+    const version = this.runner('kubectl', this.kubectl(['version']));
+    if (version.status !== 0) {
+      return {
+        supported: false,
+        reason: `AKS kubeconfig is not reachable: ${version.stderr || version.stdout}`,
+      };
+    }
+    const nodes = this.runner('kubectl', this.kubectl(['get', 'nodes', '-o', 'json']));
+    if (nodes.status !== 0) {
+      return {
+        supported: false,
+        reason: `AKS nodes are not reachable: ${nodes.stderr || nodes.stdout}`,
+      };
+    }
+    const nodeList = JSON.parse(nodes.stdout) as {
+      items?: Array<{
+        spec?: { unschedulable?: boolean };
+        status?: { conditions?: Array<{ status?: string; type?: string }> };
+      }>;
+    };
+    const hasReadyNode = nodeList.items?.some(
+      node =>
+        !node.spec?.unschedulable &&
+        node.status?.conditions?.some(
+          condition => condition.type === 'Ready' && condition.status === 'True'
+        )
+    );
+    return hasReadyNode
       ? { supported: true }
-      : {
-          supported: false,
-          reason: `AKS kubeconfig is not reachable: ${result.stderr || result.stdout}`,
-        };
+      : { supported: false, reason: 'AKS has no Ready schedulable nodes' };
   }
 
   /** Leaves the operator-managed AKS cluster and kubeconfig in place. */

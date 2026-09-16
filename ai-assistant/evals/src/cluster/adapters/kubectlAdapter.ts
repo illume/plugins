@@ -20,16 +20,26 @@
  * preventing one cluster type from inheriting another type's lifecycle.
  */
 
-import type { ClusterProfileName } from '../../contracts/evaluationContracts.js';
+import type { JsonValue } from '../../canonicalJson.js';
+import type {
+  ActionRequest,
+  ClusterProfileName,
+  JsonPatchOperation,
+} from '../../contracts/evaluationContracts.js';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { CommandRunner } from '../commandRunner.js';
 import type {
   ClusterAdapter,
+  DeploymentObservation,
   EndpointsObservation,
+  EventObservation,
   NodeObservation,
+  PersistentVolumeClaimObservation,
   PodObservation,
   PreflightResult,
+  RoleRuleObservation,
   SchedulingObservation,
   ServiceSelectorObservation,
 } from '../clusterAdapter.js';
@@ -174,12 +184,27 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
    * @returns A Promise that resolves after kubectl applies the manifest.
    */
   async applyManifest(namespace: string, manifestYamlPath: string): Promise<void> {
-    const result = this.runner(
-      'kubectl',
-      this.kubectl(['apply', '-n', namespace, '-f', manifestYamlPath])
-    );
-    if (result.status !== 0) {
-      throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
+    const temporaryDirectory = hasNamespacePlaceholder
+      ? mkdtempSync(path.join(tmpdir(), 'headlamp-eval-fixture-'))
+      : undefined;
+    const appliedPath = temporaryDirectory
+      ? path.join(temporaryDirectory, path.basename(manifestYamlPath))
+      : manifestYamlPath;
+    try {
+      if (temporaryDirectory) {
+        writeFileSync(appliedPath, source.replaceAll('__EVAL_NAMESPACE__', namespace), 'utf8');
+      }
+      const result = this.runner(
+        'kubectl',
+        this.kubectl(['apply', '-n', namespace, '-f', appliedPath])
+      );
+      if (result.status !== 0) {
+        throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+      }
+    } finally {
+      if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
     }
   }
 
@@ -318,6 +343,203 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       reason: scheduled?.reason,
       message: scheduled?.message,
     };
+  }
+
+  async getPersistentVolumeClaim(
+    namespace: string,
+    name: string
+  ): Promise<PersistentVolumeClaimObservation> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'persistentvolumeclaim', name, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) return { found: false };
+    const claim = JSON.parse(result.stdout) as {
+      spec?: { storageClassName?: string };
+      status?: { phase?: string };
+    };
+    return {
+      found: true,
+      storageClassName: claim.spec?.storageClassName,
+      phase: claim.status?.phase,
+    };
+  }
+
+  async storageClassExists(name: string): Promise<boolean> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'storageclass', name, '-o', 'name'])
+    );
+    if (result.status === 0) return true;
+    if (/\bnotfound\b|\bnot found\b/i.test(`${result.stderr}\n${result.stdout}`)) return false;
+    throw new Error(`failed to check storageclass/${name}: ${result.stderr || result.stdout}`);
+  }
+
+  async canServiceAccount(
+    namespace: string,
+    serviceAccount: string,
+    verb: string,
+    resource: string
+  ): Promise<boolean> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl([
+        'auth',
+        'can-i',
+        verb,
+        resource,
+        '-n',
+        namespace,
+        '--as',
+        `system:serviceaccount:${namespace}:${serviceAccount}`,
+      ])
+    );
+    const decision = result.stdout.trim();
+    if (decision === 'yes') return true;
+    if (decision === 'no') return false;
+    throw new Error(
+      `failed to authorize serviceaccount/${serviceAccount}: ${result.stderr || result.stdout}`
+    );
+  }
+
+  async getRoleRules(namespace: string, name: string): Promise<RoleRuleObservation[]> {
+    const role = runJson<{ rules?: RoleRuleObservation[] }>(
+      this.runner,
+      this.kubectl(['get', 'role', name, '-n', namespace])
+    );
+    return (role.rules ?? []).map(rule => ({
+      apiGroups: rule.apiGroups ?? [],
+      resources: rule.resources ?? [],
+      verbs: rule.verbs ?? [],
+    }));
+  }
+
+  async getDeployment(namespace: string, name: string): Promise<DeploymentObservation> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'deployment', name, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) {
+      const output = `${result.stderr}\n${result.stdout}`;
+      if (/\bnotfound\b|\bnot found\b/i.test(output)) return { found: false };
+      throw new Error(`failed to get deployment/${name}: ${result.stderr || result.stdout}`);
+    }
+    const deployment = JSON.parse(result.stdout) as {
+      metadata?: { generation?: number };
+      spec?: {
+        template?: {
+          spec?: {
+            containers?: Array<{
+              resources?: { requests?: { cpu: string; memory: string } };
+            }>;
+          };
+        };
+      };
+      status?: { observedGeneration?: number; availableReplicas?: number };
+    };
+    return {
+      found: true,
+      generation: deployment.metadata?.generation,
+      observedGeneration: deployment.status?.observedGeneration,
+      availableReplicas: deployment.status?.availableReplicas ?? 0,
+      resourceRequests: deployment.spec?.template?.spec?.containers?.[0]?.resources?.requests,
+    };
+  }
+
+  async getEvent(namespace: string, name: string): Promise<EventObservation> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'events.events.k8s.io', name, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) return { found: false };
+    const event = JSON.parse(result.stdout) as { eventTime?: string; reason?: string };
+    return { found: true, eventTime: event.eventTime, reason: event.reason };
+  }
+
+  async getResourceAnnotation(
+    namespace: string,
+    resource: 'configmap',
+    name: string,
+    annotation: string
+  ): Promise<string | undefined> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', resource, name, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) return undefined;
+    const object = JSON.parse(result.stdout) as {
+      metadata?: { annotations?: Record<string, string> };
+    };
+    return object.metadata?.annotations?.[annotation];
+  }
+
+  async getResourceIdentity(
+    namespace: string,
+    resourceRef: string
+  ): Promise<ActionRequest['target'] | null> {
+    const [resource, name, extra] = resourceRef.split('/');
+    if (!resource || !name || extra) throw new Error(`invalid resource ref: ${resourceRef}`);
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', resource, name, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) return null;
+    const object = JSON.parse(result.stdout) as {
+      apiVersion: string;
+      kind: string;
+      metadata: { namespace?: string; name: string; uid: string };
+    };
+    return {
+      api_version: object.apiVersion,
+      kind: object.kind,
+      namespace: object.metadata.namespace ?? namespace,
+      name: object.metadata.name,
+      uid: object.metadata.uid,
+    };
+  }
+
+  async getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', target.kind, target.name, '-n', target.namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) {
+      const output = `${result.stderr}\n${result.stdout}`;
+      if (/\bnotfound\b|\bnot found\b/i.test(output)) return null;
+      throw new Error(`failed to snapshot ${target.kind}/${target.name}: ${result.stderr}`);
+    }
+    return JSON.parse(result.stdout) as JsonValue;
+  }
+
+  async applyJsonPatch(
+    target: ActionRequest['target'],
+    patch: JsonPatchOperation[]
+  ): Promise<JsonValue> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl([
+        'patch',
+        target.kind,
+        target.name,
+        '-n',
+        target.namespace,
+        '--type=json',
+        '--patch',
+        JSON.stringify(patch),
+        '-o',
+        'json',
+      ])
+    );
+    if (result.status !== 0) {
+      throw new Error(
+        `failed to patch ${target.kind}/${target.name}: ${result.stderr || result.stdout}`
+      );
+    }
+    const object = JSON.parse(result.stdout) as {
+      metadata?: { uid?: string };
+    };
+    if (object.metadata?.uid !== target.uid) throw new Error('patched resource identity changed');
+    return object as JsonValue;
   }
 
   /**

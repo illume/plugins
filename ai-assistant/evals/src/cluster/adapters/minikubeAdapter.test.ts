@@ -22,6 +22,20 @@ import { createFakeCommandRunner } from '../commandRunner.js';
 import { MinikubeAdapter } from './minikubeAdapter.js';
 import { makeScratchDir, removeScratchDir } from '../../test-helpers/scratchDir.js';
 
+class InspectableMinikubeAdapter extends MinikubeAdapter {
+  get configuredKubeconfigPath(): string {
+    return this.kubeconfigPath;
+  }
+}
+
+test('MinikubeAdapter isolates default kubeconfigs between concurrent runs', () => {
+  const { runner } = createFakeCommandRunner([]);
+  const first = new InspectableMinikubeAdapter(runner);
+  const second = new InspectableMinikubeAdapter(runner);
+
+  assert.notEqual(first.configuredKubeconfigPath, second.configuredKubeconfigPath);
+});
+
 test('MinikubeAdapter reuses a running profile and exports an isolated kubeconfig', async () => {
   const directory = makeScratchDir('minikube-adapter');
   const kubeconfigPath = path.join(directory, 'kubeconfig');

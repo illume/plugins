@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import type { ClusterProfileName } from '../contracts/evaluationContracts.js';
+import type {
+  ActionRequest,
+  ClusterProfileName,
+  JsonPatchOperation,
+} from '../contracts/evaluationContracts.js';
+import type { JsonValue } from '../canonicalJson.js';
 
 /**
  * Cluster-facing port used by the evaluation state machine.
@@ -96,6 +101,39 @@ export interface SchedulingObservation {
   condition?: string;
   /** Human-readable scheduler message. */
   message?: string;
+}
+
+/** Candidate-safe state observed for one PersistentVolumeClaim. */
+export interface PersistentVolumeClaimObservation {
+  found: boolean;
+  storageClassName?: string;
+  phase?: string;
+}
+
+/** One namespaced RBAC rule retained for deterministic authorization evidence. */
+export interface RoleRuleObservation {
+  apiGroups: string[];
+  resources: string[];
+  verbs: string[];
+}
+
+/** Candidate-safe rollout and resource-request state for one Deployment. */
+export interface DeploymentObservation {
+  found: boolean;
+  generation?: number;
+  observedGeneration?: number;
+  availableReplicas?: number;
+  resourceRequests?: {
+    cpu: string;
+    memory: string;
+  };
+}
+
+/** Candidate-safe fields from one Kubernetes Event. */
+export interface EventObservation {
+  found: boolean;
+  eventTime?: string;
+  reason?: string;
 }
 
 /**
@@ -193,6 +231,42 @@ export interface ClusterAdapter {
    * @returns Scheduler evidence or an unsupported disposition.
    */
   getSchedulingObservation(namespace: string, podName: string): Promise<SchedulingObservation>;
+  /** Reads the provisioning state of one namespaced PersistentVolumeClaim. */
+  getPersistentVolumeClaim(
+    namespace: string,
+    name: string
+  ): Promise<PersistentVolumeClaimObservation>;
+  /** Checks whether an exact cluster-scoped StorageClass exists. */
+  storageClassExists(name: string): Promise<boolean>;
+  /** Evaluates one namespaced permission as the specified ServiceAccount. */
+  canServiceAccount(
+    namespace: string,
+    serviceAccount: string,
+    verb: string,
+    resource: string
+  ): Promise<boolean>;
+  /** Reads the rules from one namespaced Role. */
+  getRoleRules(namespace: string, name: string): Promise<RoleRuleObservation[]>;
+  /** Reads rollout and first-container request state from one Deployment. */
+  getDeployment(namespace: string, name: string): Promise<DeploymentObservation>;
+  /** Reads the timestamp and reason from one events.k8s.io Event. */
+  getEvent(namespace: string, name: string): Promise<EventObservation>;
+  /** Reads one annotation without exposing unrelated resource fields. */
+  getResourceAnnotation(
+    namespace: string,
+    resource: 'configmap',
+    name: string,
+    annotation: string
+  ): Promise<string | undefined>;
+  /** Resolves only the immutable identity fields needed to bind a repair proposal. */
+  getResourceIdentity(
+    namespace: string,
+    resourceRef: string
+  ): Promise<ActionRequest['target'] | null>;
+  /** Reads one complete resource for repair diffing at the trusted harness boundary. */
+  getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null>;
+  /** Applies an authorized RFC 6902 patch and returns the resulting resource. */
+  applyJsonPatch(target: ActionRequest['target'], patch: JsonPatchOperation[]): Promise<JsonValue>;
   /**
    * Deletes a trial namespace and verifies cleanup where possible.
    *

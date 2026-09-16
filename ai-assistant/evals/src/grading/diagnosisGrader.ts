@@ -31,6 +31,7 @@ import type {
   DimensionResult,
   EvaluatorPacket,
   RequiredEvidenceRelation,
+  RepairSubmission,
   SubmissionParseStatus,
 } from '../contracts/evaluationContracts.js';
 import { assertValid } from '../contracts/validate.js';
@@ -43,6 +44,8 @@ export interface ParsedSubmission {
   status: SubmissionParseStatus;
   /** Valid typed submission, or `null` when unavailable or malformed. */
   submission: DiagnosisSubmission | null;
+  /** Complete repair sidecar when the requested contract is repair_submission. */
+  repairSubmission?: RepairSubmission;
   /** Diagnostic text describing malformed input. */
   parseError?: string;
 }
@@ -53,7 +56,12 @@ export interface ParsedSubmission {
  * @param submissionText - Raw submission JSON, or `null` when none was supplied.
  * @returns The typed submission and its parse disposition.
  */
-export function parseSubmission(submissionText: string | null): ParsedSubmission {
+export function parseSubmission(
+  submissionText: string | null,
+  requiredSchema:
+    | 'diagnosis_submission@1.0.0'
+    | 'repair_submission@1.0.0' = 'diagnosis_submission@1.0.0'
+): ParsedSubmission {
   if (submissionText === null) {
     return { status: 'missing', submission: null };
   }
@@ -64,7 +72,20 @@ export function parseSubmission(submissionText: string | null): ParsedSubmission
     return { status: 'malformed', submission: null, parseError: String(err) };
   }
   try {
-    assertValid(loadSchema('diagnosis-submission'), parsed, 'diagnosis submission');
+    const repair = requiredSchema === 'repair_submission@1.0.0';
+    assertValid(
+      loadSchema(repair ? 'repair-submission' : 'diagnosis-submission'),
+      parsed,
+      repair ? 'repair submission' : 'diagnosis submission'
+    );
+    if (repair) {
+      const repairSubmission = parsed as RepairSubmission;
+      return {
+        status: 'valid',
+        submission: repairSubmission.diagnosis,
+        repairSubmission,
+      };
+    }
   } catch (err) {
     return { status: 'malformed', submission: null, parseError: String(err) };
   }
@@ -91,6 +112,27 @@ function factMatches(
 
 function normalizeHypothesis(value: string): string {
   return (value.toLowerCase().match(/[a-z0-9]+/g) ?? []).join(' ');
+}
+
+function hypothesisAliasMatches(candidate: string, alias: string): boolean {
+  const candidateTokenList = normalizeHypothesis(candidate).split(' ').filter(Boolean);
+  const candidateTokens = new Set(candidateTokenList);
+  const aliasTokens = normalizeHypothesis(alias).split(' ').filter(Boolean);
+  const aliasNegations = new Set(
+    aliasTokens.flatMap((token, index) =>
+      token === 'not' && aliasTokens[index + 1] ? [`not ${aliasTokens[index + 1]}`] : []
+    )
+  );
+  return (
+    aliasTokens.length > 0 &&
+    aliasTokens.every(token => candidateTokens.has(token)) &&
+    !candidateTokenList.some(
+      (token, index) =>
+        token === 'not' &&
+        aliasTokens.includes(candidateTokenList[index + 1] ?? '') &&
+        !aliasNegations.has(`not ${candidateTokenList[index + 1]}`)
+    )
+  );
 }
 
 function relationMatches(
@@ -221,10 +263,10 @@ export function gradeRootCause(input: RootCauseGradingInput): DimensionResult {
       const accepted = (evaluatorPacket.accepted_hypotheses_if_uncertain ?? []).find(
         hypothesis =>
           !matchedAcceptedHypotheses.has(hypothesis) &&
-          [
-            hypothesis,
-            ...(evaluatorPacket.accepted_hypothesis_aliases_if_uncertain?.[hypothesis] ?? []),
-          ].some(alias => normalizeHypothesis(alias) === candidate)
+          (normalizeHypothesis(hypothesis) === candidate ||
+            (evaluatorPacket.accepted_hypothesis_aliases_if_uncertain?.[hypothesis] ?? []).some(
+              alias => hypothesisAliasMatches(candidate, alias)
+            ))
       );
       if (accepted) matchedAcceptedHypotheses.add(accepted);
     }

@@ -17,7 +17,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ClusterAdapter } from '../../cluster/clusterAdapter.js';
-import { capacityCase } from './schedulingCases.js';
+import { capacityCase, capacityRepairCase } from './schedulingCases.js';
 import { selectorFaultCase } from './serviceSelectorCases.js';
 
 test('selector observation records one list call with per-Pod evidence', async () => {
@@ -55,4 +55,22 @@ test('capacity observation records one list call with per-Node evidence', async 
   assert.equal(steps.length, 3);
   assert.equal(steps[0]?.operation, 'list_node_allocatable');
   assert.equal(steps[0]?.evidenceValues?.length, 2);
+});
+
+test('capacity repair waits for and emits its Deployment availability postcondition', async () => {
+  let observations = 0;
+  const adapter = {
+    mode: 'real',
+    getDeployment: async () => ({
+      found: true,
+      availableReplicas: ++observations === 1 ? 0 : 1,
+    }),
+  } as unknown as ClusterAdapter;
+
+  const steps = await capacityRepairCase.observeAfterRepair?.(adapter, 'ns');
+  assert.ok(observations >= 2);
+  assert.deepEqual(
+    steps?.map(step => [step.resourceRef, step.fieldPath, step.value]),
+    [['deployment/cpu-hog', 'status.availableReplicas', '1']]
+  );
 });

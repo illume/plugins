@@ -72,6 +72,7 @@ import {
   SCHEMA_VERSION,
 } from '../contracts/evaluationContracts.js';
 import type {
+  ActionJournalEvent,
   RegressionDelta,
   TrajectoryToolEvent,
   TrialResult,
@@ -80,6 +81,7 @@ import { artifactId as generateArtifactId } from '../ids.js';
 import type { ContractReferencesDocument } from './contractReferences.js';
 import { serializeContractReferences } from './contractReferences.js';
 import type { CandidateIdentity } from '../candidates/candidateAdapter.js';
+import type { ExploratoryAttempt } from '../comparisons/repeatTargeting.js';
 
 const PRODUCER = '@headlamp-k8s/ai-evals';
 const BUNDLE_FORMAT_VERSION = '1.0.0';
@@ -110,6 +112,7 @@ export interface TrialIndexRow extends Record<string, JsonValue> {
 export class TrialBundleWriter {
   readonly trialDir: string;
   readonly trajectory: JsonlWriter<TrajectoryToolEvent & Record<string, JsonValue>>;
+  readonly actionJournal: JsonlWriter<ActionJournalEvent & Record<string, JsonValue>>;
   readonly submissions: JsonlWriter<Record<string, JsonValue>>;
   readonly graderResults: JsonlWriter<Record<string, JsonValue>>;
 
@@ -125,6 +128,12 @@ export class TrialBundleWriter {
     this.trajectory = new JsonlWriter(
       path.join(this.trialDir, 'trajectory.jsonl'),
       schemaUri('trajectory-event'),
+      SCHEMA_VERSION,
+      PRODUCER
+    );
+    this.actionJournal = new JsonlWriter(
+      path.join(this.trialDir, 'action-journal.jsonl'),
+      schemaUri('action-journal-event'),
       SCHEMA_VERSION,
       PRODUCER
     );
@@ -226,6 +235,7 @@ export class RunBundleWriter {
   readonly bundleDir: string;
   private readonly trialsIndex: JsonlWriter<TrialIndexRow>;
   private readonly regressionDeltas: JsonlWriter<RegressionDelta & Record<string, JsonValue>>;
+  private readonly exploratoryAttempts: JsonlWriter<ExploratoryAttempt & Record<string, JsonValue>>;
   private readonly candidateIdentities = new Map<string, CandidateIdentity>();
   private closed = false;
 
@@ -252,6 +262,12 @@ export class RunBundleWriter {
       path.join(this.bundleDir, 'regression-deltas.jsonl'),
       schemaUri('regression-delta'),
       REGRESSION_DELTA_SCHEMA_VERSION,
+      PRODUCER
+    );
+    this.exploratoryAttempts = new JsonlWriter(
+      path.join(this.bundleDir, 'exploratory-attempts.jsonl'),
+      schemaUri('exploratory-attempt'),
+      SCHEMA_VERSION,
       PRODUCER
     );
   }
@@ -282,6 +298,13 @@ export class RunBundleWriter {
    */
   recordRegressionDelta(delta: RegressionDelta): void {
     this.regressionDeltas.append(delta as unknown as RegressionDelta & Record<string, JsonValue>);
+  }
+
+  /** Appends one matched exploratory baseline/candidate attempt pair. */
+  recordExploratoryAttempt(attempt: ExploratoryAttempt): void {
+    this.exploratoryAttempts.append(
+      attempt as unknown as ExploratoryAttempt & Record<string, JsonValue>
+    );
   }
 
   /** Registers one resolved candidate configuration for the closing manifest. */
@@ -340,6 +363,7 @@ export class RunBundleWriter {
         'contract-refs.json',
         'trials.jsonl',
         'regression-deltas.jsonl',
+        'exploratory-attempts.jsonl',
         'trials/<trial_id>/*',
       ],
       unsupported_files: [

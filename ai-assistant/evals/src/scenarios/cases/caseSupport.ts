@@ -42,6 +42,7 @@ export interface PreflightOutcome {
 export interface ScenarioCaseLogic {
   preflight(adapter: ClusterAdapter, namespace: string): Promise<PreflightOutcome>;
   observe(adapter: ClusterAdapter, namespace: string): Promise<ObservationStep[]>;
+  observeAfterRepair?(adapter: ClusterAdapter, namespace: string): Promise<ObservationStep[]>;
 }
 
 /** Measures one asynchronous observation with a monotonic clock. */

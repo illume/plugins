@@ -1,3 +1,4 @@
+import { encodingForModel } from 'js-tiktoken';
 import { describe, expect, it } from 'vitest';
 import { basePrompt } from './baseAssistantPrompt';
 import {
@@ -92,6 +93,14 @@ describe('buildMCPToolsSection', () => {
 describe('buildSystemPrompt', () => {
   // ── base content selection ─────────────────────────────────────────────────
 
+  it.each([
+    ['Kubernetes tools enabled', basePrompt],
+    ['Kubernetes tools disabled', NO_K8S_TOOLS_PROMPT],
+  ])('keeps the %s invariant prefix above the OpenAI cache threshold', (_name, prompt) => {
+    const encoding = encodingForModel('gpt-4o');
+    expect(encoding.encode(prompt).length).toBeGreaterThanOrEqual(1_024);
+  });
+
   it('uses NO_K8S_TOOLS_PROMPT when kubernetes_api_request is not in availableTools', () => {
     const result = buildSystemPrompt(noTools);
     expect(result).toContain('DISABLED');
@@ -160,6 +169,7 @@ describe('buildSystemPrompt', () => {
     });
     expect(result).toContain('CURRENT CONTEXT:');
     expect(result).toContain('Cluster: prod-eu');
+    expect(result.indexOf('Cluster: prod-eu')).toBeGreaterThan(basePrompt.length);
   });
 
   it('does NOT append CURRENT CONTEXT when undefined', () => {

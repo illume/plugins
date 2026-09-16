@@ -37,6 +37,7 @@ import type {
   TrialResult,
 } from '../contracts/evaluationContracts.js';
 import type { TrialIndexRow } from './bundleWriter.js';
+import type { ExploratoryAttempt } from '../comparisons/repeatTargeting.js';
 import { loadSchema, schemaUri, type SchemaName } from '../contracts/schemas.js';
 import { assertValid } from '../contracts/validate.js';
 import {
@@ -62,6 +63,8 @@ export interface ClosedBundle {
   trials: TrialResult[];
   /** Validated baseline-to-candidate regression deltas. */
   regressionDeltas: RegressionDelta[];
+  /** Validated matched exploratory attempt pairs used for repeat targeting. */
+  exploratoryAttempts: ExploratoryAttempt[];
   /** Validated references whose archived content passed digest verification. */
   contractReferences: ContractReference[];
   /** Validated scenario manifests loaded from the verified contract archive. */
@@ -167,6 +170,7 @@ export function readClosedBundle(
       'scenario-ref.json',
       'environment-manifest.json',
       'trajectory.jsonl',
+      'action-journal.jsonl',
       'submissions.jsonl',
       'grader-results.jsonl',
       'result.json',
@@ -194,6 +198,12 @@ export function readClosedBundle(
       ? validateJsonl<Record<string, JsonValue>>(
           path.join(trialDir, 'submissions.jsonl'),
           'submission-record'
+        )
+      : [];
+    const actionJournal = existsSync(path.join(trialDir, 'action-journal.jsonl'))
+      ? validateJsonl<Record<string, JsonValue>>(
+          path.join(trialDir, 'action-journal.jsonl'),
+          'action-journal-event'
         )
       : [];
     const graderResults = existsSync(path.join(trialDir, 'grader-results.jsonl'))
@@ -237,13 +247,17 @@ export function readClosedBundle(
     if (result.trial_id !== row.trial_id || result.run_id !== row.run_id) {
       throw new Error(`trial ${row.trial_id} result identity does not match its index row`);
     }
-    verifyTrialReferences(result, trajectory, submissions, graderResults);
+    verifyTrialReferences(result, trajectory, actionJournal, submissions, graderResults);
     return result;
   });
   const regressionDeltas = validateJsonl<RegressionDelta & Record<string, JsonValue>>(
     path.join(bundleDir, 'regression-deltas.jsonl'),
     'regression-delta'
   ) as unknown as RegressionDelta[];
+  const exploratoryAttempts = validateJsonl<ExploratoryAttempt & Record<string, JsonValue>>(
+    path.join(bundleDir, 'exploratory-attempts.jsonl'),
+    'exploratory-attempt'
+  ) as unknown as ExploratoryAttempt[];
 
   return {
     runDir,
@@ -253,6 +267,7 @@ export function readClosedBundle(
     trialIndex,
     trials,
     regressionDeltas,
+    exploratoryAttempts,
     contractReferences: contractReferences.contracts,
     scenarioManifests,
   };
@@ -336,6 +351,7 @@ function validateJsonl<T extends JsonValue>(filePath: string, schemaName: Schema
 function verifyTrialReferences(
   result: TrialResult,
   trajectory: Array<Record<string, JsonValue>>,
+  actionJournal: Array<Record<string, JsonValue>>,
   submissions: Array<Record<string, JsonValue>>,
   graderResults: Array<Record<string, JsonValue>>
 ): void {
@@ -363,7 +379,7 @@ function verifyTrialReferences(
       }
     }
   }
-  for (const record of [...trajectory, ...submissions]) {
+  for (const record of [...trajectory, ...actionJournal, ...submissions]) {
     if (record.trial_id !== result.trial_id) {
       throw new Error(`trial ${result.trial_id} contains a record for another trial`);
     }

@@ -72,16 +72,16 @@ later scope.
 | Eval-system health and failure ownership            | Phase 1: setup/cleanup/grader/exclusion/flake/duration/cost measures and one owner per failed or invalid row         | `implemented`         | `deferred_to_phase_2`: observed SLOs, alerting, trend review, and gating behavior                                                      |
 | Case ownership, provenance, review, and quarantine  | Phase 1: owner/source/review dates plus issue/reason/entry/expiry/requalification fields                             | `implemented`         | `deferred_to_phase_2`: scheduled execution, expiry enforcement, and requalification                                                    |
 | Real product execution                              | Phase 1: one real headless/shared-session path; mocks and scripted agents only as controls                           | `implemented`         | `deferred_to_phase_2`: browser approval path for repairs; Phase 3 expands UI/headless parity                                           |
-| Dataset lifecycle                                   | Phase 1: public development cases, lineage, one promoted regression, and draft qualification queue                   | `implemented`         | `deferred_to_phase_2`: frozen development/regression/capability/safety splits and lineage-separated private holdout                    |
+| Dataset lifecycle                                   | Phase 1: public development cases, lineage, one promoted regression, and draft qualification queue                   | `implemented`         | `deferred_to_phase_2`: frozen public splits; `deferred_to_phase_3`: lineage-separated private holdouts and access verification          |
 | Repeats and uncertainty                             | Phase 1: exploratory repeats and descriptive variability without inferential claims                                  | `implemented`         | `deferred_to_phase_2`: registered matched repeats, intervals, practical margins, and prespecified decisions                            |
 | Continuous evaluation                               | Phase 1: manual local check and reproducible report command                                                          | `implemented`         | `deferred_to_phase_2`: small deterministic PR suite plus scheduled repeated regression/capability/safety/comparator runs               |
 | Repair, approval, and least privilege               | Phase 1: read-only denial, secret canary, and forbidden-action controls                                              | `implemented`         | `deferred_to_phase_2`: action/rollback/collateral checks and real browser approval paths                                               |
-| External tool comparison                            | No Phase 1 implementation                                                                                            | `deferred_to_phase_2` | Phase 2: qualified HolmesGPT/K8sGPT adapters, neutral contracts, published context, and common-denominator repeats                     |
+| External tool comparison                            | No Phase 1 implementation                                                                                            | `deferred_to_phase_2` | Phase 2: qualified HolmesGPT/kubectl-ai adapters, neutral contracts, published context, and common-denominator repeats                     |
 | Interaction and robustness                          | Phase 1: healthy, insufficient-evidence, malformed, and simple deterministic variants                                | `implemented`         | `deferred_to_phase_3`: extend the 275-public-variant portfolio with multi-turn interaction, metamorphic relations, and external replay |
 | Distribution coverage                               | Phase 1: declare the narrow four-case/local-AKS profile and unsupported cells                                        | `implemented`         | `deferred_to_phase_3`: explicit offline target-distribution coverage/gaps; Phase 5 validates transport to production                   |
 | SME audit and case maintenance                      | Phase 1: senior pre-run truth review and owner/review-due metadata                                                   | `implemented`         | `deferred_to_phase_3`: periodic truth/rejection/pass-failure audit and age/saturation/duplication/flake/retirement decisions           |
 | Grader portfolio                                    | Phase 1: hard and structured deterministic graders with positive/negative controls                                   | `implemented`         | `deferred_to_phase_3`: if free-form quality matters, qualify a calibrated model grader; otherwise record `not_applicable`              |
-| Adversarial safety                                  | Phase 1: leakage/forbidden-access controls; Phase 2 adds 30 public security/injection variants plus private holdouts | `implemented`         | `deferred_to_phase_4`: scheduled attack portfolio, capability thresholds/vetoes, threat review, safety case, and invalidation drills   |
+| Adversarial safety                                  | Phase 1: leakage/forbidden-access controls; Phase 2 adds 30 public security/injection variants; Phase 3 adds private holdouts | `implemented` | `deferred_to_phase_4`: scheduled attack portfolio, capability thresholds/vetoes, threat review, safety case, and invalidation drills   |
 | Production feedback and validity                    | No valid offline proxy; Phase 1 only prepares portable fields, provenance, and disclosure classes                    | `deferred_to_phase_5` | Phase 5: governed sampling/feedback, monitoring, incident promotion, holdout refresh, deployment studies, and metric lifecycle         |
 | Human reliance or usability                         | No valid offline proxy; earlier phases retain approval/interaction telemetry but make no human claim                 | `deferred_to_phase_5` | Phase 5: governed study when required by a product decision; otherwise record `not_applicable`                                         |
 
@@ -274,29 +274,37 @@ Run two complementary tracks:
    products, but provider/model/tool differences remain named factors and no
    model-versus-scaffold attribution is allowed.
 
-Phase 2 starts with exactly two references chosen for low setup cost and
-container-friendly automation:
+The prospective v2 comparison revision, approved on 2026-09-15, uses HolmesGPT
+and kubectl-ai as its two supplied-evidence diagnosis references. The original
+[v1 registration](../registrations/phase2-comparison-v1.json) remains unchanged;
+[v2](../registrations/phase2-comparison-v2.json) records its superseded digest
+and scope rationale. Earlier K8sGPT and kubectl-ai runs remain exploratory, not
+confirmatory evidence under the revised design. K8sGPT remains descriptive
+context rather than a required strict comparator.
 
-| System                | Phase 2 role                                      | Why selected and eligible shared-task boundary                                                                                                                                                                                                                         |
-| --------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Headlamp AI Assistant | Candidate under development and comparison anchor | Every qualified public variant through the real headless/shared-session path; the frozen 30-case subset also runs through the production plugin UI and supplies Headlamp's external-comparison result, with headless/plugin discordance reported separately             |
-| HolmesGPT             | Investigation/RCA reference                       | Publishes a [ready-to-run Compose image](https://github.com/HolmesGPT/holmesgpt/blob/master/docker-compose.yaml) configured with provider environment variables and a mounted kubeconfig; use diagnosis, healthy, and abstention cells whose evidence contract matches |
-| K8sGPT                | Deterministic analyzer/explanation reference      | Publishes an [official container image](https://github.com/k8sgpt-ai/k8sgpt/blob/main/RELEASE.md) and has a narrow `auth add`/analyzer surface; use only supported resource/failure families, with healthy/no-finding as a valid cell                                  |
+| System                | Phase 2 role                                      | Why selected and eligible shared-task boundary                                                                                                                                                                                                                                           |
+| --------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Headlamp AI Assistant | Candidate under development and comparison anchor | Every qualified public variant through the real headless/shared-session path; the frozen 30-case subset also runs through the production plugin UI and supplies Headlamp's external-comparison result, with headless/plugin discordance reported separately                              |
+| HolmesGPT             | Investigation/RCA reference                       | Publishes a [ready-to-run Compose image](https://github.com/HolmesGPT/holmesgpt/blob/master/docker-compose.yaml) configured with provider environment variables and a mounted kubeconfig; use diagnosis, healthy, and abstention cells whose evidence contract matches                   |
+| kubectl-ai            | Supplied-evidence diagnosis reference             | The pinned v0.0.31 binary runs in a shell-free container and directly emits the common diagnosis JSON from harness observations; transport and isolation controls passed on 2026-09-15 with a source-linked qualification receipt. |
 
-HolmesGPT and K8sGPT are the complete Phase 2 reference roster. “Required” means
+HolmesGPT and kubectl-ai are the complete strict Phase 2 reference roster. “Required” means
 each adapter is qualified and each system has at least one eligible cell; it
-does not mean forcing an unsupported construct into a false failure. Defer
-kubectl-ai because its [documented container
-path](https://github.com/GoogleCloudPlatform/kubectl-ai/blob/main/CONTAINER.md)
-requires building an image from source and additional credential mounting.
+does not mean forcing an unsupported construct into a false failure. The
+kubectl-ai image and runtime controls are documented in the
+[candidate guide](../src/candidates/README.md).
 Keep kagent and DevOps AI Toolkit as published context until a later phase
 justifies their broader setup and adapter cost.
 
 In Phase 2, assign all 30 frozen external-comparison variants to every selected
 system before capability checks. Each assignment ends `eligible`, `unsupported`,
-or `invalid` with a reason. At least 20 cells spanning ten families and every
-represented behavioral stratum must be jointly eligible across Headlamp,
-HolmesGPT, and K8sGPT for an aggregate multi-system gap to be reported. An
+or `ineligible` with a reason; `pending` blocks confirmatory execution. At least
+20 of the 25 non-repair cells spanning ten declared families and all five
+non-repair strata must be jointly eligible across Headlamp plugin/CLI,
+HolmesGPT, and kubectl-ai for the registered diagnosis comparisons. Repair
+and real browser/headless approval parity remain separate mandatory Headlamp
+Phase 2 gates. The `multi_turn_tool_failure` stratum in this comparison means
+diagnosis from supplied observations, not demonstrated live tool recovery. An
 insufficient-evidence case is compared only for systems that can receive the
 same withheld evidence and emit uncertainty; otherwise its unsupported status
 is a capability result, not a zero.
@@ -306,20 +314,37 @@ task instruction or mapped losslessly from native structured fields. Do not
 use a model judge, human reviewer, regex, or adapter-authored interpretation to
 convert free prose into cause/evidence fields. If HolmesGPT cannot emit valid
 structured output under its real candidate path, keep its native response as
-an artifact and mark the strict common-contract cell unsupported. K8sGPT
+an artifact and mark the strict common-contract cell unsupported. The same
+rule applies to kubectl-ai. K8sGPT
 analyzer fields may map only where the mapping is explicit, total for the
 scored fields, and covered by fixed parity fixtures.
 
+K8sGPT evaluation invokes only its model-backed `analyze --explain` path. The
+pinned v0.4.38 CLI does not expose provider token usage in JSON or text output,
+so its token fields remain unobserved rather than being recorded as zero. A
+provider-side trace may populate those fields only after its attribution and
+round-trip fidelity are qualified.
+
+Native K8sGPT runs are restricted to the dedicated `local-minikube` profile,
+using a ten-minute read-only ServiceAccount credential scoped to the trial
+namespace, plus StorageClass reads. This resource-level view is not equivalent
+to the common field-level evidence contract. Successful native execution is
+retained with an unsupported grader, inapplicable diagnosis dimensions, and an
+inconclusive eligibility disposition; it is not a task-quality failure. Empty
+findings never become an adapter-authored diagnosis. Even with `--explain`,
+K8sGPT skips LLM requests when its analyzers find no problems.
+
 Phase 2 first runs one exploratory attempt for every assigned system/case cell,
-using one common Azure deployment where both model-using systems support it and
+using one common Azure deployment where the model-using systems support it and
 a separate product-default track. It then freezes the jointly eligible
 30-case external-comparison matrix and runs matched repeats under a registered
 information target. Report per-system absolute results and
 Headlamp-versus-each-reference gaps; do not emit one multi-system average or
-rank systems with different eligible sets. K8sGPT remains an analyzer reference
-rather than being credited or penalized for unsupported mutation. HolmesGPT
-repair cells enter only if its exact pinned container configuration supports
-the same approval/action contract.
+rank systems with different eligible sets. K8sGPT remains a descriptive analyzer
+reference, not an arm of the revised comparison. Neither reference is scored
+on repair in v2. Admitting reference repair later requires a new scope revision
+and qualification of the same approval/action contract. Diagnosis draft lock
+does not mean repair/browser gates or Phase 2 as a whole have passed.
 
 For each comparison report:
 
@@ -672,8 +697,8 @@ The progression is additive:
 | Phase | Canonical data added                                                                                                                                                                                                                             | Report contents added; all earlier sections remain                                                                                                                                                                                                                    |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1     | Base bundle, complete trial census, typed diagnosis submissions, deterministic grader rows, environment identity, traces, terminal results, artifact index, descriptive `regression-deltas.jsonl`, case lifecycle and best-practice dispositions | Candidate/profile identity; separate eligibility/stage/task/safety/lifecycle flows; per-case typed RCA/evidence/uncertainty; controls; health/ownership/quarantine measures; Headlamp regression deltas; local/AKS and Foundry cells; artifact links and claim limits |
-| 2     | Action/approval events; before/after state; split/holdout metadata; `comparisons.jsonl`; inferential fields; Minikube/KWOK-set identity; CI/schedule, SLO, quarantine and browser-parity records                                                 | Everything from Phase 1 plus HolmesGPT/K8sGPT gaps, registered repeats/intervals; repair/approval/collateral results; separate KWOK/Minikube results; PR/scheduled lane health and gates; SLO/quarantine decisions; UI repair parity; private-holdout status          |
-| 3     | Lineage/transform/interaction events; `relation-results.jsonl`; external/environment cells; source-class, distribution, maintenance, SME-audit, UI-parity, and conditional grader-qualification records                                          | Everything from Phase 2 plus obligation/distribution gaps; interaction/metamorphic/external results; case lifecycle; SME audit; UI/headless parity; qualified grader evidence or `not_applicable`; model/environment views                                            |
+| 2     | Action/approval events; before/after state; public split metadata; `comparisons.jsonl`; inferential fields; Minikube/KWOK-set identity; CI/schedule, SLO, quarantine and browser-parity records | Everything from Phase 1 plus HolmesGPT/kubectl-ai gaps, registered repeats/intervals; repair/approval/collateral results; separate KWOK/Minikube results; PR/scheduled lane health and gates; SLO/quarantine decisions; UI repair parity; private holdouts deferred to Phase 3 |
+| 3     | Protected holdout metadata and access evidence; lineage/transform/interaction events; `relation-results.jsonl`; external/environment cells; source-class, distribution, maintenance, SME-audit, UI-parity, and conditional grader-qualification records | Everything from Phase 2 plus approved private-holdout aggregates; obligation/distribution gaps; interaction/metamorphic/external results; case lifecycle; SME audit; UI/headless parity; qualified grader evidence or `not_applicable`; model/environment views |
 | 4     | Security/audit/action events; signed checkpoints; canary, quarantine, concurrency, telemetry, red-team, threshold, safety-case, and invalidation-drill artifacts                                                                                 | Everything from Phase 3 plus hard vetoes; attack/control utility; scheduled safety results; safety case; invalidation blast radius; races; telemetry freshness/timing/cost; residual risks                                                                            |
 | 5     | Governed study bundle plus sampling/feedback, monitoring, incident, holdout-refresh, deployment-study, and metric-lifecycle records                                                                                                              | Offline report remains unchanged; study report adds governance/cohort flow, predictive/human/impact results, production monitoring and feedback, incident promotion, controlled deployment evidence, and lifecycle decisions                                          |
 
@@ -819,7 +844,7 @@ Implementation grows in place rather than being reorganized by phase:
 | Phase | Code added under `evals/src/`                                                                                                                                                                                                                                                 | Stable code retained                                                                       |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | 1     | CLI, runner, contracts, lifecycle, Copilot/Azure and KWOK/AKS adapters, Headlamp adapter, deterministic graders, regression-delta analysis, health/ownership/quarantine metadata, canonical task/timing/tool fields, offline exporter mappings, storage/reporting/publication | Package, IDs, schemas, bundle reader/writer, report core, scenario/profile/control loaders |
-| 2     | HolmesGPT/K8sGPT, Minikube, and action adapters; approval journal; browser parity; cross-system comparisons; CI/schedule/quarantine operations; SLO and repeated-pair/statistical reducers                                                                                    | All Phase 1 commands/formats and regression-delta rows; no second runner/report generator  |
+| 2     | HolmesGPT/kubectl-ai, Minikube, and action adapters; approval journal; browser parity; cross-system comparisons; CI/schedule/quarantine operations; SLO and repeated-pair/statistical reducers                                                                                    | All Phase 1 commands/formats and regression-delta rows; no second runner/report generator  |
 | 3     | Native benchmark adapters, interaction runner, transforms/shrinker, distribution/maintenance audit, UI parity matrix, conditional model-grader qualification                                                                                                                  | Same trial pipeline, adapters, operations, and result/report schemas                       |
 | 4     | Integrity/signing, restricted execution, red-team/threshold/safety-case workflows, invalidation drills, concurrency actors/barriers, telemetry and live destination exporters                                                                                                 | Same event writer, artifact store, grader precedence, schedules, publication path          |
 | 5     | Governed study/sampling/feedback records, linkage and monitoring interfaces, incident/holdout/metric-lifecycle and cohort/analysis/report reducers                                                                                                                            | Offline run bundles remain immutable and are referenced by digest                          |
@@ -932,8 +957,8 @@ The overall report grows without changing its core:
 | Phase | Overall GitHub report addition                                                                                                                                                                                |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1     | First immutable run summary; four-case outcomes/controls; health/ownership/quarantine and best-practice dispositions; Headlamp regression deltas; local/AKS and Foundry cells; descriptive one-point series   |
-| 2     | HolmesGPT/K8sGPT gaps; repeated trends; separate KWOK/Minikube results; repair/approval/safety; PR/scheduled lane and SLO/quarantine status; UI repair parity; private holdout withheld; superiority decision |
-| 3     | Obligation/distribution and source coverage; maintenance and SME audit; UI/headless parity; grader decision/qualification; interaction/metamorphic/external and model/environment views                       |
+| 2     | HolmesGPT/kubectl-ai gaps; repeated trends; separate KWOK/Minikube results; repair/approval/safety; PR/scheduled lane and SLO/quarantine status; UI repair parity; public-roster decision; holdouts deferred to Phase 3 |
+| 3     | Approved private-holdout aggregates and access status; obligation/distribution and source coverage; maintenance and SME audit; UI/headless parity; grader decision/qualification; interaction/metamorphic/external and model/environment views |
 | 4     | Sanitized veto/utility trends; red-team promotion and scheduled safety; thresholds/safety case; checkpoint/quarantine/invalidation drills; concurrency/telemetry summaries                                    |
 | 5     | Approved aggregate predictive/human/impact evidence; sampling/feedback flow; drift/outcome/incident/holdout monitoring; deployment-study and metric-lifecycle decisions; explicit withheld cells              |
 
@@ -1226,10 +1251,10 @@ rather than adding a manual verdict.
 ### Phase 2: trustworthy regression and repair gate
 
 **Outcome:** at exit, the framework supports at least 275 qualified public
-diagnosis, uncertainty, safe-repair, and safety variants plus a separate private
-holdout. It can earn the scorecard's “strongest combined methodology” claim for
+diagnosis, uncertainty, safe-repair, and safety variants. Private holdouts and
+their access/evaluation gates belong to Phase 3. It can earn the scorecard's “strongest combined methodology” claim for
 the declared profile. It also compares a frozen 30-case common-denominator
-subset with exactly two container-friendly references, HolmesGPT and K8sGPT,
+subset with exactly two container-friendly references, HolmesGPT and kubectl-ai,
 and turns the manual Phase 1 loop into a bounded regression service.
 
 Execution requires an automated qualification factory, parallel isolated
@@ -1241,8 +1266,8 @@ or weaken admission to preserve a delivery target.
 #### Phase 2 case inventory
 
 Phase 2 contains at least 275 qualified public scenario variants across at least
-25 independently reviewed causal/evidence families. A separate set of 25
-lineage-separated private holdouts does not count toward the public minimum.
+25 independently reviewed causal/evidence families. The 25 lineage-separated
+private holdouts planned for Phase 3 are not required here and never count toward the public minimum.
 Variants, twins, transformed cases, environment cells, and repeated trials
 remain separate denominators and do not masquerade as independent incidents.
 
@@ -1265,7 +1290,7 @@ The public portfolio has this minimum behavioral composition. Each variant has
 exactly one primary stratum even when it exercises secondary behaviors, so a
 repair case is not counted again as a diagnosis or safety case. Additional
 public variants may raise one or more strata above their floor, and the registry
-records the exact total. The 25 private holdouts are additional and preserve
+records the exact total. Phase 3 separately adds the 25 private holdouts with
 their own undisclosed, family-stratified composition.
 
 | Public behavioral stratum              | Variants | Minimum portfolio requirement                                                                                |
@@ -1320,8 +1345,8 @@ until every earlier exit gate passes.
 | Order | Sub-phase | Highest-value increment                                          | Primary dependency                                                          | Exit signal                                                                                                           |
 | ----: | --------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 |     1 | Phase 2A  | Qualified public portfolio and real repair boundaries            | Phase 1 contracts, Minikube capacity, source rights, and independent review | At least 275 variants across at least 25 families qualify; plugin/browser and headless action contracts agree         |
-|     2 | Phase 2B  | Deterministic decisions and neutral candidate adapters           | Qualified fixtures, candidate-view boundaries, and action contracts         | Every scored field passes controls; plugin, HolmesGPT, and K8sGPT adapters receive explicit eligibility dispositions  |
-|     3 | Phase 2C  | Frozen comparison design and tuning-resistant private holdouts   | Valid graders/adapters and exploratory matched attempts                     | Estimand, repeats, margins, dependence, missingness, splits, and private access controls are registered               |
+|     2 | Phase 2B  | Deterministic decisions and neutral candidate adapters           | Qualified fixtures, candidate-view boundaries, and action contracts         | Every scored field passes controls; plugin, HolmesGPT, and kubectl-ai adapters receive explicit eligibility dispositions  |
+|     3 | Phase 2C  | Frozen public comparison design                                 | Valid graders/adapters and exploratory matched attempts                     | Estimand, repeats, margins, dependence, missingness, and public splits are registered                                |
 |     4 | Phase 2D  | Complete portfolio, AKS, and external-comparison evidence        | Frozen design plus qualified public, cloud, repair, and comparator cells    | Every registered cell reaches its target or terminal exclusion; reports preserve uncertainty and environment identity |
 |     5 | Phase 2E  | Sustainable regression service with evidence-derived reliability | Phase 2A–2D qualification runs and observed health data                     | PR/scheduled lanes enforce gating, retention, quarantine, credentials, and exporter contracts                         |
 
@@ -1364,7 +1389,7 @@ Create typed required, supporting, and contradictory evidence plus accepted
 repair sets. Build machine-authored reference, partial, wrong, abstaining,
 overconfident, unsupported-evidence, unsafe-effective, malformed, and injected
 submission controls for every decision field. Qualify pinned HolmesGPT and
-K8sGPT containers, minimal provider/kubeconfig/RBAC configuration,
+kubectl-ai containers, minimal provider/tool configuration,
 fixed-submission adapter parity, the production plugin adapter, and one
 exploratory assignment of each frozen external-comparison case. Prose style and
 communication remain unscored.
@@ -1376,26 +1401,54 @@ fixed-submission parity, and cleanup controls. The plugin adapter passes browser
 startup, context, typed-submission, telemetry, approval, and cleanup controls.
 Every cell in the frozen 30-case external-comparison subset has an explicit
 assignment and eligibility disposition for Headlamp plugin, Headlamp CLI,
-HolmesGPT, and K8sGPT.
+HolmesGPT, and kubectl-ai. The five repair assignments are terminal exclusions
+for the references, with Headlamp repair evidence assessed separately.
 
-##### Phase 2C: repeated-run design and private holdouts
+##### Phase 2C: repeated-run design and public splits
 
-**Purpose:** freeze the comparison design before confirmatory results are visible
-and create a bounded check against tuning to the public cases.
+**Purpose:** freeze the public comparison design before confirmatory results are
+visible, without claiming transfer to unseen private cases.
 
 Run at least three exploratory matched baseline/candidate attempts per anchor
 and a family-stratified sample of the scaled portfolio to estimate discordance
 and invalidity. Freeze repeat targets by behavioral stratum before viewing
 confirmatory results. Separate development, regression, capability, safety, and
-external-comparison uses before tuning. Author 25 lineage-separated private
-holdouts whose identities, prompts, manifests, gold, and case-level results are
-absent from this document and candidate-accessible storage.
+external-comparison uses before tuning. Private-holdout creation, isolation
+verification, and evaluation are Phase 3 obligations and do not block this gate.
 
 **Exit gate:** the comparison estimand, direction, repeat target, practical
 margin, dependence unit, missing/invalid/censored-pair rule, multiplicity policy,
-and dataset splits are registered. Holdout access controls are verified, and no
-private case identity, prompt, gold, or case-level trace appears in ordinary
-candidate or report storage.
+and public dataset splits are registered. Existing candidate/truth and privacy
+boundaries remain enforced; no private-holdout verification is required to exit Phase 2.
+
+Current evidence: the operator selected a 0.05 absolute practical margin before
+the three-round exploratory run on 2026-09-15. Its 90 valid trials produced 60
+valid observation-matched pairs; the plan, rotated order, trial identities,
+matching digests, and lineage diagnostics are retained in the closed bundle
+referenced by [the exploratory receipt](../registrations/phase2-exploratory-20260915.json).
+The full public diagnosis roster has only one lineage in each of the
+insufficient-evidence, security, and tool-failure strata. Repeated calls cannot
+substitute for independent incidents. The operator therefore approved a
+budgeted finite-public-roster design on 2026-09-15: ten fresh full-roster rounds,
+250 invocations per CLI tool and 750 total, with prior exploratory trials excluded.
+The 0.05 practical margin remains unchanged. This is not a powered test for
+unseen incidents or a guarantee of resolving a five-point difference.
+
+For each contrast, average binary success differences within fixed lineages,
+then equally across lineages and across rounds. Use full-roster rounds as the
+sampling units, allowing arbitrary dependence within rounds. Conditional on
+verified independent rounds and fixed configuration, two-sided Hoeffding bounds
+with Bonferroni protection for two contrasts use half-width
+`sqrt(2 * ln(2 * 2 / 0.05) / 10)`, approximately 0.9362. No empirical-variance
+shortcut is permitted. Per-stratum outputs remain descriptive. Test superiority
+against Holmes first, then kubectl-ai only after Holmes passes; safety failures
+veto claims. Missing/invalid pairs, unmet sampling assumptions, reused exploratory
+trials, changed configurations, or incomplete rounds prevent confirmatory
+decisions. Do not replace failed attempts or stop early based on scores.
+Locking this plan removes the registration blocker but does not complete its
+execution, plugin parity, repair/browser evidence, or other Phase 2 exits.
+The operator deferred private holdouts to Phase 3 on 2026-09-15. Verification
+remains pending rather than passed, and no private content was opened for this work.
 
 ##### Phase 2D: portfolio execution and evidence reporting
 
@@ -1405,7 +1458,7 @@ without hiding environment-specific disagreement.
 Run the Headlamp CLI baseline and candidate revisions on every public Minikube
 variant and on the 24-case AKS subset. Run the production plugin baseline and
 candidate artifacts on every eligible cell in the frozen 30-case plugin subset.
-Separately run the Headlamp plugin, HolmesGPT, and K8sGPT on every eligible cell
+Separately run the Headlamp plugin, HolmesGPT, and kubectl-ai on every eligible diagnosis cell
 in the same frozen external-comparison subset, retaining the matched Headlamp CLI
 cell as a surface-parity control. Run repair comparison cells only for systems
 that passed the common approval and action contract. Balance execution order
@@ -1431,7 +1484,7 @@ feedback without making expensive or credentialed execution an implicit CI
 requirement.
 
 Add a small deterministic PR lane and scheduled broader lanes for repeated
-regression, capability, safety, plugin/headless parity, and HolmesGPT/K8sGPT
+regression, capability, safety, plugin/headless parity, and HolmesGPT/kubectl-ai
 comparison. Keep browser, expensive provider, and AKS cells scheduled or
 manual-on-demand when runtime, credentials, or cost prohibit PR execution.
 Derive initial setup, cleanup, invalid-grader, exclusion,
@@ -1474,7 +1527,7 @@ declared requalification evidence passes.
 Phase 2 does not replace any Phase 1 file. It appends approval, action,
 authorization, effect, rollback, and collateral-check event types to
 `trajectory.jsonl`; stores pre/post Kubernetes snapshots and allowed-diff
-results as indexed native JSON/YAML artifacts; adds split and opaque holdout
+results as indexed native JSON/YAML artifacts; adds public split
 metadata to `bundle/manifest.json`; and introduces `comparisons.jsonl` with
 cross-system assignment/eligibility, registered estimand, repeat, dependence,
 interval, margin, and decision fields. Each comparison row references immutable
@@ -1487,10 +1540,10 @@ The report preserves every Phase 1 section and adds:
   resampling unit, interval/confidence method and level, multiplicity family,
   practical margin, missing/invalid/censored pair rule, uncertainty, and
   prespecified decision;
-- repeated Headlamp-versus-HolmesGPT and Headlamp-versus-K8sGPT comparisons over
-  the frozen 30-case external-comparison subset; K8sGPT is not scored on repair, and
-  HolmesGPT repair cells are included only if its pinned container passes the
-  same approval/action contract;
+- repeated Headlamp-versus-HolmesGPT and Headlamp-versus-kubectl-ai comparisons
+  on jointly eligible cases in the frozen 25-case supplied-evidence diagnosis
+  subset; five repair cases from the preserved 30-case roster remain separate
+  Headlamp repair/browser evidence, not a cross-system repair comparison;
 - separate plugin/headless assignment flow, outcomes, browser/tool/approval
   failures, and paired discordance for the frozen 30-case plugin subset;
 - `RCA`, `Repair`, and conjunctive `RCA-and-Repair` outcomes without allowing
@@ -1502,10 +1555,8 @@ The report preserves every Phase 1 section and adds:
   read-only/repair mode,
   KWOK/Minikube/AKS profile, and attack/benign twin, with the
   KWOK-compatible subset and its smaller denominator shown separately;
-- private-holdout assigned/valid/aggregate outcomes and access status without
-  case identity, prompt, gold, or case-level trace in the ordinary report. The
-  25 private variants remain clustered by family and lineage and support only
-  the registered holdout estimand; no broader generalization claim is made;
+- an explicit `deferred_to_phase_3` disposition for private-holdout evidence,
+  without claiming unseen-case transfer or requiring private runs in Phase 2;
 - typed-submission control coverage and `unscored_novel_strategy` counts;
 - PR/scheduled lane status, health-SLO numerator and denominator, threshold
   source window, violations, quarantine age/expiry/requalification, and
@@ -1535,13 +1586,14 @@ Phase 2 exits only when:
 - matched reports preserve complete numerators, denominators, attempts,
   family/lineage units, uncertainty, invalidity, and
   KWOK/Minikube/AKS differences without pooling them;
-- private cases were inaccessible during tuning and every scored typed field
-  passes its frozen positive, negative, malformed, and injection controls;
-- pinned HolmesGPT and K8sGPT container adapters pass startup, health,
+- every scored typed field passes its frozen positive, negative, malformed,
+  and injection controls; private-holdout evaluation is deferred to Phase 3;
+- pinned HolmesGPT and kubectl-ai container adapters pass startup, health,
   fixed-submission parity, and cleanup controls; every selected system is
   assigned all 30 external-comparison cases; every cell has an eligibility
-  disposition; and at least 20 cells spanning ten families and every represented
-  behavioral stratum are jointly eligible across all three systems; and
+  disposition; and at least 20 diagnosis cells spanning ten declared families
+  and all five non-repair strata are jointly eligible across the selected
+  systems under v2; separate Headlamp repair/browser gates still apply; and
 - the built production plugin and headless CLI are assigned the same frozen
   30-case plugin subset under matched inputs; every plugin cell has an eligibility
   disposition, and any surface discordance remains visible and blocks
@@ -1570,11 +1622,15 @@ another inspected tool retains broader evidence. None of Phase 2 establishes
 production prevalence or benefit. If one combined dimension is missing, claim
 only the dimensions that passed; do not say “best overall.”
 
+The absence of a Phase 2 private holdout must be stated in every transfer or
+competitiveness claim. Phase 2 completion does not demonstrate resistance to
+public-suite tuning or generalization to unseen cases.
+
 ### Phase 3: capability breadth, robustness, and grader validation
 
 **Outcome:** at exit, the framework tests whether Phase 2 conclusions transfer
 across additional Kubernetes mechanisms, interaction failures, harmless
-representation changes, and one independent public replay corpus. It still
+representation changes, 25 lineage-separated private holdouts, and one independent public replay corpus. It still
 does not claim production representativeness.
 
 Before adding generated breadth, admit reviewed source-backed cases from real
@@ -1641,11 +1697,11 @@ gate passes.
 
 | Order | Sub-phase | Highest-value increment                                           | Primary dependency                                                           | Exit signal                                                                                             |
 | ----: | --------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-|     1 | Phase 3A  | Source-backed Kubernetes breadth and explicit obligation gaps     | Phase 2 portfolio, admission contracts, and phase-start SME audit            | At least 283 qualified public variants; every targeted source class is represented or recorded as a gap |
+|     1 | Phase 3A  | Source-backed breadth, obligation gaps, and private holdout preparation | Phase 2 portfolio, admission contracts, and phase-start SME audit        | At least 283 qualified public variants; source gaps recorded; 25 private holdouts frozen and access verified |
 |     2 | Phase 3B  | Real clarification, correction, tool-failure, and denial behavior | Qualified bases plus Phase 2 session, action-journal, and approval contracts | Four interaction paths pass controls and browser/headless semantic parity                               |
 |     3 | Phase 3C  | Robustness to harmless representation changes                     | Frozen bases, entity mappings, absolute graders, and lineage schema          | Twelve valid metamorphic pairs emit reproducible absolute and relation results                          |
 |     4 | Phase 3D  | Transfer to one independent corpus and bounded environments       | Stable relation/adapter contracts and prespecified models/sentinels          | Neutral adapter qualification or explicit rejection; every required environment cell resolved           |
-|     5 | Phase 3E  | Independent validity and claim decision                           | Frozen Phase 3A–3D evidence, blinded audit sample, and target profile        | SME audit and grader decision close; complete evidence report supports only qualified claims            |
+|     5 | Phase 3E  | Independent validity, held-out evaluation, and claim decision      | Frozen Phase 3A–3D evidence, private holdouts, blinded audit, target profile | Private-run evidence, SME audit, and grader decision close; report supports only qualified claims         |
 
 ##### Phase 3A: source-backed breadth and obligation gaps
 
@@ -1660,11 +1716,22 @@ lowest-cost core pair. Preserve operator/core setup, oracle, and cleanup
 ownership separately. Update the obligation/gap ledger and environment
 manifest as each pair qualifies.
 
+Custodians author and freeze 25 lineage-separated private holdouts outside the
+checkout before the tuning they will evaluate. Keep identities, prompts,
+fixtures, gold, and case-level traces inaccessible to candidate runtimes and
+development automation. Require owner-only storage, logged custodian access,
+contamination checks, and successful `eval:holdout:verify` with the expected
+25 unique identities. Freeze the held-out estimand, candidate versions, repeats,
+missingness rules, and permitted aggregate disclosures before execution.
+These scenario holdouts are distinct from any free-form judge calibration holdout.
+
 **Exit gate:** all eight new variants pass rights, privacy, setup, mechanism-
 oracle, candidate-view, grader-control, and cleanup qualification, growing the
 valid public portfolio from at least 275 to at least 283. Each source class has
 admitted evidence or an explicit gap, and no generated descendant or external
-replay row counts toward this gate.
+replay row counts toward this gate. The 25 additional private holdouts are
+frozen with verified access controls and no identities or content in ordinary
+candidate/report storage; they do not count toward the public minimum.
 
 ##### Phase 3B: interaction and product-boundary contracts
 
@@ -1731,11 +1798,19 @@ the expert-labeled calibration set and judge holdout, then backfill the baseline
 and relevant history; otherwise record the reviewed `not_applicable` decision.
 Add the recurring audit cadence to the Phase 2 scheduled service.
 
+Execute the frozen 25-case private holdout evaluation under custodian-controlled
+access. Retain every assigned attempt and terminal exclusion in protected
+storage; report only approved aggregate outcomes, denominators, lineage/family
+uncertainty, and access/contamination status. Never tune against these results
+and then reuse them as fresh held-out evidence.
+
 **Exit gate:** the independent audit is complete and every disagreement changes
 only a new version followed by reruns. The report preserves every denominator,
 gap, relation, exclusion, and environment coordinate. The model-grader gate is
 qualified and backfilled or explicitly `not_applicable`; diagnostic-only scores
-support no release claim.
+support no release claim. Private-holdout access verification, frozen-design
+execution, complete protected accounting, and leak-free aggregate reporting must
+also pass; a public-only result cannot satisfy this Phase 3 gate.
 
 Limit model comparison to two configurations selected before results. Run the
 same four sentinel variants on local Minikube and AKS and, where the product support
@@ -1783,8 +1858,15 @@ base/follow-up and native/adapter relations. The relation row references both
 absolute trial results, the transform or adapter digest, entity mapping,
 expected relation, observed relation, and invalid/discordant reason.
 
+Add opaque private-holdout metadata to protected bundles without moving private
+identities or case content into the public manifest or ordinary development storage.
+
 The report preserves all Phase 1–2 sections and adds:
 
+- private-holdout assigned/valid/excluded counts, aggregate outcomes, and access
+  verification without case identities, prompts, gold, or case-level traces in
+  ordinary reports. The 25 private cases remain clustered by family/lineage and
+  support only the registered held-out estimand;
 - the versioned obligation denominator, implemented/uncovered obligations,
   single-family obligations, source/setup/oracle lineage concentration, and
   leave-one-lineage-out fragility;
@@ -1828,7 +1910,10 @@ obligations, uncovered cells, single-lineage concentration, family-level
 uncertainty, environment discordance, tool-capability differences, latency,
 tokens, and cost. It also requires source-backed case flow, offline distribution
 gaps, case-lifecycle decisions, passing representative UI/headless parity, a
-completed SME audit, and a closed free-form grader decision gate. No model-grader
+completed SME audit, and a closed free-form grader decision gate. The 25
+lineage-separated private holdouts must have verified isolation, be inaccessible
+during the tuning they evaluate, and complete their prespecified runs or terminal
+exclusions with protected accounting and approved aggregate reporting. No model-grader
 result supports a claim unless every qualification and baseline-backfill
 requirement passed.
 
@@ -2306,8 +2391,8 @@ diagnostic-only,” “capability suspended,” or “deployment claim not suppo
 | Phase | Concrete output                                                                                                                                                                                                                                                                                                                 | Team envelope           | Claim unlocked                                                                                                              | Explicitly deferred                                                                                                       |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | 1     | Four read-only variants; deterministic typed RCA; Headlamp regression deltas; local/AKS; health, ownership, review and quarantine baselines; best-practice matrix; one real product path; one promoted regression                                                                                                               | 10 days                 | Reproducible four-case read-only measurement and tested model compatibility                                                 | Human/model scoring, CI service, repair/UI approval, all external-tool comparison, broad distribution, production claims  |
-| 2     | At least 275 public variants across at least 25 families on Minikube; frozen KWOK, 24-case AKS, and 30-case external-comparison subsets; HolmesGPT/K8sGPT; approved repairs and UI anchors; 25 additional private holdouts; matched uncertainty; PR/scheduled lanes; observed SLOs; operational quarantine; scoped safety gates | Five ordered exit gates | Strongest combined methodology in the inspected public set and named external competitiveness gaps for the declared profile | Free-form grader decision/qualification, target-population representativeness, additional references, production validity |
-| 3     | At least 283 public variants; source-backed case flow; four interactions; twelve metamorphic pairs; external replay; distribution/maintenance reporting; SME audit; UI/headless parity; closed model-grader decision gate                                                                                                       | Five ordered exit gates | Broader capability, robustness, maintained semantic validity, and one external-boundary result                              | Every version/distribution/architecture, production prevalence                                                            |
+| 2     | At least 275 public variants across at least 25 families on Minikube; frozen KWOK, 24-case AKS, and 30-case external-comparison subsets; HolmesGPT/kubectl-ai; approved repairs and UI anchors; matched uncertainty; PR/scheduled lanes; observed SLOs; operational quarantine; scoped safety gates | Five ordered exit gates | Qualified public-roster methodology and external competitiveness gaps; no unseen-private-case claim | Private holdouts, free-form grader decision/qualification, target-population representativeness, additional references, production validity |
+| 3     | At least 283 public variants plus 25 private holdouts with access verification and held-out evaluation; source-backed case flow; four interactions; twelve metamorphic pairs; external replay; distribution/maintenance reporting; SME audit; UI/headless parity; closed model-grader decision gate | Five ordered exit gates | Broader capability, robustness, qualified held-out transfer, maintained semantic validity, and one external-boundary result | Every version/distribution/architecture, production prevalence |
 | 4     | Periodic red-team promotion; scheduled attack/control lane; five attack pairs; safety thresholds/case; quarantine/invalidation drills; four race schedules; two telemetry families; signed/restricted evidence                                                                                                                  | Five ordered exit gates | High-risk safety/integrity/concurrency validity for tested production-like boundaries                                       | Human representativeness and deployment benefit, energy/carbon without complete measurement                               |
 | 5     | Synthetic governance rehearsal; prospective shadow prediction; conditional human study; governed sampling/feedback; monitoring; incident promotion; holdout refresh; controlled deployment studies; metric lifecycle                                                                                                            | Five ordered exit gates | Only the predictive, human, or deployment claims whose own gates pass                                                       | Universal coverage/thresholds, permanent grader validity, automatic production mutation                                   |
 
@@ -2337,7 +2422,7 @@ those saves little while destroying the result's meaning.
 | Trial-and-error repair passes with wrong RCA                     | Require causal-evidence checks and hard postconditions separately; gate exact approval scope and collateral state                                                                                                  |
 | Judge prefers verbosity or silently drifts                       | Use deterministic facts first; Phase 3 either records grading as not applicable or requires expert calibration, blinded/swapped order, bias/injection controls, agreement, holdout, pinning, and baseline backfill |
 | Best practices remain permanently “optional”                     | Regenerate the disposition matrix at every exit; implement cheap scoped forms early and require a named expansion phase or evidenced `not_applicable` decision                                                     |
-| A small visible suite is overfit or marketed as coverage         | Limit Phase 1 to per-case claims; use lineage-aware development, regression, capability, safety, and private-holdout sets from Phase 2                                                                             |
+| A small visible suite is overfit or marketed as coverage         | Limit Phase 1 to per-case claims; use lineage-aware public splits in Phase 2, restrict claims to the public roster, and require lineage-separated private holdouts in Phase 3 |
 | Generated drafts or variants inflate breadth                     | Count only independently admitted causal families as base breadth; report drafts, controls, transforms, repeats, models, and environments as separate units                                                        |
 | Copilot or Foundry resolution changes during comparison          | Resolve once into an immutable candidate manifest; a different catalog choice, deployment, model observation, adapter, or parameter set starts a new configuration                                                 |
 | Parallel agents share state or rate limits                       | Give each task isolated work/output and trial identities; serialize scarce cluster/provider cells; preserve `429`, cache, collision, and contamination failures                                                    |
@@ -2417,15 +2502,16 @@ are not independent incidents, and no draft counts before executable pre-run
 engineering qualification.
 
 After this loop catches a real or seeded regression, build the concrete Phase 2
-portfolio of at least 275 qualified public variants across at least 25 families,
-plus 25 separately protected private holdouts. Run every public variant on
+portfolio of at least 275 qualified public variants across at least 25 families.
+Defer the 25 separately protected private holdouts to Phase 3. Run every public variant on
 Minikube, retain a metadata-selected KWOK-compatible fast subset, and expose
 both local paths as `npm run eval:local:kwok` and
 `npm run eval:local:minikube`. Freeze a 24-case AKS parity subset and a 30-case
-external-comparison subset. Add only HolmesGPT and K8sGPT as external references:
-pin their container images, configure only provider credentials plus
-kubeconfig/RBAC, assign every external-comparison case, preserve unsupported
-cells, and require direct typed output or lossless native-field mapping. Publish
+external-comparison subset. Under the approved v2 scope, use HolmesGPT and
+kubectl-ai for supplied-evidence diagnosis, with repair/browser evidence
+separate and K8sGPT retained as descriptive context. Pin container identities,
+bound tool access, assign every case, preserve unsupported cells, and require
+direct typed output or lossless native-field mapping. Publish
 each system's absolute eligible results and Headlamp-versus-each-reference gaps
 under both the common-Azure and product-default tracks. This is matched
 competitiveness evidence, not an overall rank.
@@ -2434,7 +2520,8 @@ Treat best-practice adoption as scoped expansion rather than a late compliance
 project. Phase 1 cheaply records health, ownership, review, quarantine,
 distribution limits, safety controls, and portable production-governance fields.
 Phase 2 operationalizes those seeds as CI/schedules, observed SLOs, expiring
-quarantine, UI repair parity, splits/holdout, and scoped gates. Phase 3 expands
+quarantine, UI repair parity, public splits, and scoped gates. Phase 3 adds
+private-holdout creation, access verification, and evaluation, and expands
 source breadth, distribution and maintenance evidence, SME audit, UI/headless
 parity, and either a fully qualified model grader or an explicit
 `not_applicable` decision. Phase 4 expands early attack controls into scheduled
@@ -2446,7 +2533,7 @@ expanded practice.
 If all differentiation-scorecard rows pass, this is the point where Headlamp
 can claim the strongest combined methodology found in the inspected public
 tools for that narrow profile, while publishing their breadth/model-comparison
-advantages beside it. Only then spend scarce capacity on kubectl-ai, kagent,
+advantages beside it. Only then spend scarce capacity on kagent,
 DevOps AI Toolkit, operator breadth, native benchmark adapters, generated
 variants, cross-version matrices, deeper adversarial/concurrent behavior, human
 reliance, or production sampling. HolmesGPT, k8s-ai-bench, and DevOps AI Toolkit

@@ -33,7 +33,12 @@ import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
 import { MCPArgumentProcessor } from '../mcp/tools/ArgumentProcessor';
 import type { MCPToolSchema, UserContext } from '../mcp/tools/types';
-import { buildSystemPrompt, buildToolResponseSystemPrompt } from '../prompts/buildSystemPrompt';
+import { basePrompt } from '../prompts/baseAssistantPrompt';
+import {
+  buildSystemPrompt,
+  buildToolResponseSystemPrompt,
+  NO_K8S_TOOLS_PROMPT,
+} from '../prompts/buildSystemPrompt';
 import {
   createArgumentPreparationPrompt,
   getIntelligentDefault,
@@ -42,7 +47,11 @@ import {
   apiErrorPromptTemplate,
   toolFailurePromptTemplate,
 } from '../prompts/langchain/errorPrompts';
-import { canUseDirectToolCalling, createChatModel } from '../providers/createChatModel';
+import {
+  canUseDirectToolCalling,
+  createChatModel,
+  isCopilotClaudeModel,
+} from '../providers/createChatModel';
 import { ProviderSettings } from '../providers/savedConfigs';
 import { redactSecrets } from '../security/redactSecrets';
 import { DEFAULT_SKILLS_CONFIG, SkillsConfig } from '../skills/config';
@@ -188,6 +197,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
   private extraTools: Map<string, ExtraTool> = new Map();
   private telemetryObserver?: AssistantTelemetryObserver;
+  private cacheCopilotClaudeSystemPrompt: boolean;
 
   // Skills system
   private skillManager: SkillManager | null = null;
@@ -239,6 +249,12 @@ export default class LangChainAssistantSession extends AssistantSession {
     super();
     this.providerId = providerId;
     this.telemetryObserver = options?.telemetryObserver;
+    const configuredModel =
+      typeof config.model === 'string' ? config.model.split('/').pop() : undefined;
+    this.cacheCopilotClaudeSystemPrompt =
+      providerId === 'copilot' &&
+      configuredModel !== undefined &&
+      isCopilotClaudeModel(configuredModel);
     const enabledToolIds = enabledTools ?? [];
     console.debug(
       'AI Assistant: Initializing with enabled tools:',
@@ -532,7 +548,7 @@ export default class LangChainAssistantSession extends AssistantSession {
 
       // Prepare messages
       const messages = [
-        new SystemMessage(this.createSystemPrompt()),
+        this.createSystemMessage(this.createSystemPrompt()),
         ...this.prepareChatHistory(),
         new HumanMessage(message),
       ];
@@ -910,6 +926,21 @@ export default class LangChainAssistantSession extends AssistantSession {
     });
   }
 
+  private createSystemMessage(prompt: string): SystemMessage {
+    if (!this.cacheCopilotClaudeSystemPrompt) return new SystemMessage(prompt);
+    const cacheablePrefix = prompt.startsWith(basePrompt)
+      ? basePrompt
+      : prompt.startsWith(NO_K8S_TOOLS_PROMPT)
+      ? NO_K8S_TOOLS_PROMPT
+      : '';
+    if (!cacheablePrefix) return new SystemMessage(prompt);
+    const dynamicSuffix = prompt.slice(cacheablePrefix.length);
+    return new SystemMessage([
+      { type: 'text', text: cacheablePrefix, cache_control: { type: 'ephemeral' } },
+      ...(dynamicSuffix ? [{ type: 'text', text: dynamicSuffix }] : []),
+    ]);
+  }
+
   /**
    * Creates specialized instructions for summarizing tool responses.
    *
@@ -1039,7 +1070,7 @@ export default class LangChainAssistantSession extends AssistantSession {
 
       // Convert chain input to messages
       const messages = [
-        new SystemMessage(chainInput.systemPrompt),
+        this.createSystemMessage(chainInput.systemPrompt),
         ...chainInput.chatHistory,
         new HumanMessage(chainInput.input),
       ];
@@ -1109,7 +1140,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     message: string,
     model: InvokableChatModel
   ): Promise<ConversationMessage> {
-    const systemMessage = new SystemMessage(this.createSystemPrompt());
+    const systemMessage = this.createSystemMessage(this.createSystemPrompt());
     const userMessage = new HumanMessage(message);
     const messages = [systemMessage, userMessage];
 
@@ -1185,7 +1216,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   ): Promise<ConversationMessage> {
     // Convert chain input to messages for tool-enabled models
     const messages = [
-      new SystemMessage(chainInput.systemPrompt),
+      this.createSystemMessage(chainInput.systemPrompt),
       ...chainInput.chatHistory,
       new HumanMessage(chainInput.input),
     ];
@@ -2231,7 +2262,7 @@ Please analyze this data and provide a specific, detailed response that directly
 
     try {
       // Prepare messages for tool response
-      const systemMessage = new SystemMessage(this.createToolResponseSystemPrompt());
+      const systemMessage = this.createSystemMessage(this.createToolResponseSystemPrompt());
       const messages = this.prepareMessagesForToolResponse();
 
       // Use the unbound model (no tools) to avoid recursive tool calls
@@ -2306,7 +2337,7 @@ Please analyze this data and provide a specific, detailed response that directly
        */
       invoke: async (input: ToolResponseChainInput) => {
         const response = await model.invoke([
-          new SystemMessage(input.systemPrompt),
+          this.createSystemMessage(input.systemPrompt),
           ...input.messages,
         ]);
         this.recordModelUsage(response);
@@ -2338,7 +2369,7 @@ Please analyze this data and provide a specific, detailed response that directly
    * @returns System, regular conversation, and optional tool-analysis messages.
    */
   private prepareMessagesForToolResponse(): BaseMessage[] {
-    const systemMessage = new SystemMessage(this.createSystemPrompt());
+    const systemMessage = this.createSystemMessage(this.createSystemPrompt());
     const messages: BaseMessage[] = [systemMessage];
 
     // Add conversation history, excluding tool responses and assistant tool-call messages.

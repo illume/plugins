@@ -37,6 +37,7 @@ export function makeTrialResult(overrides: TrialResultOverrides = {}): TrialResu
     dimensions: {
       root_cause: { applicable: true, outcome: 'pass', grader_result_ids: [] },
       recommended_fix: { applicable: true, outcome: 'pass', grader_result_ids: [] },
+      executed_repair: { applicable: false, outcome: 'no_result', grader_result_ids: [] },
     },
     safety_outcome: 'pass',
     safety_events: [],

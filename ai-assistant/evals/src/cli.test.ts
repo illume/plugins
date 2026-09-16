@@ -40,6 +40,27 @@ function runCli(args: string[]): { stdout: string; stderr: string; status: numbe
   return { stdout: result.stdout ?? '', stderr: result.stderr ?? '', status: result.status ?? 1 };
 }
 
+test('cli comparison:status selects the revised draft or preserved legacy registration', () => {
+  const current = runCli(['comparison:status']);
+  assert.equal(current.status, 0, current.stderr);
+  const status = JSON.parse(current.stdout);
+  assert.equal(status.registration_id, 'phase2-comparison-v2');
+  assert.equal(status.comparison_scope, 'supplied_evidence_diagnosis');
+  assert.equal(status.confirmatory_execution, 'allowed');
+  assert.equal(status.repeat_budget.cli_invocations, 750);
+  assert.equal(status.private_holdouts_required_in_phase, 3);
+  assert.deepEqual(status.blockers, []);
+  assert.equal(status.assignment_counts['kubectl-ai'].eligible, 25);
+  const legacy = runCli([
+    'comparison:status',
+    '--registration',
+    path.join(evalsRoot, 'registrations/phase2-comparison-v1.json'),
+  ]);
+  assert.equal(legacy.status, 0, legacy.stderr);
+  assert.equal(JSON.parse(legacy.stdout).registration_id, 'phase2-comparison-v1');
+  assert.equal(JSON.parse(legacy.stdout).assignment_counts.k8sgpt.unsupported, 30);
+});
+
 test('cli run: local-kwok dry-run reference produces two passing trials', () => {
   const dir = makeScratchDir('cli-run');
   try {
@@ -47,6 +68,8 @@ test('cli run: local-kwok dry-run reference produces two passing trials', () => 
       'run',
       '--profile',
       'local-kwok',
+      '--portfolio',
+      'phase-1',
       '--candidate',
       'reference',
       '--runs-dir',
@@ -85,6 +108,8 @@ test('cli run: rejects an incompatible --case on local-kwok with a non-zero exit
       'run',
       '--profile',
       'local-kwok',
+      '--portfolio',
+      'phase-1',
       '--candidate',
       'reference',
       '--case',
@@ -96,6 +121,46 @@ test('cli run: rejects an incompatible --case on local-kwok with a non-zero exit
     ]);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /not in the generated KWOK-compatible subset/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('cli run: forwards kubectl-ai configuration and rejects mutable images before setup', () => {
+  const dir = makeScratchDir('cli-kubectl-ai');
+  try {
+    const result = spawnSync(
+      tsxBin,
+      [
+        cliPath,
+        'run',
+        '--execute',
+        'real',
+        '--profile',
+        'local-minikube',
+        '--candidate',
+        'kubectl-ai',
+        '--kubectl-ai-image',
+        'example:latest',
+        '--kubectl-ai-model',
+        'gpt-4o',
+        '--case',
+        'core-pvc-storageclass-healthy-v1',
+        '--runs-dir',
+        dir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          AZURE_OPENAI_API_KEY: 'test-cli-key',
+          AZURE_OPENAI_ENDPOINT: 'https://example.openai.azure.com',
+        },
+      }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /requires an immutable image ID or digest/);
+    assert.deepEqual(readdirSync(dir), []);
   } finally {
     removeScratchDir(dir);
   }
@@ -121,12 +186,47 @@ test('cli run: rejects incomplete pricing before creating a run', () => {
   }
 });
 
-test('cli list-scenarios: local-kwok lists exactly the two kwok-compatible cases', () => {
-  const result = runCli(['list-scenarios', '--profile', 'local-kwok']);
+test('cli run: explicit Azure provider requires endpoint and deployment name', () => {
+  const dir = makeScratchDir('cli-run-azure-config');
+  try {
+    const result = runCli([
+      'run',
+      '--provider',
+      'azure',
+      '--api-key',
+      'test-key',
+      '--model',
+      'gpt-4o',
+      '--runs-dir',
+      dir,
+    ]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /--endpoint and --deployment-name are required/);
+    assert.deepEqual(readdirSync(dir), []);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('cli list-scenarios: local-kwok lists exactly the two Phase 1 kwok-compatible cases', () => {
+  const result = runCli(['list-scenarios', '--profile', 'local-kwok', '--portfolio', 'phase-1']);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /core-service-selector-fault-v1 \(kwok_compatible=true\)/);
-  assert.match(result.stdout, /core-service-selector-healthy-v1 \(kwok_compatible=true\)/);
+  assert.match(result.stdout, /core-service-selector-fault-v1 .*kwok_compatible=true/);
+  assert.match(result.stdout, /core-service-selector-healthy-v1 .*kwok_compatible=true/);
   assert.doesNotMatch(result.stdout, /core-unschedulable-capacity-v1/);
+});
+
+test('cli list-scenarios: qualified Phase 2 anchors are runnable without pending override', () => {
+  const listed = runCli([
+    'list-scenarios',
+    '--profile',
+    'local-minikube',
+    '--portfolio',
+    'phase-2',
+  ]);
+  assert.equal(listed.status, 0, listed.stderr);
+  assert.match(listed.stdout, /core-service-selector-repair-v1 .*qualification=qualified/);
+  assert.match(listed.stdout, /core-annotation-injection-v1 .*qualification=qualified/);
 });
 
 test('cli report:publish + report:overall --check: publish then verify a matching overall view', () => {

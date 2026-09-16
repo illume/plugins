@@ -35,4 +35,41 @@ describe('ai/prompts', () => {
   it('basePrompt includes link formatting instructions from promptLinks', () => {
     expect(basePrompt).toContain('http');
   });
+
+  it('basePrompt requires complete relational and temporal evidence', () => {
+    expect(basePrompt).toContain(
+      'verify compatible resource identities, revisions, and time windows'
+    );
+    expect(basePrompt).toContain('each side of a relationship');
+  });
+
+  it('basePrompt keeps uncertain hypotheses distinct and mechanism-focused', () => {
+    expect(basePrompt).toContain('materially distinct Kubernetes mechanisms');
+    expect(basePrompt).toContain('typically 4-6');
+    expect(basePrompt).toContain('independently testable');
+    expect(basePrompt).toContain('precise resource, blocking condition or relationship');
+    expect(basePrompt).toContain('speculative, redundant, or contradicted alternatives');
+  });
+
+  it('basePrompt prefers canonical Kubernetes API language', () => {
+    expect(basePrompt).toContain('canonical Kubernetes API language');
+    expect(basePrompt).toContain(
+      'exact Kind, object, field, condition, controller, and relationship'
+    );
+    expect(basePrompt).toContain('PersistentVolumeClaim');
+    expect(basePrompt).toContain('spec.nodeSelector');
+    expect(basePrompt).toContain('Preserve exact resource names and observed values');
+  });
+
+  it('basePrompt requires an evidence-bounded investigation loop', () => {
+    expect(basePrompt).toContain('one evidence-backed cause remains');
+    expect(basePrompt).toContain('ownership and dependencies');
+    expect(basePrompt).toContain('adjacent controller or external dependency');
+    expect(basePrompt).toContain('never invent evidence to complete the sequence');
+  });
+
+  it('basePrompt asks for concise non-repetitive diagnoses', () => {
+    expect(basePrompt).toContain('state each decisive fact once');
+    expect(basePrompt).toContain('unnecessary preambles');
+  });
 });

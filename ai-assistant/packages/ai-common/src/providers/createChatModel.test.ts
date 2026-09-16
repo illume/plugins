@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ChatAnthropic } from '@langchain/anthropic';
 import { describe, expect, it } from 'vitest';
 import {
   canUseDirectToolCalling,
@@ -164,6 +165,17 @@ describe('createLangChainModel — copilot model name stripping', () => {
     // 'openai/gpt-4o' → 'gpt-4o'
     const m = createChatModel('copilot', { apiKey: 'ghp_tok', model: 'openai/gpt-4o' });
     expect(m).toBeDefined();
+  });
+
+  it('routes Claude models through the native Anthropic client', () => {
+    for (const modelName of ['anthropic/claude-opus-4.7', 'claude-haiku-4.5']) {
+      const model = createChatModel('copilot', {
+        apiKey: 'ghp_tok',
+        model: modelName,
+      });
+
+      expect(model).toBeInstanceOf(ChatAnthropic);
+    }
   });
 
   it('Bug: multi-segment model names lose all but the last segment', () => {

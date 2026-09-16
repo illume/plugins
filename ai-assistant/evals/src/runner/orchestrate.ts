@@ -28,19 +28,30 @@
  * doc's ten-day budget.
  */
 
-import type { ExecutionMode } from '../cluster/adapterFactory.js';
-import type { ClusterProfileName, TrialResult } from '../contracts/evaluationContracts.js';
-import { createHeadlampCliCandidate } from '../candidates/headlampCli.js';
 import type { TokenPricingSnapshot } from '../candidates/candidateAdapter.js';
-import { createScriptedCandidate, type ScriptedCandidateMode } from '../candidates/scripted.js';
 import type { CandidateAdapter } from '../candidates/candidateAdapter.js';
-import { loadAllScenarios, type LoadedScenario } from '../scenarios/loader.js';
+import { createHeadlampCliCandidate } from '../candidates/headlampCli.js';
+import { createHolmesGptCandidate, HOLMES_GPT_IMAGE } from '../candidates/holmesGptAdapter.js';
+import {
+  createK8sGptCandidate,
+  K8S_GPT_IMAGE,
+  type K8sGptCandidateOptions,
+} from '../candidates/k8sGptAdapter.js';
+import {
+  createKubectlAiCandidate,
+  type KubectlAiCandidateOptions,
+} from '../candidates/kubectlAiAdapter.js';
+import { createScriptedCandidate, type ScriptedCandidateMode } from '../candidates/scripted.js';
+import type { ExecutionMode } from '../cluster/adapterFactory.js';
+import { loadClusterProfile } from '../cluster/profile.js';
+import type { ClusterProfileName, TrialResult } from '../contracts/evaluationContracts.js';
 import { isEligibleToRun, ownershipRowFromManifest } from '../operations/ownership.js';
 import { computeRegressionDeltas } from '../regressions/regressionDelta.js';
-import { RunBundleWriter } from '../storage/bundleWriter.js';
-import { readClosedBundle } from '../storage/bundleReader.js';
 import { buildReport, writeReport } from '../reporting/reportBuilder.js';
-import { loadClusterProfile } from '../cluster/profile.js';
+import { matchesScenarioSelection, type ScenarioSelection } from '../scenarios/admission.js';
+import { loadAllScenarios, type LoadedScenario } from '../scenarios/loader.js';
+import { readClosedBundle } from '../storage/bundleReader.js';
+import { RunBundleWriter } from '../storage/bundleWriter.js';
 import {
   archiveContractReferences,
   defaultContractStoreRoot,
@@ -48,7 +59,12 @@ import {
 import { runCandidatePass } from './candidatePass.js';
 
 /** Candidate adapter configuration accepted by the Phase 1 orchestrator. */
-export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
+export type CandidateSpec =
+  | ScriptedCandidateMode
+  | 'headlamp-cli'
+  | 'holmesgpt'
+  | 'k8sgpt'
+  | 'kubectl-ai';
 
 /**
  * Tests whether a CLI value names a supported candidate configuration.
@@ -57,7 +73,22 @@ export type CandidateSpec = ScriptedCandidateMode | 'headlamp-cli';
  * @returns `true` when the value is a supported candidate specification.
  */
 export function isCandidateSpec(value: string): value is CandidateSpec {
-  return ['reference', 'wrong', 'malformed', 'unavailable', 'headlamp-cli'].includes(value);
+  return [
+    'reference',
+    'partial',
+    'wrong',
+    'abstaining',
+    'overconfident',
+    'unsupported-evidence',
+    'unsafe-effective',
+    'injected',
+    'malformed',
+    'unavailable',
+    'headlamp-cli',
+    'holmesgpt',
+    'k8sgpt',
+    'kubectl-ai',
+  ].includes(value);
 }
 
 /** Inputs that define one complete evaluation run and its persisted output. */
@@ -74,6 +105,8 @@ export interface RunOptions {
   mode: ExecutionMode;
   /** Explicit case IDs; when omitted, defaults per profile (see `selectScenarios`). */
   cases?: string[];
+  /** Prespecified portfolio, split, and stratum filters. */
+  selection?: ScenarioSelection;
   /** Candidate configuration evaluated by the run. */
   candidate: CandidateSpec;
   /** Optional baseline configuration compared with the candidate. */
@@ -86,6 +119,17 @@ export interface RunOptions {
   candidateCliArgs?: string[];
   /** Explicit token-price snapshot used for reproducible cost estimates. */
   pricing?: TokenPricingSnapshot;
+  /** Holmes model identifier, such as azure/gpt-4o. */
+  holmesModel?: string;
+  /** Azure OpenAI model used by K8sGPT's mandatory explanation path. */
+  k8sGptModel?: string;
+  /** Azure OpenAI deployment used by K8sGPT's mandatory explanation path. */
+  k8sGptDeployment?: string;
+  kubectlAiImage?: string;
+  kubectlAiModel?: string;
+  kubectlAiTimeoutMs?: number;
+  /** Whether the evaluation operator explicitly approves policy-matched repair requests. */
+  approveRepairs?: boolean;
 }
 
 /** Canonical bundle identity and projections returned after a run closes successfully. */
@@ -112,13 +156,48 @@ export interface RunOutcome {
  * @param candidateCliArgs - Additional Headlamp CLI arguments.
  * @returns The configured candidate adapter.
  */
+function resolveK8sGptOptions(
+  mode: ExecutionMode,
+  profile: ClusterProfileName,
+  model?: string,
+  deployment?: string
+): K8sGptCandidateOptions {
+  if (mode !== 'real') throw new Error('k8sgpt requires --execute real');
+  if (profile !== 'local-minikube') {
+    throw new Error(
+      'k8sgpt requires --profile local-minikube for isolated read-only native analysis'
+    );
+  }
+  if (!model) throw new Error('k8sgpt requires --k8sgpt-model <model>');
+  if (!deployment) throw new Error('k8sgpt requires --k8sgpt-deployment <deployment>');
+  const apiKey = process.env.AZURE_API_KEY;
+  const apiBase = process.env.AZURE_API_BASE;
+  const apiVersion = process.env.AZURE_API_VERSION;
+  if (!apiKey || !apiBase || !apiVersion) {
+    throw new Error('k8sgpt requires AZURE_API_KEY, AZURE_API_BASE, and AZURE_API_VERSION');
+  }
+  return {
+    image: K8S_GPT_IMAGE,
+    kubeconfigPath: '',
+    model,
+    deployment,
+    apiKey,
+    apiBase,
+    apiVersion,
+  };
+}
+
 function buildCandidate(
   spec: CandidateSpec,
   scenario: LoadedScenario,
   mode: ExecutionMode,
   profile: ClusterProfileName,
   candidateCliArgs?: string[],
-  pricing?: TokenPricingSnapshot
+  pricing?: TokenPricingSnapshot,
+  holmesModel?: string,
+  k8sGptModel?: string,
+  k8sGptDeployment?: string,
+  kubectlAiOptions?: KubectlAiCandidateOptions
 ): CandidateAdapter {
   if (spec === 'headlamp-cli') {
     return createHeadlampCliCandidate({
@@ -130,6 +209,24 @@ function buildCandidate(
       cliArgs: candidateCliArgs,
       pricing,
     });
+  }
+  if (spec === 'holmesgpt') {
+    if (mode !== 'real') throw new Error('holmesgpt requires --execute real');
+    if (!holmesModel) throw new Error('holmesgpt requires --holmes-model <provider/model>');
+    return createHolmesGptCandidate({
+      image: HOLMES_GPT_IMAGE,
+      kubeconfigPath: '',
+      model: holmesModel,
+    });
+  }
+  if (spec === 'k8sgpt') {
+    return createK8sGptCandidate(
+      resolveK8sGptOptions(mode, profile, k8sGptModel, k8sGptDeployment)
+    );
+  }
+  if (spec === 'kubectl-ai') {
+    if (!kubectlAiOptions) throw new Error('kubectl-ai configuration was not resolved');
+    return createKubectlAiCandidate(kubectlAiOptions);
   }
   return createScriptedCandidate(spec, scenario.evaluatorPacket);
 }
@@ -150,7 +247,8 @@ function buildCandidate(
 export function selectScenarios(
   profile: ClusterProfileName,
   requestedCases: string[] | undefined,
-  scenariosRoot?: string
+  scenariosRoot?: string,
+  selection: ScenarioSelection = {}
 ): LoadedScenario[] {
   const all = loadAllScenarios(scenariosRoot).filter(isEligibleToRun);
 
@@ -158,6 +256,9 @@ export function selectScenarios(
     return requestedCases.map(id => {
       const scenario = all.find(s => s.manifest.scenario_id === id);
       if (!scenario) throw new Error(`unknown or inactive scenario: ${id}`);
+      if (!matchesScenarioSelection(scenario.manifest, selection)) {
+        throw new Error(`${id} does not match the requested portfolio selection`);
+      }
       if (profile === 'local-kwok' && !scenario.kwokCompatible) {
         throw new Error(
           `${id} is not in the generated KWOK-compatible subset (required_mechanisms: ` +
@@ -177,11 +278,37 @@ export function selectScenarios(
   if (profile === 'local-kwok') {
     return all.filter(
       scenario =>
+        matchesScenarioSelection(scenario.manifest, selection) &&
         scenario.kwokCompatible &&
         scenario.manifest.supported_cluster_profiles.includes('local-kwok')
     );
   }
-  return all.filter(s => s.manifest.supported_cluster_profiles.includes(profile));
+  return all.filter(
+    scenario =>
+      matchesScenarioSelection(scenario.manifest, selection) &&
+      scenario.manifest.supported_cluster_profiles.includes(profile)
+  );
+}
+
+function assertCandidateSupportsScenarios(
+  candidate: CandidateSpec,
+  scenarios: LoadedScenario[],
+  role: 'candidate' | 'baseline'
+): void {
+  if (candidate !== 'holmesgpt' && candidate !== 'k8sgpt' && candidate !== 'kubectl-ai') return;
+  const unsupported = scenarios
+    .filter(
+      scenario =>
+        scenario.candidatePacket.required_submission_schema !== 'diagnosis_submission@1.0.0'
+    )
+    .map(scenario => scenario.manifest.scenario_id);
+  if (unsupported.length > 0) {
+    throw new Error(
+      `${role} ${candidate} does not support repair_submission@1.0.0 scenarios: ${unsupported.join(
+        ', '
+      )}`
+    );
+  }
 }
 
 /**
@@ -194,9 +321,46 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
   if (options.baseline === options.candidate) {
     throw new Error('baseline and candidate must identify distinct configurations');
   }
-  const scenarios = selectScenarios(options.profile, options.cases, options.scenariosRoot);
+  const scenarios = selectScenarios(
+    options.profile,
+    options.cases,
+    options.scenariosRoot,
+    options.selection
+  );
   if (scenarios.length === 0) {
     throw new Error('no scenarios selected: check --profile/--case and scenario lifecycle_state');
+  }
+  assertCandidateSupportsScenarios(options.candidate, scenarios, 'candidate');
+  if (options.baseline) assertCandidateSupportsScenarios(options.baseline, scenarios, 'baseline');
+
+  if (options.candidate === 'k8sgpt' || options.baseline === 'k8sgpt') {
+    resolveK8sGptOptions(
+      options.mode,
+      options.profile,
+      options.k8sGptModel,
+      options.k8sGptDeployment
+    );
+  }
+
+  let kubectlAiOptions: KubectlAiCandidateOptions | undefined;
+  if (options.candidate === 'kubectl-ai' || options.baseline === 'kubectl-ai') {
+    if (options.mode !== 'real') throw new Error('kubectl-ai requires --execute real');
+    if (!options.kubectlAiImage || !options.kubectlAiModel) {
+      throw new Error(
+        'kubectl-ai requires --kubectl-ai-image <digest> and --kubectl-ai-model <deployment>'
+      );
+    }
+    if (!process.env.AZURE_OPENAI_API_KEY || !process.env.AZURE_OPENAI_ENDPOINT) {
+      throw new Error('kubectl-ai requires AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT');
+    }
+    kubectlAiOptions = {
+      image: options.kubectlAiImage,
+      model: options.kubectlAiModel,
+      apiKey: process.env.AZURE_OPENAI_API_KEY,
+      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+      timeoutMs: options.kubectlAiTimeoutMs,
+    };
+    createKubectlAiCandidate(kubectlAiOptions);
   }
 
   const bundleWriter = new RunBundleWriter(options.runsRoot, options.runId);
@@ -212,6 +376,7 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
     profile: options.profile,
     mode: options.mode,
     supersedesTrialId: options.supersedesTrialId,
+    approveRepairs: options.approveRepairs,
     createCandidate: scenario =>
       buildCandidate(
         options.candidate,
@@ -219,7 +384,11 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
         options.mode,
         options.profile,
         options.candidateCliArgs,
-        options.pricing
+        options.pricing,
+        options.holmesModel,
+        options.k8sGptModel,
+        options.k8sGptDeployment,
+        kubectlAiOptions
       ),
   });
 
@@ -231,6 +400,7 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
       bundleWriter,
       profile: options.profile,
       mode: options.mode,
+      approveRepairs: options.approveRepairs,
       createCandidate: scenario =>
         buildCandidate(
           options.baseline!,
@@ -238,7 +408,11 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
           options.mode,
           options.profile,
           options.candidateCliArgs,
-          options.pricing
+          options.pricing,
+          options.holmesModel,
+          options.k8sGptModel,
+          options.k8sGptDeployment,
+          kubectlAiOptions
         ),
     });
     const deltas = computeRegressionDeltas(baselineResults, candidateResults);

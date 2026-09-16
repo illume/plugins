@@ -11,6 +11,7 @@
     "title",
     "description",
     "provenance",
+    "portfolio",
     "supported_cluster_profiles",
     "required_mechanisms",
     "declared_kwok_compatible",
@@ -52,7 +53,98 @@
           "enum": ["active", "draft", "quarantined", "retired"]
         },
         "quarantine": { "type": "object" }
-      }
+      },
+      "additionalProperties": false
+    },
+    "portfolio": {
+      "type": "object",
+      "required": [
+        "phase",
+        "visibility",
+        "behavioral_stratum",
+        "family_id",
+        "lineage_id",
+        "variant_kind",
+        "splits",
+        "qualification_status",
+        "qualification_controls",
+        "reviewed_by"
+      ],
+      "properties": {
+        "phase": { "type": "integer", "enum": [1, 2] },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "behavioral_stratum": {
+          "type": "string",
+          "enum": [
+            "fault_diagnosis",
+            "healthy_control",
+            "insufficient_evidence",
+            "approved_repair",
+            "security_prompt_injection",
+            "multi_turn_tool_failure"
+          ]
+        },
+        "family_id": { "type": "string", "minLength": 1 },
+        "lineage_id": { "type": "string", "minLength": 1 },
+        "variant_kind": {
+          "type": "string",
+          "enum": ["anchor", "adapted", "transformed", "generated"]
+        },
+        "parent_scenario_id": { "type": "string", "minLength": 1 },
+        "splits": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "development",
+              "regression",
+              "capability",
+              "safety",
+              "external_comparison",
+              "aks_parity"
+            ]
+          }
+        },
+        "qualification_status": {
+          "type": "string",
+          "enum": ["qualified", "pending", "rejected"]
+        },
+        "qualification_controls": {
+          "type": "object",
+          "required": [
+            "provenance",
+            "rights",
+            "family_lineage",
+            "mechanism_oracle",
+            "candidate_view",
+            "setup",
+            "observation_capture",
+            "cleanup",
+            "leakage"
+          ],
+          "properties": {
+            "provenance": { "$ref": "#/$defs/qualificationControl" },
+            "rights": { "$ref": "#/$defs/qualificationControl" },
+            "family_lineage": { "$ref": "#/$defs/qualificationControl" },
+            "mechanism_oracle": { "$ref": "#/$defs/qualificationControl" },
+            "candidate_view": { "$ref": "#/$defs/qualificationControl" },
+            "setup": { "$ref": "#/$defs/qualificationControl" },
+            "observation_capture": { "$ref": "#/$defs/qualificationControl" },
+            "cleanup": { "$ref": "#/$defs/qualificationControl" },
+            "leakage": { "$ref": "#/$defs/qualificationControl" }
+          },
+          "additionalProperties": false
+        },
+        "reviewed_by": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "qualified_at": { "type": "string" }
+      },
+      "additionalProperties": false
     },
     "supported_cluster_profiles": { "type": "array", "items": { "type": "string" } },
     "required_mechanisms": { "type": "array", "items": { "type": "string" } },
@@ -62,7 +154,15 @@
     "artifact_policy": {
       "type": "object",
       "required": ["retain_raw_tool_output"],
-      "properties": { "retain_raw_tool_output": { "type": "boolean" } }
+      "properties": { "retain_raw_tool_output": { "type": "boolean" } },
+      "additionalProperties": false
     }
-  }
+  },
+  "$defs": {
+    "qualificationControl": {
+      "type": "string",
+      "enum": ["passed", "pending", "failed"]
+    }
+  },
+  "additionalProperties": false
 }

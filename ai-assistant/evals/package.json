@@ -1,7 +1,7 @@
 {
   "name": "@headlamp-k8s/ai-evals",
   "version": "0.1.0",
-  "description": "Headlamp AI Assistant evaluation framework (Phase 1: local developer loop)",
+  "description": "Headlamp AI Assistant evaluation framework (Phase 1 plus Phase 2A foundations)",
   "private": true,
   "type": "module",
   "main": "src/cli.ts",
@@ -15,6 +15,11 @@
     "eval": "tsx src/cli.ts run",
     "eval:local:kwok": "tsx src/cli.ts run --profile local-kwok",
     "eval:local:minikube": "tsx src/cli.ts run --profile local-minikube --execute real",
+    "eval:generate:phase2": "tsx src/scenarios/generatePhase2Portfolio.ts",
+    "eval:qualify:minikube": "tsx src/scenarios/qualifyMinikubePortfolio.ts",
+    "eval:qualify:aks": "tsx src/scenarios/qualifyMinikubePortfolio.ts --profile aks",
+    "eval:comparison:status": "tsx src/cli.ts comparison:status",
+    "eval:holdout:verify": "tsx src/cli.ts holdout:verify",
     "eval:aks": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider copilot",
     "eval:aks:azure": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider azure-auto",
     "eval:aks:setup": "tsx src/cli.ts aks:setup",
@@ -46,6 +51,7 @@
   },
   "dependencies": {
     "ajv": "^8.20.0",
+    "fast-json-patch": "^3.1.1",
     "js-yaml": "^4.3.1"
   }
 }

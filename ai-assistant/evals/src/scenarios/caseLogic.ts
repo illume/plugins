@@ -20,10 +20,25 @@
  * trial runner depends only on this stable lookup and shared case contract.
  */
 
-import { capacityCase, pendingUnderdeterminedCase } from './cases/schedulingCases.js';
-import { selectorFaultCase, selectorHealthyCase } from './cases/serviceSelectorCases.js';
+import {
+  capacityCase,
+  capacityRepairCase,
+  pendingUnderdeterminedCase,
+} from './cases/schedulingCases.js';
+import {
+  selectorFaultCase,
+  selectorHealthyCase,
+  selectorRepairCase,
+} from './cases/serviceSelectorCases.js';
+import { healthyStorageClassCase, missingStorageClassCase } from './cases/storageCases.js';
+import {
+  annotationBenignCase,
+  annotationInjectionCase,
+  workloadRbacDeniedCase,
+} from './cases/securityCases.js';
+import { staleEventHealthyCase } from './cases/rolloutCases.js';
 import type { ScenarioCaseLogic } from './cases/caseSupport.js';
-import { PHASE_ONE_SCENARIO_IDS } from '../contracts/evaluationContracts.js';
+import { PHASE_ONE_SCENARIO_IDS, PHASE_TWO_ANCHOR_IDS } from '../contracts/evaluationContracts.js';
 
 export type { ObservationStep, PreflightOutcome, ScenarioCaseLogic } from './cases/caseSupport.js';
 export { parseCpuCores } from './cases/schedulingCases.js';
@@ -33,11 +48,29 @@ const registry = {
   'core-service-selector-healthy-v1': selectorHealthyCase,
   'core-unschedulable-capacity-v1': capacityCase,
   'core-pending-underdetermined-v1': pendingUnderdeterminedCase,
-} satisfies Record<(typeof PHASE_ONE_SCENARIO_IDS)[number], ScenarioCaseLogic>;
+  'core-pvc-storageclass-missing-v1': missingStorageClassCase,
+  'core-pvc-storageclass-healthy-v1': healthyStorageClassCase,
+  'core-workload-rbac-denied-v1': workloadRbacDeniedCase,
+  'core-rollout-stale-event-healthy-v1': staleEventHealthyCase,
+  'core-service-selector-repair-v1': selectorRepairCase,
+  'core-unschedulable-capacity-repair-v1': capacityRepairCase,
+  'core-annotation-injection-v1': annotationInjectionCase,
+  'core-annotation-benign-v1': annotationBenignCase,
+} satisfies Record<
+  (typeof PHASE_ONE_SCENARIO_IDS)[number] | (typeof PHASE_TWO_ANCHOR_IDS)[number],
+  ScenarioCaseLogic
+>;
 
-/** Resolves the registered behavior for one scenario identity. */
-export function caseLogicFor(scenarioId: string): ScenarioCaseLogic {
-  const logic = (registry as Record<string, ScenarioCaseLogic>)[scenarioId];
-  if (!logic) throw new Error(`no case logic registered for scenario ${scenarioId}`);
+/** Resolves registered behavior directly or through a generated variant's parent. */
+export function caseLogicFor(scenarioId: string, parentScenarioId?: string): ScenarioCaseLogic {
+  const registered = registry as Record<string, ScenarioCaseLogic>;
+  const logic =
+    registered[scenarioId] ?? (parentScenarioId ? registered[parentScenarioId] : undefined);
+  if (!logic) {
+    throw new Error(
+      `no case logic registered for scenario ${scenarioId}` +
+        (parentScenarioId ? ` or parent ${parentScenarioId}` : '')
+    );
+  }
   return logic;
 }

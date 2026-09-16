@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "phase2-health-probe-readiness-10-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "Users report that the `web` Service in this namespace is not routing traffic to any backend Pod. Investigate and explain the root cause, citing the exact resource evidence you retrieve. This is a read-only investigation: do not propose or attempt any change. This is portfolio variant 10.",
+  "visible_resource_refs": [
+    "service/web",
+    "pod/web-1"
+  ],
+  "allowed_observation_kinds": [
+    "service.selector",
+    "pod.labels",
+    "endpointslice.endpoints"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

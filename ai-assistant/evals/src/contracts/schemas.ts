@@ -38,15 +38,22 @@ export type SchemaName =
   | 'evaluator-packet'
   | 'contract-refs'
   | 'diagnosis-submission'
+  | 'repair-submission'
+  | 'action-request'
+  | 'action-approval'
   | 'submission-record'
   | 'bundle-manifest'
   | 'trial-index'
   | 'trajectory-event'
+  | 'action-journal-event'
   | 'trial-result'
   | 'artifact-index'
   | 'regression-delta'
   | 'environment-manifest'
   | 'grader-result'
+  | 'exploratory-attempt'
+  | 'comparison-registration'
+  | 'private-holdout-manifest'
   | 'report';
 
 /**

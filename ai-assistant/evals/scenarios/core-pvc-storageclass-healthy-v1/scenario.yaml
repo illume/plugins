@@ -1,0 +1,51 @@
+schema_version: '1.0.0'
+scenario_id: core-pvc-storageclass-healthy-v1
+scenario_version: '1.0.1'
+family: storage-provisioning
+mode: diagnose_only
+title: PVC uses an available StorageClass
+description: >
+  A PVC requests an existing StorageClass and is Bound. This healthy twin must
+  not be diagnosed as a missing-class failure.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-09'
+  last_review: '2026-09-12'
+  review_due: '2026-12-11'
+  lifecycle_state: active
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: healthy_control
+  family_id: storage-provisioning
+  lineage_id: pvc-storageclass-core
+  variant_kind: anchor
+  splits:
+    - development
+    - capability
+  qualification_status: qualified
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - René Dudfield
+  qualified_at: '2026-09-12T00:00:00Z'
+supported_cluster_profiles:
+  - local-minikube
+required_mechanisms:
+  - api-server
+  - csi
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-pvc-class-healthy
+artifact_policy:
+  retain_raw_tool_output: true

@@ -69,6 +69,169 @@ test('runTrial: a reference candidate on the fault scenario passes root_cause an
   }
 });
 
+test('runTrial: a generated variant executes its registered parent case logic', async () => {
+  const dir = makeScratchDir('trial-generated');
+  try {
+    const scenario = loadScenario('phase2-service-discovery-01-v1');
+    const adapter = new SimulatedKwokAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_generated');
+    const result = await runTrial({
+      runId: 'run_generated',
+      trialId: 'trial_generated',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: createScriptedCandidate('reference', scenario.evaluatorPacket),
+      bundleWriter,
+      executionMode: 'dry-run',
+    });
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.stage_status.setup, 'ok');
+    assert.equal(result.stage_status.candidate, 'ok');
+    assert.equal(result.stage_status.cleanup, 'ok');
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runTrial: native-only results retain execution health without entering task scores', async () => {
+  for (const invocationStatus of ['ok', 'unavailable'] as const) {
+    const dir = makeScratchDir('trial-native-only');
+    try {
+      const scenario = loadScenario('core-service-selector-fault-v1');
+      const adapter = new SimulatedKwokAdapter('local-kwok');
+      const reason = 'Native output cannot represent the common submission contract.';
+      const result = await runTrial({
+        runId: 'run_native',
+        trialId: 'trial_native',
+        scenario,
+        clusterAdapter: adapter,
+        clusterPreflight: await adapter.preflight(),
+        candidateAdapter: {
+          id: 'native-only',
+          kind: 'reference-system',
+          unsupportedSubmissionReason: reason,
+          async invoke() {
+            return {
+              raw_text: '{"status":"OK","problems":0,"results":null}',
+              submission_text: null,
+              status: invocationStatus,
+              duration_ns: '1',
+              tool_events: [],
+            };
+          },
+        },
+        bundleWriter: new RunBundleWriter(dir, 'run_native'),
+        executionMode: 'dry-run',
+      });
+      assert.equal(result.dimensions.root_cause.applicable, false);
+      assert.equal(result.model_usage, null);
+      assert.equal(result.stage_status.cleanup, 'ok');
+      if (invocationStatus === 'ok') {
+        assert.equal(result.run_eligibility, 'inconclusive');
+        assert.equal(result.stage_status.candidate, 'ok');
+        assert.equal(result.stage_status.grader, 'unsupported');
+        assert.equal(result.dimensions.root_cause.invalidity_reason, reason);
+        assert.equal(result.first_failure_owner, undefined);
+      } else {
+        assert.equal(result.run_eligibility, 'invalid');
+        assert.equal(result.first_failure_owner, 'candidate');
+      }
+    } finally {
+      removeScratchDir(dir);
+    }
+  }
+});
+
+test('runTrial: a repair anchor receives target identity and accepts a repair sidecar', async () => {
+  const dir = makeScratchDir('trial-repair');
+  try {
+    const scenario = loadScenario('core-service-selector-repair-v1');
+    const adapter = new SimulatedKwokAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_repair');
+    const result = await runTrial({
+      runId: 'run_repair',
+      trialId: 'trial_repair',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: createScriptedCandidate('reference', scenario.evaluatorPacket),
+      bundleWriter,
+      executionMode: 'dry-run',
+    });
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.submission_status, 'valid');
+    assert.equal(result.dimensions.root_cause.outcome, 'pass');
+    assert.equal(result.dimensions.recommended_fix.outcome, 'pass');
+    assert.equal(result.dimensions.executed_repair.outcome, 'abstain');
+    assert.match(result.dimensions.executed_repair.invalidity_reason ?? '', /approval_denied/);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runTrial: an approved repair executes, verifies, and persists its action journal', async () => {
+  const dir = makeScratchDir('trial-approved-repair');
+  class ControllerBackedAdapter extends SimulatedKwokAdapter {
+    override async computeEndpoints(namespace: string, serviceName: string) {
+      const selector = await this.getServiceSelector(namespace, serviceName);
+      return { addresses: selector.selector?.tier === 'backend' ? ['10.0.0.10'] : [] };
+    }
+  }
+  try {
+    const scenario = loadScenario('core-service-selector-repair-v1');
+    const adapter = new ControllerBackedAdapter('local-kwok');
+    const bundleWriter = new RunBundleWriter(dir, 'run_approved_repair');
+    const scripted = createScriptedCandidate('reference', scenario.evaluatorPacket);
+    const result = await runTrial({
+      runId: 'run_approved_repair',
+      trialId: 'trial_approved_repair',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: {
+        ...scripted,
+        async invoke(input) {
+          const invocation = await scripted.invoke(input);
+          const submission = JSON.parse(invocation.submission_text ?? '{}') as {
+            proposed_action: { action_id: string };
+          };
+          submission.proposed_action.action_id = 'candidate-generated-action-id';
+          return { ...invocation, submission_text: JSON.stringify(submission) };
+        },
+      },
+      bundleWriter,
+      executionMode: 'dry-run',
+      requestRepairApproval: async () => ({ decision: 'approved' }),
+    });
+
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.dimensions.recommended_fix.outcome, 'pass');
+    assert.equal(
+      result.dimensions.executed_repair.outcome,
+      'pass',
+      result.dimensions.executed_repair.invalidity_reason
+    );
+    const journal = readJsonlPayloads(
+      `${bundleWriter.bundleDir}/trials/trial_approved_repair/action-journal.jsonl`
+    ) as Array<Record<string, unknown>>;
+    assert.deepEqual(
+      journal.map(event => event.type),
+      [
+        'action_proposed',
+        'action_displayed',
+        'approval_decided',
+        'authorization_checked',
+        'action_executed',
+        'postcondition_checked',
+        'collateral_checked',
+      ]
+    );
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
 test('runTrial: persists sanitized candidate telemetry in the result and trajectory', async () => {
   const dir = makeScratchDir('trial-telemetry');
   try {

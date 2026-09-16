@@ -97,6 +97,31 @@ test('parseSubmission: a schema-conforming object parses as valid', () => {
   assert.ok(result.submission);
 });
 
+test('parseSubmission: validates and unwraps the required repair sidecar', () => {
+  const diagnosis = submission({});
+  const repair = {
+    schema_version: '1.0.0',
+    diagnosis,
+    proposed_action: {
+      action_id: 'repair-selector',
+      target: {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+      operation: 'json_patch',
+      patch: [{ op: 'replace', path: '/spec/selector/tier', value: 'backend' }],
+      evidence_digest: 'a'.repeat(64),
+    },
+  };
+  const result = parseSubmission(JSON.stringify(repair), 'repair_submission@1.0.0');
+  assert.equal(result.status, 'valid');
+  assert.deepEqual(result.submission, diagnosis);
+  assert.deepEqual(result.repairSubmission?.proposed_action, repair.proposed_action);
+});
+
 test('gradeRootCause: passes when cause_facts cover an accepted fact set with grounded evidence', () => {
   const dimension = gradeRootCause({
     submission: submission({
@@ -345,6 +370,64 @@ test('gradeRootCause: accepts distinct ordinary paraphrases of bounded hypothese
         ],
         'scheduling constraints exclude available nodes': [
           'Node affinity or another scheduling constraint may exclude available nodes',
+        ],
+      },
+    },
+    retrievedObservations: [],
+    graderResultId: 'g1',
+  });
+  assert.equal(dimension.outcome, 'pass');
+});
+
+test('gradeRootCause: bounded aliases allow qualifiers and token order changes', () => {
+  const dimension = gradeRootCause({
+    submission: submission({
+      uncertainty: { is_uncertain: true },
+      alternative_dispositions: [
+        'Unschedulable: insufficient CPU/memory on available nodes',
+        'No node satisfies nodeSelector/affinity or taints/tolerations',
+      ],
+      cause_facts: [],
+    }),
+    evaluatorPacket: {
+      ...uncertainPacket,
+      accepted_hypotheses_if_uncertain: [
+        'insufficient schedulable capacity',
+        'scheduling constraints exclude available nodes',
+      ],
+      accepted_hypothesis_aliases_if_uncertain: {
+        'insufficient schedulable capacity': ['insufficient cpu memory'],
+        'scheduling constraints exclude available nodes': ['affinity nodeSelector'],
+      },
+    },
+    retrievedObservations: [],
+    graderResultId: 'g1',
+  });
+  assert.equal(dimension.outcome, 'pass');
+});
+
+test('gradeRootCause: accepts bounded Kubernetes alternatives emitted by reference systems', () => {
+  const dimension = gradeRootCause({
+    submission: submission({
+      uncertainty: { is_uncertain: true },
+      alternative_dispositions: [
+        'Insufficient resources on nodes (e.g., CPU, memory, or ephemeral storage)',
+        'NodeSelector or Affinity rules not matching any available nodes',
+      ],
+      cause_facts: [],
+    }),
+    evaluatorPacket: {
+      ...uncertainPacket,
+      accepted_hypotheses_if_uncertain: [
+        'insufficient schedulable capacity',
+        'scheduling constraints exclude available nodes',
+      ],
+      accepted_hypothesis_aliases_if_uncertain: {
+        'insufficient schedulable capacity': [
+          'Insufficient resources on nodes (e.g., CPU, memory, or ephemeral storage)',
+        ],
+        'scheduling constraints exclude available nodes': [
+          'NodeSelector or Affinity rules not matching any available nodes',
         ],
       },
     },

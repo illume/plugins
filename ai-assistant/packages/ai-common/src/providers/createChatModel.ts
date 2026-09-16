@@ -40,6 +40,11 @@ export type SupportedProviderId =
   | 'local'
   | 'mock-testing-model';
 
+export function isCopilotClaudeModel(model: string): boolean {
+  const normalizedModel = model.includes('/') ? model.split('/').pop()! : model;
+  return normalizedModel.startsWith('claude-');
+}
+
 /**
  * Creates a LangChain `BaseChatModel` from a provider ID and configuration map.
  *
@@ -131,6 +136,17 @@ export function createChatModel(
           );
         // Strip optional "provider/" prefix (e.g. "openai/gpt-4o" → "gpt-4o")
         const model = c.model.includes('/') ? c.model.split('/').pop()! : c.model;
+        if (isCopilotClaudeModel(model)) {
+          return new ChatAnthropic({
+            apiKey: c.apiKey,
+            model,
+            verbose,
+            anthropicApiUrl: 'https://api.githubcopilot.com',
+            clientOptions: {
+              defaultHeaders: { Authorization: `Bearer ${c.apiKey}` },
+            },
+          });
+        }
         return new ChatOpenAI({
           apiKey: c.apiKey,
           model,

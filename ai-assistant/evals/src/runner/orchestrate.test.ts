@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { isCandidateSpec, runEvaluation, selectScenarios } from './orchestrate.js';
-import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { readClosedBundle } from '../storage/bundleReader.js';
+import { makeScratchDir, removeScratchDir } from '../test-helpers/scratchDir.js';
+import { isCandidateSpec, runEvaluation, selectScenarios } from './orchestrate.js';
 
 test('selectScenarios: local-kwok defaults to exactly the generated KWOK-compatible subset', () => {
-  const scenarios = selectScenarios('local-kwok', undefined);
+  const scenarios = selectScenarios('local-kwok', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, ['core-service-selector-fault-v1', 'core-service-selector-healthy-v1']);
 });
 
 test('selectScenarios: aks defaults to every scenario declaring aks support', () => {
-  const scenarios = selectScenarios('aks', undefined);
+  const scenarios = selectScenarios('aks', undefined, undefined, { phase: 1 });
   const ids = scenarios.map(s => s.manifest.scenario_id).sort();
   assert.deepEqual(ids, [
     'core-pending-underdetermined-v1',
@@ -53,10 +54,149 @@ test('selectScenarios: explicitly requesting an unknown case is a hard error', (
   );
 });
 
+test('selectScenarios: portfolio, split, and stratum filters compose', () => {
+  const scenarios = selectScenarios('local-minikube', undefined, undefined, {
+    phase: 1,
+    split: 'capability',
+    stratum: 'fault_diagnosis',
+  });
+  assert.deepEqual(scenarios.map(scenario => scenario.manifest.scenario_id).sort(), [
+    'core-service-selector-fault-v1',
+    'core-unschedulable-capacity-v1',
+  ]);
+});
+
+test('selectScenarios: explicit IDs must match portfolio filters', () => {
+  assert.throws(
+    () =>
+      selectScenarios('local-minikube', ['core-service-selector-fault-v1'], undefined, {
+        phase: 2,
+      }),
+    /does not match the requested portfolio selection/
+  );
+});
+
 test('isCandidateSpec: recognizes every valid spec and rejects anything else', () => {
   assert.equal(isCandidateSpec('reference'), true);
+  assert.equal(isCandidateSpec('partial'), true);
+  assert.equal(isCandidateSpec('abstaining'), true);
+  assert.equal(isCandidateSpec('overconfident'), true);
+  assert.equal(isCandidateSpec('unsupported-evidence'), true);
+  assert.equal(isCandidateSpec('unsafe-effective'), true);
+  assert.equal(isCandidateSpec('injected'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
+  assert.equal(isCandidateSpec('holmesgpt'), true);
+  assert.equal(isCandidateSpec('k8sgpt'), true);
+  assert.equal(isCandidateSpec('kubectl-ai'), true);
   assert.equal(isCandidateSpec('not-a-real-spec'), false);
+});
+
+test('runEvaluation: rejects Holmes repair scenarios before candidate execution', async () => {
+  const dir = makeScratchDir('orchestrate-holmes-repair');
+  try {
+    await assert.rejects(
+      runEvaluation({
+        runId: 'run_holmes_repair',
+        runsRoot: dir,
+        profile: 'local-minikube',
+        mode: 'real',
+        cases: ['core-service-selector-repair-v1'],
+        candidate: 'holmesgpt',
+        holmesModel: 'azure/gpt-4o',
+      }),
+      /holmesgpt does not support repair_submission@1\.0\.0 scenarios: core-service-selector-repair-v1/
+    );
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: rejects K8sGPT repair scenarios before candidate execution', async () => {
+  const dir = makeScratchDir('orchestrate-k8sgpt-repair');
+  try {
+    await assert.rejects(
+      runEvaluation({
+        runId: 'run_k8sgpt_repair',
+        runsRoot: dir,
+        profile: 'local-minikube',
+        mode: 'real',
+        cases: ['core-service-selector-repair-v1'],
+        candidate: 'k8sgpt',
+      }),
+      /k8sgpt does not support repair_submission@1\.0\.0 scenarios: core-service-selector-repair-v1/
+    );
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: requires an explicit K8sGPT explain model', async () => {
+  const dir = makeScratchDir('orchestrate-k8sgpt-model');
+  try {
+    await assert.rejects(
+      runEvaluation({
+        runId: 'run_k8sgpt_model',
+        runsRoot: dir,
+        profile: 'local-minikube',
+        mode: 'real',
+        cases: ['core-pvc-storageclass-healthy-v1'],
+        candidate: 'k8sgpt',
+      }),
+      /k8sgpt requires --k8sgpt-model <model>/
+    );
+    assert.equal(existsSync(path.join(dir, 'run_k8sgpt_model')), false);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: rejects a K8sGPT baseline on a non-isolated profile before writing a bundle', async () => {
+  const dir = makeScratchDir('orchestrate-k8sgpt-profile');
+  try {
+    await assert.rejects(
+      runEvaluation({
+        runId: 'run_k8sgpt_profile',
+        runsRoot: dir,
+        profile: 'aks',
+        mode: 'real',
+        cases: ['core-service-selector-healthy-v1'],
+        candidate: 'reference',
+        baseline: 'k8sgpt',
+        k8sGptModel: 'gpt-4o',
+        k8sGptDeployment: 'gpt-4o',
+      }),
+      /k8sgpt requires --profile local-minikube/
+    );
+    assert.equal(existsSync(path.join(dir, 'run_k8sgpt_profile')), false);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: kubectl-ai admission fails before writing bundles', async () => {
+  const dir = makeScratchDir('orchestrate-kubectl-ai');
+  try {
+    for (const baseline of [false, true]) {
+      const base = {
+        runId: 'run_kubectl_ai',
+        runsRoot: dir,
+        profile: 'local-minikube' as const,
+        mode: 'real' as const,
+        cases: ['core-pvc-storageclass-healthy-v1'],
+        candidate: baseline ? ('reference' as const) : ('kubectl-ai' as const),
+        ...(baseline ? { baseline: 'kubectl-ai' as const } : {}),
+      };
+      await assert.rejects(runEvaluation(base), /requires --kubectl-ai-image/);
+      await assert.rejects(runEvaluation({ ...base, mode: 'dry-run' }), /requires --execute real/);
+      await assert.rejects(
+        runEvaluation({ ...base, cases: ['core-service-selector-repair-v1'] }),
+        /kubectl-ai does not support repair/
+      );
+      assert.equal(existsSync(path.join(dir, base.runId)), false);
+    }
+  } finally {
+    removeScratchDir(dir);
+  }
 });
 
 test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces regression deltas', async () => {
@@ -69,6 +209,7 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
       contractStoreRoot,
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
       baseline: 'wrong',
     });
@@ -77,10 +218,19 @@ test('runEvaluation: end-to-end local-kwok run with baseline/candidate produces 
     assert.equal(passing.length, 2);
     assert.ok(passing.every(t => t.dimensions.root_cause.outcome === 'pass'));
     const bundle = readClosedBundle(dir, outcome.runId, contractStoreRoot);
-    assert.equal(
-      bundle.contractReferences.filter(reference => reference.role === 'schema').length,
-      30
+    const schemaReferences = bundle.contractReferences.filter(
+      reference => reference.role === 'schema'
     );
+    const schemaFileNames = readdirSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'schema')
+    )
+      .filter(fileName => fileName.endsWith('.schema.json'))
+      .sort();
+    assert.deepEqual(
+      [...new Set(schemaReferences.map(reference => path.basename(reference.uri)))].sort(),
+      schemaFileNames
+    );
+    assert.equal(schemaReferences.length, schemaFileNames.length * passing.length);
     assert.deepEqual(
       [...new Set(bundle.contractReferences.map(reference => reference.role))].sort(),
       [
@@ -130,6 +280,7 @@ test('runEvaluation: a single-candidate run has no regression-deltas rows', asyn
       contractStoreRoot: path.join(dir, 'contracts'),
       profile: 'local-kwok',
       mode: 'dry-run',
+      selection: { phase: 1 },
       candidate: 'reference',
     });
 
@@ -176,5 +327,32 @@ test('runEvaluation: rerun lineage is retained on the replacement trial', async 
     assert.equal(outcome.trials[0]?.execution_mode, 'dry-run');
   } finally {
     removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: Phase 2B controls keep task and safety outcomes orthogonal', async () => {
+  const controls = [
+    { candidate: 'unsupported-evidence', rootCause: 'fail', safety: 'pass' },
+    { candidate: 'unsafe-effective', rootCause: 'pass', safety: 'fail' },
+    { candidate: 'injected', rootCause: 'pass', safety: 'fail' },
+  ] as const;
+
+  for (const control of controls) {
+    const dir = makeScratchDir(`orchestrate-${control.candidate}`);
+    try {
+      const outcome = await runEvaluation({
+        runId: `run_${control.candidate}`,
+        runsRoot: dir,
+        contractStoreRoot: path.join(dir, 'contracts'),
+        profile: 'local-kwok',
+        mode: 'dry-run',
+        cases: ['core-service-selector-fault-v1'],
+        candidate: control.candidate,
+      });
+      assert.equal(outcome.trials[0]?.dimensions.root_cause.outcome, control.rootCause);
+      assert.equal(outcome.trials[0]?.safety_outcome, control.safety);
+    } finally {
+      removeScratchDir(dir);
+    }
   }
 });

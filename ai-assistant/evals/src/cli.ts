@@ -49,6 +49,12 @@ import { parseProviderDetectionOutput } from './candidates/providerDetection.js'
 import { writeExportProjections } from './exporters/writeExports.js';
 import type { TokenPricingSnapshot } from './candidates/candidateAdapter.js';
 import { validateTokenPricingSnapshot } from './candidates/headlampCli.js';
+import {
+  comparisonRegistrationStatus,
+  loadComparisonRegistration,
+} from './comparisons/registration.js';
+import { assertCopilotModelAvailable } from './candidates/copilotCatalog.js';
+import { verifyPrivateHoldoutAccess } from './operations/privateHoldoutAccess.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
@@ -251,7 +257,7 @@ function requireCandidateSpec(
 ): CandidateSpec {
   if (typeof value !== 'string' || !isCandidateSpec(value)) {
     throw new Error(
-      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli`
+      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli|holmesgpt|k8sgpt|kubectl-ai`
     );
   }
   return value;
@@ -338,8 +344,18 @@ async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
     throw new Error(`--api-key <key> is required for provider ${flags.provider}`);
   }
 
+  if (flags.provider === 'copilot' && typeof flags.model === 'string') {
+    await assertCopilotModelAvailable(apiKey, flags.model);
+  }
+
   const args = ['--provider', flags.provider, '--api-key', apiKey];
   if (typeof flags.model === 'string') args.push('--model', flags.model);
+  if (flags.provider === 'azure') {
+    if (typeof flags.endpoint !== 'string' || typeof flags['deployment-name'] !== 'string') {
+      throw new Error('--endpoint and --deployment-name are required for provider azure');
+    }
+    args.push('--endpoint', flags.endpoint, '--deployment-name', flags['deployment-name']);
+  }
   return args;
 }
 
@@ -382,6 +398,19 @@ async function commandRun(flags: Flags): Promise<void> {
     baseline,
     candidateCliArgs,
     pricing,
+    holmesModel: typeof flags['holmes-model'] === 'string' ? flags['holmes-model'] : undefined,
+    k8sGptModel: typeof flags['k8sgpt-model'] === 'string' ? flags['k8sgpt-model'] : undefined,
+    k8sGptDeployment:
+      typeof flags['k8sgpt-deployment'] === 'string' ? flags['k8sgpt-deployment'] : undefined,
+    kubectlAiImage:
+      typeof flags['kubectl-ai-image'] === 'string' ? flags['kubectl-ai-image'] : undefined,
+    kubectlAiModel:
+      typeof flags['kubectl-ai-model'] === 'string' ? flags['kubectl-ai-model'] : undefined,
+    kubectlAiTimeoutMs:
+      flags['kubectl-ai-timeout-ms'] === undefined
+        ? undefined
+        : Number(flags['kubectl-ai-timeout-ms']),
+    approveRepairs: flags['approve-repairs'] === true,
   });
 
   console.log(`\nrun_id: ${outcome.runId}`);
@@ -513,6 +542,14 @@ async function commandRerun(flags: Flags): Promise<void> {
     cases: [source.scenario_id],
     candidate,
     supersedesTrialId: source.trial_id,
+    kubectlAiImage:
+      typeof flags['kubectl-ai-image'] === 'string' ? flags['kubectl-ai-image'] : undefined,
+    kubectlAiModel:
+      typeof flags['kubectl-ai-model'] === 'string' ? flags['kubectl-ai-model'] : undefined,
+    kubectlAiTimeoutMs:
+      flags['kubectl-ai-timeout-ms'] === undefined
+        ? undefined
+        : Number(flags['kubectl-ai-timeout-ms']),
     candidateCliArgs: await providerCliArgs(flags),
     pricing: pricingFromFlags(flags),
   });
@@ -543,6 +580,38 @@ async function main(): Promise<void> {
     case 'report:overall':
       commandReportOverall(flags);
       break;
+    case 'comparison:status':
+      console.log(
+        JSON.stringify(
+          comparisonRegistrationStatus(
+            loadComparisonRegistration(
+              typeof flags.registration === 'string' ? flags.registration : undefined
+            )
+          ),
+          null,
+          2
+        )
+      );
+      break;
+    case 'holdout:verify': {
+      if (typeof flags.manifest !== 'string') {
+        throw new Error('holdout:verify requires --manifest <outside-checkout-path>');
+      }
+      const registration = loadComparisonRegistration().registration;
+      const checkoutRoot =
+        typeof flags['checkout-root'] === 'string' ? flags['checkout-root'] : evalsRoot;
+      const publicRoot =
+        typeof flags['public-root'] === 'string' ? flags['public-root'] : evalsRoot;
+      const verification = verifyPrivateHoldoutAccess({
+        manifestPath: flags.manifest,
+        checkoutRoot,
+        publicRoots: [publicRoot],
+        expectedCount: registration.private_holdouts.target_count,
+      });
+      console.log(JSON.stringify(verification, null, 2));
+      if (verification.access_control_verification !== 'passed') process.exitCode = 1;
+      break;
+    }
     case 'rerun':
       await commandRerun(flags);
       break;
@@ -588,7 +657,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|rerun|list-scenarios> [--flags...]'
+        'Usage: headlamp-ai-eval <run|export|aks:setup|aks:delete|report:publish|report:overall|comparison:status|holdout:verify|rerun|list-scenarios> [--flags...]'
       );
       process.exit(command ? 1 : 0);
   }

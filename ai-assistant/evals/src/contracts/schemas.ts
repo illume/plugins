@@ -33,6 +33,7 @@ const cache = new Map<string, JsonSchema>();
 
 /** Logical names of versioned schemas in the local evaluation registry. */
 export type SchemaName =
+  | 'private-holdout-manifest'
   | 'scenario'
   | 'candidate-packet'
   | 'evaluator-packet'

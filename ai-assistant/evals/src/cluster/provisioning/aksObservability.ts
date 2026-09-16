@@ -54,6 +54,7 @@ export interface AksObservabilityOptions {
   location: string;
   stateDirectory: string;
   workloadImage: string;
+  nodeVmSize?: string;
   acceptAzureCosts: boolean;
   runner?: CommandRunner;
   wait?: (milliseconds: number) => Promise<void>;
@@ -215,6 +216,8 @@ export async function withAksObservabilityFault<T>(
   assert.equal(options.acceptAzureCosts, true, 'Explicit --accept-azure-costs is required');
   assert.match(options.subscription, /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i);
   assert.match(options.location, /^[a-z0-9]+$/);
+  const nodeVmSize = options.nodeVmSize ?? 'Standard_D2s_v5';
+  assert.match(nodeVmSize, /^Standard_[A-Za-z0-9_]+$/);
   assert.match(
     options.workloadImage,
     /^[a-zA-Z0-9./:_-]+@sha256:[0-9a-f]{64}$/,
@@ -382,7 +385,7 @@ export async function withAksObservabilityFault<T>(
       '--node-count',
       '1',
       '--node-vm-size',
-      'Standard_D2s_v5',
+      nodeVmSize,
       '--enable-managed-identity',
       '--network-plugin',
       'azure',
@@ -470,11 +473,9 @@ export async function withAksObservabilityFault<T>(
         '--nics',
         'backend',
         '--image',
-        'Ubuntu2204',
+        'Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202608060',
         '--size',
         'Standard_B1s',
-        '--security-type',
-        'Standard',
         '--admin-username',
         'evaluser',
         '--ssh-key-values',
@@ -623,7 +624,7 @@ export async function withAksObservabilityFault<T>(
         '--node-count',
         '1',
         '--node-vm-size',
-        'Standard_D2s_v5',
+        nodeVmSize,
         '--mode',
         'User',
         '--enable-cluster-autoscaler',
@@ -688,22 +689,41 @@ export async function withAksObservabilityFault<T>(
         baseline,
         fault,
       });
-      az([
-        'aks',
-        'nodepool',
-        'update',
-        '-g',
-        resourceGroup,
-        '--cluster-name',
-        'eval',
-        '-n',
-        'target',
-        '--update-cluster-autoscaler',
-        '--min-count',
-        '1',
-        '--max-count',
-        '2',
-      ]);
+      await eventually(
+        'autoscaler maximum recovery update',
+        () =>
+          runner('az', [
+            'aks',
+            'nodepool',
+            'update',
+            '-g',
+            resourceGroup,
+            '--cluster-name',
+            'eval',
+            '-n',
+            'target',
+            '--update-cluster-autoscaler',
+            '--min-count',
+            '1',
+            '--max-count',
+            '2',
+            '--subscription',
+            state.subscription,
+            '--only-show-errors',
+            '-o',
+            'json',
+          ]),
+        result => {
+          if (result.status === 0) return true;
+          if (
+            /\bOperationNotAllowed\b/.test(result.stderr) &&
+            /in-progress [^\r\n]+ operation/.test(result.stderr)
+          )
+            return false;
+          throw new Error(`az aks nodepool recovery failed (exit ${result.status})`);
+        },
+        wait
+      );
       rollout();
       const scaled = await eventually(
         'autoscaler scale-out',

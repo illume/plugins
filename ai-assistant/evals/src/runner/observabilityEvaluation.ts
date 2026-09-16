@@ -99,7 +99,7 @@ export async function readLiveAzureTool(
     ? `${evidence.resourceId}/effectiveNetworkSecurityGroups`
     : `${evidence.clusterId}/agentPools`;
   const initialUrl = new URL(`https://management.azure.com${resourcePath}`);
-  initialUrl.searchParams.set('api-version', isNetwork ? '2024-09-01' : '2024-07-01');
+  initialUrl.searchParams.set('api-version', '2024-07-01');
   allowed.add(initialUrl.href);
   const tool = new Tool();
   tool.setContext({
@@ -340,6 +340,7 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
       location: { type: 'string' },
       'state-dir': { type: 'string' },
       'workload-image': { type: 'string' },
+      'node-vm-size': { type: 'string' },
       'accept-azure-costs': { type: 'boolean' },
       'candidate-module': { type: 'string' },
     },
@@ -402,6 +403,7 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
       location: values.location,
       stateDirectory: directory,
       workloadImage: values['workload-image'],
+      nodeVmSize: values['node-vm-size'],
       acceptAzureCosts: true,
     },
     async evidence => {

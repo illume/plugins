@@ -30,6 +30,11 @@ outside the locked Phase 2 roster and qualified comparison denominator. Use
 All cases remain pending independent qualification. An offline unit-test pass
 does not count as Azure execution or a model diagnosis result.
 
+The [live AKS GPT-4o report](../../docs/observability-aks-gpt4o-results.md) retains
+the first execution outcomes: NSG partial diagnosis with successful recovery;
+autoscaler evidence-grounding failure with failed recovery; cleanup passed for
+all attempts. These results do not qualify either case independently.
+
 ### AKS Incidents
 
 Each invocation creates a fresh tagged resource group, custom VNet, an AKS cluster
@@ -53,6 +58,10 @@ report that autoscaling is enabled and the pool has reached maxCount=1. The
 production `azure_cost_capacity_read` tool reads the live agent-pool settings.
 Increasing the maximum to two must result in automatic node scale-out and two
 Ready replicas; the runner never manually scales the node count.
+The recovery update retries only Azure `OperationNotAllowed` responses identifying
+an in-progress cluster operation, at most 60 attempts with ten seconds between
+attempts. Other errors fail immediately. This retry was unit-tested after the
+first live recovery failure; it has not yet been exercised in Azure.
 
 These are realistic AKS troubleshooting tasks, not claims that Kubernetes can
 never provide clues. Events can expose autoscaler limits; the Azure tool supplies
@@ -74,6 +83,9 @@ objects do not own. No events are hidden to force a favorable comparison.
 	pool growing from one to two Standard_D2s_v5 nodes. Disks, load balancers,
 	outbound traffic, and other Azure resources can also incur charges. Region
 	prices and quota vary; there is no promised monetary cap.
+- If the default node SKU is unavailable for your subscription/region, use
+	`--node-vm-size Standard_A2_v2` (or another supported AKS SKU). The capacity
+	scenario computes workload demand from the selected node's allocatable CPU.
 - `--accept-azure-costs` is mandatory before any provisioning. Commands and
 	convergence loops are bounded; cloud operations may continue after a local
 	timeout. A terminated process cannot guarantee cleanup, so retain the state
@@ -111,6 +123,14 @@ npm run eval:observability -- cleanup --state-dir "$PWD/.private/aks-network-run
 ```
 
 ### Candidate Runs
+
+[`createHeadlampObservabilityCandidate`](../candidates/headlampObservability.ts)
+provides the actual AI Assistant `LangChainAssistantSession` adapter. Construct it
+with `{ provider: 'azure', config: { model, deploymentName, endpoint, apiKey } }`
+and default-export the returned callback from your private candidate module.
+Acquire credentials in that private process; do not commit them. Each callback
+creates a fresh session with only the allowed read tools. Its optional `record`
+hook retains the original response, model/tool telemetry, and elapsed time.
 
 Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
 to evaluate a trusted model adapter during the induced-fault window. The module

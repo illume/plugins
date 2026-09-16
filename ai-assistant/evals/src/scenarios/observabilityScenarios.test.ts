@@ -181,6 +181,7 @@ for (const scenario of observabilityScenarios) {
           scenario: scenario.id,
           subscription: '00000000-0000-0000-0000-000000000001',
           location: 'eastus2',
+          nodeVmSize: 'Standard_A2_v2',
           stateDirectory: directory,
           workloadImage: `busybox@sha256:${'a'.repeat(64)}`,
           acceptAzureCosts: true,
@@ -198,6 +199,16 @@ for (const scenario of observabilityScenarios) {
       assert.equal(statSync(directory).mode & 0o777, 0o700);
       assert.equal(statSync(path.join(directory, 'kubeconfig')).mode & 0o777, 0o600);
       assert.ok(fake.calls.some(call => call.args[0] === 'aks' && call.args[1] === 'create'));
+      const backend = fake.calls.find(call => call.args[0] === 'vm' && call.args[1] === 'create');
+      if (backend) {
+        assert.ok(
+          backend.args.includes('Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202608060')
+        );
+        assert.ok(!backend.args.includes('--security-type'));
+      }
+      for (const call of fake.calls.filter(call => call.args.includes('--node-vm-size'))) {
+        assert.equal(call.args[call.args.indexOf('--node-vm-size') + 1], 'Standard_A2_v2');
+      }
       for (const call of fake.calls.filter(
         call => call.command === 'az' && call.args[0] !== 'cloud'
       ))
@@ -215,6 +226,79 @@ for (const scenario of observabilityScenarios) {
         'cleanup-started',
         'cleanup-passed',
       ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const outcome of [
+  'transient-conflict',
+  'persistent-conflict',
+  'permission-denied',
+  'invalid-update',
+]) {
+  test(`autoscaler recovery handles ${outcome} without repeating the candidate`, async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'aks-recovery-'));
+    const directory = path.join(root, 'run');
+    const fake = fakeAzure(directory);
+    let updates = 0;
+    let candidates = 0;
+    let waits = 0;
+    const runner: CommandRunner = (executable, args) => {
+      if (executable === 'az' && args.slice(0, 3).join(' ') === 'aks nodepool update') {
+        updates++;
+        if (outcome !== 'transient-conflict' || updates === 1) {
+          return {
+            status: 1,
+            stdout: '',
+            stderr: outcome.includes('conflict')
+              ? '(OperationNotAllowed) There is an in-progress PutExtensionAddonHandler.PUT operation on the managed cluster.'
+              : outcome === 'permission-denied'
+              ? '(AuthorizationFailed) Permission denied.'
+              : '(OperationNotAllowed) Invalid maximum count.',
+          };
+        }
+      }
+      return fake.runner(executable, args);
+    };
+    try {
+      const run = withAksObservabilityFault(
+        {
+          scenario: 'aks-autoscaler-max-count-v1',
+          subscription: '00000000-0000-0000-0000-000000000001',
+          location: 'eastus2',
+          stateDirectory: directory,
+          workloadImage: `busybox@sha256:${'a'.repeat(64)}`,
+          acceptAzureCosts: true,
+          runner,
+          wait: async () => {
+            waits++;
+          },
+        },
+        async () => {
+          candidates++;
+          return 'retained-result';
+        }
+      );
+      if (outcome === 'transient-conflict') {
+        const result = await run;
+        assert.equal(result.candidate, 'retained-result');
+        assert.equal(updates, 2);
+        assert.equal(waits, 1);
+      } else {
+        await assert.rejects(
+          run,
+          outcome === 'persistent-conflict' ? /did not converge/ : /recovery failed/
+        );
+        assert.equal(updates, outcome === 'persistent-conflict' ? 60 : 1);
+        assert.equal(waits, outcome === 'persistent-conflict' ? 59 : 0);
+      }
+      assert.equal(candidates, 1);
+      assert.equal(
+        JSON.parse(readFileSync(path.join(directory, 'state.json'), 'utf8')).cleanup,
+        'passed'
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

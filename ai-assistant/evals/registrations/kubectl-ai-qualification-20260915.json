@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-09-15T08:14:50.113Z",
+  "scope": "supplied-evidence diagnosis transport and isolation; not model quality or repair",
+  "image": "sha256:841c66aef2ca1e333b2e297f9a121b8f2d2591c41db831654e0ee566e13c436e",
+  "upstream_commit": "08cf256aa2f5749958f76659134625fe70a19a15",
+  "binary_sha256": "47294528c31149d768d4c08ad231af466479aa2f156d53fb09e249feadbcf56f",
+  "parity": {
+    "system": "kubectl-ai",
+    "status": "eligible",
+    "stages": {
+      "startup": "passed",
+      "health": "passed",
+      "fixed_submission_parity": "passed",
+      "cleanup": "passed"
+    },
+    "reasons": []
+  },
+  "absent_executables": [
+    "/bin/bash",
+    "/bin/sh",
+    "/usr/bin/kubectl",
+    "/kubectl"
+  ],
+  "provider_failure": {
+    "observed_http_status": 401,
+    "outcome": "timeout",
+    "submission": null,
+    "deadline_ms": 5000,
+    "elapsed_ns": "5086734500"
+  },
+  "tests": {
+    "exit_code": 0,
+    "output_sha256": "32d677eb36209f47d0a944b8b50b62c617c3a26236e30047c355471494329e53"
+  },
+  "sources": {
+    "src/candidates/kubectlAiAdapter.ts": "a200aca483219dc2c1ec3f9a8c4cc9f97a8d1e704d39bbaf6a50bfd8c14b3297",
+    "src/candidates/kubectlAiAdapter.test.ts": "3c6302dd855161939584c8e06a5641c6d665b56b93c1f7048215583b76978b64",
+    "src/candidates/referenceQualification.ts": "dd10a461924544555be8e0df3327f9885d7c3e7a7172320a5777a089fc5146dd",
+    "src/candidates/holmesGptAdapter.ts": "2452f3be081838513889a485863bf754fd821e3d42718bf2c2285e9c51d19040",
+    "images/kubectl-ai/Dockerfile": "00ad7326928114b8178362346ff388dee05fd14232f391c432c3f2db4d2f1900"
+  },
+  "cleanup": {
+    "containers_remaining": 0,
+    "private_mounts_remaining": 0
+  },
+  "exploratory_run": "run_0mu2ai0ft000001_e92db382-d595-4488-bcc1-5984aa666a1d"
+}

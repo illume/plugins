@@ -18,6 +18,23 @@ import { describe, expect, it } from 'vitest';
 import { getEnabledToolIds, isToolEnabled, setEnabledTools, toggleTool } from './enabledTools';
 
 const toolId = 'kubernetes_api_request';
+const observabilityToolIds = [
+  'datadog_read',
+  'splunk_read',
+  'grafana_read',
+  'prometheus_read',
+  'azure_monitor_traces_read',
+  'azure_metrics_read',
+  'azure_resource_health_read',
+  'azure_application_insights_read',
+  'azure_diagnostics_read',
+  'azure_control_plane_logs_read',
+  'azure_network_config_read',
+  'azure_cost_capacity_read',
+  'azure_security_posture_read',
+  'azure_deployment_changes_read',
+];
+const disabledObservabilityTools = Object.fromEntries(observabilityToolIds.map(id => [id, false]));
 
 describe('isToolEnabled', () => {
   it('defaults null settings to enabled', () => {
@@ -83,13 +100,20 @@ describe('toggleTool', () => {
 
 describe('enabled tool collections', () => {
   it('returns enabled built-in tool IDs', () => {
-    expect(getEnabledToolIds({ enabledTools: { [toolId]: false } })).toEqual([]);
-    expect(getEnabledToolIds({ enabledTools: { [toolId]: true } })).toEqual([toolId]);
+    expect(getEnabledToolIds({ enabledTools: { [toolId]: false } })).toEqual(observabilityToolIds);
+    expect(getEnabledToolIds({ enabledTools: { [toolId]: true } })).toEqual([
+      toolId,
+      ...observabilityToolIds,
+    ]);
   });
 
   it('stores enabled built-in tools in map settings', () => {
-    expect(setEnabledTools({}, [toolId])).toEqual({ enabledTools: { [toolId]: true } });
-    expect(setEnabledTools({}, [])).toEqual({ enabledTools: { [toolId]: false } });
+    expect(setEnabledTools({}, [toolId])).toEqual({
+      enabledTools: { [toolId]: true, ...disabledObservabilityTools },
+    });
+    expect(setEnabledTools({}, [])).toEqual({
+      enabledTools: { [toolId]: false, ...disabledObservabilityTools },
+    });
   });
 
   it('preserves the string-array settings format', () => {
@@ -100,7 +124,13 @@ describe('enabled tool collections', () => {
   });
 
   it('accepts null and undefined settings', () => {
-    expect(setEnabledTools(null, [toolId]).enabledTools).toEqual({ [toolId]: true });
-    expect(setEnabledTools(undefined, []).enabledTools).toEqual({ [toolId]: false });
+    expect(setEnabledTools(null, [toolId]).enabledTools).toEqual({
+      [toolId]: true,
+      ...disabledObservabilityTools,
+    });
+    expect(setEnabledTools(undefined, []).enabledTools).toEqual({
+      [toolId]: false,
+      ...disabledObservabilityTools,
+    });
   });
 });

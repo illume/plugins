@@ -37,6 +37,7 @@ import type {
   EvaluatorPacket,
   ScenarioManifest,
 } from '../contracts/evaluationContracts.js';
+import { assertScenarioAdmission, buildPortfolioCensus } from './admission.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 /** Absolute path to the repository's default scenario directory. */
@@ -136,7 +137,9 @@ export function loadScenario(scenarioId: string, root: string = scenariosRoot): 
     );
   }
 
-  return { manifest, candidatePacket, evaluatorPacket, kwokCompatible, directory };
+  const loaded = { manifest, candidatePacket, evaluatorPacket, kwokCompatible, directory };
+  assertScenarioAdmission(loaded);
+  return loaded;
 }
 
 /**
@@ -146,5 +149,7 @@ export function loadScenario(scenarioId: string, root: string = scenariosRoot): 
  * @returns All validated scenarios sorted by directory name.
  */
 export function loadAllScenarios(root: string = scenariosRoot): LoadedScenario[] {
-  return listScenarioIds(root).map(id => loadScenario(id, root));
+  const scenarios = listScenarioIds(root).map(id => loadScenario(id, root));
+  buildPortfolioCensus(scenarios);
+  return scenarios;
 }

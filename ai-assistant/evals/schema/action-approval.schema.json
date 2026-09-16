@@ -1,0 +1,31 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/action-approval.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "approval_id",
+    "action_id",
+    "request_digest",
+    "candidate_id",
+    "cluster_identity_digest",
+    "evidence_digest",
+    "target_uid",
+    "decision",
+    "decided_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "approval_id": { "type": "string", "minLength": 1 },
+    "action_id": { "type": "string", "minLength": 1 },
+    "request_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "candidate_id": { "type": "string", "minLength": 1 },
+    "cluster_identity_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidence_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "target_uid": { "type": "string", "minLength": 1 },
+    "decision": { "type": "string", "enum": ["approved", "denied"] },
+    "decided_at": { "type": "string" },
+    "reason": { "type": "string" }
+  },
+  "additionalProperties": false
+}

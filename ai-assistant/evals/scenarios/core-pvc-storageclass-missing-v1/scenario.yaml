@@ -1,0 +1,49 @@
+schema_version: '1.0.0'
+scenario_id: core-pvc-storageclass-missing-v1
+scenario_version: '1.0.0'
+family: storage-provisioning
+mode: diagnose_only
+title: PVC requests a StorageClass that does not exist
+description: >
+  A Pending PVC requests an unavailable StorageClass while another class exists.
+  The candidate must distinguish a missing class from capacity and scheduling causes.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-09'
+  last_review: '2026-09-09'
+  review_due: '2026-12-09'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: storage-provisioning
+  lineage_id: pvc-storageclass-core
+  variant_kind: anchor
+  splits:
+    - development
+    - capability
+  qualification_status: pending
+  qualification_controls: &pending-controls
+    provenance: passed
+    rights: passed
+    family_lineage: pending
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+required_mechanisms:
+  - api-server
+  - csi
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-pvc-class-missing
+artifact_policy:
+  retain_raw_tool_output: true

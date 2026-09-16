@@ -1,0 +1,129 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/repair-submission.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": ["schema_version", "diagnosis", "proposed_action"],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0.0"] },
+    "diagnosis": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "cause_facts",
+        "resource_refs",
+        "evidence_refs",
+        "alternative_dispositions",
+        "uncertainty",
+        "proposed_actions"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "enum": ["1.0.0"] },
+        "cause_facts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidateFact" }
+        },
+        "resource_refs": { "type": "array", "items": { "type": "string" } },
+        "evidence_refs": { "type": "array", "items": { "type": "string" } },
+        "alternative_dispositions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "uncertainty": {
+          "type": "object",
+          "required": ["is_uncertain"],
+          "properties": {
+            "is_uncertain": { "type": "boolean" },
+            "reason": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "proposed_actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["operation", "description"],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "enum": ["no_action", "unscored_novel_strategy"]
+              },
+              "description": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "proposed_action": {
+      "type": "object",
+      "required": ["action_id", "target", "operation", "patch", "evidence_digest"],
+      "properties": {
+        "action_id": { "type": "string", "minLength": 1 },
+        "target": { "$ref": "#/$defs/target" },
+        "operation": { "type": "string", "enum": ["json_patch"] },
+        "patch": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/patchOperation" }
+        },
+        "evidence_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "candidateFact": {
+      "type": "object",
+      "required": ["resource_ref", "field_path", "observed_value"],
+      "properties": {
+        "resource_ref": { "type": "string" },
+        "field_path": { "type": "string" },
+        "observed_value": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["api_version", "kind", "namespace", "name", "uid"],
+      "properties": {
+        "api_version": { "type": "string" },
+        "kind": { "type": "string" },
+        "namespace": { "type": "string" },
+        "name": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "patchOperation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["op", "path", "value"],
+          "properties": {
+            "op": { "type": "string", "enum": ["add", "replace", "test"] },
+            "path": {
+              "type": "string",
+              "pattern": "^/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*$"
+            },
+            "value": { "type": ["string", "number", "boolean", "null"] }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["op", "path"],
+          "properties": {
+            "op": { "type": "string", "enum": ["remove"] },
+            "path": {
+              "type": "string",
+              "pattern": "^/(?:[^~/]|~[01])*(?:/(?:[^~/]|~[01])*)*$"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

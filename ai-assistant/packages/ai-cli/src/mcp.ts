@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { makeMcpServers } from '@headlamp-k8s/ai-common/mcp/config/serverConfig';
 import type { MCPSettings } from '@headlamp-k8s/ai-common/mcp/types';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { MultiServerMCPClient } from '@langchain/mcp-adapters';
@@ -26,17 +27,7 @@ export async function initMCPTools(
   const noop = async () => {};
   if (!mcpConfig?.enabled || !mcpConfig.servers?.length) return { model, cleanup: noop };
 
-  const mcpServers: Record<string, any> = {};
-  for (const server of mcpConfig.servers) {
-    if (!server.enabled || !server.name || !server.command) continue;
-    mcpServers[server.name] = {
-      transport: 'stdio',
-      command: server.command,
-      args: server.args || [],
-      env: server.env ? { ...process.env, ...server.env } : (process.env as Record<string, string>),
-      restart: { enabled: true, maxAttempts: 3, delayMs: 2000 },
-    };
-  }
+  const mcpServers = makeMcpServers(mcpConfig, []);
 
   if (Object.keys(mcpServers).length === 0) return { model, cleanup: noop };
 

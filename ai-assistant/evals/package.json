@@ -18,6 +18,7 @@
     "eval:generate:phase2": "tsx src/scenarios/generatePhase2Portfolio.ts",
     "eval:qualify:minikube": "tsx src/scenarios/qualifyMinikubePortfolio.ts",
     "eval:qualify:aks": "tsx src/scenarios/qualifyMinikubePortfolio.ts --profile aks",
+    "eval:observability:check": "tsx src/runner/observabilityEvaluation.ts",
     "eval:comparison:status": "tsx src/cli.ts comparison:status",
     "eval:holdout:verify": "tsx src/cli.ts holdout:verify",
     "eval:aks": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider copilot",

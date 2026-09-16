@@ -164,6 +164,16 @@ custodian access, and held-out evaluation evidence before private-case transfer 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
 
+### Observability retrieval drafts
+
+The [observability draft suite](src/scenarios/README.md#observability-only-draft-scenarios)
+adds twelve paired cases for Datadog, Splunk, Grafana, Prometheus, Azure Monitor,
+and AKS network reads. Each pair has identical Kubernetes evidence but different
+external causes. Run `npm run eval:observability:check` from this package to
+verify production-tool fixtures and enabled/Kubernetes-only/unavailable controls
+without model calls or external services. These pending cases are separate from
+the qualified portfolio and the locked Phase 2 comparison.
+
 ## Prerequisites
 
 - Node.js 20+ and npm.

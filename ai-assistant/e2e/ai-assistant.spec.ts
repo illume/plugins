@@ -1,14 +1,187 @@
 import { expect, test } from '@playwright/test';
-import JSZip from 'jszip';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { startMockObservabilityApi } from './mock-observability-api';
 
 const screenshotsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'screenshots');
 
 test.describe.serial('AI Assistant on KWOK', () => {
   test.beforeAll(() => {
     fs.mkdirSync(screenshotsDir, { recursive: true });
+  });
+
+  test('configures and executes native read-only observability tools', async ({ page }) => {
+    const grafanaUrl = process.env.E2E_GRAFANA_URL;
+    const prometheusUrl = process.env.E2E_PROMETHEUS_URL;
+    test.skip(
+      !grafanaUrl || !prometheusUrl,
+      'The observability scenario requires runner-managed Grafana and Prometheus services'
+    );
+    const api = await startMockObservabilityApi();
+    const azureRequests: string[] = [];
+    try {
+      await page.route('https://management.azure.com/**', route => {
+        azureRequests.push(route.request().url());
+        return route.fulfill({
+          status: route.request().method() === 'OPTIONS' ? 204 : 200,
+          contentType: 'application/json',
+          headers: {
+            'access-control-allow-origin': '*',
+            'access-control-allow-headers': 'authorization, content-type',
+            'access-control-allow-methods': 'GET, POST, OPTIONS',
+          },
+          body:
+            route.request().method() === 'OPTIONS'
+              ? undefined
+              : JSON.stringify({ value: [], changes: [] }),
+        });
+      });
+      await page.goto('/settings/plugins/%40headlamp-k8s%2Fai-assistant');
+      for (const [provider, url] of Object.entries(api.urls)) {
+        const name =
+          provider === 'azureMonitor'
+            ? 'Azure Monitor and AKS'
+            : provider.charAt(0).toUpperCase() + provider.slice(1);
+        await page.getByRole('textbox', { name: `${name} URL` }).fill(url);
+      }
+      await page.getByRole('group', { name: 'Datadog' }).getByLabel('API Key').fill('datadog-api');
+      await page
+        .getByRole('group', { name: 'Datadog' })
+        .getByLabel('Application Key')
+        .fill('datadog-app');
+      await page
+        .getByRole('group', { name: 'Splunk' })
+        .getByLabel('Access Token')
+        .fill('splunk-token');
+      await page
+        .getByRole('group', { name: 'Grafana' })
+        .getByLabel('Service Account Token')
+        .fill('grafana-token');
+      await page
+        .getByRole('group', { name: 'Prometheus' })
+        .getByLabel('HTTP Token')
+        .fill('prometheus-token');
+      await page
+        .getByRole('group', { name: 'Azure Monitor and AKS' })
+        .getByLabel('Logs Access Token')
+        .fill('azure-monitor-token');
+      await page
+        .getByRole('group', { name: 'Azure Monitor and AKS' })
+        .getByLabel('Resource Manager Token')
+        .fill('azure-management-token');
+
+      for (const toolName of [
+        'Datadog Read',
+        'Splunk Read',
+        'Grafana Read',
+        'Prometheus Read',
+        'Azure Monitor Traces Read',
+      ]) {
+        const toolToggle = page.getByRole('checkbox', {
+          name: `Enable or disable ${toolName}`,
+        });
+        await expect(toolToggle).toBeChecked();
+        await toolToggle.uncheck();
+        await expect(toolToggle).not.toBeChecked();
+        await toolToggle.check();
+        await expect(toolToggle).toBeChecked();
+      }
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const configs = JSON.parse(localStorage.getItem('pluginConfigs') ?? '{}');
+            return configs['@headlamp-k8s/ai-assistant']?.enabledTools?.sort();
+          })
+        )
+        .toEqual(
+          [
+            'kubernetes_api_request',
+            'datadog_read',
+            'splunk_read',
+            'grafana_read',
+            'prometheus_read',
+            'azure_monitor_traces_read',
+            'azure_metrics_read',
+            'azure_resource_health_read',
+            'azure_application_insights_read',
+            'azure_diagnostics_read',
+            'azure_control_plane_logs_read',
+            'azure_network_config_read',
+            'azure_cost_capacity_read',
+            'azure_security_posture_read',
+            'azure_deployment_changes_read',
+          ].sort()
+        );
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
+        .toContain(api.urls.prometheus);
+
+      await page.getByText('Developer Options', { exact: true }).click();
+      await page.getByRole('checkbox', { name: 'Mock Testing Model' }).check();
+      await page.getByRole('button', { name: 'AI Assistant' }).click();
+      await page.getByLabel('Assistant mode').click();
+      await page.getByRole('option', { name: 'Chat' }).click();
+      const promptInput = page.locator('#deployment-ai-prompt');
+      await promptInput.fill('E2E query all observability providers');
+      await promptInput.press('Enter');
+      await page.getByRole('button', { name: 'Execute 5 Tools' }).click();
+
+      await expect.poll(() => api.requests.length).toBeGreaterThanOrEqual(5);
+      expect(api.requests.find(request => request.provider === 'datadog')).toMatchObject({
+        method: 'POST',
+        datadogApiKey: 'datadog-api',
+        datadogApplicationKey: 'datadog-app',
+      });
+      expect(api.requests.find(request => request.provider === 'splunk')).toMatchObject({
+        method: 'POST',
+        authorization: 'Splunk splunk-token',
+      });
+      expect(api.requests.find(request => request.provider === 'grafana')).toMatchObject({
+        method: 'GET',
+        path: '/api/search?type=dash-db&query=Kubernetes&limit=100',
+        authorization: ['Bearer', 'grafana-token'].join(' '),
+      });
+      expect(api.requests.find(request => request.provider === 'prometheus')).toMatchObject({
+        method: 'GET',
+        path: '/api/v1/query?query=up',
+        authorization: ['Bearer', 'prometheus-token'].join(' '),
+      });
+      const azureMonitorRequest = api.requests.find(request => request.provider === 'azureMonitor');
+      expect(azureMonitorRequest).toMatchObject({
+        method: 'POST',
+        path: '/v1/workspaces/workspace-id/query',
+        authorization: ['Bearer', 'azure-monitor-token'].join(' '),
+      });
+      expect(JSON.parse(azureMonitorRequest?.body ?? '{}')).toMatchObject({
+        query: expect.stringContaining('AppRequests'),
+      });
+      expect(api.successfulUpstreams).toEqual(expect.arrayContaining(['grafana', 'prometheus']));
+
+      await promptInput.fill('E2E query Azure AKS troubleshooting sources');
+      await promptInput.press('Enter');
+      await page.getByRole('button', { name: 'Execute 9 Tools' }).click();
+
+      await expect.poll(() => azureRequests.length).toBeGreaterThanOrEqual(7);
+      await expect
+        .poll(() => api.requests.filter(request => request.provider === 'azureMonitor').length)
+        .toBeGreaterThanOrEqual(3);
+      expect(azureRequests).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('/providers/microsoft.insights/metrics'),
+          expect.stringContaining(
+            '/providers/Microsoft.ResourceHealth/availabilityStatuses/current'
+          ),
+          expect.stringContaining('/providers/microsoft.insights/diagnosticSettings'),
+          expect.stringContaining('/effectiveRouteTable'),
+          expect.stringContaining('/agentPools'),
+          expect.stringContaining('/providers/Microsoft.Security/assessments'),
+          expect.stringContaining('/providers/Microsoft.ResourceGraph/resourceChanges'),
+        ])
+      );
+    } finally {
+      await api.close();
+    }
   });
 
   test('covers the main assistant scenarios', async ({ page }) => {
@@ -123,7 +296,9 @@ Inspect pod status, recent events, and container logs before recommending a fix.
     await kubernetesTool.uncheck();
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('pluginConfigs')))
-      .toContain('"enabledTools":[]');
+      .toContain(
+        '"enabledTools":["datadog_read","splunk_read","grafana_read","prometheus_read","azure_monitor_traces_read","azure_metrics_read","azure_resource_health_read","azure_application_insights_read","azure_diagnostics_read","azure_control_plane_logs_read","azure_network_config_read","azure_cost_capacity_read","azure_security_posture_read","azure_deployment_changes_read"]'
+      );
     await page.reload();
     await expect(kubernetesTool).not.toBeChecked();
     await kubernetesTool.check();

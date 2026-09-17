@@ -64,6 +64,12 @@ interface TestModel {
   }>;
   stream?(input: unknown, options?: unknown): AsyncIterable<unknown> | Promise<unknown>;
   bindTools?(tools: unknown[]): TestModel;
+  withStructuredOutput?(
+    schema: unknown,
+    config: unknown
+  ): {
+    invoke(messages: unknown, options?: unknown): Promise<{ raw: AIMessage; parsed: unknown }>;
+  };
 }
 
 type TestToolManager = Partial<ToolManagerAdapter>;
@@ -3641,6 +3647,120 @@ describe('processToolResponsesStream', () => {
     const finalPrompt = result.value;
     expect(finalPrompt.role).toBe('assistant');
     expect(finalPrompt.error).toBe(true);
+  });
+});
+
+describe('optional structured final response', () => {
+  const schema = {
+    type: 'object',
+    properties: { fact_refs: { type: 'array', items: { type: 'string' } } },
+    required: ['fact_refs'],
+    additionalProperties: false,
+  };
+  function managerWithHistory(observer?: (event: AssistantTelemetryEvent) => void) {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      finalResponseSchema: { name: 'selection', schema },
+      telemetryObserver: observer,
+    });
+    privateManager(manager).history.push(
+      { role: 'user', content: 'Original diagnostic request' },
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [{ type: 'function', id: 'read1', function: { name: 'read', arguments: '{}' } }],
+      },
+      { role: 'tool', name: 'read', toolCallId: 'read1', content: '{"evidence":"observed"}' }
+    );
+    return manager;
+  }
+
+  it('uses strict JSON only for final synthesis and retains raw content and usage', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    const content = '{ "fact_refs": ["kubectl"] }';
+    const invoke = vi
+      .fn()
+      .mockResolvedValue({
+        raw: new AIMessage({
+          content,
+          usage_metadata: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+          response_metadata: { finish_reason: 'stop' },
+        }),
+        parsed: { fact_refs: ['kubectl'] },
+      });
+    const structured = vi.fn().mockReturnValue({ invoke });
+    const ordinary = vi.fn();
+    privateManager(manager).model = { invoke: ordinary, withStructuredOutput: structured };
+    const response = await manager.processToolResponses();
+    expect(response.content).toBe(content);
+    expect(structured).toHaveBeenCalledWith(schema, {
+      name: 'selection',
+      method: 'jsonSchema',
+      strict: true,
+      includeRaw: true,
+    });
+    expect(JSON.stringify(invoke.mock.calls[0][0])).toContain('Original diagnostic request');
+    expect(JSON.stringify(invoke.mock.calls[0][0])).toContain('observed');
+    expect(invoke.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    expect(ordinary).not.toHaveBeenCalled();
+    expect(events.some(event => event.type === 'model_usage')).toBe(true);
+  });
+
+  it.each(['refusal', 'length', 'malformed', 'unparsed'])(
+    'fails closed for %s without an unconstrained retry',
+    async kind => {
+      const manager = managerWithHistory();
+      const ordinary = vi.fn();
+      privateManager(manager).model = {
+        invoke: ordinary,
+        withStructuredOutput: () => ({
+          invoke: async () => ({
+            raw: new AIMessage({
+              content: kind === 'malformed' ? '{"fact_refs":[]}}' : '{"fact_refs":[]}',
+              additional_kwargs: kind === 'refusal' ? { refusal: 'refused' } : {},
+              response_metadata: { finish_reason: kind === 'length' ? 'length' : 'stop' },
+            }),
+            parsed: kind === 'unparsed' ? null : { fact_refs: [] },
+          }),
+        }),
+      };
+      expect((await manager.processToolResponses()).error).toBe(true);
+      expect(ordinary).not.toHaveBeenCalled();
+    }
+  );
+
+  it('buffers strict streaming until the complete structured response is available', async () => {
+    const manager = managerWithHistory();
+    const stream = vi.fn();
+    privateManager(manager).model = {
+      stream,
+      withStructuredOutput: () => ({
+        invoke: async () => ({
+          raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+          parsed: { fact_refs: [] },
+        }),
+      }),
+    };
+    const chunks = [];
+    for await (const chunk of manager.processToolResponsesStream()) chunks.push(chunk);
+    expect(chunks).toEqual(['{"fact_refs":[]}']);
+    expect(stream).not.toHaveBeenCalled();
+  });
+
+  it('propagates cancellation to the structured invocation', async () => {
+    const manager = managerWithHistory();
+    let observedSignal: AbortSignal | undefined;
+    privateManager(manager).model = {
+      withStructuredOutput: () => ({
+        invoke: async (_, options) => {
+          observedSignal = (options as { signal: AbortSignal }).signal;
+          manager.abort();
+          return { raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } };
+        },
+      }),
+    };
+    expect((await manager.processToolResponses()).error).toBe(true);
+    expect(observedSignal?.aborted).toBe(true);
   });
 });
 

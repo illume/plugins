@@ -204,6 +204,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   private extraTools: Map<string, ExtraTool> = new Map();
   private telemetryObserver?: AssistantTelemetryObserver;
   private cacheCopilotClaudeSystemPrompt: boolean;
+  private readonly finalResponseSchema?: { name: string; schema: Record<string, unknown> };
 
   // Skills system
   private skillManager: SkillManager | null = null;
@@ -254,11 +255,15 @@ export default class LangChainAssistantSession extends AssistantSession {
       observabilityContext?: ObservabilityToolContext;
       /** Skip per-call prompts for observability tools until the persisted setting is disabled. */
       autoApproveObservabilityTools?: boolean;
+      finalResponseSchema?: { name: string; schema: Record<string, unknown> };
     }
   ) {
     super();
     this.providerId = providerId;
     this.telemetryObserver = options?.telemetryObserver;
+    this.finalResponseSchema = options?.finalResponseSchema
+      ? structuredClone(options.finalResponseSchema)
+      : undefined;
     const configuredModel =
       typeof config.model === 'string' ? config.model.split('/').pop() : undefined;
     this.cacheCopilotClaudeSystemPrompt =
@@ -2316,6 +2321,11 @@ Please analyze this data and provide a specific, detailed response that directly
     ConversationMessage,
     undefined
   > {
+    if (this.finalResponseSchema) {
+      const response = await this.processToolResponses();
+      yield response.content;
+      return response;
+    }
     // Check if there are any tool responses in the history
     if (!hasToolResponses(this.history)) {
       const lastMessage = getLastAssistantMessage(this.history);
@@ -2402,6 +2412,43 @@ Please analyze this data and provide a specific, detailed response that directly
        * @returns Raw model response.
        */
       invoke: async (input: ToolResponseChainInput) => {
+        if (this.finalResponseSchema) {
+          const controller = this.currentAbortController ?? new AbortController();
+          this.currentAbortController = controller;
+          try {
+            const result = await model
+              .withStructuredOutput(this.finalResponseSchema.schema, {
+                name: this.finalResponseSchema.name,
+                method: 'jsonSchema',
+                strict: true,
+                includeRaw: true,
+              })
+              .invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
+                signal: controller.signal,
+              });
+            const raw = result.raw as BaseMessage;
+            this.recordModelUsage(raw);
+            if (controller.signal.aborted) throw new Error('Structured response cancelled');
+            if (raw.additional_kwargs?.refusal) throw new Error('Structured response refused');
+            const finishReason = (raw.response_metadata as Record<string, unknown>)?.finish_reason;
+            if (finishReason && finishReason !== 'stop')
+              throw new Error('Structured response incomplete');
+            const content = this.extractTextContent(raw.content);
+            const parsed: unknown = JSON.parse(content);
+            if (
+              result.parsed === null ||
+              result.parsed === undefined ||
+              !parsed ||
+              typeof parsed !== 'object' ||
+              Array.isArray(parsed)
+            ) {
+              throw new Error('Structured response did not match the expected object');
+            }
+            return { content };
+          } finally {
+            if (this.currentAbortController === controller) this.currentAbortController = null;
+          }
+        }
         const response = await model.invoke([
           this.createSystemMessage(input.systemPrompt),
           ...input.messages,
@@ -2524,7 +2571,9 @@ Please analyze this data and provide a specific, detailed response that directly
     response: ModelToolResponse
   ): Promise<ConversationMessage> {
     // Analyze and potentially correct kubectl suggestions
-    const correctedResponse = await this.analyzeAndCorrectResponse(response);
+    const correctedResponse = this.finalResponseSchema
+      ? response
+      : await this.analyzeAndCorrectResponse(response);
 
     const extractedContent = this.extractTextContent(correctedResponse.content);
 

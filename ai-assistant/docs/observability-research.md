@@ -480,6 +480,38 @@ This is a prompt-wording/example intervention, not dynamic reference enumeration
 automatic value lookup, or a new causal validator. No old scores are repaired or
 replaced, and no grader or identity boundary is loosened.
 
+### Claim Reference Wording: Eighteen-Session Results
+
+The [fixed hint comparison](../evals/docs/observability-reference-hint-results.md)
+completed all 18 sessions. Unknown identity rejections fell from **5/9 without
+the hint to 0/9 with it**, and valid resolved submissions rose from 3/9 to 7/9.
+However, both arms had **0/4 incident causal passes and 3/5 control passes**.
+The gate failed: the hint and claims remain opt-in, with defaults unchanged.
+
+Both hinted NSG answers selected retrieved `r2.f1`, the nested
+`/value/0/networkSecurityGroup/id`. The frozen validator accepts only direct
+object-relative identity paths, so both were rejected before same-object checks.
+These are unsupported identity-shape failures, not invented IDs or demonstrated
+correct diagnoses. Both hinted capacity answers abstained. The hinted wrong-pool
+and Kubernetes-only capacity answers became valid, grounded, but incorrect causes.
+Clearer reference syntax did not solve causal selection.
+
+The unhinted wrong-pool session timed out after repeated transport failures: four
+planning fetches (three failures, then HTTP 200) and four failed synthesis fetches.
+Another unhinted session retried one planning transport failure. These were request
+retries under unchanged policy, not score retries. The run recorded 43 fetches,
+35 HTTP 200 responses, eight pre-header transport errors, 32 reads, and 35 usage
+events. Observed subtotals were 302,440 input and 3,339 output tokens; timed-out
+synthesis usage remains unknown. No 429/500 or numeric retry-delay header appeared.
+No general latency/cost claim follows from different failure patterns. All children
+exited without watchdog kills; no resources were provisioned.
+
+Next audit the identity contract offline for nested ARM relationships and rule
+groups, preserving cross-object negative checks. Any validator change needs new
+tests and a prospective plan, not historical regrading. Retain the wrong-pool and
+insufficient-evidence false causes separately: better ID resolution is not causal
+validation. Do not repeat paid runs merely to obtain passes.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

@@ -218,6 +218,31 @@ No paid comparison, remote billing guarantee, historical score change, or broade
 streaming/MCP cancellation qualification is implied. The next model experiment
 must declare a new plan and retain these measurement limits.
 
+### Invocation Phase Telemetry: Offline Verification
+
+Direct planning and post-tool synthesis now emit sanitized `model_invocation`
+start/terminal events with session-local IDs, phase, elapsed time, and a numeric
+HTTP status when available from a thrown error. Cancellation is recorded before
+a stalled invocation settles; a late result cannot overwrite that terminal event.
+This resolves the ambiguity between a stalled planning request, a tool read, and
+final synthesis in future recordings without guessing from the last usage event.
+
+The actual Azure-client mocked boundary verifies successful planning then synthesis,
+cancelled planning, stalled strict/ordinary synthesis, and a rejected synthesis
+request. The rejection produces a failed synthesis event and no fallback model
+request; the telemetry omits provider error text and credentials. A separate
+shared-session check covers a thrown 429 without inferring SDK retry counts.
+All 1,979 shared-runtime tests and 376 eval tests pass, including existing usage
+metadata tests updated to filter their event type. Six disk-persistence checks
+also passed in `.tmp/pr25-invocation-recording-offline-b-20260917`.
+
+These are logical invocation records, not HTTP request-attempt accounting. A
+returned invocation can still fail selection validation. No retry policy, prompt,
+model, budget, or diagnosis default was changed. SDK backoff/remote billing and
+uncovered streaming/MCP/fallback paths remain separate verification work. No new
+paid eval ran, and the historical six timeouts remain unattributed; their missing
+phase or usage data cannot be reconstructed from these new events.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

@@ -499,6 +499,17 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
               .length,
             2
           );
+          assert.deepEqual(
+            value.telemetry
+              .filter((event: any) => event.type === 'model_invocation')
+              .map((event: any) => [event.invocation_id, event.phase, event.status]),
+            [
+              [1, 'planning', 'started'],
+              [1, 'planning', 'completed'],
+              [2, 'synthesis', 'started'],
+              [2, 'synthesis', 'completed'],
+            ]
+          );
         },
       });
       const result = await candidate({
@@ -637,6 +648,17 @@ for (const evidenceMode of ['compact-select', 'compact'] as const) {
     );
     assert.equal(usage.length, 1);
     assert.equal((usage[0] as { input_tokens: number }).input_tokens, 10);
+    assert.deepEqual(
+      records[0]!.telemetry
+        .filter((event: any) => event.type === 'model_invocation')
+        .map((event: any) => [event.invocation_id, event.phase, event.status]),
+      [
+        [1, 'planning', 'started'],
+        [1, 'planning', 'completed'],
+        [2, 'synthesis', 'started'],
+        [2, 'synthesis', 'cancelled'],
+      ]
+    );
     assert.equal(progress[0]?.telemetry.length, 0, 'Earlier snapshots must not mutate');
   });
 }
@@ -697,6 +719,15 @@ test('cancelled planning cannot fall back or save a late model answer', async co
   assert.equal(progress.length, progressCount);
   assert.equal(records[0]?.status, 'cancelled');
   assert.equal(records[0]?.text, '');
+  assert.deepEqual(
+    records[0]!.telemetry
+      .filter((event: any) => event.type === 'model_invocation')
+      .map((event: any) => [event.invocation_id, event.phase, event.status]),
+    [
+      [1, 'planning', 'started'],
+      [1, 'planning', 'cancelled'],
+    ]
+  );
   assert.equal(records[0]?.resolvedSubmission, null);
   assert.equal(callTool.mock.callCount(), 0);
 });
@@ -781,6 +812,108 @@ test('cancelling a pending tool read settles immediately and ignores its late re
   assert.equal(records.length, 1);
   assert.equal(JSON.stringify(records[0]), snapshot);
   assert.equal(records[0]?.toolPayloadCharacters, 0);
+});
+
+test('provider rejection records the synthesis phase without a new fallback invocation', async context => {
+  let requests = 0;
+  let record: HeadlampObservabilityRecord | undefined;
+  const progress: HeadlampObservabilityRecord[] = [];
+  context.mock.method(globalThis, 'fetch', async () => {
+    assert.ok(++requests <= 2, 'Provider rejection must not start another request');
+    if (requests === 2)
+      return Response.json(
+        {
+          error: {
+            message: 'private-provider-detail',
+            type: 'invalid_request_error',
+            code: 'invalid_api_key',
+          },
+        },
+        { status: 401 }
+      );
+    return Response.json({
+      id: 'offline',
+      object: 'chat.completion',
+      created: 0,
+      model: 'gpt-4o',
+      choices: [
+        {
+          index: 0,
+          finish_reason: 'tool_calls',
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'read',
+                type: 'function',
+                function: {
+                  name: 'kubernetes_api_request',
+                  arguments: JSON.stringify({ method: 'GET', path: '/eval/observed-kubernetes' }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+    });
+  });
+  const candidate = await createHeadlampObservabilityCandidate({
+    provider: 'azure',
+    config: {
+      model: 'gpt-4o',
+      endpoint: 'https://offline.invalid',
+      deploymentName: 'gpt-4o',
+      apiKey: 'offline-not-secret',
+    },
+    record: value => {
+      record = value;
+    },
+    recordProgress: value => progress.push(value),
+  });
+  await assert.rejects(
+    candidate({
+      ...input,
+      callTool: async () => ({
+        data: { value: 1 },
+        observations: [
+          {
+            evidence_id: 'read',
+            resource_ref: 'tool/kubernetes_api_request',
+            field_path: '/value',
+            value: '1',
+          },
+        ],
+      }),
+    }),
+    /Assistant session failed/
+  );
+  assert.ok(record);
+  assert.equal(record.status, 'failed');
+  const events = record.telemetry.filter(
+    (event: any) => event.type === 'model_invocation'
+  ) as Array<Record<string, unknown>>;
+  assert.deepEqual(
+    events.map(event => [event.invocation_id, event.phase, event.status]),
+    [
+      [1, 'planning', 'started'],
+      [1, 'planning', 'completed'],
+      [2, 'synthesis', 'started'],
+      [2, 'synthesis', 'failed'],
+    ]
+  );
+  assert.equal(events[3]?.http_status, 401);
+  assert.ok(
+    progress.some(value =>
+      value.telemetry.some(
+        (event: any) => event.type === 'model_invocation' && event.status === 'failed'
+      )
+    )
+  );
+  assert.ok(!JSON.stringify(events).includes('private-provider-detail'));
+  assert.equal(summarizeObservabilityUsage(record).status, 'partial');
+  assert.equal(requests, 2);
 });
 
 test('guidance is independent of grouping and has no incident-specific values', async () => {

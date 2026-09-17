@@ -173,6 +173,24 @@ Do not label the last available usage event as final-synthesis usage after a
 timeout: it might belong to planning. Keep progress and terminal artifacts separate
 and use atomic replacement when writing snapshots to avoid partially written JSON.
 
+Direct planning and strict/ordinary post-tool synthesis also emit
+`model_invocation` events. Each has a session-local `invocation_id`, `phase`
+(`planning` or `synthesis`), and `status` (`started`, `completed`, `failed`, or
+`cancelled`). A terminal event includes elapsed `duration_ns`; a thrown provider
+error may include a numeric `http_status`. No prompts, raw error messages, response
+bodies, headers, or credentials are included in these lifecycle events. Recorders
+can persist the start event even before usage is available. Cancellation emits
+its terminal event immediately and does not later emit a second completion.
+
+These events wrap logical LangChain invocations, not individual HTTP attempts.
+`completed` means the invocation returned, not that the final selection passed
+validation. Internal SDK retries, general chain fallbacks, MCP planning, and
+streaming paths are not fully instrumented by this change. Do not infer their
+request count or billable work from this event count. Usage remains a separate
+event type; consumers must filter on `type` rather than assume the first event
+contains token counts. An abort during tool processing may have only a completed
+planning invocation and no synthesis invocation, which is expected.
+
 For Azure/OpenAI, the factory defaults to `evidenceMode: 'compact-select'`,
 `referenceStyle: 'numeric'`, and `strictFinalOutput: true`. Compact evidence removes
 repeated metadata and raw/flattened duplication. Only model-selected references

@@ -260,9 +260,43 @@ Both existing diagnosis defaults and historical scores remain unchanged. Eight
 fetch attempts and seven usage events were retained; reported token totals exclude
 unknown usage for the timed-out synthesis. No Azure resources were provisioned.
 
-Next, validate bounded final-generation and provider-timeout options offline before
-another fixed paid comparison. Keep causal-selection work separate from transport
-delivery; the new instrumentation improves measurement, not diagnosis accuracy.
+The next offline limit checks are recorded below. Keep causal-selection work
+separate from transport delivery; instrumentation improves measurement, not
+diagnosis accuracy.
+
+### Final-Synthesis Limits: Offline Verification
+
+Added independent opt-in `finalResponseMaxOutputTokens` and
+`finalResponseTimeoutMs` options for structured Azure/OpenAI eval responses.
+Defaults remain unset, with both effective settings retained in candidate records.
+The optional final model is constructed through the existing provider factory
+with the same configuration and its own output ceiling; the planning model is
+not mutated. Limits are validated before model requests. The shared session exposes
+the same options; the token cap requires an Azure/OpenAI structured response and
+the final timeout requires a structured response.
+
+The local final-invocation deadline starts after planning/tools, aborts the request
+signal, and settles even when a model promise ignores abort. It bounds the logical
+synthesis call, not each HTTP retry independently; SDK retry policy is unchanged.
+An earlier caller cancellation wins. Success, failure, and abort clear timers and
+listeners, and late responses cannot become successful submissions. A token ceiling
+does not repair truncated JSON; provider `length` termination still fails closed.
+
+Verification is **offline only**: actual Azure/OpenAI client requests with mocked
+HTTP show no planning cap and the requested final cap, including GPT-4o's
+`max_tokens` and the installed SDK's o3 `max_completion_tokens` mapping. Tests
+also cover token-only configuration, combined limits, timeout before outer abort,
+early cancellation, timer cleanup, unsupported/invalid settings, and a truncated
+response with no fallback request. All **1,987 shared tests and 383 eval tests**,
+formatting, typechecks, and scoped lint passed. No new model/provider qualification
+or improved diagnosis/delivery rate is claimed, and no paid calls were made.
+
+Keep these limits opt-in until a new prospective experiment compares bounded and
+unbounded requests with identical packets/prompts and retained failures. Requested
+token limits depend on deployment capabilities and may include reasoning tokens;
+local deadlines do not prove remote billing termination. The historical pre-header
+timeout remains unexplained, not retroactively fixed. See the
+[configuration and limitations](../evals/src/scenarios/README.md#candidate-runs).
 
 ### Representation And Identity
 

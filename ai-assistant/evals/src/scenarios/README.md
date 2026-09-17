@@ -208,6 +208,38 @@ unsupported strict call fails visibly, without an unconstrained retry; use an
 explicit compact override for incompatible models. Strict output applies only to
 post-tool synthesis, not initial planning or answer repair.
 
+For a separately planned bounded-output experiment, strict Azure/OpenAI selection
+accepts `finalResponseMaxOutputTokens` and `finalResponseTimeoutMs`. Both are unset
+by default and recorded as `null` when omitted. The token limit must be a positive
+safe integer; the timeout must be an integer from 1 through 2,147,483,647 ms.
+Unsupported providers, non-strict modes, and invalid limits are rejected before
+model requests. The selected deployment must still support the requested schema
+and token budget; model context/output limits are not inferred automatically.
+
+The token ceiling uses a separate final model with the same provider configuration,
+leaving the planning model untouched. Offline HTTP tests verify `max_tokens` for
+GPT-4o and the installed SDK's `max_completion_tokens` mapping for o3, on both
+Azure and OpenAI paths. This is request-mapping coverage, not live qualification of
+those deployments. Reasoning-model budgets may include reasoning as well as visible
+output. A `length` result remains a failure, not repaired or silently retried as
+an unconstrained answer.
+
+The timeout starts at structured final synthesis, after planning and tool reads.
+It aborts the active synthesis signal with a `TimeoutError` and settles the local
+call even if the underlying promise ignores cancellation. It covers the logical
+synthesis invocation, including any SDK retry time, rather than resetting per HTTP
+attempt. Timers/listeners are removed after completion or cancellation. Set it
+below the outer trial deadline; the earlier outer cancellation still wins and the
+outer deadline continues to include preparation, planning, and tools. Strict
+buffered streaming uses the same final path; ordinary free-form streaming is not
+covered by these options.
+
+An inner deadline is recorded as a failed candidate response, with a cancelled
+synthesis invocation; outer cancellation is a cancelled candidate. Neither local
+settlement nor a token ceiling guarantees provider completion, complete usage,
+remote cancellation, or bounded billing. No defaults were promoted and no paid
+comparison accompanied implementation of these limits.
+
 The [first compact replay](../../docs/observability-compact-replay-results.md)
 measured efficiency benefits but no accuracy gain. The
 [20-session factorial](../../docs/observability-selection-factorial-results.md)

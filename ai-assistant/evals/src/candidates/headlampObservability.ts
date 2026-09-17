@@ -32,6 +32,8 @@ export interface HeadlampObservabilityOptions {
   strictFinalOutput?: boolean;
   evidenceGrouping?: EvidenceGrouping;
   diagnosticGuidance?: DiagnosticGuidance;
+  finalResponseMaxOutputTokens?: number;
+  finalResponseTimeoutMs?: number;
   recordProgress?: (value: HeadlampObservabilityRecord) => void;
   record?: (value: HeadlampObservabilityRecord) => void;
 }
@@ -46,6 +48,8 @@ export interface HeadlampObservabilityRecord {
   strictFinalOutput: boolean;
   evidenceGrouping: EvidenceGrouping;
   diagnosticGuidance: DiagnosticGuidance;
+  finalResponseMaxOutputTokens: number | null;
+  finalResponseTimeoutMs: number | null;
   resolvedSubmission: string | null;
   selectionError: string | null;
   toolPayloadCharacters: number;
@@ -115,6 +119,27 @@ export async function createHeadlampObservabilityCandidate(
   );
   const strictFinalOutput =
     options.strictFinalOutput ?? (supportsStrictOutput && evidenceMode === 'compact-select');
+  const finalResponseMaxOutputTokens = options.finalResponseMaxOutputTokens ?? null;
+  const finalResponseTimeoutMs = options.finalResponseTimeoutMs ?? null;
+  if (options.finalResponseMaxOutputTokens !== undefined) {
+    assert.ok(
+      strictFinalOutput &&
+        supportsStrictOutput &&
+        Number.isSafeInteger(options.finalResponseMaxOutputTokens) &&
+        options.finalResponseMaxOutputTokens > 0,
+      'Final output-token limit requires strict Azure/OpenAI selection and a positive integer'
+    );
+  }
+  if (options.finalResponseTimeoutMs !== undefined) {
+    assert.ok(
+      strictFinalOutput &&
+        supportsStrictOutput &&
+        Number.isInteger(options.finalResponseTimeoutMs) &&
+        options.finalResponseTimeoutMs > 0 &&
+        options.finalResponseTimeoutMs <= 2_147_483_647,
+      'Final timeout requires strict Azure/OpenAI selection and a positive 32-bit integer'
+    );
+  }
   assert.ok(
     !strictFinalOutput || evidenceMode === 'compact-select',
     'Strict selection output requires compact-select mode'
@@ -159,6 +184,8 @@ export async function createHeadlampObservabilityCandidate(
       strictFinalOutput,
       evidenceGrouping,
       diagnosticGuidance,
+      finalResponseMaxOutputTokens,
+      finalResponseTimeoutMs,
       resolvedSubmission,
       selectionError,
       toolPayloadCharacters,
@@ -181,7 +208,11 @@ export async function createHeadlampObservabilityCandidate(
         progress();
       },
       ...(strictFinalOutput
-        ? { finalResponseSchema: { name: 'fact_selection', schema: FACT_SELECTION_SCHEMA } }
+        ? {
+            finalResponseSchema: { name: 'fact_selection', schema: FACT_SELECTION_SCHEMA },
+            ...(finalResponseMaxOutputTokens === null ? {} : { finalResponseMaxOutputTokens }),
+            ...(finalResponseTimeoutMs === null ? {} : { finalResponseTimeoutMs }),
+          }
         : {}),
     });
     let rejectCancellation: (reason: Error) => void = () => {};

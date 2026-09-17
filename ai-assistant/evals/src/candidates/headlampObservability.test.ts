@@ -532,6 +532,8 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
       });
       assert.equal(requests.length, 2);
       assert.equal(requests[0]?.response_format, undefined);
+      assert.equal(requests[0]?.max_tokens, undefined);
+      assert.equal(requests[1]?.max_tokens, undefined);
       assert.ok(requests[0]?.tools.length);
       assert.equal(requests[1]?.response_format.type, 'json_schema');
       assert.equal(requests[1]?.response_format.json_schema.strict, true);
@@ -545,6 +547,267 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
       ]);
     });
   }
+}
+
+for (const provider of ['azure', 'openai']) {
+  for (const model of ['gpt-4o', 'o3']) {
+    test(`${provider} ${model} output ceiling reaches only final synthesis`, async context => {
+      const requests: Array<Record<string, any>> = [];
+      let record: HeadlampObservabilityRecord | undefined;
+      context.mock.method(
+        globalThis,
+        'fetch',
+        async (request: Request | string | URL, init?: RequestInit) => {
+          requests.push(
+            JSON.parse(request instanceof Request ? await request.text() : String(init?.body))
+          );
+          assert.ok(requests.length <= 2);
+          const planning = requests.length === 1;
+          return Response.json({
+            id: 'offline',
+            object: 'chat.completion',
+            created: 0,
+            model,
+            choices: [
+              {
+                index: 0,
+                finish_reason: planning ? 'tool_calls' : 'stop',
+                message: planning
+                  ? {
+                      role: 'assistant',
+                      content: '',
+                      tool_calls: [
+                        {
+                          id: 'read',
+                          type: 'function',
+                          function: {
+                            name: 'kubernetes_api_request',
+                            arguments: JSON.stringify({
+                              method: 'GET',
+                              path: '/eval/observed-kubernetes',
+                            }),
+                          },
+                        },
+                      ],
+                    }
+                  : {
+                      role: 'assistant',
+                      content: JSON.stringify({
+                        schema_version: 'fact_selection@1.0.0',
+                        fact_refs: ['r1.f1'],
+                        alternative_dispositions: [],
+                        uncertainty: { is_uncertain: false },
+                        proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+                      }),
+                    },
+              },
+            ],
+            usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+          });
+        }
+      );
+      const candidate = await createHeadlampObservabilityCandidate({
+        provider,
+        config: {
+          model,
+          endpoint: 'https://offline.invalid',
+          deploymentName: model,
+          apiKey: 'offline-not-secret',
+        },
+        finalResponseMaxOutputTokens: 512,
+        ...(model === 'o3' ? { finalResponseTimeoutMs: 2000 } : {}),
+        record: value => {
+          record = value;
+        },
+      });
+      await candidate({
+        ...input,
+        callTool: async () => ({
+          data: { value: 1 },
+          observations: [
+            {
+              evidence_id: 'read',
+              resource_ref: 'tool/kubernetes_api_request',
+              field_path: '/value',
+              value: '1',
+            },
+          ],
+        }),
+      });
+      assert.equal(requests.length, 2);
+      assert.equal(requests[0]?.max_tokens, undefined);
+      assert.equal(requests[0]?.max_completion_tokens, undefined);
+      assert.ok(requests[0]?.tools.length);
+      const field = model === 'o3' ? 'max_completion_tokens' : 'max_tokens';
+      assert.equal(requests[1]?.[field], 512);
+      assert.equal(
+        requests[1]?.[model === 'o3' ? 'max_tokens' : 'max_completion_tokens'],
+        undefined
+      );
+      assert.equal(requests[1]?.response_format.json_schema.strict, true);
+      assert.equal(requests[1]?.tools, undefined);
+      assert.equal(record?.status, 'completed');
+      assert.equal(record?.finalResponseTimeoutMs, model === 'o3' ? 2000 : null);
+      assert.equal(record?.finalResponseMaxOutputTokens, 512);
+    });
+  }
+}
+
+test('final limits reject unsupported or invalid settings before a request', async () => {
+  for (const value of [0, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {},
+        finalResponseMaxOutputTokens: value,
+      }),
+      /Final output-token/
+    );
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {},
+        finalResponseTimeoutMs: value,
+      }),
+      /Final timeout/
+    );
+  }
+  for (const limits of [{ finalResponseTimeoutMs: 50 }, { finalResponseMaxOutputTokens: 512 }]) {
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {},
+        evidenceMode: 'compact',
+        ...limits,
+      }),
+      /requires strict/
+    );
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({ provider: 'local', config: {}, ...limits }),
+      /requires strict/
+    );
+  }
+});
+
+for (const failureMode of ['stalled', 'length'] as const) {
+  test(
+    `bounded final synthesis fails closed for ${failureMode}`,
+    { timeout: 5000 },
+    async context => {
+      const outer = new AbortController();
+      let record: HeadlampObservabilityRecord | undefined;
+      let requests = 0;
+      let finalSignal: AbortSignal | undefined;
+      let release: (response: Response) => void = () => {};
+      const pending = new Promise<Response>(resolve => {
+        release = resolve;
+      });
+      context.after(() => release(Response.json({ choices: [] })));
+      context.mock.method(
+        globalThis,
+        'fetch',
+        async (request: Request | string | URL, init?: RequestInit) => {
+          assert.ok(++requests <= 2, 'No retry/fallback after bounded final failure');
+          if (requests === 1)
+            return Response.json({
+              id: 'plan',
+              object: 'chat.completion',
+              created: 0,
+              model: 'gpt-4o',
+              choices: [
+                {
+                  index: 0,
+                  finish_reason: 'tool_calls',
+                  message: {
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: [
+                      {
+                        id: 'read',
+                        type: 'function',
+                        function: {
+                          name: 'kubernetes_api_request',
+                          arguments: JSON.stringify({
+                            method: 'GET',
+                            path: '/eval/observed-kubernetes',
+                          }),
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+              usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+            });
+          finalSignal = request instanceof Request ? request.signal : init?.signal ?? undefined;
+          if (failureMode === 'stalled') return pending;
+          return Response.json({
+            id: 'limited',
+            object: 'chat.completion',
+            created: 0,
+            model: 'gpt-4o',
+            choices: [
+              {
+                index: 0,
+                finish_reason: 'length',
+                message: { role: 'assistant', content: '{"schema_version":' },
+              },
+            ],
+            usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+          });
+        }
+      );
+      const candidate = await createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {
+          model: 'gpt-4o',
+          endpoint: 'https://offline.invalid',
+          deploymentName: 'gpt-4o',
+          apiKey: 'offline-not-secret',
+        },
+        finalResponseMaxOutputTokens: 512,
+        finalResponseTimeoutMs: 50,
+        record: value => {
+          record = value;
+        },
+      });
+      await assert.rejects(
+        candidate({
+          ...input,
+          signal: outer.signal,
+          callTool: async () => ({
+            data: { value: 1 },
+            observations: [
+              {
+                evidence_id: 'read',
+                resource_ref: 'tool/kubernetes_api_request',
+                field_path: '/value',
+                value: '1',
+              },
+            ],
+          }),
+        }),
+        /Assistant session failed/
+      );
+      assert.equal(outer.signal.aborted, false, 'Inner deadline does not require outer abort');
+      assert.equal(record?.status, 'failed');
+      assert.equal(record?.resolvedSubmission, null);
+      assert.equal(record?.finalResponseTimeoutMs, 50);
+      assert.equal(summarizeObservabilityUsage(record).status, 'partial');
+      if (failureMode === 'stalled') {
+        assert.equal(finalSignal?.aborted, true);
+        assert.ok(
+          record?.telemetry.some(
+            (event: any) =>
+              event.type === 'model_invocation' &&
+              event.phase === 'synthesis' &&
+              event.status === 'cancelled'
+          )
+        );
+      }
+      assert.equal(requests, 2);
+    }
+  );
 }
 
 for (const evidenceMode of ['compact-select', 'compact'] as const) {

@@ -59,6 +59,20 @@ and opt-outs; OBS-8 below defines consumer rollout gates.
 | Field-labelled suffixes | Tested; not promoted | Both labelled arms had 0/4 enabled passes; every enabled selection was invalid. | Keep opt-in; numeric prompt example confounds the result. |
 | Strict cancellation and buffered streaming | Implemented, offline tested | Abort signal, raw text/usage retention, refusal/incomplete-output rejection, and complete JSON delivery. | Used by strict mode; broader runtime work remains open. |
 
+### Fresh Strict-Default Live Run: Interim
+
+The [2026-09-17 live rerun checkpoint](../evals/docs/observability-aks-strict-results.md)
+records an enabled NSG diagnosis pass on fresh infrastructure: all 6/6 required
+facts, selection and no-action controls passed, 22.553 seconds. Connectivity
+recovery also passed. Kubernetes-only failed diagnosis in 15.569 seconds: it
+expressed uncertainty but still asserted unrelated facts as causes.
+
+At this publication checkpoint, NSG cleanup is underway and autoscaler is queued
+behind verified deletion. Only two of four planned diagnoses are complete; this
+is not yet a lifecycle-valid NSG pass or a completed rerun. The original results
+below remain unchanged. This new NSG success does not isolate strict JSON from
+compaction, selection, the public fact budget, or changed live observations.
+
 ### Live AKS Baseline
 
 The [live report](../evals/docs/observability-aks-gpt4o-results.md) records four
@@ -193,6 +207,8 @@ Never expand one selected object into every required field.
 The 20-session factorial is complete. Do not rerun it to improve scores. Retain
 prompt-only/full/compact overrides and explicit labelled experiments. Default
 tests cover the real Azure request boundary and provider/override rules.
+The separate fresh live rerun has an NSG diagnosis/recovery pass; cleanup and
+autoscaler results remain pending at the published checkpoint linked above.
 
 ### OBS-3: Causal And Abstention Controls
 

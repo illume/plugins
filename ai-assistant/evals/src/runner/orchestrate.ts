@@ -62,6 +62,7 @@ import { runCandidatePass } from './candidatePass.js';
 export type CandidateSpec =
   | ScriptedCandidateMode
   | 'headlamp-cli'
+  | 'headlamp-cli-legacy'
   | 'holmesgpt'
   | 'k8sgpt'
   | 'kubectl-ai';
@@ -85,6 +86,7 @@ export function isCandidateSpec(value: string): value is CandidateSpec {
     'malformed',
     'unavailable',
     'headlamp-cli',
+    'headlamp-cli-legacy',
     'holmesgpt',
     'k8sgpt',
     'kubectl-ai',
@@ -199,9 +201,10 @@ function buildCandidate(
   k8sGptDeployment?: string,
   kubectlAiOptions?: KubectlAiCandidateOptions
 ): CandidateAdapter {
-  if (spec === 'headlamp-cli') {
+  if (spec === 'headlamp-cli' || spec === 'headlamp-cli-legacy') {
     return createHeadlampCliCandidate({
       useMockProvider: mode !== 'real',
+      sessionMode: spec === 'headlamp-cli-legacy' ? 'legacy' : 'agent-harness',
       allowedEnvVars:
         mode === 'real'
           ? loadClusterProfile(profile === 'aks' ? 'aks-azure' : profile).model.credential_env_vars

@@ -22,6 +22,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { createFakeCommandRunner } from '../commandRunner.js';
 import { KwokAdapter } from './kwokAdapter.js';
 
@@ -40,7 +41,7 @@ test('preflight: reports unsupported with a specific reason when a tool is missi
 });
 
 test('preflight: supported when every tool resolves and kubectl responds', async () => {
-  const { runner } = createFakeCommandRunner([
+  const { runner, calls } = createFakeCommandRunner([
     { match: ['which', 'kubectl'], result: { status: 0, stdout: '/usr/bin/kubectl', stderr: '' } },
     { match: ['which', 'kwokctl'], result: { status: 0, stdout: '/usr/bin/kwokctl', stderr: '' } },
     { match: ['which', 'docker'], result: { status: 0, stdout: '/usr/bin/docker', stderr: '' } },
@@ -74,6 +75,10 @@ test('preflight: supported when every tool resolves and kubectl responds', async
   const adapter = new KwokAdapter(runner, isolation);
   const preflight = await adapter.preflight();
   assert.equal(preflight.supported, true);
+  const apply = calls.find(call => call.command === 'kubectl' && call.args.includes('apply'));
+  const manifestPath = apply?.args[apply.args.indexOf('-f') + 1];
+  assert.equal(typeof manifestPath, 'string');
+  assert.equal(existsSync(manifestPath!), true);
 });
 
 test('getServiceSelector: parses the selector from kubectl JSON output', async () => {
@@ -202,6 +207,24 @@ test('getSchedulingObservation: rejects kubectl failures instead of fabricating 
     () => adapter.getSchedulingObservation('ns1', 'missing'),
     /failed to observe scheduling.*forbidden/
   );
+});
+
+test('createNamespace waits for the default ServiceAccount', async () => {
+  const { runner, calls } = createFakeCommandRunner([
+    {
+      match: [...kube, 'create', 'namespace', 'ns1'],
+      result: { status: 0, stdout: 'namespace/ns1 created', stderr: '' },
+    },
+    {
+      match: [...kube, 'get', 'serviceaccount', 'default', '-n', 'ns1'],
+      result: { status: 0, stdout: 'serviceaccount/default', stderr: '' },
+    },
+  ]);
+  const adapter = new KwokAdapter(runner, isolation);
+
+  await adapter.createNamespace('ns1');
+
+  assert.equal(calls.length, 2);
 });
 
 test('applyManifest and deleteNamespace issue the expected kubectl commands', async () => {

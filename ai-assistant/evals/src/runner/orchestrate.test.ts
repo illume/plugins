@@ -85,6 +85,7 @@ test('isCandidateSpec: recognizes every valid spec and rejects anything else', (
   assert.equal(isCandidateSpec('unsafe-effective'), true);
   assert.equal(isCandidateSpec('injected'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
+  assert.equal(isCandidateSpec('headlamp-cli-legacy'), true);
   assert.equal(isCandidateSpec('holmesgpt'), true);
   assert.equal(isCandidateSpec('k8sgpt'), true);
   assert.equal(isCandidateSpec('kubectl-ai'), true);

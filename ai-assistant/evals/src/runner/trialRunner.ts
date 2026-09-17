@@ -335,10 +335,15 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
 
   // --- Cluster-level preflight (tool/credential availability) ---
   if (!clusterPreflight.supported) {
+    const reason = `cluster preflight unsupported: ${
+      clusterPreflight.reason ?? 'no reason was reported'
+    }`;
     stageStatus.setup = 'unsupported';
     runEligibility = 'invalid';
     firstFailureOwner = 'setup';
     lifecycleValidity = 'clean';
+    rootCauseDimension = noApplicableDimension(reason);
+    recommendedFixDimension = noApplicableDimension(reason);
     return finalize();
   }
 
@@ -361,9 +366,14 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     );
     const preflightOutcome = await caseLogic.preflight(clusterAdapter, namespace);
     if (!preflightOutcome.ok) {
+      const reason = `scenario preflight failed: ${
+        preflightOutcome.reason ?? 'no reason was reported'
+      }`;
       stageStatus.setup = 'error';
       runEligibility = 'invalid';
       firstFailureOwner = 'setup';
+      rootCauseDimension = noApplicableDimension(reason);
+      recommendedFixDimension = noApplicableDimension(reason);
       aborted = true;
     }
 
@@ -691,6 +701,11 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
     stageStatus[currentStage] = 'error';
     runEligibility = 'invalid';
     if (!firstFailureOwner) firstFailureOwner = currentStage;
+    if (currentStage === 'setup') {
+      const reason = `trial setup failed: ${String(error)}`;
+      rootCauseDimension = noApplicableDimension(reason);
+      recommendedFixDimension = noApplicableDimension(reason);
+    }
     artifacts.push(trialWriter.writeArtifact('error.txt', String(error)));
   } finally {
     if (shouldCleanup) await safeCleanup();

@@ -257,7 +257,7 @@ function requireCandidateSpec(
 ): CandidateSpec {
   if (typeof value !== 'string' || !isCandidateSpec(value)) {
     throw new Error(
-      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli|holmesgpt|k8sgpt|kubectl-ai`
+      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli|headlamp-cli-legacy|holmesgpt|k8sgpt|kubectl-ai`
     );
   }
   return value;

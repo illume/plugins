@@ -496,6 +496,10 @@ test('runTrial: an unsupported cluster preflight (e.g. AKS without credentials) 
     assert.equal(result.stage_status.setup, 'unsupported');
     assert.equal(result.stage_status.candidate, 'skipped');
     assert.equal(result.first_failure_owner, 'setup');
+    assert.match(
+      result.dimensions.root_cause.invalidity_reason ?? '',
+      /cluster preflight unsupported/
+    );
   } finally {
     removeScratchDir(dir);
   }

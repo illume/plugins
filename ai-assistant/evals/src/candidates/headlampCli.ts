@@ -367,6 +367,8 @@ export interface HeadlampCliCandidateOptions {
   processRunner?: ProcessRunner;
   /** Use the CLI's deterministic mock provider. Real evals must set this false. */
   useMockProvider?: boolean;
+  /** Selects the product session implementation while keeping all other CLI inputs fixed. */
+  sessionMode?: 'agent-harness' | 'legacy';
   /** Explicit pricing snapshot used to estimate configured usage. */
   pricing?: TokenPricingSnapshot;
 }
@@ -537,14 +539,18 @@ export function createHeadlampCliCandidate(
 ): CandidateAdapter {
   const timeoutMs = options.timeoutMs ?? 120_000;
   const runProcess = options.processRunner ?? createRealProcessRunner();
+  const sessionMode = options.sessionMode ?? 'agent-harness';
+  const candidateId = sessionMode === 'legacy' ? 'headlamp-cli-legacy' : 'headlamp-cli';
   const identity = headlampCandidateIdentity(
+    candidateId,
     options.cliArgs ?? [],
     options.useMockProvider !== false,
+    sessionMode,
     options.pricing
   );
 
   return {
-    id: 'headlamp-cli',
+    id: candidateId,
     kind: 'headlamp-cli',
     identity,
     async invoke(input: CandidateInvocationInput): Promise<CandidateInvocationResult> {
@@ -610,7 +616,14 @@ export function createHeadlampCliCandidate(
       try {
         result = await runProcess(
           tsxBin,
-          [cliEntry, ...(options.cliArgs ?? []), '--telemetry-file', telemetryPath, prompt],
+          [
+            cliEntry,
+            ...(options.cliArgs ?? []),
+            ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
+            '--telemetry-file',
+            telemetryPath,
+            prompt,
+          ],
           baseEnv,
           timeoutMs
         );
@@ -674,8 +687,10 @@ export function createHeadlampCliCandidate(
 }
 
 function headlampCandidateIdentity(
+  candidateId: string,
   cliArgs: string[],
   useMockProvider: boolean,
+  sessionMode: 'agent-harness' | 'legacy',
   pricing?: TokenPricingSnapshot
 ): CandidateAdapter['identity'] {
   const argument = (name: string): string | null => {
@@ -690,9 +705,10 @@ function headlampCandidateIdentity(
     endpoint_digest: endpoint ? sha256OfText(endpoint) : null,
     credential_configured: argument('--api-key') !== null,
     mock_provider: useMockProvider,
+    session_mode: sessionMode,
   };
   return {
-    candidate_id: 'headlamp-cli',
+    candidate_id: candidateId,
     kind: 'headlamp-cli',
     configuration_digest: sha256OfJson(safeConfiguration),
     ...safeConfiguration,

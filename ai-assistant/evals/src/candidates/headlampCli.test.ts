@@ -402,6 +402,28 @@ test('createHeadlampCliCandidate: forwards provider configuration as CLI argumen
   assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
 });
 
+test('createHeadlampCliCandidate: records and invokes the legacy session ablation', async () => {
+  let capturedArgs: string[] = [];
+  const candidate = createHeadlampCliCandidate({
+    sessionMode: 'legacy',
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.equal(candidate.id, 'headlamp-cli-legacy');
+  assert.equal(candidate.identity?.candidate_id, 'headlamp-cli-legacy');
+  assert.equal(candidate.identity?.session_mode, 'legacy');
+  assert.ok(capturedArgs.includes('--legacy-session'));
+});
+
 test('createHeadlampCliCandidate: a non-zero exit code is reported as unavailable, not a silent pass', async () => {
   const candidate = createHeadlampCliCandidate({
     processRunner: async () => ({ stdout: '', stderr: 'boom', exitCode: 1, timedOut: false }),

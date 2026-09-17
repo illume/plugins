@@ -282,7 +282,7 @@ An earlier caller cancellation wins. Success, failure, and abort clear timers an
 listeners, and late responses cannot become successful submissions. A token ceiling
 does not repair truncated JSON; provider `length` termination still fails closed.
 
-Verification is **offline only**: actual Azure/OpenAI client requests with mocked
+Verification at this checkpoint was **offline only**: Azure/OpenAI client requests with mocked
 HTTP show no planning cap and the requested final cap, including GPT-4o's
 `max_tokens` and the installed SDK's o3 `max_completion_tokens` mapping. Tests
 also cover token-only configuration, combined limits, timeout before outer abort,
@@ -291,12 +291,44 @@ response with no fallback request. All **1,987 shared tests and 383 eval tests**
 formatting, typechecks, and scoped lint passed. No new model/provider qualification
 or improved diagnosis/delivery rate is claimed, and no paid calls were made.
 
-Keep these limits opt-in until a new prospective experiment compares bounded and
-unbounded requests with identical packets/prompts and retained failures. Requested
+The prospective follow-up below also leaves these limits opt-in. Requested
 token limits depend on deployment capabilities and may include reasoning tokens;
 local deadlines do not prove remote billing termination. The historical pre-header
 timeout remains unexplained, not retroactively fixed. See the
 [configuration and limitations](../evals/src/scenarios/README.md#candidate-runs).
+
+### Final-Synthesis Limits: Sixteen-Session Comparison
+
+After committing the shared limits and eval adapter, the
+[fixed four-arm comparison](../evals/docs/observability-final-limits-results.md)
+ran 16 fresh GPT-4o sessions: baseline, final 512-token ceiling, final 30-second
+deadline, and both. Each used the same NSG, capacity, synthetic healthy-capacity,
+and Kubernetes-only capacity packets with rotated arm order, strict numeric
+selection, read grouping, no guidance, and a 120-second outer deadline.
+
+All 16 returned valid grounded selections and passed no-action checks. There were
+no timeouts, truncations, candidate errors, duplicate/unknown references, extra
+fetch attempts, or observed retry-delay headers. However, all **eight incident
+answers failed the causal contract**. Two NSG answers covered all six required
+facts but included facts outside its permitted supporting set. Every enabled
+capacity answer omitted the explicit target pool name despite its availability.
+
+Only **two of eight controls passed**: token-only and combined limits correctly
+declared healthy capacity. The other healthy answers abstained; all four
+Kubernetes-only answers selected cause facts rather than cleanly abstaining.
+One sample per case/arm is not evidence that a ceiling improves health recognition.
+
+Final outputs used 49-109 tokens and synthesis completed within 14.485 seconds,
+so neither boundary triggered. All baseline calls completed too: no delivery,
+latency, or diagnosis improvement is established, and no default is promoted.
+The 32 observed usage events total 306,163 input and 2,772 output tokens, not a
+billing reconciliation. All child processes exited normally; no resources were
+provisioned. Historical scores and the earlier timeout explanations are unchanged.
+
+Next, prioritize a source-bound field/claim representation hypothesis with offline
+identity-preservation checks, retaining the missing-name, wrong-pool, and clean
+abstention counterexamples. Do not add tool calls for facts already retrieved or
+rerun this comparison merely to find a timeout or a pass.
 
 ### Representation And Identity
 

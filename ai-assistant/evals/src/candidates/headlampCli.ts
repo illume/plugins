@@ -636,6 +636,8 @@ export function createHeadlampCliCandidate(
               ? [
                   '--structured-diagnosis-evidence-ids',
                   JSON.stringify(input.observations.map(observation => observation.evidence_id)),
+                  '--structured-diagnosis-observations',
+                  observationSummary,
                 ]
               : []),
             '--telemetry-file',

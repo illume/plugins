@@ -28,7 +28,8 @@ import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
 import {
   createDiagnosisProviderSchema,
-  createDiagnosisSubmissionSchema,
+  type StructuredDiagnosisObservation,
+  validateDiagnosisSubmission,
 } from './structuredDiagnosis.js';
 
 interface KubectlContext {
@@ -87,6 +88,7 @@ export async function createManager(
     suppliedEvidenceOnly?: boolean;
     structuredDiagnosis?: boolean;
     structuredDiagnosisEvidenceIds?: string[];
+    structuredDiagnosisObservations?: StructuredDiagnosisObservation[];
   } = {}
 ): Promise<LangChainAssistantSession> {
   if (options.structuredDiagnosis && providerId === 'mock-testing-model') {
@@ -98,24 +100,23 @@ export async function createManager(
     telemetryObserver: options.telemetryObserver,
     model: options.model,
   };
+  const structuredDiagnosisEvidenceIds = options.structuredDiagnosisObservations?.length
+    ? options.structuredDiagnosisObservations.map(observation => observation.evidence_id)
+    : options.structuredDiagnosisEvidenceIds ?? [];
   const manager = options.legacySession
     ? new LangChainAssistantSession(providerId, config, [], commonOptions)
     : new AgentHarnessSession(providerId, config, [], {
         ...commonOptions,
         responseFormat: options.structuredDiagnosis
-          ? providerStrategy(
-              createDiagnosisProviderSchema(options.structuredDiagnosisEvidenceIds ?? [])
-            )
+          ? providerStrategy(createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds))
           : undefined,
         validateStructuredResponse: options.structuredDiagnosis
-          ? response => {
-              const parsed = createDiagnosisSubmissionSchema(
-                options.structuredDiagnosisEvidenceIds ?? []
-              ).safeParse(response);
-              return parsed.success
-                ? { success: true, data: parsed.data }
-                : { success: false, error: parsed.error.message };
-            }
+          ? response =>
+              validateDiagnosisSubmission(
+                response,
+                options.structuredDiagnosisObservations ?? [],
+                structuredDiagnosisEvidenceIds
+              )
           : undefined,
       });
   const kubectlContext =

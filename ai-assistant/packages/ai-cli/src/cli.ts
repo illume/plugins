@@ -195,6 +195,7 @@ async function main() {
     suppliedEvidenceOnly: parsed.suppliedEvidenceOnly,
     structuredDiagnosis: parsed.structuredDiagnosis,
     structuredDiagnosisEvidenceIds: parsed.structuredDiagnosisEvidenceIds,
+    structuredDiagnosisObservations: parsed.structuredDiagnosisObservations,
   });
 
   if (parsed.interactive) {

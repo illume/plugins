@@ -30,6 +30,7 @@ describe('parseArgs', () => {
     expect(result.suppliedEvidenceOnly).toBe(false);
     expect(result.structuredDiagnosis).toBe(false);
     expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
+    expect(result.structuredDiagnosisObservations).toEqual([]);
     expect(result.help).toBe(false);
     expect(result.skillSources).toEqual([]);
   });
@@ -85,6 +86,21 @@ describe('parseArgs', () => {
       parseArgs([...base, '--structured-diagnosis-evidence-ids', '["evidence-1","evidence-2"]'])
         .structuredDiagnosisEvidenceIds
     ).toEqual(['evidence-1', 'evidence-2']);
+  });
+
+  it('parses candidate-visible structured diagnosis observations', () => {
+    const observations = [
+      {
+        evidence_id: 'evidence-1',
+        resource_ref: 'deployment/web',
+        field_path: 'status.availableReplicas',
+        observed_value: '1',
+      },
+    ];
+    expect(
+      parseArgs([...base, '--structured-diagnosis-observations', JSON.stringify(observations)])
+        .structuredDiagnosisObservations
+    ).toEqual(observations);
   });
 
   it('documents the legacy-session environment variable', () => {

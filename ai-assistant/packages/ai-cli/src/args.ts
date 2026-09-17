@@ -50,6 +50,13 @@ export interface ParsedArgs {
   structuredDiagnosis: boolean;
   /** Exact evidence IDs permitted by the structured diagnosis contract. */
   structuredDiagnosisEvidenceIds: string[];
+  /** Candidate-visible observations used for post-provider validation. */
+  structuredDiagnosisObservations: Array<{
+    evidence_id: string;
+    resource_ref: string;
+    field_path: string;
+    observed_value: string;
+  }>;
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
@@ -72,6 +79,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     suppliedEvidenceOnly: process.env.HEADLAMP_AI_SUPPLIED_EVIDENCE_ONLY === '1',
     structuredDiagnosis: process.env.HEADLAMP_AI_STRUCTURED_DIAGNOSIS === '1',
     structuredDiagnosisEvidenceIds: [],
+    structuredDiagnosisObservations: [],
   };
   const args = argv.slice(2);
   const queryParts: string[] = [];
@@ -129,6 +137,27 @@ export function parseArgs(argv: string[]): ParsedArgs {
           throw new Error('--structured-diagnosis-evidence-ids must be a JSON string array');
         }
         result.structuredDiagnosisEvidenceIds = value;
+        break;
+      }
+      case '--structured-diagnosis-observations': {
+        const value: unknown = JSON.parse(args[++i] ?? '[]');
+        if (
+          !Array.isArray(value) ||
+          !value.every(
+            observation =>
+              typeof observation === 'object' &&
+              observation !== null &&
+              !Array.isArray(observation) &&
+              typeof (observation as Record<string, unknown>).evidence_id === 'string' &&
+              typeof (observation as Record<string, unknown>).resource_ref === 'string' &&
+              typeof (observation as Record<string, unknown>).field_path === 'string' &&
+              typeof (observation as Record<string, unknown>).observed_value === 'string'
+          )
+        ) {
+          throw new Error('--structured-diagnosis-observations must be a JSON array');
+        }
+        result.structuredDiagnosisObservations =
+          value as ParsedArgs['structuredDiagnosisObservations'];
         break;
       }
       case '--interactive':

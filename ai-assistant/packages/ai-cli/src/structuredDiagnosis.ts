@@ -18,6 +18,14 @@ import { z } from 'zod';
 
 type ProviderJsonSchema = Record<string, unknown> & { type: 'object' };
 
+/** Candidate-visible observation used to validate diagnosis references. */
+export interface StructuredDiagnosisObservation {
+  evidence_id: string;
+  resource_ref: string;
+  field_path: string;
+  observed_value: string;
+}
+
 const causeFactSchema = z
   .object({
     resource_ref: z.string(),
@@ -57,6 +65,54 @@ export function createDiagnosisSubmissionSchema(evidenceIds: string[]) {
       ),
     })
     .strict();
+}
+
+/** Validates a diagnosis and canonicalizes its evidence ledger from supplied observations. */
+export function validateDiagnosisSubmission(
+  response: Record<string, unknown>,
+  observations: StructuredDiagnosisObservation[],
+  evidenceIds = observations.map(observation => observation.evidence_id)
+): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
+  const parsed = createDiagnosisSubmissionSchema(evidenceIds).safeParse(response);
+  if (!parsed.success) return { success: false, error: parsed.error.message };
+  if (observations.length === 0) return { success: true, data: parsed.data };
+
+  const observationKey = (resourceRef: string, fieldPath: string, observedValue: string) =>
+    JSON.stringify([resourceRef, fieldPath, observedValue]);
+  const observationsByFact = new Map<string, StructuredDiagnosisObservation[]>();
+  for (const observation of observations) {
+    const key = observationKey(
+      observation.resource_ref,
+      observation.field_path,
+      observation.observed_value
+    );
+    observationsByFact.set(key, [...(observationsByFact.get(key) ?? []), observation]);
+  }
+  for (const fact of parsed.data.cause_facts) {
+    const matchingObservations = observationsByFact.get(
+      observationKey(fact.resource_ref, fact.field_path, fact.observed_value)
+    );
+    if (!matchingObservations) {
+      return {
+        success: false,
+        error: `Cause fact was not supplied as an exact observation: ${fact.resource_ref} ${fact.field_path}`,
+      };
+    }
+  }
+
+  const canonicalFacts = Array.from(observationsByFact.keys(), key => {
+    const [resource_ref, field_path, observed_value] = JSON.parse(key) as [string, string, string];
+    return { resource_ref, field_path, observed_value };
+  });
+  return {
+    success: true,
+    data: {
+      ...parsed.data,
+      cause_facts: canonicalFacts,
+      resource_refs: [...new Set(observations.map(observation => observation.resource_ref))],
+      evidence_refs: [...new Set(observations.map(observation => observation.evidence_id))],
+    },
+  };
 }
 
 /** Builds the provider-native JSON Schema supported by strict model providers. */

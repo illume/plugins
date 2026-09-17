@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createDiagnosisProviderSchema,
   createDiagnosisSubmissionSchema,
+  validateDiagnosisSubmission,
 } from './structuredDiagnosis.js';
 
 const submission = {
@@ -92,5 +93,92 @@ describe('createDiagnosisSubmissionSchema', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it('canonicalizes omitted facts and references from supplied observations', () => {
+    const observations = [
+      {
+        evidence_id: 'deployment-evidence',
+        resource_ref: 'deployment/web',
+        field_path: 'status.availableReplicas',
+        observed_value: '1',
+      },
+      {
+        evidence_id: 'event-evidence',
+        resource_ref: 'event/web-old-failure',
+        field_path: 'eventTime',
+        observed_value: '2025-01-01T00:00:00.000000Z',
+      },
+    ];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: [
+          {
+            resource_ref: 'deployment/web',
+            field_path: 'status.availableReplicas',
+            observed_value: '1',
+          },
+        ],
+        resource_refs: ['deployment/web'],
+        evidence_refs: ['deployment-evidence'],
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.cause_facts).toEqual([
+      {
+        resource_ref: 'deployment/web',
+        field_path: 'status.availableReplicas',
+        observed_value: '1',
+      },
+      {
+        resource_ref: 'event/web-old-failure',
+        field_path: 'eventTime',
+        observed_value: '2025-01-01T00:00:00.000000Z',
+      },
+    ]);
+    expect(result.data.resource_refs).toEqual(['deployment/web', 'event/web-old-failure']);
+    expect(result.data.evidence_refs).toEqual(['deployment-evidence', 'event-evidence']);
+  });
+
+  it('accepts exact coverage of all supplied observations', () => {
+    const observations = [
+      {
+        evidence_id: 'deployment-evidence',
+        resource_ref: 'deployment/web',
+        field_path: 'status.availableReplicas',
+        observed_value: '1',
+      },
+      {
+        evidence_id: 'event-evidence',
+        resource_ref: 'event/web-old-failure',
+        field_path: 'eventTime',
+        observed_value: '2025-01-01T00:00:00.000000Z',
+      },
+    ];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: observations.map(observation => ({
+          resource_ref: observation.resource_ref,
+          field_path: observation.field_path,
+          observed_value: observation.observed_value,
+        })),
+        resource_refs: ['deployment/web', 'event/web-old-failure'],
+        evidence_refs: ['deployment-evidence', 'event-evidence'],
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  it('preserves exact-ID validation when no observation ledger is supplied', () => {
+    const result = validateDiagnosisSubmission(submission, [], ['evidence-1', 'evidence-2']);
+
+    expect(result).toEqual({ success: true, data: submission });
   });
 });

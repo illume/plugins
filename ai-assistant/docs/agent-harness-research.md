@@ -36,7 +36,7 @@ default.
 | Harness-native optional tool dispatch                                    | Not implemented                                                       | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
 | CLI harness default and legacy fallback                                  | Implemented                                                           | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
 | Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
-| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, uniqueness, repair, telemetry, and CLI regressions                                   |
+| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence-ledger, repair, telemetry, and CLI regressions                    |
 | Plugin UI harness default                                                | Not implemented                                                       | No                                         | Requires quality comparison and browser stream/approval parity                                 |
 | Typed evidence in the product answer path                                | Not implemented                                                       | No                                         | Evaluation submission validation exists; product integration is untested                       |
 | Checkpointed approval/resume                                             | Not implemented                                                       | No                                         | Research backlog                                                                               |
@@ -165,6 +165,33 @@ retry window and were invalidated before grading. Real-provider confirmation of
 the final repair revision therefore remains pending; no outcome is inferred
 from that probe.
 
+### Controller-convergence evidence-ledger result
+
+The structured response originally left evidence selection to the model. In
+three retained harness runs for `phase2-controller-convergence-01-v1`, the
+answer correctly said the Deployment was reconciled and the Warning event was
+old, but omitted the event timestamp from `cause_facts`; one later generation
+included it and passed. A consistency-only validator still allowed repair to
+drop the event from all references, and a completeness repair remained
+stochastic.
+
+The final experiment instead validates every model-selected cause fact against
+the supplied observations, then derives `cause_facts`, `resource_refs`, and
+`evidence_refs` deterministically from that task-scoped observation packet. It
+does not use protected evaluator truth and does not change the model's
+conclusion, uncertainty, alternatives, or proposed actions. The evaluator is
+the only current caller supplying this canonical observation ledger.
+
+Ten fresh independent Copilot `gpt-4o-2024-11-20` Minikube trials all produced
+valid root-cause passes with safety pass and clean lifecycle state. Seven used
+one model request and three used the existing bounded repair, for 13 requests,
+35,186 total tokens, and 8.70 seconds mean diagnosis time. The runs are retained
+from `run_0mu5j5uk7000001_2090f2fc-866f-47e8-9369-82fde2999140` through
+`run_0mu5ja5pv000001_b33f36f4-378e-497c-bd59-6b38a4e7566c`. An unrelated
+healthy PVC control and the annotation-injection control also passed with valid,
+safe, lifecycle-clean results in
+`run_0mu5jbi6b000001_af3196b9-5a3a-4c25-97d2-0a7c715f2936`.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated
@@ -221,6 +248,7 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Matched harness versus legacy, 25 registered cases                                     | Harness 17 pass/7 partial/1 no-result; legacy 18 pass/7 partial; safety and lifecycle equal | Keep legacy fallback; do not promote to the plugin or claim a quality gain |
 | Explicit supplied evidence with unavailable retrieval                                  | Final harness slice completed 25/25 trials with zero tool calls                             | Keep no-retrieval mode for supplied-evidence evaluations                   |
 | Provider schema alone versus external evidence validation                              | Shape enforcement missed duplicate evidence IDs; external validation repaired them          | Validate semantics outside the provider schema with one bounded repair     |
+| Model-selected evidence ledger versus canonical supplied observations                  | Controller convergence moved from stochastic partial/no-result to 10/10 valid passes        | Canonicalize the ledger in explicit supplied-evidence diagnosis mode       |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next result should repeat the registered roster with counterbalanced order

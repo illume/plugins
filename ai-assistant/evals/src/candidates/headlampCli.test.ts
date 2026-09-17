@@ -379,6 +379,15 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
   assert.ok(capturedArgs.includes('--structured-diagnosis'));
   const evidenceIdsIndex = capturedArgs.indexOf('--structured-diagnosis-evidence-ids');
   assert.deepEqual(JSON.parse(capturedArgs[evidenceIdsIndex + 1]!), ['ev1']);
+  const observationsIndex = capturedArgs.indexOf('--structured-diagnosis-observations');
+  assert.deepEqual(JSON.parse(capturedArgs[observationsIndex + 1]!), [
+    {
+      evidence_id: 'ev1',
+      resource_ref: 'service/web',
+      field_path: 'spec.selector',
+      observed_value: '{}',
+    },
+  ]);
   assert.ok(
     capturedArgs.some(arg =>
       arg.includes('return exactly one proposed action with operation "no_action"')

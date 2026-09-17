@@ -63,6 +63,41 @@ describe('AgentHarnessSession', () => {
     expect(invoked).not.toHaveBeenCalled();
   });
 
+  it('requires approval for a mutating host-provided tool registered under a built-in tool name', async () => {
+    // A host (e.g. the CLI) can supply its own tool implementation but still
+    // advertise it under the same identifier as a built-in tool
+    // (`kubernetes_api_request`) for model-facing consistency. Auto-approval
+    // must still be denied for non-GET calls even though this arrives as a
+    // host-provided "extra" tool rather than through the runtime.
+    const invoked = vi.fn(async () => 'must not execute');
+    const kubectlBackedTool = tool(invoked, {
+      name: 'kubernetes_api_request',
+      description: 'Run a Kubernetes API request via kubectl',
+      schema: z.object({ method: z.string(), url: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            {
+              id: 'mutating-call',
+              name: 'kubernetes_api_request',
+              args: { method: 'DELETE', url: '/api/v1/namespaces/default/pods/my-pod' },
+            },
+          ],
+          [],
+        ],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(createMockApprovalManager({ mode: 'deny-all' }));
+    await session.enableDirectToolCalling([kubectlBackedTool]);
+
+    await session.userSend('Delete the pod');
+
+    expect(invoked).not.toHaveBeenCalled();
+  });
+
   it('requires approval for built-in Kubernetes Secret reads', async () => {
     const execute = vi.fn();
     const toolManager = createMockToolManager({
@@ -692,6 +727,69 @@ describe('AgentHarnessSession', () => {
       'assistant',
     ]);
     expect(validateToolCallAlignment(session.history).aligned).toBe(true);
+  });
+
+  it('redacts secret data from a runtime-owned history entry before storing it', async () => {
+    const toolManager = createMockToolManager({
+      enabledToolNames: ['kubernetes_api_request'],
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'kubernetes_api_request',
+        description: 'Read Kubernetes resources',
+        schema: z.object({ method: z.string(), url: z.string() }),
+      }),
+    ]);
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          {
+            id: 'get-secret-call',
+            name: 'kubernetes_api_request',
+            args: { method: 'GET', url: '/api/v1/namespaces/default/secrets/my-secret' },
+          },
+        ],
+        [],
+      ],
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager,
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    const rawSecretContent = JSON.stringify({
+      kind: 'Secret',
+      data: { password: 'cG9zdGdyZXM6Ly8=' },
+    });
+    vi.spyOn(toolManager, 'executeTool').mockImplementation(
+      async (_name, _args, toolCallId): Promise<ToolExecutionResult> => {
+        // Runtime-owned history is written with the raw, unredacted payload,
+        // matching how a real Kubernetes GET writes to host history.
+        session.history.push({
+          role: 'tool',
+          content: rawSecretContent,
+          toolCallId,
+          name: 'kubernetes_api_request',
+        });
+        return {
+          content: rawSecretContent,
+          shouldAddToHistory: false,
+          shouldProcessFollowUp: true,
+        };
+      }
+    );
+
+    await session.userSend('Show me the secret');
+
+    const toolEntry = session.history
+      .slice()
+      .reverse()
+      .find(message => message.role === 'tool');
+    expect(toolEntry).toBeDefined();
+    expect(toolEntry?.content).not.toContain('cG9zdGdyZXM6Ly8=');
+    expect(toolEntry?.content).toContain('[REDACTED]');
   });
 
   it('suspends mutation follow-up and retains the initiating prompt for confirmation', async () => {

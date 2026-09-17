@@ -132,6 +132,18 @@ Acquire credentials in that private process; do not commit them. Each callback
 creates a fresh session with only the allowed read tools. Its optional `record`
 hook retains the original response, model/tool telemetry, and elapsed time.
 
+The factory also accepts experimental `evidenceMode: 'compact' | 'compact-select'`.
+`compact` removes repeated metadata and raw/flattened duplication while keeping
+the existing answer schema. `compact-select` resolves model-selected short fact
+references into exact citations, without adding unselected fields. The default
+remains `full`. Use `gradeObservabilitySelection` as a supplementary evaluator
+with a publicly declared fact budget; do not replace the original grader or treat
+grounded references as proof of causal reasoning.
+The [first compact-evidence replay](../../docs/observability-compact-replay-results.md)
+reduced token use but did not improve pass rates; it records all failures and
+explains the observation-only replay limitations. These modes are eval-adapter
+experiments, not changes to the normal browser UI or CLI behavior.
+
 Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
 to evaluate a trusted model adapter during the induced-fault window. The module
 must default-export a `LiveObservabilityCandidate` callback. It is invoked twice,

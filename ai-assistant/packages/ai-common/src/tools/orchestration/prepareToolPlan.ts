@@ -147,12 +147,13 @@ export interface OrchestrationTask {
   /** Whether the batch must wait for this tool before proceeding. */
   required: boolean;
   /**
-   * Starts tool execution and resolves with its result. Implementations are
-   * expected to already catch tool errors into an error-shaped `ToolResult`
-   * (matching the existing `buildOrchestrationToolError` pattern) so a
-   * rejection here is treated as a last-resort, unexpected failure.
+   * Starts tool execution with a signal owned by the orchestration batch and
+   * resolves with its result. Implementations are expected to already catch
+   * tool errors into an error-shaped `ToolResult` (matching the existing
+   * `buildOrchestrationToolError` pattern) so a rejection here is treated as
+   * a last-resort, unexpected failure.
    */
-  run: () => Promise<ToolResult>;
+  run: (signal?: AbortSignal) => Promise<ToolResult>;
 }
 
 /**
@@ -160,15 +161,13 @@ export interface OrchestrationTask {
  * necessarily waiting for every tool.
  *
  * Policy:
- * - Every task runs concurrently regardless of `required`; nothing is
- *   delayed or aborted.
+ * - Every task runs concurrently regardless of `required`.
  * - When at least one task is `required`, the batch waits only for the
  *   required tasks (`Promise.all`). Any optional task not yet settled by
  *   that point is recorded as pending via `buildPendingToolPlaceholder` — a
  *   slow "nice to have" tool never delays the response once the tools the
- *   answer actually needs have returned. Optional tasks keep running in the
- *   background; if they resolve after this function returns, the mutation to
- *   the returned map has no further effect on the current turn.
+ *   answer actually needs have returned. Unsettled optional tasks are aborted
+ *   before the result snapshot is returned.
  * - When every task is optional (no required tool to gate on), the batch
  *   races for the first *successful* result instead, bounded by
  *   `optionalTimeoutMs` so a batch of entirely stuck/failing tools cannot
@@ -180,17 +179,35 @@ export interface OrchestrationTask {
  * @param tasks - Tool executions to run, each already wrapping its own
  *                error handling.
  * @param optionalTimeoutMs - Deadline used only in the all-optional case.
+ * @param signal - Optional parent signal for cancelling the entire batch.
  * @returns Tool name → result map, including `pending` placeholders for any
  *          optional tool not waited on to completion.
  */
 export async function waitForOrchestrationResults(
   tasks: OrchestrationTask[],
-  optionalTimeoutMs: number = DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS
+  optionalTimeoutMs: number = DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
+  signal?: AbortSignal
 ): Promise<Record<string, ToolResult>> {
   const results: Record<string, ToolResult> = {};
+  const settledTasks = new Set<OrchestrationTask>();
+  const optionalControllers = new Map<OrchestrationTask, AbortController>();
+  const removeParentAbortListeners: Array<() => void> = [];
+  let acceptingResults = true;
 
   const requiredTasks = tasks.filter(task => task.required);
   const optionalTasks = tasks.filter(task => !task.required);
+
+  for (const task of optionalTasks) {
+    const controller = new AbortController();
+    optionalControllers.set(task, controller);
+    if (signal?.aborted) {
+      controller.abort();
+    } else if (signal) {
+      const onAbort = () => controller.abort();
+      signal.addEventListener('abort', onAbort, { once: true });
+      removeParentAbortListeners.push(() => signal.removeEventListener('abort', onAbort));
+    }
+  }
 
   // Launch every task immediately and track its settlement into `results`,
   // regardless of which wait strategy below ends up applying. `track()` never
@@ -206,15 +223,18 @@ export async function waitForOrchestrationResults(
   // is attached.
   const track = (task: OrchestrationTask): Promise<void> =>
     Promise.resolve()
-      .then(() => task.run())
+      .then(() => task.run(optionalControllers.get(task)?.signal ?? signal))
       .then(
         result => {
-          results[task.name] = result;
+          if (acceptingResults) results[task.name] = result;
         },
         error => {
-          results[task.name] = buildOrchestrationToolError(task.name, error as Error | null);
+          if (acceptingResults) {
+            results[task.name] = buildOrchestrationToolError(task.name, error as Error | null);
+          }
         }
-      );
+      )
+      .finally(() => settledTasks.add(task));
 
   const requiredTracked = requiredTasks.map(track);
   const optionalTracked = optionalTasks.map(task => track(task).catch(() => {}));
@@ -225,19 +245,29 @@ export async function waitForOrchestrationResults(
   } else {
     // Every task is optional — race for the first success, bounded by a
     // deadline so a fully-stuck batch still returns.
-    await Promise.race([
-      firstSuccessOrAllSettled(optionalTasks, optionalTracked, results),
-      delay(optionalTimeoutMs),
-    ]);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        firstSuccessOrAllSettled(optionalTasks, optionalTracked, results),
+        new Promise<void>(resolve => {
+          timeout = setTimeout(resolve, optionalTimeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
   }
 
+  acceptingResults = false;
   for (const task of optionalTasks) {
     if (!(task.name in results)) {
       results[task.name] = buildPendingToolPlaceholder(task.name);
     }
+    if (!settledTasks.has(task)) optionalControllers.get(task)?.abort();
   }
+  for (const removeListener of removeParentAbortListeners) removeListener();
 
-  return results;
+  return { ...results };
 }
 
 /**
@@ -267,22 +297,21 @@ function firstSuccessOrAllSettled(
         // placeholder here, since only `waitForOrchestrationResults` writes
         // those, and only after this race has already resolved.
         const result = results[task.name];
-        const succeeded = !!result && !result.error && !result.isError;
+        const metadata =
+          result?.metadata && typeof result.metadata === 'object'
+            ? (result.metadata as Record<string, unknown>)
+            : undefined;
+        const succeeded =
+          !!result &&
+          result.success !== false &&
+          !result.error &&
+          !result.isError &&
+          !metadata?.error &&
+          !metadata?.isError;
         if (succeeded || settledCount === tasks.length) {
           resolve();
         }
       });
     });
   });
-}
-
-/**
- * Resolves after `ms` milliseconds. Used only as a bounded ceiling for the
- * all-optional wait race — never for the default/required-gated path.
- *
- * @param ms - Delay in milliseconds.
- * @returns A promise resolved after the delay.
- */
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }

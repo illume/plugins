@@ -237,9 +237,17 @@ describe('waitForOrchestrationResults', () => {
   it('does not wait for a slow optional tool once required tools have settled', async () => {
     const required = deferred<ToolResult>();
     const optional = deferred<ToolResult>(); // never resolves in this test
+    let optionalSignal: AbortSignal | undefined;
     const tasks: OrchestrationTask[] = [
       { name: 'required_tool', required: true, run: () => required.promise },
-      { name: 'optional_tool', required: false, run: () => optional.promise },
+      {
+        name: 'optional_tool',
+        required: false,
+        run: signal => {
+          optionalSignal = signal;
+          return optional.promise;
+        },
+      },
     ];
 
     const resultsPromise = waitForOrchestrationResults(tasks);
@@ -247,6 +255,11 @@ describe('waitForOrchestrationResults', () => {
 
     const results = await resultsPromise;
     expect(results.required_tool).toEqual(successResult);
+    expect(results.optional_tool).toEqual(buildPendingToolPlaceholder('optional_tool'));
+    expect(optionalSignal?.aborted).toBe(true);
+
+    optional.resolve({ success: true, data: { tooLate: true } });
+    await Promise.resolve();
     expect(results.optional_tool).toEqual(buildPendingToolPlaceholder('optional_tool'));
   });
 
@@ -270,19 +283,35 @@ describe('waitForOrchestrationResults', () => {
   });
 
   it('races for the first successful result when every task is optional', async () => {
+    vi.useFakeTimers();
     const slow = deferred<ToolResult>();
     const fast = deferred<ToolResult>();
+    let slowSignal: AbortSignal | undefined;
     const tasks: OrchestrationTask[] = [
-      { name: 'slow_tool', required: false, run: () => slow.promise },
+      {
+        name: 'slow_tool',
+        required: false,
+        run: signal => {
+          slowSignal = signal;
+          return slow.promise;
+        },
+      },
       { name: 'fast_tool', required: false, run: () => fast.promise },
     ];
 
-    const resultsPromise = waitForOrchestrationResults(tasks, 5_000);
-    fast.resolve(successResult);
+    try {
+      const resultsPromise = waitForOrchestrationResults(tasks, 5_000);
+      fast.resolve(successResult);
+      await vi.advanceTimersByTimeAsync(0);
 
-    const results = await resultsPromise;
-    expect(results.fast_tool).toEqual(successResult);
-    expect(results.slow_tool).toEqual(buildPendingToolPlaceholder('slow_tool'));
+      const results = await resultsPromise;
+      expect(results.fast_tool).toEqual(successResult);
+      expect(results.slow_tool).toEqual(buildPendingToolPlaceholder('slow_tool'));
+      expect(slowSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('returns immediately once every optional task has failed, without waiting the full deadline', async () => {
@@ -316,9 +345,16 @@ describe('waitForOrchestrationResults', () => {
   it('gives up at the deadline when every optional task is genuinely stuck', async () => {
     vi.useFakeTimers();
     try {
-      const stuck = new Promise<ToolResult>(() => {}); // never settles
+      let stuckSignal: AbortSignal | undefined;
       const tasks: OrchestrationTask[] = [
-        { name: 'stuck_tool', required: false, run: () => stuck },
+        {
+          name: 'stuck_tool',
+          required: false,
+          run: signal => {
+            stuckSignal = signal;
+            return new Promise<ToolResult>(() => {});
+          },
+        },
       ];
 
       const resultsPromise = waitForOrchestrationResults(tasks, 10_000);
@@ -335,6 +371,8 @@ describe('waitForOrchestrationResults', () => {
       const results = await resultsPromise;
       expect(settled).toBe(true);
       expect(results.stuck_tool).toEqual(buildPendingToolPlaceholder('stuck_tool'));
+      expect(stuckSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
     }
@@ -424,6 +462,29 @@ describe('waitForOrchestrationResults', () => {
     later.resolve(successResult);
     const results = await resultsPromise;
     expect(results.early_fail).toEqual({ error: true, message: 'early failure' });
+    expect(results.later_success).toEqual(successResult);
+  });
+
+  it.each([
+    { success: false, message: 'explicit failure' },
+    { metadata: { error: true }, message: 'metadata error' },
+    { metadata: { isError: true }, message: 'metadata isError' },
+  ])('does not treat $message as the first optional success', async failure => {
+    const early = deferred<ToolResult>();
+    const later = deferred<ToolResult>();
+    const tasks: OrchestrationTask[] = [
+      { name: 'early_fail', required: false, run: () => early.promise },
+      { name: 'later_success', required: false, run: () => later.promise },
+    ];
+
+    const resultsPromise = waitForOrchestrationResults(tasks, 60_000);
+    early.resolve(failure);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    later.resolve(successResult);
+    const results = await resultsPromise;
+    expect(results.early_fail).toEqual(failure);
     expect(results.later_success).toEqual(successResult);
   });
 

@@ -81,6 +81,7 @@ import { RecommendedTool, ToolPlanner } from '../tools/langchain/ToolPlanner';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
+  DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
   filterApprovedOrchestrationTools,
   OrchestrationTask,
   shouldCacheResponse,
@@ -1461,19 +1462,23 @@ export default class LangChainAssistantSession extends AssistantSession {
             // Undefined (older/mocked recommendations) defaults to required,
             // preserving the original "wait for everything" behavior.
             required: tool.required !== false,
-            run: () =>
+            run: signal =>
               this.toolManager.executeTool(
                 tool.name,
                 approvalData?.arguments || tool.arguments || {},
                 toolCallId,
                 undefined,
-                this.currentAbortController?.signal
+                signal
               ),
           };
         });
 
         try {
-          toolResults = await waitForOrchestrationResults(tasks);
+          toolResults = await waitForOrchestrationResults(
+            tasks,
+            DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
+            this.currentAbortController?.signal
+          );
         } catch (error) {
           console.error('Error executing parallel tools:', error);
           // Continue with sequential tools even if some parallel tools fail

@@ -22,7 +22,8 @@
  * It provides the runtime surface used by `LangChainAssistantSession`:
  * - `executeTool` — returns a configurable canned `ToolExecutionResult`
  * - `getToolNames` — returns configured names
- * - `getMCPTools` / `getLangChainTools` — return empty lists
+ * - `getMCPTools` — returns an empty list
+ * - `getLangChainTools` — returns model-facing definitions for enabled tools
  * - `bindToModelAsync` / `waitForMCPToolsInitialization` — resolve immediately
  *
  * ### Usage
@@ -50,6 +51,8 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';
 import type { LangChainToolRuntime } from '../../assistant/langchain/LangChainToolBinding';
 import type { ConversationMessage as Prompt } from '../../conversation/types';
 import type { ToolExecutionResult } from '../ToolRuntime';
@@ -199,12 +202,25 @@ export class MockToolManager implements LangChainToolRuntime {
   }
 
   /**
-   * Returns no LangChain tool adapters.
+   * Returns model-facing definitions for enabled mock tools. The adapter
+   * invokes `executeTool`, so these definitions never access a real cluster.
    *
-   * @returns Always an empty array.
+   * @returns One model-facing definition for each enabled tool.
    */
   getLangChainTools(): StructuredToolInterface[] {
-    return [];
+    return this.enabledNames.map(toolName =>
+      tool(
+        async args => {
+          const result = await this.executeTool(toolName, args as Record<string, unknown>);
+          return result.content;
+        },
+        {
+          name: toolName,
+          description: `Mock ${toolName} tool`,
+          schema: z.object({}).passthrough(),
+        }
+      )
+    );
   }
 
   /**

@@ -185,25 +185,25 @@ function parseSerializedToolArguments(serialized: string): Record<string, unknow
 
 /** Coordinates model calls, tool execution, and chat history for the AI assistant. */
 export default class LangChainAssistantSession extends AssistantSession {
-  private model: BaseChatModel;
+  protected model: BaseChatModel;
   private boundModel: InvokableChatModel | null = null;
-  private providerId: string;
-  private toolManager: LangChainToolRuntime;
-  private kubernetesContext: KubernetesToolContext | undefined;
-  private currentAbortController: AbortController | null = null;
+  protected providerId: string;
+  protected toolManager: LangChainToolRuntime;
+  protected kubernetesContext: KubernetesToolContext | undefined;
+  protected currentAbortController: AbortController | null = null;
   private promptTemplate: ChatPromptTemplate;
   private outputParser: StringOutputParser;
   private useDirectToolCalling: boolean = false;
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
-  private extraTools: Map<string, ExtraTool> = new Map();
+  protected extraTools: Map<string, ExtraTool> = new Map();
   private telemetryObserver?: AssistantTelemetryObserver;
   private cacheCopilotClaudeSystemPrompt: boolean;
 
   // Skills system
-  private skillManager: SkillManager | null = null;
-  private skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
+  protected skillManager: SkillManager | null = null;
+  protected skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
   /** Skills prompt text for the current request (computed per-message, transient). */
-  private currentSkillsPromptText: string = '';
+  protected currentSkillsPromptText: string = '';
 
   // Response cache for common queries (in-memory)
   private responseCache: Map<string, CacheEntry<ConversationMessage>> = new Map();
@@ -244,6 +244,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       mcpClient?: ToolClient;
       /** Receives sanitized model-usage and tool-completion events. */
       telemetryObserver?: AssistantTelemetryObserver;
+      /** Optional model supplied by an embedded host or deterministic test. */
+      model?: BaseChatModel;
     }
   ) {
     super();
@@ -263,7 +265,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.toolManager =
       options?.toolManager ??
       new LangChainToolManager({ enabledToolIds, mcpClient: options?.mcpClient });
-    this.model = this.createModel(providerId, config);
+    this.model = options?.model ?? this.createModel(providerId, config);
 
     // Initialize prompt template and output parser
     this.promptTemplate = this.createPromptTemplate();
@@ -439,7 +441,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param query - User query used for skill routing.
    * @returns Routed skill prompt text, or an empty string when unavailable or failed.
    */
-  private async getSkillsPromptForQuery(query: string): Promise<string> {
+  protected async getSkillsPromptForQuery(query: string): Promise<string> {
     if (!this.skillManager) return '';
 
     try {
@@ -495,7 +497,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param content - Model or message content to normalize.
    * @returns Extracted text, or an empty string for unsupported content.
    */
-  private extractTextContent(content: unknown): string {
+  protected extractTextContent(content: unknown): string {
     return extractTextContent(content);
   }
 
@@ -894,7 +896,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns LangChain messages safe for prompt invocation.
    */
-  private prepareChatHistory(): BaseMessage[] {
+  protected prepareChatHistory(): BaseMessage[] {
     // Filter out system messages and display-only messages to avoid conflicts with the system message in the prompt template
     const filteredHistory = this.history.filter(
       prompt => prompt.role !== 'system' && !prompt.isDisplayOnly
@@ -917,7 +919,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns System prompt text.
    */
-  private createSystemPrompt(): string {
+  protected createSystemPrompt(): string {
     return buildSystemPrompt({
       availableTools: [...this.toolManager.getToolNames(), ...this.extraTools.keys()],
       mcpTools: this.toolManager.getMCPTools(),
@@ -2139,7 +2141,7 @@ Please analyze this data and provide a specific, detailed response that directly
    * @param error - Request failure of any shape.
    * @returns Error message added to history.
    */
-  private async handleUserSendError(error: unknown): Promise<ConversationMessage> {
+  protected async handleUserSendError(error: unknown): Promise<ConversationMessage> {
     // Clear abort controller in case of error
     this.currentAbortController = null;
 

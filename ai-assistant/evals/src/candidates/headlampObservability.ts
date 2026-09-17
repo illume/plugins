@@ -53,6 +53,53 @@ export interface HeadlampObservabilityRecord {
   error: string | null;
 }
 
+export function summarizeObservabilityUsage(
+  record?: Pick<HeadlampObservabilityRecord, 'status' | 'telemetry'>
+) {
+  const events = (record?.telemetry ?? []).filter(
+    (event): event is Record<string, unknown> =>
+      !!event && typeof event === 'object' && 'type' in event && event.type === 'model_usage'
+  );
+  const validCount = (value: unknown): value is number =>
+    typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+  const inputs = events.map(event => event.input_tokens).filter(validCount);
+  const outputs = events.map(event => event.output_tokens).filter(validCount);
+  const semantics = new Set(events.map(event => event.input_token_semantics));
+  const inputTokenSemantics =
+    events.length === 0
+      ? null
+      : semantics.size === 1 && semantics.has('total_including_cache')
+      ? 'total_including_cache'
+      : semantics.size === 1 && semantics.has('uncached_only')
+      ? 'uncached_only'
+      : 'mixed-or-unknown';
+  const observedInputTokens =
+    inputs.length && inputTokenSemantics !== 'mixed-or-unknown'
+      ? inputs.reduce((sum, count) => sum + count, 0)
+      : null;
+  const observedOutputTokens = outputs.length
+    ? outputs.reduce((sum, count) => sum + count, 0)
+    : null;
+  return {
+    schema_version: 'observability_observed_usage@1.0.0',
+    status:
+      observedInputTokens === null && observedOutputTokens === null
+        ? 'unknown'
+        : record?.status === 'completed' &&
+          inputs.length === events.length &&
+          outputs.length === events.length &&
+          inputTokenSemantics !== 'mixed-or-unknown'
+        ? 'reported'
+        : 'partial',
+    observedUsageEvents: events.length,
+    observedInputTokens,
+    observedOutputTokens,
+    inputTokenSemantics,
+    missingInputCounts: events.length - inputs.length,
+    missingOutputCounts: events.length - outputs.length,
+  };
+}
+
 export async function createHeadlampObservabilityCandidate(
   options: HeadlampObservabilityOptions
 ): Promise<LiveObservabilityCandidate> {

@@ -157,6 +157,22 @@ work or billing, nor that a shell/SDK tool with no cancellation support was kill
 Only reported usage events are retained; missing in-flight usage is unknown, not
 zero. Do not infer a complete cost from a cancelled record.
 
+`summarizeObservabilityUsage(record)` returns the versioned
+`observability_observed_usage@1.0.0` projection. `observedUsageEvents` counts
+telemetry events, not HTTP requests or provider retries. Input/output values are
+observed subtotals, or `null` when no valid measurements exist; a reported zero
+remains zero. Missing fields are counted separately. Input totals are withheld
+when events have mixed or unknown input-token semantics, and the semantics are
+retained so uncached-only counts cannot be mistaken for cache-inclusive totals.
+
+Usage status is `unknown` without usable counts, `partial` for unfinished/failed
+turns or missing fields, and `reported` only for a completed turn whose observed
+events have both counts and consistent input semantics. `reported` describes the
+available events, not a guarantee that the provider reported all billable work.
+Do not label the last available usage event as final-synthesis usage after a
+timeout: it might belong to planning. Keep progress and terminal artifacts separate
+and use atomic replacement when writing snapshots to avoid partially written JSON.
+
 For Azure/OpenAI, the factory defaults to `evidenceMode: 'compact-select'`,
 `referenceStyle: 'numeric'`, and `strictFinalOutput: true`. Compact evidence removes
 repeated metadata and raw/flattened duplication. Only model-selected references

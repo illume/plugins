@@ -188,6 +188,36 @@ callbacks do not recover the six historical incomplete records. The original
 27-assignment report and its hashes/scores remain unchanged. See the
 [recording contract](../evals/src/scenarios/README.md#candidate-runs).
 
+### Recording Integration: Offline Verification
+
+The private replay launcher now uses the progress and terminal callbacks to write
+separate JSON snapshots via same-directory atomic replacement. Six offline checks
+exercise stalled planning, tool reads, and final synthesis in both strict-selection
+and compact modes through the installed Azure client with mocked HTTP. Each check
+reads a progress file before cancellation, observes a terminal cancellation file
+before the stalled work is released, verifies 0600 file permissions, and confirms
+that late completion changes neither the record nor the request count.
+
+All six checks passed. Planning cancellation retained unknown usage as `null`;
+tool/synthesis cancellation retained the already-observed planning usage as partial.
+The reusable `summarizeObservabilityUsage` helper distinguishes observed events
+from request counts, validates missing/zero counts, and retains input-token semantics.
+The launcher no longer assumes its last usage event belongs to synthesis or sums
+missing records as zero. Its future result format is versioned `2.0.0`, preserves
+deadline classification when cancellation wins a promise race, and refuses to
+resume a historical recording format. Live execution requires explicit
+`--execute-paid`; the offline modes acquire no Azure credentials or live services.
+
+Private check artifacts: `.tmp/pr25-recording-offline-final-20260917`, with six
+progress files, six terminal records, six trial summaries, and `offline-check.json`.
+The launcher command is `node --import tsx .local/replay-object-guidance.ts
+--offline-recording-check` from the eval package, with `REPLAY_OUTPUT` set to a
+new directory. These are deliberately stalled mock requests, not additional
+diagnosis trials. All 375 offline eval tests, formatting, and typecheck pass.
+No paid comparison, remote billing guarantee, historical score change, or broader
+streaming/MCP cancellation qualification is implied. The next model experiment
+must declare a new plan and retain these measurement limits.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

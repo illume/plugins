@@ -4,6 +4,7 @@ import {
   createHeadlampObservabilityCandidate,
   emptyContainers,
   observabilityPrompt,
+  summarizeObservabilityUsage,
   type HeadlampObservabilityOptions,
   type HeadlampObservabilityRecord,
 } from './headlampObservability.js';
@@ -16,6 +17,82 @@ import {
   gradeObservabilityCausality,
 } from '../grading/observabilitySelection.js';
 import { gradeRootCause, parseSubmission } from '../grading/diagnosisGrader.js';
+
+test('usage summaries distinguish missing measurements, partial usage, and reported zero', () => {
+  const usage = {
+    type: 'model_usage',
+    input_token_semantics: 'total_including_cache',
+    input_tokens: 10,
+    output_tokens: 5,
+  };
+  const unknown = summarizeObservabilityUsage();
+  assert.equal(unknown.status, 'unknown');
+  assert.equal(unknown.observedInputTokens, null);
+  assert.equal(unknown.observedOutputTokens, null);
+  assert.equal(unknown.observedUsageEvents, 0);
+  for (const status of ['running', 'failed', 'cancelled'] as const) {
+    const partial = summarizeObservabilityUsage({ status, telemetry: [usage] });
+    assert.equal(partial.status, 'partial');
+    assert.equal(partial.observedInputTokens, 10);
+    assert.equal(partial.observedOutputTokens, 5);
+    assert.equal(partial.observedUsageEvents, 1);
+  }
+  const reported = summarizeObservabilityUsage({
+    status: 'completed',
+    telemetry: [usage, { ...usage, input_tokens: 20, output_tokens: 0 }, { type: 'turn_complete' }],
+  });
+  assert.equal(reported.status, 'reported');
+  assert.equal(reported.observedInputTokens, 30);
+  assert.equal(reported.observedOutputTokens, 5);
+  assert.equal(reported.observedUsageEvents, 2);
+  const zero = summarizeObservabilityUsage({
+    status: 'completed',
+    telemetry: [{ ...usage, input_tokens: 0, output_tokens: 0 }],
+  });
+  assert.equal(zero.status, 'reported');
+  assert.equal(zero.observedInputTokens, 0);
+  assert.equal(zero.observedOutputTokens, 0);
+  const missing = summarizeObservabilityUsage({
+    status: 'completed',
+    telemetry: [
+      usage,
+      { type: 'model_usage', input_token_semantics: 'total_including_cache', output_tokens: 3 },
+    ],
+  });
+  assert.equal(missing.status, 'partial');
+  assert.equal(missing.missingInputCounts, 1);
+  assert.equal(missing.observedInputTokens, 10);
+  assert.equal(missing.observedOutputTokens, 8);
+  for (const invalid of [null, '5', -1, Infinity, NaN, 0.5]) {
+    assert.equal(
+      summarizeObservabilityUsage({
+        status: 'completed',
+        telemetry: [
+          null,
+          [],
+          { type: 'tool_call' },
+          { ...usage, input_tokens: invalid, output_tokens: invalid },
+        ],
+      }).status,
+      'unknown'
+    );
+  }
+  const mixed = summarizeObservabilityUsage({
+    status: 'completed',
+    telemetry: [usage, { ...usage, input_token_semantics: 'uncached_only' }],
+  });
+  assert.equal(mixed.inputTokenSemantics, 'mixed-or-unknown');
+  assert.equal(mixed.observedInputTokens, null);
+  assert.equal(mixed.observedOutputTokens, 10);
+  assert.equal(mixed.status, 'partial');
+  assert.equal(
+    summarizeObservabilityUsage({
+      status: 'completed',
+      telemetry: [{ ...usage, input_token_semantics: 'uncached_only' }],
+    }).inputTokenSemantics,
+    'uncached_only'
+  );
+});
 
 test('compact evidence preserves all facts and resolves only explicit selections', () => {
   const evidence = new CompactEvidence();

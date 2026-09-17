@@ -7,6 +7,8 @@ import {
 } from './headlampObservability.js';
 import type { LiveObservabilityCandidateInput } from '../runner/observabilityEvaluation.js';
 import { CompactEvidence } from './compactEvidence.js';
+import { FACT_SELECTION_SCHEMA } from './compactEvidence.js';
+import { assertValid } from '../contracts/validate.js';
 import { gradeObservabilitySelection } from '../grading/observabilitySelection.js';
 import { gradeRootCause, parseSubmission } from '../grading/diagnosisGrader.js';
 
@@ -86,6 +88,172 @@ test('Headlamp candidate prompt exposes only enabled reads and no evaluator trut
   assert.ok(!prompt.includes('azure_cost_capacity_read'));
   assert.ok(prompt.includes('cause_facts'));
   assert.ok(!prompt.includes('maxCount'));
+});
+
+test('field-labelled references distinguish adjacent equal-valued fields without changing facts', () => {
+  const registry = new CompactEvidence('field-labelled');
+  const observations = ['maxCount', 'minCount'].map(name => ({
+    evidence_id: 'read',
+    resource_ref: 'pool',
+    field_path: `/properties/${name}`,
+    value: '1',
+  }));
+  const view = registry.add(observations);
+  assert.deepEqual(
+    view.records[0]?.facts.map(row => row[0]),
+    ['r1.f1.maxCount', 'r1.f2.minCount']
+  );
+  const resolve = (reference: string) =>
+    JSON.parse(
+      registry.resolve(
+        JSON.stringify({
+          schema_version: 'fact_selection@1.0.0',
+          fact_refs: [reference],
+          alternative_dispositions: [],
+          uncertainty: { is_uncertain: false },
+          proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+        })
+      )
+    );
+  assert.equal(resolve('r1.f1.maxCount').cause_facts[0].field_path, '/properties/maxCount');
+  assert.equal(resolve('r1.f2.minCount').cause_facts[0].field_path, '/properties/minCount');
+  assert.throws(() => resolve('r1.f2.maxCount'));
+  const later = registry.add([{ ...observations[0]!, value: '2' }]);
+  assert.equal(later.records[0]?.facts[0]?.[0], 'r2.f1.maxCount');
+  assert.equal(resolve('r1.f1.maxCount').cause_facts[0].observed_value, '1');
+  assert.equal(resolve('r2.f1.maxCount').cause_facts[0].observed_value, '2');
+});
+
+test('the shared selection schema is valid and shown in both reference arms', () => {
+  assertValid(
+    FACT_SELECTION_SCHEMA,
+    {
+      schema_version: 'fact_selection@1.0.0',
+      fact_refs: [],
+      alternative_dispositions: [],
+      uncertainty: { is_uncertain: true },
+      proposed_actions: [{ operation: 'no_action', description: 'Insufficient evidence' }],
+    },
+    'selection'
+  );
+  assert.ok(
+    observabilityPrompt(input, 'compact-select').includes(JSON.stringify(FACT_SELECTION_SCHEMA))
+  );
+  assert.throws(() => assertValid(FACT_SELECTION_SCHEMA, { fact_refs: [] }, 'invalid selection'));
+});
+
+test('strict final output rejects unsupported configurations before model creation', async () => {
+  await assert.rejects(
+    createHeadlampObservabilityCandidate({
+      provider: 'azure',
+      config: {},
+      strictFinalOutput: true,
+    }),
+    /compact-select/
+  );
+  await assert.rejects(
+    createHeadlampObservabilityCandidate({
+      provider: 'local',
+      config: {},
+      evidenceMode: 'compact-select',
+      strictFinalOutput: true,
+    }),
+    /supported/
+  );
+});
+
+test('strict selection reaches the actual Azure final request, not the planning request', async context => {
+  const requests: Array<Record<string, any>> = [];
+  context.mock.method(
+    globalThis,
+    'fetch',
+    async (request: Request | string | URL, init?: RequestInit) => {
+      const body = request instanceof Request ? await request.text() : String(init?.body);
+      requests.push(JSON.parse(body));
+      assert.ok(requests.length <= 2, 'Unexpected retry or extra model invocation');
+      const planning = requests.length === 1;
+      return Response.json({
+        id: `offline-${requests.length}`,
+        object: 'chat.completion',
+        created: 0,
+        model: 'gpt-4o-2024-11-20',
+        choices: [
+          {
+            index: 0,
+            finish_reason: planning ? 'tool_calls' : 'stop',
+            message: planning
+              ? {
+                  role: 'assistant',
+                  content: '',
+                  tool_calls: [
+                    {
+                      id: 'call1',
+                      type: 'function',
+                      function: {
+                        name: 'kubernetes_api_request',
+                        arguments: JSON.stringify({
+                          method: 'GET',
+                          path: '/eval/observed-kubernetes',
+                        }),
+                      },
+                    },
+                  ],
+                }
+              : {
+                  role: 'assistant',
+                  content: JSON.stringify({
+                    schema_version: 'fact_selection@1.0.0',
+                    fact_refs: ['r1.f1.cpu'],
+                    alternative_dispositions: [],
+                    uncertainty: { is_uncertain: false },
+                    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+                  }),
+                },
+          },
+        ],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+      });
+    }
+  );
+  const candidate = await createHeadlampObservabilityCandidate({
+    provider: 'azure',
+    config: {
+      model: 'gpt-4o',
+      endpoint: 'https://offline.invalid',
+      deploymentName: 'gpt-4o',
+      apiKey: 'offline-not-secret',
+    },
+    evidenceMode: 'compact-select',
+    referenceStyle: 'field-labelled',
+    strictFinalOutput: true,
+  });
+  const result = await candidate({
+    ...input,
+    callTool: async (name, args) => {
+      assert.equal(name, 'kubernetes_api_request');
+      assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
+      return {
+        data: { cpu: '100m' },
+        observations: [
+          {
+            evidence_id: 'read1',
+            resource_ref: 'tool/kubernetes_api_request',
+            field_path: '/cpu',
+            value: '100m',
+          },
+        ],
+      };
+    },
+  });
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0]?.response_format, undefined);
+  assert.ok(requests[0]?.tools.length);
+  assert.equal(requests[1]?.response_format.type, 'json_schema');
+  assert.equal(requests[1]?.response_format.json_schema.strict, true);
+  assert.equal(requests[1]?.tools, undefined);
+  assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
+    { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
+  ]);
 });
 
 test('selection controls reject the echo-all shortcut without changing the legacy grader', () => {

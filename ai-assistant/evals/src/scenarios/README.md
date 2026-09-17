@@ -146,6 +146,15 @@ at the operator's request for its measured efficiency benefit, not a demonstrate
 accuracy gain. This default applies to the observability eval adapter, not the
 normal browser UI or CLI behavior.
 
+For experimental selection, the factory accepts `referenceStyle: 'numeric' |
+'field-labelled'` and `strictFinalOutput: true`. Strict output requires
+`evidenceMode: 'compact-select'` with an Azure/OpenAI provider and is applied only
+to the real assistant's post-tool synthesis call. It does not constrain initial
+tool planning or repair model answers. Both options remain opt-in; compact-only
+is still the default. The [20-session factorial report](../../docs/observability-selection-factorial-results.md)
+records reliable JSON under strict decoding, persistent wrong-pool/omission errors,
+and failures of the suffix-based labelled reference encoding.
+
 Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
 to evaluate a trusted model adapter during the induced-fault window. The module
 must default-export a `LiveObservabilityCandidate` callback. It is invoked twice,

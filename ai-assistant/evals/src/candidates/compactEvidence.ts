@@ -6,9 +6,48 @@ type Observation = Awaited<
   ReturnType<LiveObservabilityCandidateInput['callTool']>
 >['observations'][number];
 
+export type FactReferenceStyle = 'numeric' | 'field-labelled';
+
+export const FACT_SELECTION_SCHEMA = {
+  type: 'object',
+  properties: {
+    schema_version: { type: 'string', enum: ['fact_selection@1.0.0'] },
+    fact_refs: { type: 'array', items: { type: 'string' } },
+    alternative_dispositions: { type: 'array', items: { type: 'string' } },
+    uncertainty: {
+      type: 'object',
+      properties: { is_uncertain: { type: 'boolean' } },
+      required: ['is_uncertain'],
+      additionalProperties: false,
+    },
+    proposed_actions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          operation: { type: 'string', enum: ['no_action', 'unscored_novel_strategy'] },
+          description: { type: 'string' },
+        },
+        required: ['operation', 'description'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: [
+    'schema_version',
+    'fact_refs',
+    'alternative_dispositions',
+    'uncertainty',
+    'proposed_actions',
+  ],
+  additionalProperties: false,
+};
+
 export class CompactEvidence {
   private reads = 0;
   private facts = new Map<string, Observation>();
+
+  constructor(private readonly referenceStyle: FactReferenceStyle = 'numeric') {}
 
   add(observations: Observation[]) {
     const read = `r${++this.reads}`;
@@ -17,7 +56,11 @@ export class CompactEvidence {
       { read: string; resource: string; evidence_id: string; facts: string[][] }
     >();
     for (const [index, observation] of observations.entries()) {
-      const reference = `${read}.f${index + 1}`;
+      const field = observation.field_path.split('/').at(-1) ?? '';
+      const label = encodeURIComponent(field.replaceAll('~1', '/').replaceAll('~0', '~'));
+      const reference = `${read}.f${index + 1}${
+        this.referenceStyle === 'field-labelled' ? `.${label || 'root'}` : ''
+      }`;
       this.facts.set(reference, structuredClone(observation));
       const key = JSON.stringify([observation.evidence_id, observation.resource_ref]);
       let group = groups.get(key);

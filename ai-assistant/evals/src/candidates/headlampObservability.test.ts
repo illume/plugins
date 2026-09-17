@@ -5,6 +5,7 @@ import {
   emptyContainers,
   observabilityPrompt,
   type HeadlampObservabilityOptions,
+  type HeadlampObservabilityRecord,
 } from './headlampObservability.js';
 import type { LiveObservabilityCandidateInput } from '../runner/observabilityEvaluation.js';
 import { CompactEvidence } from './compactEvidence.js';
@@ -412,6 +413,16 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         },
         ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
         evidenceGrouping,
+        record: value => {
+          assert.equal(value.status, 'completed');
+          assert.equal(value.error, null);
+          assert.ok(value.resolvedSubmission);
+          assert.equal(
+            value.telemetry.filter(event => (event as { type: string }).type === 'model_usage')
+              .length,
+            2
+          );
+        },
       });
       const result = await candidate({
         ...input,
@@ -447,6 +458,253 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
     });
   }
 }
+
+for (const evidenceMode of ['compact-select', 'compact'] as const) {
+  test(`cancelled ${evidenceMode} synthesis records partial usage immediately and settles once`, async context => {
+    const controller = new AbortController();
+    const records: HeadlampObservabilityRecord[] = [];
+    const progress: HeadlampObservabilityRecord[] = [];
+    let requests = 0;
+    let releaseFinal: (response: Response) => void = () => {};
+    const pendingFinal = new Promise<Response>(resolve => {
+      releaseFinal = resolve;
+    });
+    context.after(() => releaseFinal(Response.json({ choices: [] })));
+    context.mock.method(
+      globalThis,
+      'fetch',
+      async (request: Request | string | URL, init?: RequestInit) => {
+        requests++;
+        if (requests === 1)
+          return Response.json({
+            id: 'offline',
+            object: 'chat.completion',
+            created: 0,
+            model: 'gpt-4o',
+            choices: [
+              {
+                index: 0,
+                finish_reason: 'tool_calls',
+                message: {
+                  role: 'assistant',
+                  content: '',
+                  tool_calls: [
+                    {
+                      id: 'read',
+                      type: 'function',
+                      function: {
+                        name: 'kubernetes_api_request',
+                        arguments: JSON.stringify({
+                          method: 'GET',
+                          path: '/eval/observed-kubernetes',
+                        }),
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+          });
+        assert.equal(requests, 2, 'Cancellation must not trigger fallback requests');
+        assert.ok(
+          progress.some(record =>
+            record.telemetry.some(event => (event as { type: string }).type === 'model_usage')
+          )
+        );
+        assert.equal(records.length, 0);
+        const signal = request instanceof Request ? request.signal : init?.signal;
+        assert.ok(signal instanceof AbortSignal);
+        controller.abort();
+        assert.equal(signal.aborted, true, 'Abort must reach the actual HTTP request');
+        assert.equal(records.length, 1, 'Persist before an outer timeout can end the process');
+        return pendingFinal;
+      }
+    );
+    const candidate = await createHeadlampObservabilityCandidate({
+      provider: 'azure',
+      config: {
+        model: 'gpt-4o',
+        endpoint: 'https://offline.invalid',
+        deploymentName: 'gpt-4o',
+        apiKey: 'offline-not-secret',
+      },
+      evidenceMode,
+      recordProgress: value => progress.push(value),
+      record: value => records.push(value),
+    });
+    await assert.rejects(
+      candidate({
+        ...input,
+        signal: controller.signal,
+        callTool: async () => ({
+          data: { cpu: '100m' },
+          observations: [
+            {
+              evidence_id: 'read',
+              resource_ref: 'tool/kubernetes_api_request',
+              field_path: '/cpu',
+              value: '100m',
+            },
+          ],
+        }),
+      }),
+      /cancelled|abort/i
+    );
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.status, 'cancelled');
+    assert.equal(records[0]?.resolvedSubmission, null);
+    assert.ok(records[0]!.toolPayloadCharacters > 0);
+    const usage = records[0]!.telemetry.filter(
+      event => (event as { type: string }).type === 'model_usage'
+    );
+    assert.equal(usage.length, 1);
+    assert.equal((usage[0] as { input_tokens: number }).input_tokens, 10);
+    assert.equal(progress[0]?.telemetry.length, 0, 'Earlier snapshots must not mutate');
+  });
+}
+
+test('cancelled planning cannot fall back or save a late model answer', async context => {
+  const controller = new AbortController();
+  const records: HeadlampObservabilityRecord[] = [];
+  let requests = 0;
+  const progress: HeadlampObservabilityRecord[] = [];
+  const callTool = context.mock.fn(async () => {
+    throw new Error('Unexpected read');
+  });
+  context.mock.method(
+    globalThis,
+    'fetch',
+    async (request: Request | string | URL, init?: RequestInit) => {
+      assert.equal(++requests, 1, 'No retry after cancellation');
+      const signal = request instanceof Request ? request.signal : init?.signal;
+      assert.ok(signal instanceof AbortSignal);
+      controller.abort();
+      assert.equal(signal.aborted, true);
+      assert.equal(records.length, 1);
+      return Response.json({
+        id: 'late',
+        object: 'chat.completion',
+        created: 0,
+        model: 'gpt-4o',
+        choices: [
+          {
+            index: 0,
+            finish_reason: 'stop',
+            message: { role: 'assistant', content: '{"late":true}' },
+          },
+        ],
+      });
+    }
+  );
+  const candidate = await createHeadlampObservabilityCandidate({
+    provider: 'azure',
+    config: {
+      model: 'gpt-4o',
+      endpoint: 'https://offline.invalid',
+      deploymentName: 'gpt-4o',
+      apiKey: 'offline-not-secret',
+    },
+    record: value => records.push(value),
+    recordProgress: value => progress.push(value),
+  });
+  await assert.rejects(
+    candidate({ ...input, callTool, signal: controller.signal }),
+    /cancelled|abort/i
+  );
+  const snapshot = JSON.stringify(records[0]);
+  const progressCount = progress.length;
+  await new Promise<void>(resolve => setImmediate(resolve));
+  assert.equal(records.length, 1);
+  assert.equal(JSON.stringify(records[0]), snapshot);
+  assert.equal(progress.length, progressCount);
+  assert.equal(records[0]?.status, 'cancelled');
+  assert.equal(records[0]?.text, '');
+  assert.equal(records[0]?.resolvedSubmission, null);
+  assert.equal(callTool.mock.callCount(), 0);
+});
+
+test('cancelling a pending tool read settles immediately and ignores its late result', async context => {
+  const controller = new AbortController();
+  const records: HeadlampObservabilityRecord[] = [];
+  let requests = 0;
+  const output = {
+    data: { value: 1 },
+    observations: [
+      {
+        evidence_id: 'read',
+        resource_ref: 'tool/kubernetes_api_request',
+        field_path: '/value',
+        value: '1',
+      },
+    ],
+  };
+  let finishRead: (value: typeof output) => void = () => {};
+  const pending = new Promise<typeof output>(resolve => {
+    finishRead = resolve;
+  });
+  context.after(() => finishRead(output));
+  context.mock.method(globalThis, 'fetch', async () => {
+    assert.equal(++requests, 1, 'No synthesis after a cancelled read');
+    return Response.json({
+      id: 'offline',
+      object: 'chat.completion',
+      created: 0,
+      model: 'gpt-4o',
+      choices: [
+        {
+          index: 0,
+          finish_reason: 'tool_calls',
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'read',
+                type: 'function',
+                function: {
+                  name: 'kubernetes_api_request',
+                  arguments: JSON.stringify({ method: 'GET', path: '/eval/observed-kubernetes' }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+    });
+  });
+  const candidate = await createHeadlampObservabilityCandidate({
+    provider: 'azure',
+    config: {
+      model: 'gpt-4o',
+      endpoint: 'https://offline.invalid',
+      deploymentName: 'gpt-4o',
+      apiKey: 'offline-not-secret',
+    },
+    record: value => records.push(value),
+  });
+  await assert.rejects(
+    candidate({
+      ...input,
+      signal: controller.signal,
+      callTool: async () => {
+        controller.abort();
+        return pending;
+      },
+    }),
+    /cancelled|abort/i
+  );
+  assert.equal(records.length, 1);
+  assert.equal(records[0]?.status, 'cancelled');
+  const snapshot = JSON.stringify(records[0]);
+  finishRead(output);
+  await new Promise<void>(resolve => setImmediate(resolve));
+  assert.equal(requests, 1);
+  assert.equal(records.length, 1);
+  assert.equal(JSON.stringify(records[0]), snapshot);
+  assert.equal(records[0]?.toolPayloadCharacters, 0);
+});
 
 test('guidance is independent of grouping and has no incident-specific values', async () => {
   const plain = observabilityPrompt(input, 'compact-select');

@@ -132,6 +132,31 @@ Acquire credentials in that private process; do not commit them. Each callback
 creates a fresh session with only the allowed read tools. Its optional `record`
 hook retains the original response, model/tool telemetry, and elapsed time.
 
+`recordProgress` receives independent `HeadlampObservabilityRecord` snapshots at
+startup, on observed telemetry, after completed tool payloads, and when final text
+arrives. Persist snapshots as they arrive instead of waiting for the entire turn.
+Both hooks are synchronous and should return promptly without throwing; callers
+own persistence and should keep these records private. The adapter does not create
+artifact files automatically.
+
+Records include `status` (`running`, `completed`, `failed`, or `cancelled`) and
+`error` separately from fact-selection validation errors. `record` fires once on
+terminal disposition. On abort it fires immediately, before a stalled session or
+tool must settle; partial planning usage and already-returned evidence sizes are
+retained. Late responses cannot overwrite this record or become a submission.
+The supplied AbortSignal still owns the deadline; the adapter creates no new
+timer or automatic retry. Pre-cancelled calls are recorded without model requests.
+
+Cancellation reaches the actual Azure-client planning and final-synthesis HTTP
+signal in offline tests. The shared nonstreaming direct-call path now preserves
+cancellation through tool processing, rejects cancelled model results, skips later
+tool calls/final synthesis after cancelled work, and does not fall back after an
+abort. An already-running `callTool` implementation must still honor the supplied
+signal itself. Prompt settlement does not prove that a remote provider stopped
+work or billing, nor that a shell/SDK tool with no cancellation support was killed.
+Only reported usage events are retained; missing in-flight usage is unknown, not
+zero. Do not infer a complete cost from a cancelled record.
+
 For Azure/OpenAI, the factory defaults to `evidenceMode: 'compact-select'`,
 `referenceStyle: 'numeric'`, and `strictFinalOutput: true`. Compact evidence removes
 repeated metadata and raw/flattened duplication. Only model-selected references

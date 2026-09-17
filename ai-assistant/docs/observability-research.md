@@ -161,6 +161,33 @@ diagnosis. Incremental telemetry and deadline handling are now the next priority
 six attempts lack complete response/usage records, so recorded usage is a lower
 bound, not a complete cost estimate.
 
+### Cancellation And Incremental Records
+
+Subsequent implementation adds `recordProgress` snapshots and explicit terminal
+status/error fields to the observability candidate. The final record is emitted
+once, immediately on cancellation, rather than waiting for a stalled session's
+`finally` block. Existing `record` callers receive cancellation records without
+opting into progress; callers wanting checkpoints before cancellation can persist
+`recordProgress` snapshots. Earlier snapshots are independent copies, late results
+are ignored, and observed planning usage is retained when final synthesis stalls.
+
+The shared nonstreaming direct-call path retains its abort controller through
+planning and tool handling, checks cancellation after asynchronous preparation and
+tool results, prevents later reads/synthesis, and avoids chain fallback on abort.
+Ordinary post-tool synthesis now receives an abort signal, as strict synthesis
+already did. Offline controls cover cancellation during approval initialization,
+skill preparation, direct planning, tool reads, and strict/ordinary synthesis,
+plus successful records and late results. Real Azure-client HTTP is mocked; no
+paid rerun or new accuracy claim accompanies this change.
+
+This is scoped progress on OBS-5, not end-to-end cancellation qualification for
+every streaming, MCP orchestration, approval, or provider path. Tools already in
+flight may be non-cancellable; local HTTP abort does not establish remote billing
+termination. Usage not reported before cancellation remains unknown, and these
+callbacks do not recover the six historical incomplete records. The original
+27-assignment report and its hashes/scores remain unchanged. See the
+[recording contract](../evals/src/scenarios/README.md#candidate-runs).
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to
@@ -274,9 +301,10 @@ missing/denied/truncated/error states. Expose caps, omissions, and continuations
 without automatically expanding access or query scope.
 
 The completed grouping/guidance run exposed six deadline failures without complete
-candidate records. Prioritize incremental usage/error capture and cancellation
-verification before more paid comparisons; an exited local process does not prove
-the remote provider immediately stopped billing or work.
+candidate records. Incremental snapshots and once-only cancellation records are now
+implemented and offline-tested for the actual direct-call eval path. Broader
+streaming/MCP/tool cancellation qualification remains; an exited local process
+does not prove the remote provider immediately stopped billing or work.
 
 Verify cancellation and telemetry through planning, tools, synthesis, and cluster
 changes in the actual shared session. Preserve immutable snapshots and approvals;
@@ -339,7 +367,7 @@ remaining item with a dated result and an explicit default decision.
 | R03 | P1 / OBS-4 | Planned | Do retrieved-ID enums remove unknown refs without changing access? Test empty/large registries and wrong-but-valid selections. |
 | R04 | P1 / OBS-5 | Planned | Can typed snapshots preserve empty/null/missing and source/time identity? Test stale reads, cluster switches, and array reordering. |
 | R05 | P1 / OBS-5 | Planned | Do completeness states prevent absent-versus-truncated confusion? Reproduce the 101-item cap and content budget; test denied/failed/paginated reads. |
-| R06 | P0 / OBS-5 | Next; six observed deadlines | Verify end-to-end cancellation and incremental telemetry. Completed grouping/guidance attempts lost usage/response records on timeout; resolve measurement gaps before more paid comparisons. |
+| R06 | P0 / OBS-5 | Direct-call fix offline-tested; broader coverage pending | Incremental snapshots and immediate cancellation records preserve observed usage. Planning/tool/final-response guards prevent new work after abort in the tested path. Streaming/MCP and remote/tool cancellation limits remain; historical missing usage stays unknown. |
 | R07 | P1 / OBS-6 | Planned | Does one public-validator repair help at matched cost without gold feedback? Count good-to-bad and bad-to-good changes. |
 | R08 | P1 / OBS-7 | Planned | Can a bounded loop discover the needed next read? Use tasks not solvable from prescribed initial requests. |
 | R09 | P0 before OBS-8 | Recovery verified; retry-path coverage separate | Latest owned autoscaler lifecycle recovered and cleaned up successfully. Check retained command evidence before claiming the specific concurrent-operation retry path was exercised. |

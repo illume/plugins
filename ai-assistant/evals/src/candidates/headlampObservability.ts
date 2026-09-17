@@ -20,7 +20,7 @@ export type DiagnosticGuidance = 'none' | 'aks';
 interface Session {
   setContext(context: string): void;
   enableDirectToolCalling(tools: unknown[]): Promise<void>;
-  userSend(message: string): Promise<{ content: string }>;
+  userSend(message: string): Promise<{ content: string; error?: boolean }>;
   abort(): void;
 }
 
@@ -32,20 +32,25 @@ export interface HeadlampObservabilityOptions {
   strictFinalOutput?: boolean;
   evidenceGrouping?: EvidenceGrouping;
   diagnosticGuidance?: DiagnosticGuidance;
-  record?: (value: {
-    text: string;
-    telemetry: unknown[];
-    enabledTools: string[];
-    durationMs: number;
-    evidenceMode: EvidenceMode;
-    referenceStyle: FactReferenceStyle;
-    strictFinalOutput: boolean;
-    evidenceGrouping: EvidenceGrouping;
-    diagnosticGuidance: DiagnosticGuidance;
-    resolvedSubmission: string | null;
-    selectionError: string | null;
-    toolPayloadCharacters: number;
-  }) => void;
+  recordProgress?: (value: HeadlampObservabilityRecord) => void;
+  record?: (value: HeadlampObservabilityRecord) => void;
+}
+
+export interface HeadlampObservabilityRecord {
+  text: string;
+  telemetry: unknown[];
+  enabledTools: string[];
+  durationMs: number;
+  evidenceMode: EvidenceMode;
+  referenceStyle: FactReferenceStyle;
+  strictFinalOutput: boolean;
+  evidenceGrouping: EvidenceGrouping;
+  diagnosticGuidance: DiagnosticGuidance;
+  resolvedSubmission: string | null;
+  selectionError: string | null;
+  toolPayloadCharacters: number;
+  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  error: string | null;
 }
 
 export async function createHeadlampObservabilityCandidate(
@@ -93,18 +98,61 @@ export async function createHeadlampObservabilityCandidate(
     let resolvedSubmission: string | null = null;
     let selectionError: string | null = null;
     const started = Date.now();
+    let text = '';
+    let status: HeadlampObservabilityRecord['status'] = 'running';
+    let error: string | null = null;
+    let recorded = false;
+    const snapshot = (): HeadlampObservabilityRecord => ({
+      text,
+      telemetry: structuredClone(telemetry),
+      enabledTools: [...input.enabledTools],
+      durationMs: Date.now() - started,
+      evidenceMode,
+      referenceStyle,
+      strictFinalOutput,
+      evidenceGrouping,
+      diagnosticGuidance,
+      resolvedSubmission,
+      selectionError,
+      toolPayloadCharacters,
+      status,
+      error,
+    });
+    const progress = () => {
+      if (!recorded) options.recordProgress?.(snapshot());
+    };
+    const finish = () => {
+      if (recorded) return;
+      recorded = true;
+      options.record?.(snapshot());
+    };
     const manager = new SessionClass(options.provider, options.config, [], {
       autoApproveObservabilityTools: true,
-      telemetryObserver: (event: unknown) => telemetry.push(event),
+      telemetryObserver: (event: unknown) => {
+        if (recorded) return;
+        telemetry.push(structuredClone(event));
+        progress();
+      },
       ...(strictFinalOutput
         ? { finalResponseSchema: { name: 'fact_selection', schema: FACT_SELECTION_SCHEMA } }
         : {}),
     });
-    const abort = () => manager.abort();
+    let rejectCancellation: (reason: Error) => void = () => {};
+    const cancellation = new Promise<never>((_, reject) => {
+      rejectCancellation = reject;
+    });
+    void cancellation.catch(() => {});
+    const abort = () => {
+      status = 'cancelled';
+      error = 'Trial cancelled';
+      rejectCancellation(new DOMException(error, 'AbortError'));
+      manager.abort();
+      finish();
+    };
     input.signal.addEventListener('abort', abort, { once: true });
-    let text = '';
     try {
       assert.ok(!input.signal.aborted, 'Trial was already cancelled');
+      progress();
       const tools = input.readRequests
         .filter(request => input.enabledTools.includes(request.tool))
         .map(
@@ -118,7 +166,9 @@ export async function createHeadlampObservabilityCandidate(
                 Object.fromEntries(Object.keys(request.args).map(key => [key, z.string()]))
               ),
               func: async (args: Record<string, unknown>) => {
+                input.signal.throwIfAborted();
                 const output = await input.callTool(request.tool, args);
+                input.signal.throwIfAborted();
                 const payload =
                   evidenceMode === 'full'
                     ? output
@@ -128,6 +178,7 @@ export async function createHeadlampObservabilityCandidate(
                       };
                 const serialized = JSON.stringify(payload);
                 toolPayloadCharacters += serialized.length;
+                progress();
                 return serialized;
               },
             })
@@ -135,11 +186,16 @@ export async function createHeadlampObservabilityCandidate(
       manager.setContext(
         `AKS cluster: ${input.clusterId}\nCurrent namespace: observability-eval\nResource: ${input.resourceId}`
       );
-      await manager.enableDirectToolCalling(tools);
-      const response = await manager.userSend(
-        observabilityPrompt(input, evidenceMode, diagnosticGuidance)
-      );
+      await Promise.race([manager.enableDirectToolCalling(tools), cancellation]);
+      input.signal.throwIfAborted();
+      const response = await Promise.race([
+        manager.userSend(observabilityPrompt(input, evidenceMode, diagnosticGuidance)),
+        cancellation,
+      ]);
+      input.signal.throwIfAborted();
       text = response.content;
+      progress();
+      assert.ok(!response.error, 'Assistant session failed');
       const submission = extractJsonBlock(text) ?? text;
       if (evidenceMode === 'compact-select') {
         try {
@@ -149,24 +205,16 @@ export async function createHeadlampObservabilityCandidate(
           throw error;
         }
       } else resolvedSubmission = submission;
+      status = 'completed';
       return resolvedSubmission;
+    } catch (failure) {
+      status = input.signal.aborted ? 'cancelled' : 'failed';
+      error = failure instanceof Error ? failure.message : String(failure);
+      throw failure;
     } finally {
       input.signal.removeEventListener('abort', abort);
       manager.abort();
-      options.record?.({
-        text,
-        telemetry,
-        enabledTools: [...input.enabledTools],
-        durationMs: Date.now() - started,
-        evidenceMode,
-        referenceStyle,
-        strictFinalOutput,
-        evidenceGrouping,
-        diagnosticGuidance,
-        resolvedSubmission,
-        selectionError,
-        toolPayloadCharacters,
-      });
+      finish();
     }
   };
 }

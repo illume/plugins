@@ -455,6 +455,31 @@ resolve literal identities by guesswork, or weaken existing graders. Any paid
 follow-up needs a new declared plan separating reference wording from disposition
 instructions; this completed batch is not repeated until it passes.
 
+### Claim Reference Wording: Offline Verification
+
+Added opt-in `claimReferenceHint: 'example'` after the prior comparison returned
+literal identities in four claim answers. The hint only appends explicit
+reference-versus-value wording and a syntax-only example; removing it reproduces
+the existing claim prompt. The schema, resolver, disposition instructions, field
+layout, and graders remain unchanged. It requires claims and defaults to `'none'`.
+Tests confirm the hint reaches planning/synthesis and records, while literal
+identities and unretrieved placeholder references still fail. All **395 eval tests**,
+formatting, and typechecks passed, including 44 focused candidate tests.
+
+The prospective comparison declares 18 fresh GPT-4o sessions: claims without/with
+the hint on identical object fields, two attempts per incident and five controls
+per arm. The second attempt reverses arm order within each incident. Both arms
+retain no extra AKS guidance or final limits, an eight-read/twelve-fact budget,
+and 120-second outer deadline. Unknown identity rejections, valid submissions,
+incident causal passes, and control passes are measured per assigned session.
+Every failed/timed-out attempt is retained. Promotion requires all four incidents
+and all five controls to pass with the hint, no format/transport failures, and
+more causal passes than baseline. Fewer reference errors alone is insufficient.
+
+This is a prompt-wording/example intervention, not dynamic reference enumeration,
+automatic value lookup, or a new causal validator. No old scores are repaired or
+replaced, and no grader or identity boundary is loosened.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

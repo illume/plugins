@@ -290,6 +290,14 @@ well-formed wrong-object claims still reach the unchanged evaluator and can fail
 This combines new instructions, output schema, and source validation, not a test
 of schema alone. General UI chat and the default fact-selection path are unchanged.
 
+`claimReferenceHint: 'example'` appends a syntax-only reference/value example to
+the claim prompt. It requires `selectionContract: 'claims'`; its default is
+`'none'`, and records retain the effective hint. The example distinguishes the
+short reference token from the observed name/ID and explicitly warns against
+copying its placeholder tokens. It does not change disposition instructions,
+strict schema, source validation, evidence layout, or reference resolution.
+Literal identities and unretrieved example tokens still fail without repair.
+
 `gradeObservabilityCausality` is a separate prospective evaluator for explicit
 required/supporting fact alternatives and healthy/insufficient dispositions.
 It is not used to regrade prior runs or compute domain causal truth. Its contract

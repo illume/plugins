@@ -320,6 +320,56 @@ test('claims require explicit same-object identities and never repair invalid se
   }
 });
 
+test('claim reference example changes only reference guidance and cannot resolve literal identities', async () => {
+  const baseline = observabilityPrompt(input, 'compact-select', 'none', 'claims');
+  assert.equal(baseline, observabilityPrompt(input, 'compact-select', 'none', 'claims', 'none'));
+  const hinted = observabilityPrompt(input, 'compact-select', 'none', 'claims', 'example');
+  assert.ok(hinted.startsWith(baseline));
+  const hint = hinted.slice(baseline.length);
+  assert.ok(hint.includes('"identity_ref":"r7.f12"'));
+  assert.ok(hint.includes('NOT "example-object"'));
+  assert.ok(hint.includes('placeholders, not evidence'));
+  assert.ok(!hint.includes('maxCount'));
+  const registry = new CompactEvidence('numeric', 'object');
+  registry.add([
+    {
+      evidence_id: 'read',
+      resource_ref: 'tool/example',
+      field_path: '/name',
+      value: 'example-object',
+    },
+    {
+      evidence_id: 'read',
+      resource_ref: 'tool/example',
+      field_path: '/setting',
+      value: 'example-value',
+    },
+  ]);
+  for (const identity_ref of ['example-object', 'r7.f12']) {
+    assert.throws(
+      () =>
+        registry.resolveClaims(
+          JSON.stringify({
+            schema_version: 'claim_selection@1.0.0',
+            disposition: 'cause',
+            claims: [{ identity_ref, fact_refs: ['r1.f2'] }],
+            alternative_dispositions: [],
+            proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+          })
+        ),
+      /identity was not retrieved/
+    );
+  }
+  await assert.rejects(
+    createHeadlampObservabilityCandidate({
+      provider: 'azure',
+      config: {},
+      claimReferenceHint: 'example',
+    }),
+    /requires the claims contract/
+  );
+});
+
 test('claim configuration and prompt are explicit and defaults retain fact selection', async () => {
   for (const overrides of [
     { evidenceGrouping: 'read' as const },
@@ -631,14 +681,15 @@ test('strict final output rejects unsupported configurations before model creati
 });
 
 for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
-  for (const [evidenceGrouping, evidenceLayout, selectionContract] of [
-    ['read', 'rows', 'facts'],
-    ['object', 'rows', 'facts'],
-    ['object', 'fields', 'facts'],
-    ['object', 'rows', 'claims'],
-    ['object', 'fields', 'claims'],
+  for (const [evidenceGrouping, evidenceLayout, selectionContract, claimReferenceHint] of [
+    ['read', 'rows', 'facts', 'none'],
+    ['object', 'rows', 'facts', 'none'],
+    ['object', 'fields', 'facts', 'none'],
+    ['object', 'rows', 'claims', 'none'],
+    ['object', 'fields', 'claims', 'none'],
+    ['object', 'fields', 'claims', 'example'],
   ] as const) {
-    test(`strict Azure selection with ${referenceStyle} references and ${evidenceGrouping}/${evidenceLayout}/${selectionContract}`, async context => {
+    test(`strict Azure selection with ${referenceStyle} references and ${evidenceGrouping}/${evidenceLayout}/${selectionContract}/${claimReferenceHint}`, async context => {
       const requests: Array<Record<string, any>> = [];
       context.mock.method(
         globalThis,
@@ -717,8 +768,10 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         evidenceGrouping,
         ...(evidenceLayout === 'fields' ? { evidenceLayout } : {}),
         ...(selectionContract === 'claims' ? { selectionContract } : {}),
+        ...(claimReferenceHint === 'example' ? { claimReferenceHint } : {}),
         record: value => {
           assert.equal(value.status, 'completed');
+          assert.equal(value.claimReferenceHint, claimReferenceHint);
           assert.equal(value.selectionContract, selectionContract);
           assert.equal(value.evidenceLayout, evidenceLayout);
           assert.equal(value.error, null);
@@ -777,6 +830,15 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         selectionContract === 'claims' ? CLAIM_SELECTION_SCHEMA : FACT_SELECTION_SCHEMA
       );
       assert.equal(requests[1]?.tools, undefined);
+      for (const request of requests) {
+        assert.equal(
+          request.messages
+            .map((message: any) => message.content)
+            .join('\n')
+            .includes('Reference syntax only:'),
+          claimReferenceHint === 'example'
+        );
+      }
       assert.equal(
         JSON.stringify(requests[1]?.messages).includes('object_path'),
         evidenceGrouping === 'object'

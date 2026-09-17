@@ -17,6 +17,8 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
+import type { ResponseFormat } from 'langchain';
+import { MultipleStructuredOutputsError, StructuredOutputParsingError } from 'langchain';
 import { AgentToolAdapter, AgentToolExecutionHalt } from '../agents/langchain/AgentToolAdapter';
 import { createAgentHarness } from '../agents/langchain/createAgentHarness';
 import type { ConversationMessage } from '../conversation/types';
@@ -40,6 +42,12 @@ export interface AgentHarnessSessionOptions {
   model?: BaseChatModel;
   /** Receives sanitized model-usage and tool-completion events. */
   telemetryObserver?: AssistantTelemetryObserver;
+  /** Optional provider-enforced response contract for this session. */
+  responseFormat?: ResponseFormat;
+  /** External semantic validation applied after provider schema enforcement. */
+  validateStructuredResponse?: (
+    response: Record<string, unknown>
+  ) => { success: true; data: Record<string, unknown> } | { success: false; error: string };
 }
 
 /**
@@ -49,6 +57,9 @@ export interface AgentHarnessSessionOptions {
  * replacing the model/tool loop with the bounded LangGraph-backed agent.
  */
 export default class AgentHarnessSession extends LangChainAssistantSession {
+  private readonly responseFormat?: ResponseFormat;
+  private readonly validateStructuredResponse?: AgentHarnessSessionOptions['validateStructuredResponse'];
+
   constructor(
     providerId: string,
     config: ProviderSettings,
@@ -56,6 +67,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     options?: AgentHarnessSessionOptions
   ) {
     super(providerId, config, enabledTools, options);
+    this.responseFormat = options?.responseFormat;
+    this.validateStructuredResponse = options?.validateStructuredResponse;
   }
 
   /** Runs one complete createAgent model/tool loop. */
@@ -70,6 +83,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     let inputMessages: BaseMessage[] = [];
     let historyLengthBeforeRun = this.history.length;
     let latestMessages: BaseMessage[] = [];
+    let structuredResponse: Record<string, unknown> | undefined;
+    let structuredRepairAttempted = false;
 
     try {
       await this.toolManager.waitForMCPToolsInitialization();
@@ -100,6 +115,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         },
         systemPrompt: this.createSystemPrompt(),
         middleware: [toolAdapter.getHaltMiddleware()],
+        responseFormat: this.responseFormat,
       });
       inputMessages = this.prepareChatHistory();
       historyLengthBeforeRun = this.history.length;
@@ -109,21 +125,60 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       );
       for await (const state of stream) {
         latestMessages = state.messages as BaseMessage[];
+        structuredResponse = (state as { structuredResponse?: Record<string, unknown> })
+          .structuredResponse;
       }
       for (const generatedMessage of this.getGeneratedMessages(latestMessages, inputMessages)) {
         if (AIMessage.isInstance(generatedMessage)) this.recordModelUsage(generatedMessage);
       }
 
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
-      this.currentAbortController = null;
       const deferredResult = this.getDeferredResultsContent(runtimeResults);
       if (deferredResult) {
+        this.currentAbortController = null;
         return this.completeTurn({ role: 'assistant', content: deferredResult });
       }
+      if (structuredResponse) {
+        const validated = await this.validateOrRepairStructuredResponse(
+          message,
+          latestMessages,
+          structuredResponse,
+          abortController.signal,
+          () => {
+            structuredRepairAttempted = true;
+          }
+        );
+        this.currentAbortController = null;
+        return this.completeTurn(this.storeStructuredResponse(validated));
+      }
+      this.currentAbortController = null;
       return this.completeTurn(this.lastAssistantMessage());
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
-      const halt = this.asToolExecutionHalt(error);
+      let finalError = error;
+      if (
+        this.responseFormat &&
+        this.isStructuredOutputError(error) &&
+        !structuredRepairAttempted &&
+        !abortController.signal.aborted
+      ) {
+        try {
+          structuredRepairAttempted = true;
+          const repaired = await this.repairStructuredResponse(
+            message,
+            latestMessages,
+            undefined,
+            error,
+            abortController.signal
+          );
+          const validated = this.validateStructuredResponseOnce(repaired);
+          this.currentAbortController = null;
+          return this.completeTurn(this.storeStructuredResponse(validated, true));
+        } catch (repairError) {
+          finalError = repairError;
+        }
+      }
+      const halt = this.asToolExecutionHalt(finalError);
       if (halt) {
         this.currentAbortController = null;
         if (halt.requiresConfirmation) {
@@ -137,12 +192,119 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         return this.completeTurn(this.lastAssistantMessage());
       }
 
-      return this.completeTurn(await this.handleUserSendError(error));
+      this.currentAbortController = null;
+      return this.completeTurn(await this.handleUserSendError(finalError));
     }
   }
 
   private completeTurn(response: ConversationMessage): ConversationMessage {
     this.recordTelemetry({ type: 'turn_complete' });
+    return response;
+  }
+
+  private isStructuredOutputError(
+    error: unknown
+  ): error is StructuredOutputParsingError | MultipleStructuredOutputsError {
+    return (
+      error instanceof StructuredOutputParsingError ||
+      error instanceof MultipleStructuredOutputsError
+    );
+  }
+
+  private async repairStructuredResponse(
+    originalTask: string,
+    messages: BaseMessage[],
+    proposedResponse: Record<string, unknown> | undefined,
+    error: Error,
+    signal: AbortSignal
+  ): Promise<Record<string, unknown>> {
+    const proposedAnswer = messages
+      .slice()
+      .reverse()
+      .find(message => AIMessage.isInstance(message));
+    const repairAgent = await createAgentHarness({
+      model: this.model,
+      toolRuntime: {
+        waitForMCPToolsInitialization: async () => undefined,
+        getLangChainTools: () => [],
+      },
+      systemPrompt:
+        'Repair a structured diagnosis after external schema validation failed. Use only the original task and evidence below. Do not call tools, invent evidence, or change supported claims. Return only a schema-valid response.',
+      modelCallLimit: 1,
+      toolCallLimit: 0,
+      responseFormat: this.responseFormat,
+    });
+    const result = await repairAgent.invoke(
+      {
+        messages: [
+          {
+            role: 'user',
+            content: `Original task and evidence:\n${originalTask}\n\nProposed answer:\n${
+              proposedResponse
+                ? JSON.stringify(proposedResponse, null, 2)
+                : proposedAnswer
+                ? this.extractTextContent(proposedAnswer.content)
+                : '(missing)'
+            }\n\nValidation error:\n${error.message}`,
+          },
+        ],
+      },
+      { signal }
+    );
+    for (const generatedMessage of result.messages ?? []) {
+      if (AIMessage.isInstance(generatedMessage)) this.recordModelUsage(generatedMessage);
+    }
+    const repaired = (result as { structuredResponse?: Record<string, unknown> })
+      .structuredResponse;
+    if (!repaired) throw error;
+    return repaired;
+  }
+
+  private async validateOrRepairStructuredResponse(
+    originalTask: string,
+    messages: BaseMessage[],
+    response: Record<string, unknown>,
+    signal: AbortSignal,
+    onRepairAttempt: () => void
+  ): Promise<Record<string, unknown>> {
+    const validation = this.validateStructuredResponse?.(response);
+    if (!validation || validation.success) return validation?.data ?? response;
+    onRepairAttempt();
+    const repaired = await this.repairStructuredResponse(
+      originalTask,
+      messages,
+      response,
+      new Error(validation.error),
+      signal
+    );
+    return this.validateStructuredResponseOnce(repaired);
+  }
+
+  private validateStructuredResponseOnce(
+    response: Record<string, unknown>
+  ): Record<string, unknown> {
+    const validation = this.validateStructuredResponse?.(response);
+    if (!validation || validation.success) return validation?.data ?? response;
+    throw new Error(validation.error);
+  }
+
+  private storeStructuredResponse(
+    structuredResponse: Record<string, unknown>,
+    preserveExisting = false
+  ): ConversationMessage {
+    const response: ConversationMessage = {
+      role: 'assistant',
+      content: `\`\`\`json\n${JSON.stringify(structuredResponse, null, 2)}\n\`\`\``,
+    };
+    if (!preserveExisting) {
+      for (let index = this.history.length - 1; index >= 0; index--) {
+        if (this.history[index]?.role === 'assistant') {
+          this.history[index] = response;
+          return response;
+        }
+      }
+    }
+    this.history.push(response);
     return response;
   }
 

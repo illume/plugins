@@ -14,27 +14,65 @@
  * limitations under the License.
  */
 
-import { ToolMessage } from '@langchain/core/messages';
+import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import { tool } from '@langchain/core/tools';
-import { FakeToolCallingModel } from 'langchain';
+import { FakeToolCallingModel, providerStrategy } from 'langchain';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { basePrompt } from '../../prompts/baseAssistantPrompt';
 import {
   createAgentHarness,
+  evidenceFirstInstruction,
   getAgentSystemPrompt,
   parallelToolCallInstruction,
 } from './createAgentHarness';
 
 describe('createAgentHarness', () => {
   it('uses the base prompt when no custom prompt is supplied', () => {
-    expect(getAgentSystemPrompt()).toBe(`${basePrompt}\n\n${parallelToolCallInstruction}`);
+    expect(getAgentSystemPrompt()).toBe(
+      `${basePrompt}\n\n${parallelToolCallInstruction}\n\n${evidenceFirstInstruction}`
+    );
   });
 
   it('instructs the agent to parallelize independent tool calls', () => {
     expect(getAgentSystemPrompt('Troubleshoot Kubernetes.')).toBe(
-      `Troubleshoot Kubernetes.\n\n${parallelToolCallInstruction}`
+      `Troubleshoot Kubernetes.\n\n${parallelToolCallInstruction}\n\n${evidenceFirstInstruction}`
     );
+  });
+
+  it('returns schema-enforced structured output', async () => {
+    const schema = z.object({ answer: z.string() });
+    class NativeStructuredFakeModel extends FakeToolCallingModel {
+      override get profile() {
+        return { toolCalling: true, structuredOutput: true };
+      }
+
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate() {
+        const content = JSON.stringify({ answer: 'supported' });
+        return {
+          generations: [{ text: content, message: new AIMessage(content) }],
+          llmOutput: {},
+        };
+      }
+    }
+    const agent = await createAgentHarness({
+      model: new NativeStructuredFakeModel(),
+      toolRuntime: {
+        waitForMCPToolsInitialization: async () => undefined,
+        getLangChainTools: () => [],
+      },
+      responseFormat: providerStrategy(schema),
+    });
+
+    const result = await agent.invoke({ messages: [{ role: 'user', content: 'Diagnose' }] });
+
+    expect((result as { structuredResponse?: unknown }).structuredResponse).toEqual({
+      answer: 'supported',
+    });
   });
 
   it('waits for tool discovery and runs the model-tool loop', async () => {

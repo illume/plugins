@@ -20,16 +20,24 @@ import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assista
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
-import { execFileSync } from 'child_process';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { execFileSync } from 'child_process';
+import { providerStrategy } from 'langchain';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
+import {
+  createDiagnosisProviderSchema,
+  createDiagnosisSubmissionSchema,
+} from './structuredDiagnosis.js';
 
 interface KubectlContext {
   cluster: string;
   namespace: string;
 }
+
+const suppliedEvidenceContext =
+  'Supplied-evidence mode is active. Treat observations in the user request as the complete authorized evidence for this turn. Do not call tools. Produce the strongest supported answer from those observations, preserve explicit access or tool failures as evidence, and state uncertainty when the observations are insufficient.';
 
 /** Reads the active cluster and namespace without exposing kubeconfig credentials. */
 export function detectKubectlContext(
@@ -62,6 +70,8 @@ export function detectKubectlContext(
  * @param mockSkills    When true, inject a built-in mock skill set (no network needed).
  * @param mockTools     When true, inject mock Kubernetes tool results (no cluster needed).
  * @param model         Optional deterministic model override, used by tests.
+ * @param suppliedEvidenceOnly When true, bind no cluster tools and use only request observations.
+ * @param structuredDiagnosis When true, enforce the diagnosis response schema in the harness.
  */
 export async function createManager(
   providerId: string,
@@ -74,34 +84,57 @@ export async function createManager(
     telemetryObserver?: AssistantTelemetryObserver;
     legacySession?: boolean;
     model?: BaseChatModel;
+    suppliedEvidenceOnly?: boolean;
+    structuredDiagnosis?: boolean;
+    structuredDiagnosisEvidenceIds?: string[];
   } = {}
 ): Promise<LangChainAssistantSession> {
+  if (options.structuredDiagnosis && providerId === 'mock-testing-model') {
+    throw new Error('Structured diagnosis requires a provider with native structured output');
+  }
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const Session = options.legacySession ? LangChainAssistantSession : AgentHarnessSession;
-  const manager = new Session(
-    providerId,
-    config,
-    [],
-    toolManager || options.telemetryObserver || options.model
-      ? {
-          toolManager,
-          telemetryObserver: options.telemetryObserver,
-          model: options.model,
-        }
-      : undefined
-  );
-  const kubectlContext = options.mockTools ? undefined : detectKubectlContext();
+  const commonOptions = {
+    toolManager,
+    telemetryObserver: options.telemetryObserver,
+    model: options.model,
+  };
+  const manager = options.legacySession
+    ? new LangChainAssistantSession(providerId, config, [], commonOptions)
+    : new AgentHarnessSession(providerId, config, [], {
+        ...commonOptions,
+        responseFormat: options.structuredDiagnosis
+          ? providerStrategy(
+              createDiagnosisProviderSchema(options.structuredDiagnosisEvidenceIds ?? [])
+            )
+          : undefined,
+        validateStructuredResponse: options.structuredDiagnosis
+          ? response => {
+              const parsed = createDiagnosisSubmissionSchema(
+                options.structuredDiagnosisEvidenceIds ?? []
+              ).safeParse(response);
+              return parsed.success
+                ? { success: true, data: parsed.data }
+                : { success: false, error: parsed.error.message };
+            }
+          : undefined,
+      });
+  const kubectlContext =
+    options.mockTools || options.suppliedEvidenceOnly ? undefined : detectKubectlContext();
   if (kubectlContext) {
     manager.setContext(
       `Kubernetes cluster: ${kubectlContext.cluster}\nCurrent namespace: ${kubectlContext.namespace}\n` +
         `Use ${kubectlContext.namespace} for namespaced Kubernetes API requests unless the user explicitly names another namespace.`
     );
   }
-  const kubectlTool = createKubectlTool({
-    readOnly: !options.allowMutations,
-    namespace: kubectlContext?.namespace,
-  });
-  await manager.enableDirectToolCalling([kubectlTool]);
+  if (options.suppliedEvidenceOnly) {
+    manager.setContext(suppliedEvidenceContext);
+  } else {
+    const kubectlTool = createKubectlTool({
+      readOnly: !options.allowMutations,
+      namespace: kubectlContext?.namespace,
+    });
+    await manager.enableDirectToolCalling([kubectlTool]);
+  }
 
   // Inject mock skills when requested (no network needed — good for demos and tests)
   if (options.mockSkills) {

@@ -369,6 +369,10 @@ export interface HeadlampCliCandidateOptions {
   useMockProvider?: boolean;
   /** Selects the product session implementation while keeping all other CLI inputs fixed. */
   sessionMode?: 'agent-harness' | 'legacy';
+  /** Prevents the product CLI from exposing cluster tools when observations are pre-supplied. */
+  suppliedEvidenceOnly?: boolean;
+  /** Requires the harness to use the strict diagnosis response contract. */
+  structuredDiagnosis?: boolean;
   /** Explicit pricing snapshot used to estimate configured usage. */
   pricing?: TokenPricingSnapshot;
 }
@@ -540,12 +544,18 @@ export function createHeadlampCliCandidate(
   const timeoutMs = options.timeoutMs ?? 120_000;
   const runProcess = options.processRunner ?? createRealProcessRunner();
   const sessionMode = options.sessionMode ?? 'agent-harness';
+  const suppliedEvidenceOnly = options.suppliedEvidenceOnly ?? true;
+  const structuredDiagnosis =
+    options.structuredDiagnosis ??
+    (sessionMode === 'agent-harness' && options.useMockProvider === false);
   const candidateId = sessionMode === 'legacy' ? 'headlamp-cli-legacy' : 'headlamp-cli';
   const identity = headlampCandidateIdentity(
     candidateId,
     options.cliArgs ?? [],
     options.useMockProvider !== false,
     sessionMode,
+    suppliedEvidenceOnly,
+    structuredDiagnosis,
     options.pricing
   );
 
@@ -620,6 +630,14 @@ export function createHeadlampCliCandidate(
             cliEntry,
             ...(options.cliArgs ?? []),
             ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
+            ...(suppliedEvidenceOnly ? ['--supplied-evidence-only'] : []),
+            ...(structuredDiagnosis ? ['--structured-diagnosis'] : []),
+            ...(structuredDiagnosis
+              ? [
+                  '--structured-diagnosis-evidence-ids',
+                  JSON.stringify(input.observations.map(observation => observation.evidence_id)),
+                ]
+              : []),
             '--telemetry-file',
             telemetryPath,
             prompt,
@@ -691,6 +709,8 @@ function headlampCandidateIdentity(
   cliArgs: string[],
   useMockProvider: boolean,
   sessionMode: 'agent-harness' | 'legacy',
+  suppliedEvidenceOnly: boolean,
+  structuredDiagnosis: boolean,
   pricing?: TokenPricingSnapshot
 ): CandidateAdapter['identity'] {
   const argument = (name: string): string | null => {
@@ -706,6 +726,8 @@ function headlampCandidateIdentity(
     credential_configured: argument('--api-key') !== null,
     mock_provider: useMockProvider,
     session_mode: sessionMode,
+    retrieval_mode: suppliedEvidenceOnly ? 'supplied-evidence-only' : 'live',
+    structured_output: structuredDiagnosis,
   };
   return {
     candidate_id: candidateId,

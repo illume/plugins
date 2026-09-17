@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import { AIMessage } from '@langchain/core/messages';
 import { tool } from '@langchain/core/tools';
-import { FakeToolCallingModel } from 'langchain';
+import { FakeToolCallingModel, providerStrategy } from 'langchain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { validateToolCallAlignment } from '../conversation/history';
@@ -358,6 +359,162 @@ describe('AgentHarnessSession', () => {
     ]);
     expect(JSON.stringify(telemetry)).not.toContain('get pods');
     expect(JSON.stringify(telemetry)).not.toContain('kubectl output');
+  });
+
+  it('repairs one provider-validated structured response without tools', async () => {
+    class RepairingStructuredModel extends FakeToolCallingModel {
+      calls = 0;
+
+      override get profile() {
+        return { toolCalling: true, structuredOutput: true };
+      }
+
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate() {
+        this.calls += 1;
+        const content =
+          this.calls === 1 ? 'not json' : JSON.stringify({ answer: 'supported by evidence' });
+        return {
+          generations: [{ text: content, message: new AIMessage(content) }],
+          llmOutput: {},
+        };
+      }
+    }
+    const model = new RepairingStructuredModel();
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager: createMockToolManager(),
+      responseFormat: providerStrategy(z.object({ answer: z.string() })),
+    });
+
+    const response = await session.userSend('Use evidence: status is Ready');
+
+    expect(model.calls).toBe(2);
+    expect(response.content).toContain('"answer": "supported by evidence"');
+    expect(response.content).toMatch(/^```json/);
+  });
+
+  it('repairs one externally invalid structured response without tools', async () => {
+    class ExternallyValidatedModel extends FakeToolCallingModel {
+      calls = 0;
+
+      override get profile() {
+        return { toolCalling: true, structuredOutput: true };
+      }
+
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate() {
+        this.calls += 1;
+        const content = JSON.stringify({ answer: this.calls === 1 ? 'duplicate' : 'unique' });
+        return {
+          generations: [{ text: content, message: new AIMessage(content) }],
+          llmOutput: {},
+        };
+      }
+    }
+    const model = new ExternallyValidatedModel();
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager: createMockToolManager(),
+      responseFormat: providerStrategy(z.object({ answer: z.string() })),
+      validateStructuredResponse: response =>
+        response.answer === 'unique'
+          ? { success: true, data: response }
+          : { success: false, error: 'answer must be unique' },
+    });
+
+    const response = await session.userSend('Use supplied evidence');
+
+    expect(model.calls).toBe(2);
+    expect(response.content).toContain('"answer": "unique"');
+  });
+
+  it('externally validates a provider-format repair without retrying it', async () => {
+    class InvalidRepairModel extends FakeToolCallingModel {
+      calls = 0;
+
+      override get profile() {
+        return { toolCalling: true, structuredOutput: true };
+      }
+
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate() {
+        this.calls += 1;
+        const content = this.calls === 1 ? 'not json' : JSON.stringify({ answer: 'duplicate' });
+        return {
+          generations: [{ text: content, message: new AIMessage(content) }],
+          llmOutput: {},
+        };
+      }
+    }
+    const model = new InvalidRepairModel();
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager: createMockToolManager(),
+      responseFormat: providerStrategy(z.object({ answer: z.string() })),
+      validateStructuredResponse: response =>
+        response.answer === 'unique'
+          ? { success: true, data: response }
+          : { success: false, error: 'answer must be unique' },
+    });
+
+    const response = await session.userSend('Use supplied evidence');
+
+    expect(model.calls).toBe(2);
+    expect(response.error).toBe(true);
+    expect(response.content).not.toContain('duplicate');
+  });
+
+  it('does not retry a malformed response from the bounded repair', async () => {
+    class MalformedRepairModel extends FakeToolCallingModel {
+      calls = 0;
+
+      override get profile() {
+        return { toolCalling: true, structuredOutput: true };
+      }
+
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate() {
+        this.calls += 1;
+        const content =
+          this.calls === 1
+            ? JSON.stringify({ answer: 'duplicate' })
+            : this.calls === 2
+            ? 'not json'
+            : JSON.stringify({ answer: 'unique' });
+        return {
+          generations: [{ text: content, message: new AIMessage(content) }],
+          llmOutput: {},
+        };
+      }
+    }
+    const model = new MalformedRepairModel();
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model,
+      toolManager: createMockToolManager(),
+      responseFormat: providerStrategy(z.object({ answer: z.string() })),
+      validateStructuredResponse: response =>
+        response.answer === 'unique'
+          ? { success: true, data: response }
+          : { success: false, error: 'answer must be unique' },
+    });
+
+    const response = await session.userSend('Use supplied evidence');
+
+    expect(model.calls).toBe(2);
+    expect(response.error).toBe(true);
   });
 
   it('does not make a follow-up model call after a strict-false runtime result', async () => {

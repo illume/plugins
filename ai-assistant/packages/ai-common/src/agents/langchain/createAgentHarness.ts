@@ -16,7 +16,7 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
-import type { AgentMiddleware } from 'langchain';
+import type { AgentMiddleware, ResponseFormat } from 'langchain';
 import { createAgent, modelCallLimitMiddleware, toolCallLimitMiddleware } from 'langchain';
 import { basePrompt } from '../../prompts/baseAssistantPrompt';
 
@@ -24,9 +24,13 @@ const DEFAULT_MODEL_CALL_LIMIT = 8;
 const DEFAULT_TOOL_CALL_LIMIT = 12;
 export const parallelToolCallInstruction =
   'When multiple tool calls are independent, issue them in parallel rather than waiting for each one sequentially.';
+export const evidenceFirstInstruction =
+  'Use observations already supplied by the user before requesting more data. Call a tool only when a missing fact is necessary and the tool is available. If a tool fails or access is unavailable, preserve that failure as evidence and still produce the requested answer from the observations you have, with explicit uncertainty where needed.';
 
 export function getAgentSystemPrompt(systemPrompt?: string): string {
-  return `${systemPrompt ?? basePrompt}\n\n${parallelToolCallInstruction}`;
+  return `${
+    systemPrompt ?? basePrompt
+  }\n\n${parallelToolCallInstruction}\n\n${evidenceFirstInstruction}`;
 }
 
 /** Tool inventory required by the LangGraph-backed agent prototype. */
@@ -51,6 +55,8 @@ export interface AgentHarnessOptions {
   toolCallLimit?: number;
   /** Additional middleware, such as the tool adapter's halt-enforcement hook. */
   middleware?: AgentMiddleware[];
+  /** Optional provider- or tool-enforced response contract. */
+  responseFormat?: ResponseFormat;
 }
 
 /**
@@ -65,7 +71,7 @@ export interface AgentHarnessOptions {
 export async function createAgentHarness(options: AgentHarnessOptions) {
   await options.toolRuntime.waitForMCPToolsInitialization();
 
-  return createAgent({
+  const agentOptions = {
     model: options.model,
     tools: options.toolRuntime.getLangChainTools(),
     systemPrompt: getAgentSystemPrompt(options.systemPrompt),
@@ -81,5 +87,8 @@ export async function createAgentHarness(options: AgentHarnessOptions) {
       ...(options.middleware ?? []),
     ],
     name: 'headlamp-kubernetes-agent',
-  });
+  };
+  return options.responseFormat
+    ? createAgent({ ...agentOptions, responseFormat: options.responseFormat })
+    : createAgent(agentOptions);
 }

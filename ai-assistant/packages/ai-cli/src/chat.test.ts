@@ -105,4 +105,24 @@ describe('chat', () => {
     expect(execFile).not.toHaveBeenCalled();
     expect(response).toContain('nginx');
   });
+
+  it('binds no host tools in supplied-evidence mode', async () => {
+    const manager = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        model: new FakeToolCallingModel(),
+        suppliedEvidenceOnly: true,
+      }
+    );
+
+    expect((manager as unknown as { extraTools: Map<string, unknown> }).extraTools.size).toBe(0);
+    expect(execFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects structured diagnosis for a provider without native schema support', async () => {
+    await expect(
+      createManager('mock-testing-model', {}, { structuredDiagnosis: true })
+    ).rejects.toThrow('requires a provider with native structured output');
+  });
 });

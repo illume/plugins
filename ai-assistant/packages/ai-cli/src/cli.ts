@@ -192,6 +192,9 @@ async function main() {
       ? createJsonlTelemetryObserver(parsed.telemetryFile)
       : undefined,
     legacySession: parsed.legacySession,
+    suppliedEvidenceOnly: parsed.suppliedEvidenceOnly,
+    structuredDiagnosis: parsed.structuredDiagnosis,
+    structuredDiagnosisEvidenceIds: parsed.structuredDiagnosisEvidenceIds,
   });
 
   if (parsed.interactive) {

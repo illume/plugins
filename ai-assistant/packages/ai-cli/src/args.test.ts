@@ -27,6 +27,9 @@ describe('parseArgs', () => {
     expect(result.autoDetect).toBe(false);
     expect(result.allowMutations).toBe(false);
     expect(result.legacySession).toBe(false);
+    expect(result.suppliedEvidenceOnly).toBe(false);
+    expect(result.structuredDiagnosis).toBe(false);
+    expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
     expect(result.help).toBe(false);
     expect(result.skillSources).toEqual([]);
   });
@@ -67,6 +70,21 @@ describe('parseArgs', () => {
 
   it('parses --legacy-session', () => {
     expect(parseArgs([...base, '--legacy-session']).legacySession).toBe(true);
+  });
+
+  it('parses --supplied-evidence-only', () => {
+    expect(parseArgs([...base, '--supplied-evidence-only']).suppliedEvidenceOnly).toBe(true);
+  });
+
+  it('parses --structured-diagnosis', () => {
+    expect(parseArgs([...base, '--structured-diagnosis']).structuredDiagnosis).toBe(true);
+  });
+
+  it('parses exact structured diagnosis evidence IDs', () => {
+    expect(
+      parseArgs([...base, '--structured-diagnosis-evidence-ids', '["evidence-1","evidence-2"]'])
+        .structuredDiagnosisEvidenceIds
+    ).toEqual(['evidence-1', 'evidence-2']);
   });
 
   it('documents the legacy-session environment variable', () => {

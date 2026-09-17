@@ -358,6 +358,7 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
     timedOut: false,
   };
   const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
     processRunner: async (command, args, env, timeoutMs) => {
       capturedArgs = args;
       capturedTimeoutMs = timeoutMs;
@@ -374,6 +375,10 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
   assert.equal(result.status, 'ok');
   assert.equal(result.submission_text, null);
   assert.ok(capturedArgs.some(arg => arg.includes(scenario.candidatePacket.task_prompt)));
+  assert.ok(capturedArgs.includes('--supplied-evidence-only'));
+  assert.ok(capturedArgs.includes('--structured-diagnosis'));
+  const evidenceIdsIndex = capturedArgs.indexOf('--structured-diagnosis-evidence-ids');
+  assert.deepEqual(JSON.parse(capturedArgs[evidenceIdsIndex + 1]!), ['ev1']);
   assert.ok(
     capturedArgs.some(arg =>
       arg.includes('return exactly one proposed action with operation "no_action"')
@@ -422,6 +427,8 @@ test('createHeadlampCliCandidate: records and invokes the legacy session ablatio
   assert.equal(candidate.identity?.candidate_id, 'headlamp-cli-legacy');
   assert.equal(candidate.identity?.session_mode, 'legacy');
   assert.ok(capturedArgs.includes('--legacy-session'));
+  assert.ok(capturedArgs.includes('--supplied-evidence-only'));
+  assert.equal(capturedArgs.includes('--structured-diagnosis'), false);
 });
 
 test('createHeadlampCliCandidate: a non-zero exit code is reported as unavailable, not a silent pass', async () => {

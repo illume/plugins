@@ -44,6 +44,12 @@ export interface ParsedArgs {
   mockTools: boolean;
   /** When true, use the legacy session implementation. */
   legacySession: boolean;
+  /** When true, answer only from observations supplied in the request. */
+  suppliedEvidenceOnly: boolean;
+  /** When true, require the structured diagnosis response contract. */
+  structuredDiagnosis: boolean;
+  /** Exact evidence IDs permitted by the structured diagnosis contract. */
+  structuredDiagnosisEvidenceIds: string[];
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
@@ -63,6 +69,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
     mockTools:
       process.env.HEADLAMP_AI_MOCK_TOOLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
     legacySession: process.env.HEADLAMP_AI_LEGACY_SESSION === '1',
+    suppliedEvidenceOnly: process.env.HEADLAMP_AI_SUPPLIED_EVIDENCE_ONLY === '1',
+    structuredDiagnosis: process.env.HEADLAMP_AI_STRUCTURED_DIAGNOSIS === '1',
+    structuredDiagnosisEvidenceIds: [],
   };
   const args = argv.slice(2);
   const queryParts: string[] = [];
@@ -108,6 +117,20 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--legacy-session':
         result.legacySession = true;
         break;
+      case '--supplied-evidence-only':
+        result.suppliedEvidenceOnly = true;
+        break;
+      case '--structured-diagnosis':
+        result.structuredDiagnosis = true;
+        break;
+      case '--structured-diagnosis-evidence-ids': {
+        const value: unknown = JSON.parse(args[++i] ?? '[]');
+        if (!Array.isArray(value) || !value.every(id => typeof id === 'string')) {
+          throw new Error('--structured-diagnosis-evidence-ids must be a JSON string array');
+        }
+        result.structuredDiagnosisEvidenceIds = value;
+        break;
+      }
       case '--interactive':
       case '-i':
         result.interactive = true;
@@ -161,6 +184,10 @@ Options:
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1
   --mock-tools          Inject mock Kubernetes tool results (no cluster). Env: HEADLAMP_AI_MOCK_TOOLS=1
   --legacy-session      Use the previous session implementation. Env: HEADLAMP_AI_LEGACY_SESSION=1
+  --supplied-evidence-only
+                        Use only observations in the request; do not expose cluster tools
+  --structured-diagnosis
+                        Require a schema-valid structured diagnosis (harness only)
   --allow-mutations     Allow mutating kubectl operations (POST, PUT, DELETE, PATCH). Default: read-only
   --auto-approve        Auto-approve all tool calls without prompting. Env: HEADLAMP_AI_AUTO_APPROVE=1
   --auto-detect         Detect available AI providers (Copilot, Azure, Ollama)
@@ -184,6 +211,10 @@ Environment variables:
   HEADLAMP_AI_MOCK_TOOLS      Set to 1 to inject mock Kubernetes tool results
   HEADLAMP_AI_LEGACY_SESSION
                               Set to 1 to use the previous session implementation
+  HEADLAMP_AI_SUPPLIED_EVIDENCE_ONLY
+                              Set to 1 to use only observations supplied in the request
+  HEADLAMP_AI_STRUCTURED_DIAGNOSIS
+                              Set to 1 to require a structured diagnosis response
   HEADLAMP_AI_MOCK_ALL        Set to 1 to enable full offline/demo mode:
                               mock model + mock skills + mock tools + auto-approve
 

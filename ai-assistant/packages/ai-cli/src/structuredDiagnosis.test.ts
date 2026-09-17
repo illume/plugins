@@ -181,4 +181,125 @@ describe('createDiagnosisSubmissionSchema', () => {
 
     expect(result).toEqual({ success: true, data: submission });
   });
+
+  it('canonicalizes hypothesis families for an uncertain Pending Pod phase', () => {
+    const observations = [
+      {
+        evidence_id: 'pod-evidence',
+        resource_ref: 'pod/mystery-pod',
+        field_path: 'status.phase',
+        observed_value: 'Pending',
+      },
+    ];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: [],
+        resource_refs: [],
+        evidence_refs: [],
+        alternative_dispositions: [
+          'An unbound PVC may prevent Pod scheduling',
+          'Resource constraints may block scheduling',
+        ],
+        uncertainty: { is_uncertain: true, reason: 'Only the phase is known' },
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.alternative_dispositions).toEqual([
+      'Insufficient CPU or memory resources on available Nodes may prevent Pod scheduling',
+      'Node affinity or nodeSelector constraints may exclude available Nodes',
+      'An unbound PVC may prevent Pod scheduling',
+      'Resource constraints may block scheduling',
+    ]);
+  });
+
+  it('accepts two concrete Pending Pod hypothesis families', () => {
+    const observations = [
+      {
+        evidence_id: 'pod-evidence',
+        resource_ref: 'pod/mystery-pod',
+        field_path: 'status.phase',
+        observed_value: 'Pending',
+      },
+    ];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: [],
+        resource_refs: [],
+        evidence_refs: [],
+        alternative_dispositions: [
+          'Insufficient CPU or memory resources on Nodes may prevent scheduling',
+          'An unbound PersistentVolumeClaim may prevent the Pod from scheduling',
+        ],
+        uncertainty: { is_uncertain: true, reason: 'Only the phase is known' },
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  it('leaves alternatives unchanged when richer Pending Pod evidence is supplied', () => {
+    const observations = [
+      {
+        evidence_id: 'phase-evidence',
+        resource_ref: 'pod/mystery-pod',
+        field_path: 'status.phase',
+        observed_value: 'Pending',
+      },
+      {
+        evidence_id: 'reason-evidence',
+        resource_ref: 'pod/mystery-pod',
+        field_path: 'status.reason',
+        observed_value: 'Unschedulable',
+      },
+    ];
+    const alternatives = ['The scheduler reported an unschedulable Pod'];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: [],
+        resource_refs: [],
+        evidence_refs: [],
+        alternative_dispositions: alternatives,
+        uncertainty: { is_uncertain: true, reason: 'More evidence is needed' },
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.alternative_dispositions).toEqual(alternatives);
+  });
+
+  it('leaves alternatives unchanged for a confident Pending Pod diagnosis', () => {
+    const observations = [
+      {
+        evidence_id: 'pod-evidence',
+        resource_ref: 'pod/mystery-pod',
+        field_path: 'status.phase',
+        observed_value: 'Pending',
+      },
+    ];
+    const alternatives: string[] = [];
+    const result = validateDiagnosisSubmission(
+      {
+        ...submission,
+        cause_facts: [],
+        resource_refs: [],
+        evidence_refs: [],
+        alternative_dispositions: alternatives,
+        uncertainty: { is_uncertain: false, reason: '' },
+      },
+      observations
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.alternative_dispositions).toEqual(alternatives);
+  });
 });

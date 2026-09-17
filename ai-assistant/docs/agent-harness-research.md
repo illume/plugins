@@ -36,7 +36,7 @@ default.
 | Harness-native optional tool dispatch                                    | Not implemented                                                       | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
 | CLI harness default and legacy fallback                                  | Implemented                                                           | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
 | Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
-| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence-ledger, repair, telemetry, and CLI regressions                    |
+| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence and hypothesis ledgers, repair, telemetry, and CLI regressions    |
 | Plugin UI harness default                                                | Not implemented                                                       | No                                         | Requires quality comparison and browser stream/approval parity                                 |
 | Typed evidence in the product answer path                                | Not implemented                                                       | No                                         | Evaluation submission validation exists; product integration is untested                       |
 | Checkpointed approval/resume                                             | Not implemented                                                       | No                                         | Research backlog                                                                               |
@@ -175,12 +175,12 @@ included it and passed. A consistency-only validator still allowed repair to
 drop the event from all references, and a completeness repair remained
 stochastic.
 
-The final experiment instead validates every model-selected cause fact against
+The controller experiment instead validates every model-selected cause fact against
 the supplied observations, then derives `cause_facts`, `resource_refs`, and
 `evidence_refs` deterministically from that task-scoped observation packet. It
-does not use protected evaluator truth and does not change the model's
-conclusion, uncertainty, alternatives, or proposed actions. The evaluator is
-the only current caller supplying this canonical observation ledger.
+does not use protected evaluator truth or change the model's conclusion,
+uncertainty, alternatives, or proposed actions. The evaluator is the only
+current caller supplying this canonical observation ledger.
 
 Ten fresh independent Copilot `gpt-4o-2024-11-20` Minikube trials all produced
 valid root-cause passes with safety pass and clean lifecycle state. Seven used
@@ -202,6 +202,28 @@ each string contained the packet's narrower alias-token combinations. The
 prompt change was reverted: tuning candidate wording from protected aliases
 would compromise the evaluation. Blind alias review or a predeclared typed
 hypothesis taxonomy is required before using these partials to tune the harness.
+
+The next experiment implemented that public taxonomy for the narrow contract
+where the complete supplied evidence is only a Pod's `status.phase=Pending` and
+the model reports uncertainty. The taxonomy names three standard remaining
+families: insufficient node CPU or memory, node affinity or `nodeSelector`
+constraints, and an unbound PVC. It appends stable dispositions while retaining
+the model's alternatives. It does not run when richer Pod evidence is supplied,
+when the phase is not Pending, or when the model reports a confident diagnosis.
+
+External validation plus bounded model repair remained stochastic: one initial
+pass was followed by four passes, two partials, and four no-results in ten fresh
+`phase2-malformed-tool-result-01-v1` trials. Deterministic taxonomy
+canonicalization then produced 10/10 valid root-cause passes, safety passes, and
+clean lifecycle results, with one request per trial, 23,877 total tokens, and
+5.60 seconds mean diagnosis time. Those runs are retained from
+`run_0mu5lvkm5000001_ff7f385a-e93d-4cd9-8bbe-1c833bbbec3b` through
+`run_0mu5lxzi4000001_a0b09ff5-38e6-48d1-a661-630bef7e9547`.
+
+The prior `phase2-evidence-freshness-01-v1` partial, controller-convergence, and
+annotation-injection controls all produced valid, safe passes with clean
+lifecycle state in
+`run_0mu5lyq6f000001_367890e5-a75d-44f1-9ef6-0c1ce5e6bae1`.
 
 ### Matched smoke result
 
@@ -260,7 +282,8 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Explicit supplied evidence with unavailable retrieval                                  | Final harness slice completed 25/25 trials with zero tool calls                             | Keep no-retrieval mode for supplied-evidence evaluations                   |
 | Provider schema alone versus external evidence validation                              | Shape enforcement missed duplicate evidence IDs; external validation repaired them          | Validate semantics outside the provider schema with one bounded repair     |
 | Model-selected evidence ledger versus canonical supplied observations                  | Controller convergence moved from stochastic partial/no-result to 10/10 valid passes        | Canonicalize the ledger in explicit supplied-evidence diagnosis mode       |
-| More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                  | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
+| More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                 | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
+| Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next result should repeat the registered roster with counterbalanced order

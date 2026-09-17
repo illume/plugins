@@ -8,6 +8,10 @@ For user setup and credential requirements, see
 [Read-only observability data sources](../README.md#read-only-observability-data-sources). For the
 security analysis, see the [observability tools threat model](observability-threat-model.md).
 
+For completed experiments, measured results, current eval defaults, ordered next
+phases, and the research backlog, see
+[observability reliability research](observability-research.md).
+
 ## Tool inventory
 
 The common provider tools are implemented in

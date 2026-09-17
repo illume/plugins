@@ -4,6 +4,7 @@ import {
   createHeadlampObservabilityCandidate,
   emptyContainers,
   observabilityPrompt,
+  type HeadlampObservabilityOptions,
 } from './headlampObservability.js';
 import type { LiveObservabilityCandidateInput } from '../runner/observabilityEvaluation.js';
 import { CompactEvidence } from './compactEvidence.js';
@@ -147,6 +148,7 @@ test('strict final output rejects unsupported configurations before model creati
     createHeadlampObservabilityCandidate({
       provider: 'azure',
       config: {},
+      evidenceMode: 'compact',
       strictFinalOutput: true,
     }),
     /compact-select/
@@ -162,99 +164,99 @@ test('strict final output rejects unsupported configurations before model creati
   );
 });
 
-test('strict selection reaches the actual Azure final request, not the planning request', async context => {
-  const requests: Array<Record<string, any>> = [];
-  context.mock.method(
-    globalThis,
-    'fetch',
-    async (request: Request | string | URL, init?: RequestInit) => {
-      const body = request instanceof Request ? await request.text() : String(init?.body);
-      requests.push(JSON.parse(body));
-      assert.ok(requests.length <= 2, 'Unexpected retry or extra model invocation');
-      const planning = requests.length === 1;
-      return Response.json({
-        id: `offline-${requests.length}`,
-        object: 'chat.completion',
-        created: 0,
-        model: 'gpt-4o-2024-11-20',
-        choices: [
-          {
-            index: 0,
-            finish_reason: planning ? 'tool_calls' : 'stop',
-            message: planning
-              ? {
-                  role: 'assistant',
-                  content: '',
-                  tool_calls: [
-                    {
-                      id: 'call1',
-                      type: 'function',
-                      function: {
-                        name: 'kubernetes_api_request',
-                        arguments: JSON.stringify({
-                          method: 'GET',
-                          path: '/eval/observed-kubernetes',
-                        }),
+for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
+  test(`default strict selection reaches the Azure final request with ${referenceStyle} references`, async context => {
+    const requests: Array<Record<string, any>> = [];
+    context.mock.method(
+      globalThis,
+      'fetch',
+      async (request: Request | string | URL, init?: RequestInit) => {
+        const body = request instanceof Request ? await request.text() : String(init?.body);
+        requests.push(JSON.parse(body));
+        assert.ok(requests.length <= 2, 'Unexpected retry or extra model invocation');
+        const planning = requests.length === 1;
+        return Response.json({
+          id: `offline-${requests.length}`,
+          object: 'chat.completion',
+          created: 0,
+          model: 'gpt-4o-2024-11-20',
+          choices: [
+            {
+              index: 0,
+              finish_reason: planning ? 'tool_calls' : 'stop',
+              message: planning
+                ? {
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: [
+                      {
+                        id: 'call1',
+                        type: 'function',
+                        function: {
+                          name: 'kubernetes_api_request',
+                          arguments: JSON.stringify({
+                            method: 'GET',
+                            path: '/eval/observed-kubernetes',
+                          }),
+                        },
                       },
-                    },
-                  ],
-                }
-              : {
-                  role: 'assistant',
-                  content: JSON.stringify({
-                    schema_version: 'fact_selection@1.0.0',
-                    fact_refs: ['r1.f1.cpu'],
-                    alternative_dispositions: [],
-                    uncertainty: { is_uncertain: false },
-                    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
-                  }),
-                },
-          },
-        ],
-        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-      });
-    }
-  );
-  const candidate = await createHeadlampObservabilityCandidate({
-    provider: 'azure',
-    config: {
-      model: 'gpt-4o',
-      endpoint: 'https://offline.invalid',
-      deploymentName: 'gpt-4o',
-      apiKey: 'offline-not-secret',
-    },
-    evidenceMode: 'compact-select',
-    referenceStyle: 'field-labelled',
-    strictFinalOutput: true,
+                    ],
+                  }
+                : {
+                    role: 'assistant',
+                    content: JSON.stringify({
+                      schema_version: 'fact_selection@1.0.0',
+                      fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
+                      alternative_dispositions: [],
+                      uncertainty: { is_uncertain: false },
+                      proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+                    }),
+                  },
+            },
+          ],
+          usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+        });
+      }
+    );
+    const candidate = await createHeadlampObservabilityCandidate({
+      provider: 'azure',
+      config: {
+        model: 'gpt-4o',
+        endpoint: 'https://offline.invalid',
+        deploymentName: 'gpt-4o',
+        apiKey: 'offline-not-secret',
+      },
+      ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
+    });
+    const result = await candidate({
+      ...input,
+      callTool: async (name, args) => {
+        assert.equal(name, 'kubernetes_api_request');
+        assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
+        return {
+          data: { cpu: '100m' },
+          observations: [
+            {
+              evidence_id: 'read1',
+              resource_ref: 'tool/kubernetes_api_request',
+              field_path: '/cpu',
+              value: '100m',
+            },
+          ],
+        };
+      },
+    });
+    assert.equal(requests.length, 2);
+    assert.equal(requests[0]?.response_format, undefined);
+    assert.ok(requests[0]?.tools.length);
+    assert.equal(requests[1]?.response_format.type, 'json_schema');
+    assert.equal(requests[1]?.response_format.json_schema.strict, true);
+    assert.equal(requests[1]?.tools, undefined);
+    assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
+      { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
+    ]);
   });
-  const result = await candidate({
-    ...input,
-    callTool: async (name, args) => {
-      assert.equal(name, 'kubernetes_api_request');
-      assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
-      return {
-        data: { cpu: '100m' },
-        observations: [
-          {
-            evidence_id: 'read1',
-            resource_ref: 'tool/kubernetes_api_request',
-            field_path: '/cpu',
-            value: '100m',
-          },
-        ],
-      };
-    },
-  });
-  assert.equal(requests.length, 2);
-  assert.equal(requests[0]?.response_format, undefined);
-  assert.ok(requests[0]?.tools.length);
-  assert.equal(requests[1]?.response_format.type, 'json_schema');
-  assert.equal(requests[1]?.response_format.json_schema.strict, true);
-  assert.equal(requests[1]?.tools, undefined);
-  assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
-    { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
-  ]);
-});
+}
 
 test('selection controls reject the echo-all shortcut without changing the legacy grader', () => {
   const observations = Array.from({ length: 20 }, (_, index) => ({
@@ -403,18 +405,54 @@ test('Headlamp candidate uses the real session and honours pre-start cancellatio
   assert.equal(records[0]?.evidenceMode, 'compact');
 });
 
-test('Headlamp candidate preserves explicit full and fact-selection overrides', async () => {
-  for (const evidenceMode of ['full', 'compact-select'] as const) {
-    const records: Array<{ evidenceMode: string }> = [];
-    const candidate = await createHeadlampObservabilityCandidate({
-      provider: 'mock-testing-model',
-      config: {},
-      evidenceMode,
-      record: value => records.push(value),
-    });
-    const controller = new AbortController();
-    controller.abort();
-    await assert.rejects(candidate({ ...input, signal: controller.signal }), /already cancelled/);
-    assert.equal(records[0]?.evidenceMode, evidenceMode);
+test('Headlamp defaults and overrides preserve provider compatibility and explicit opt-outs', async () => {
+  for (const provider of ['azure', 'openai', 'mock-testing-model']) {
+    const supportsStrictOutput = provider !== 'mock-testing-model';
+    const defaultMode = supportsStrictOutput ? 'compact-select' : 'compact';
+    const cases: Array<{
+      options: Partial<HeadlampObservabilityOptions>;
+      mode: string;
+      strict: boolean;
+    }> = [
+      { options: {}, mode: defaultMode, strict: supportsStrictOutput },
+      { options: { strictFinalOutput: false }, mode: defaultMode, strict: false },
+      { options: { evidenceMode: 'full' }, mode: 'full', strict: false },
+      { options: { evidenceMode: 'compact' }, mode: 'compact', strict: false },
+      {
+        options: { evidenceMode: 'compact-select' },
+        mode: 'compact-select',
+        strict: supportsStrictOutput,
+      },
+      {
+        options: { evidenceMode: 'compact-select', strictFinalOutput: false },
+        mode: 'compact-select',
+        strict: false,
+      },
+    ];
+    for (const variant of cases) {
+      const records: Array<{
+        evidenceMode: string;
+        strictFinalOutput: boolean;
+        referenceStyle: string;
+      }> = [];
+      const candidate = await createHeadlampObservabilityCandidate({
+        provider,
+        config: {
+          model: 'gpt-4o',
+          endpoint: 'https://offline.invalid',
+          deploymentName: 'gpt-4o',
+          apiKey: 'offline-not-secret',
+        },
+        ...variant.options,
+        record: value => records.push(value),
+      });
+      const controller = new AbortController();
+      controller.abort();
+      await assert.rejects(candidate({ ...input, signal: controller.signal }), /already cancelled/);
+      assert.equal(records.length, 1);
+      assert.equal(records[0]?.evidenceMode, variant.mode);
+      assert.equal(records[0]?.strictFinalOutput, variant.strict);
+      assert.equal(records[0]?.referenceStyle, 'numeric');
+    }
   }
 });

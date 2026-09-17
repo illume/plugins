@@ -132,28 +132,34 @@ Acquire credentials in that private process; do not commit them. Each callback
 creates a fresh session with only the allowed read tools. Its optional `record`
 hook retains the original response, model/tool telemetry, and elapsed time.
 
-The factory defaults to `evidenceMode: 'compact'`, removing repeated metadata and
-raw/flattened duplication while keeping the existing answer schema. Use explicit
-`evidenceMode: 'full'` for the legacy representation. Experimental `compact-select`
-resolves model-selected short fact references into exact citations, without
-adding unselected fields, and remains opt-in. Use `gradeObservabilitySelection` as a supplementary evaluator
-with a publicly declared fact budget; do not replace the original grader or treat
-grounded references as proof of causal reasoning.
-The [first compact-evidence replay](../../docs/observability-compact-replay-results.md)
-reduced token use but did not improve pass rates; it records all failures and
-explains the observation-only replay limitations. Compact was subsequently enabled
-at the operator's request for its measured efficiency benefit, not a demonstrated
-accuracy gain. This default applies to the observability eval adapter, not the
-normal browser UI or CLI behavior.
+For Azure/OpenAI, the factory defaults to `evidenceMode: 'compact-select'`,
+`referenceStyle: 'numeric'`, and `strictFinalOutput: true`. Compact evidence removes
+repeated metadata and raw/flattened duplication. Only model-selected references
+are resolved into exact citations; no related fields are added automatically.
+Other providers retain `evidenceMode: 'compact'` with legacy diagnosis output and
+strict output off. This is an observability eval default, not a browser UI/CLI
+chat change, and does not start paid inference by itself.
 
-For experimental selection, the factory accepts `referenceStyle: 'numeric' |
-'field-labelled'` and `strictFinalOutput: true`. Strict output requires
-`evidenceMode: 'compact-select'` with an Azure/OpenAI provider and is applied only
-to the real assistant's post-tool synthesis call. It does not constrain initial
-tool planning or repair model answers. Both options remain opt-in; compact-only
-is still the default. The [20-session factorial report](../../docs/observability-selection-factorial-results.md)
-records reliable JSON under strict decoding, persistent wrong-pool/omission errors,
-and failures of the suffix-based labelled reference encoding.
+Explicit `evidenceMode: 'compact'` or `'full'` keeps legacy output and disables
+strict synthesis by default. `strictFinalOutput: false` preserves prompt-only
+selection without changing the evidence mode. `referenceStyle: 'field-labelled'`
+remains opt-in. Explicit strict output requires `compact-select` and an
+Azure/OpenAI provider; the selected model must support strict JSON Schema. An
+unsupported strict call fails visibly, without an unconstrained retry; use an
+explicit compact override for incompatible models. Strict output applies only to
+post-tool synthesis, not initial planning or answer repair.
+
+The [first compact replay](../../docs/observability-compact-replay-results.md)
+measured efficiency benefits but no accuracy gain. The
+[20-session factorial](../../docs/observability-selection-factorial-results.md)
+measured valid JSON in all strict responses and the strongest enabled result for
+strict numeric selection, but persistent wrong-pool/omission and abstention errors.
+The operator subsequently requested promoting the successful mechanisms; this
+does not change either experiment's scores or qualify new models/incidents.
+Use `gradeObservabilitySelection` as a supplementary evaluator with a publicly
+declared fact budget; grounded references are not proof of causal reasoning.
+The maintained [research, phases, results, and backlog](../../../docs/observability-research.md)
+records the current defaults and remaining qualification gates.
 
 Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
 to evaluate a trusted model adapter during the induced-fault window. The module

@@ -45,12 +45,18 @@ export interface HeadlampObservabilityOptions {
 export async function createHeadlampObservabilityCandidate(
   options: HeadlampObservabilityOptions
 ): Promise<LiveObservabilityCandidate> {
+  const supportsStrictOutput = ['azure', 'openai'].includes(options.provider);
+  const evidenceMode =
+    options.evidenceMode ?? (supportsStrictOutput ? 'compact-select' : 'compact');
+  const referenceStyle = options.referenceStyle ?? 'numeric';
+  const strictFinalOutput =
+    options.strictFinalOutput ?? (supportsStrictOutput && evidenceMode === 'compact-select');
   assert.ok(
-    !options.strictFinalOutput || options.evidenceMode === 'compact-select',
+    !strictFinalOutput || evidenceMode === 'compact-select',
     'Strict selection output requires compact-select mode'
   );
   assert.ok(
-    !options.strictFinalOutput || ['azure', 'openai'].includes(options.provider),
+    !strictFinalOutput || supportsStrictOutput,
     'Strict selection requires a supported Azure/OpenAI provider'
   );
   const sessionUrl = new URL(
@@ -70,9 +76,6 @@ export async function createHeadlampObservabilityCandidate(
   const { z } = await import(pathToFileURL(require.resolve('zod')).href);
   return async input => {
     const telemetry: unknown[] = [];
-    const evidenceMode = options.evidenceMode ?? 'compact';
-    const referenceStyle = options.referenceStyle ?? 'numeric';
-    const strictFinalOutput = options.strictFinalOutput === true;
     const evidence = new CompactEvidence(referenceStyle);
     let toolPayloadCharacters = 0;
     let resolvedSubmission: string | null = null;

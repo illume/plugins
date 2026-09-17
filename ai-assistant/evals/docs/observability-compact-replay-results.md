@@ -2,11 +2,11 @@
 
 Date: 2026-09-17. PR: https://github.com/illume/plugins/pull/25.
 
-Subsequent configuration decision: the operator requested enabling `compact`
-for its efficiency benefit. It is now the observability eval adapter default;
-`full` remains an explicit override and `compact-select` remains opt-in. The
-experiment and recommendation below describe the state at the time of the replay;
-no recorded scores or claims of accuracy improvement have changed.
+Historical report: the operator first enabled `compact` for its efficiency benefit,
+then promoted strict numeric selection for Azure/OpenAI after the separate factorial.
+See [current defaults, research phases, and backlog](../../docs/observability-research.md).
+The experiment, configuration descriptions, and recommendations below describe
+their respective historical checkpoints; no recorded scores have changed.
 
 ## Result
 

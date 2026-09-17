@@ -2,6 +2,13 @@
 
 Date: 2026-09-17. PR: https://github.com/illume/plugins/pull/25.
 
+Historical report: after this run, the operator requested promoting successful
+experiments. Azure/OpenAI eval candidates now default to strict numeric selection;
+other providers retain compact-only, and labelled references remain opt-in. See
+[current defaults, research phases, and backlog](../../docs/observability-research.md).
+The configuration and decision sections below preserve the run-time checkpoint;
+no responses, scores, or artifact hashes have changed.
+
 ## Outcome
 
 Strict final JSON eliminated the malformed-JSON failures seen in this replay.

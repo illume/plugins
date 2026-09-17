@@ -93,12 +93,17 @@ export interface ToolRuntime {
    * @param args - Arguments supplied to the tool.
    * @param toolCallId - Optional model-generated tool-call identifier.
    * @param pendingPrompt - Optional conversation message awaiting the result.
+   * @param signal - Optional abort signal; implementations that support
+   *   cancellation (MCP calls, HTTP-based tools) should stop in-flight work
+   *   and reject/settle promptly when it fires, rather than only being
+   *   checked before the call starts.
    * @returns The structured tool execution result.
    */
   executeTool(
     toolName: string,
     args: Record<string, unknown>,
     toolCallId?: string,
-    pendingPrompt?: ConversationMessage
+    pendingPrompt?: ConversationMessage,
+    signal?: AbortSignal
   ): Promise<ToolExecutionResult>;
 }

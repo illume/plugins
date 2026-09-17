@@ -136,7 +136,7 @@ describe('MockToolManager', () => {
         enabledToolNames: ['my_tool'],
       });
       const response = await mgr.executeTool('my_tool', { key: 'value' });
-      expect(fn).toHaveBeenCalledWith({ key: 'value' }, undefined);
+      expect(fn).toHaveBeenCalledWith({ key: 'value' }, undefined, undefined);
       expect(JSON.parse(response.content)).toEqual({ computed: true });
     });
 
@@ -156,7 +156,7 @@ describe('MockToolManager', () => {
         enabledToolNames: ['t'],
       });
       await mgr.executeTool('t', {}, 'call-123');
-      expect(fn).toHaveBeenCalledWith({}, 'call-123');
+      expect(fn).toHaveBeenCalledWith({}, 'call-123', undefined);
     });
   });
 });

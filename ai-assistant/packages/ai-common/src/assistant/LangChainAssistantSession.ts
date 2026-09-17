@@ -161,9 +161,10 @@ interface ExtraTool {
    * Executes the tool with model-generated input.
    *
    * @param input - Untrusted input supplied by the model.
+   * @param config - Optional invocation config; `signal` propagates run cancellation.
    * @returns Tool-specific result synchronously or asynchronously.
    */
-  invoke(input: unknown): Promise<unknown> | unknown;
+  invoke(input: unknown, config?: { signal?: AbortSignal }): Promise<unknown> | unknown;
 }
 
 /**
@@ -1455,7 +1456,10 @@ export default class LangChainAssistantSession extends AssistantSession {
           try {
             const result = await this.toolManager.executeTool(
               tool.name,
-              approvalData?.arguments || tool.arguments || {}
+              approvalData?.arguments || tool.arguments || {},
+              toolCallId,
+              undefined,
+              this.currentAbortController?.signal
             );
             toolResults[tool.name] = result;
             return result;
@@ -1481,7 +1485,10 @@ export default class LangChainAssistantSession extends AssistantSession {
         try {
           const result = await this.toolManager.executeTool(
             tool.name,
-            approvalData?.arguments || tool.arguments || {}
+            approvalData?.arguments || tool.arguments || {},
+            toolCallId,
+            undefined,
+            this.currentAbortController?.signal
           );
           toolResults[tool.name] = result;
         } catch (error) {
@@ -2003,7 +2010,9 @@ Please analyze this data and provide a specific, detailed response that directly
 
         if (extraTool) {
           // Execute the extra LangChain tool directly
-          const result = await extraTool.invoke(args);
+          const result = await extraTool.invoke(args, {
+            signal: this.currentAbortController?.signal,
+          });
           const content = typeof result === 'string' ? result : JSON.stringify(result);
           toolResponse = {
             content,
@@ -2016,7 +2025,8 @@ Please analyze this data and provide a specific, detailed response that directly
             toolCall.function.name,
             args,
             toolCall.id,
-            assistantPrompt
+            assistantPrompt,
+            this.currentAbortController?.signal
           );
         }
 

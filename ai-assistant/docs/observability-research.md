@@ -59,19 +59,23 @@ and opt-outs; OBS-8 below defines consumer rollout gates.
 | Field-labelled suffixes | Tested; not promoted | Both labelled arms had 0/4 enabled passes; every enabled selection was invalid. | Keep opt-in; numeric prompt example confounds the result. |
 | Strict cancellation and buffered streaming | Implemented, offline tested | Abort signal, raw text/usage retention, refusal/incomplete-output rejection, and complete JSON delivery. | Used by strict mode; broader runtime work remains open. |
 
-### Fresh Strict-Default Live Run: Interim
+### Fresh Strict-Default Live Run: Completed
 
-The [2026-09-17 live rerun checkpoint](../evals/docs/observability-aks-strict-results.md)
+The [2026-09-17 live rerun report](../evals/docs/observability-aks-strict-results.md)
 records an enabled NSG diagnosis pass on fresh infrastructure: all 6/6 required
 facts, selection and no-action controls passed, 22.553 seconds. Connectivity
 recovery also passed. Kubernetes-only failed diagnosis in 15.569 seconds: it
 expressed uncertainty but still asserted unrelated facts as causes.
 
-At this publication checkpoint, NSG cleanup is underway and autoscaler is queued
-behind verified deletion. Only two of four planned diagnoses are complete; this
-is not yet a lifecycle-valid NSG pass or a completed rerun. The original results
-below remain unchanged. This new NSG success does not isolate strict JSON from
-compaction, selection, the public fact budget, or changed live observations.
+All four planned diagnoses are now complete. Autoscaler enabled failed in 23.830
+seconds and Kubernetes-only failed in 14.116 seconds; both covered 0/4 required
+facts. All four no-action and selection-control checks passed. Both scenarios
+passed baseline, induced fault, recovery, and cleanup; all four owned resource
+groups were independently verified absent. NSG therefore has a complete enabled
+diagnosis/lifecycle pass, while autoscaler has a verified reproduction but no
+diagnosis pass. The original results below remain unchanged. This is not an
+isolated estimate of strict JSON versus compaction, selection, public fact budget,
+or changed live observations, and does not qualify the broader comparison roster.
 
 ### Live AKS Baseline
 
@@ -83,7 +87,9 @@ that had fit during baseline: citation repair alone would not prove correct
 reasoning. Two earlier NSG setup/tool failures were not model failures.
 
 The concurrent-operation recovery retry was added and unit-tested after the
-capacity failure, not verified in Azure. Cleanup success is not recovery success.
+original capacity failure. The later live run completed automatic recovery; that
+alone does not prove the concurrent-operation retry branch was exercised. Cleanup
+success is not recovery success.
 Datadog/Splunk eval cases were removed because corresponding real infrastructure
 was not provisioned; their product integrations remain.
 
@@ -191,9 +197,10 @@ distinguish implementation, execution, and qualification.
 
 ### OBS-0: Resource-Backed Baseline
 
-**Status: executed; recovery/independent qualification incomplete.** Local service
-lifecycles passed. Live AKS/model failures and cleanup are recorded above. Keep
-original scores; re-verify capacity recovery before OBS-8.
+**Status: basic lifecycles verified; independent qualification incomplete.** Local
+service lifecycles and the latest NSG/autoscaler baseline/fault/recovery/cleanup
+passed. Model failures remain recorded above. Preserve the original failed
+autoscaler recovery; a later successful attempt does not erase it.
 
 ### OBS-1: Compact Evidence And Exact Selection
 
@@ -207,8 +214,8 @@ Never expand one selected object into every required field.
 The 20-session factorial is complete. Do not rerun it to improve scores. Retain
 prompt-only/full/compact overrides and explicit labelled experiments. Default
 tests cover the real Azure request boundary and provider/override rules.
-The separate fresh live rerun has an NSG diagnosis/recovery pass; cleanup and
-autoscaler results remain pending at the published checkpoint linked above.
+The separate fresh live rerun has an NSG diagnosis/lifecycle pass and successful
+autoscaler reproduction/recovery/cleanup, but failed autoscaler diagnoses.
 
 ### OBS-3: Causal And Abstention Controls
 
@@ -276,10 +283,11 @@ abstention, cancellation, and scope enforcement. Zero safety violations required
 
 ### OBS-8: Fresh Live Qualification And Product Rollout
 
-**Status: blocked on recovery verification and relevant earlier gates.** Prove
-autoscaler baseline/fault/automatic recovery/cleanup first. Register fresh incidents
+**Status: basic live rerun complete; broader qualification and consumer gates pending.**
+The latest autoscaler baseline/fault/automatic recovery/cleanup passed. Register fresh incidents
 with varied pool/rule order, names, ports, relationships, healthy controls, and new
-mechanisms. Counterbalance enabled/disabled order; predeclare model, budgets,
+mechanisms sourced through R15's public AKS incident research below. Counterbalance
+enabled/disabled order; predeclare model, budgets,
 repeats, and failure retention. Add model-backed real local Prometheus/Grafana
 trials rather than calling lifecycle checks model success.
 
@@ -307,12 +315,97 @@ remaining item with a dated result and an explicit default decision.
 | R06 | P1 / OBS-5 | Partly implemented | Strict synthesis cancellation exists; verify planning/tool/general-synthesis cancellation and telemetry before increasing budgets. |
 | R07 | P1 / OBS-6 | Planned | Does one public-validator repair help at matched cost without gold feedback? Count good-to-bad and bad-to-good changes. |
 | R08 | P1 / OBS-7 | Planned | Can a bounded loop discover the needed next read? Use tasks not solvable from prescribed initial requests. |
-| R09 | P0 before OBS-8 | Live verification pending | Does the concurrent-operation retry restore automatic scale-out? Run a fresh owned lifecycle only with explicit cloud authorization. |
+| R09 | P0 before OBS-8 | Recovery verified; retry-path coverage separate | Latest owned autoscaler lifecycle recovered and cleaned up successfully. Check retained command evidence before claiming the specific concurrent-operation retry path was exercised. |
 | R10 | P1 / OBS-8 | Planned | Do gains survive fresh AKS mechanisms and model-backed local services? Register independent incident variation and disabled/healthy controls. |
 | R11 | P1 / OBS-8 | Not started | Do UI/CLI users get the same benefit without benchmark JSON or approval regressions? Test actual consumers before product-default changes. |
 | R12 | P2 / OBS-4 | Deferred | Can consistent labelled examples beat numeric IDs? Run a new encoding study; preserve the failed factorial. |
 | R13 | P2 / stable baseline | Deferred | How robust are model/API versions, schema limits, and context ordering? Pin versions and budgets rather than pooling deployments. |
 | R14 | P3 / after attribution | Deferred | Would larger models, fine-tuning, or more agents help beyond representation/runtime fixes? Current evidence does not identify model capacity as the bottleneck. |
+| R15 | P1 / discovery before OBS-8 | 100 candidates reviewed; reproduction pending | Which user-reported AKS incidents can we reproduce? Keep a source-backed catalogue of useful real scenarios, record verified reproductions, and separately mark cases that require external observability evidence. |
+
+### R15: Public-Report-Driven AKS Scenario Discovery
+
+Research public user reports in AKS GitHub issues, Microsoft Q&A, Stack Overflow,
+and incident write-ups. Use official Azure documentation to corroborate mechanisms,
+not as a substitute for evidence that users encountered the problem. Source review
+started on 2026-09-17; no new scenario is implemented or qualified by this research.
+
+The [AKS scenario research catalogue](aks-scenario-research.md) and
+[structured register](aks-candidate-register.json) now record 100 distinct
+source-backed candidate designs after 120 body-level reviews from 435 collected
+reports. The original seven discovery families, tool gaps, and our existing real
+reproductions remain separately recorded. Candidate evidence labels are 46
+Kubernetes-sufficient, 42 observability-helpful, and 12 observability-required;
+none is newly reproduced or observability-only verified. Twenty reviewed reports
+were not admitted, with reasons retained rather than counted toward the target.
+
+Keep two independent classifications for every candidate:
+
+- **Reproduction:** `unassessed`, `feasible-not-run`, `attempted-not-reproduced`,
+  `fault-reproduced`, `lifecycle-verified`, or `blocked`. A proposed script or
+  reporter's reproduction is not our verified run. Store attempt date, environment,
+  source revision, setup/fault/recovery/cleanup outcomes, artifacts, cost, and
+  blockers. Distinguish a related mechanism reproduction from the exact reported bug.
+- **Evidence dependence:** `Kubernetes-sufficient`, `observability-helpful`,
+  `observability-required-candidate`, `observability-only-verified`, or `unknown`.
+  Keep reproducible Kubernetes-sufficient cases in the general AKS catalogue.
+  Mark observability-only only after validating the declared evidence boundary
+  and the decisive external reads; a model's Kubernetes-only failure is not proof.
+
+Prioritize both a low-cost reproducible general case and a promising
+observability-required case. Reproduction success is independent of model diagnosis
+success. An observed fault without recovery or cleanup remains `fault-reproduced`,
+not `lifecycle-verified`; pending or failed attempts are retained.
+
+Initial findings distinguish confirmed mitigation from confirmed mechanism:
+
+- [AKS outbound TLS timeouts](https://learn.microsoft.com/en-us/answers/questions/5968366/started-intermittent-ssl-handshake-issues-for-outb): the reporter confirmed on
+   2026-08-08 that replacing Load Balancer outbound with NAT Gateway stopped the
+   issue. SNAT exhaustion remains a candidate mechanism requiring metric evidence;
+   the report does not prove that absence of NAT Gateway is inherently a fault.
+- [AKS-to-peered-VNet connectivity](https://learn.microsoft.com/en-us/answers/questions/5955816/azure-kubernetes-service-aks-azure-dns-private-res): the 2026-07-24 report
+   contrasts failing AKS nodes/Pods with working VMs. DNS/source-subnet/routing
+   explanations are proposed replies, not a reporter-confirmed resolution.
+- [Unexplained node deallocation](https://learn.microsoft.com/en-us/answers/questions/5970390/recurring-unexplained-vm-deallocation): the 2026-08-09 reporter confirmed
+   deallocated VMSS instances and recovery by starting them, but the initiating
+   cause remained unknown and support requested internal telemetry. Hold as an
+   escalation/insufficient-evidence example, not a publicly solvable causal case.
+
+For each candidate, record the source URL, report/access dates, AKS/network/plugin
+versions and configuration, symptoms, confirmed cause and resolution, and remaining
+uncertainties. Separate reporter evidence from speculation or unverified replies;
+deduplicate reports of the same underlying incident. Summarize with attribution,
+respect reuse terms, and do not import credentials or identifying customer data.
+
+Admission requires:
+
+1. An AKS-specific causal mechanism, not merely a generic Kubernetes fault hosted
+   on AKS. Initial search leads include outbound SNAT exhaustion, Azure-side DNS
+   or routing/firewall failures, and managed infrastructure capacity or health
+   failures. These are hypotheses to investigate, not qualified scenarios.
+2. The evidence needed to distinguish the cause from plausible alternatives,
+   whether Kubernetes-native or external. For external reads, record provider,
+   resource, signal, time window, and query; map them to existing Azure networking,
+   metrics, health, logs, capacity, or tracing tools. Record missing coverage.
+3. A documented Kubernetes-only evidence boundary, including available Pod/node
+   state, events, and workload logs. For an observability-required claim, show why
+   that evidence cannot establish the causal distinction and how an external read
+   resolves it. Do not hide clues to
+   manufacture an advantage. If Kubernetes-only evidence suffices, keep the case
+   in the general reproducible AKS set, without an observability-only label.
+4. A feasible disposable reproduction: provision real resources, prove a healthy
+   baseline, induce the reported mechanism, verify the actual fault, recover, and
+   perform ownership-checked cleanup. Record required permissions, telemetry setup,
+   cost limits, and inaccessible dependencies. No canned-response replacement.
+
+Deliver a ranked shortlist with source/evidence matrices, candidate tool coverage,
+reproduction plans, verified-run records, and blocked/rejected reasons. Preserve
+both general AKS cases and the observability-only subset. Define "only solvable
+with observability" relative to the declared evidence boundary, not as a claim that nobody could guess
+the cause. Freeze evaluator-only causal facts separately from candidate inputs;
+qualify accepted cases with enabled and Kubernetes-only runs plus healthy and
+confounding controls. Feed the shortlist into R10/OBS-8. Discovery can start before
+live qualification; this item alone does not authorize provisioning or paid runs.
 
 ## Promotion And Reporting Rules
 

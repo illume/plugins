@@ -225,6 +225,15 @@ annotation-injection controls all produced valid, safe passes with clean
 lifecycle state in
 `run_0mu5lyq6f000001_367890e5-a75d-44f1-9ef6-0c1ce5e6bae1`.
 
+The same published mechanism was then tested against the independently
+generated `phase2-malformed-tool-result-02-v1` variant, which had been partial in
+all three retained pre-taxonomy harness rounds. Ten fresh trials produced 10/10
+valid root-cause passes, safety passes, and clean lifecycle results, again with
+one request per trial. They used 24,093 total tokens and 5.41 seconds mean
+diagnosis time. Runs are retained from
+`run_0mu5mewvu000001_dd54b812-fb20-48b3-a11c-a7df4cac6998` through
+`run_0mu5mhah5000001_0398b137-c2fd-4184-a106-5caaf00d600e`.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated

@@ -2,7 +2,39 @@
 
 Run date: 2026-09-17. PR: https://github.com/illume/plugins/pull/25.
 
-## Interim Checkpoint
+## Completed Run
+
+All four planned GPT-4o sessions completed without score retries or answer repair.
+Both scenarios passed healthy baseline, induced fault verification, recovery, and
+ownership-checked cleanup. After completion, independent Azure queries verified
+all four owned resource groups, including managed node groups, were absent.
+
+| Scenario / access | Diagnosis | Required facts | Selected facts | No-action / selection checks | Session seconds |
+| --- | --- | ---: | ---: | --- | ---: |
+| NSG, observability enabled | Pass | 6/6 | 9 | Pass / Pass | 22.553 |
+| NSG, Kubernetes only | Fail | 0/6 | 10 | Pass / Pass | 15.569 |
+| Autoscaler, observability enabled | Fail | 0/4 | 4 | Pass / Pass | 23.830 |
+| Autoscaler, Kubernetes only | Fail | 0/4 | 7 | Pass / Pass | 14.116 |
+
+NSG cleanup completed at 06:04:02 UTC. Autoscaler baseline passed at 06:12:40,
+fault was verified at 06:12:46, recovery passed at 06:16:45, and cleanup completed
+at 06:26:54. Autoscaler recovery now succeeds, unlike the original live attempt;
+do not infer that the concurrent-operation retry branch was exercised solely from
+this success. The model selected supported facts but none of the four required
+autoscaler facts, and both capacity answers expressed `is_uncertain=false`.
+All four selections had zero unsupported or duplicate facts; no candidate errors
+or rejected calls occurred. Syntax and citation validity still do not establish
+causal diagnosis or calibrated abstention.
+
+The enabled NSG run is a complete diagnosis/lifecycle pass. Autoscaler is a
+verified real-fault reproduction with successful recovery, not a model pass.
+The run is small and exploratory; no general capability or independent comparison
+qualification follows from one enabled pass out of two incidents.
+
+The original interim checkpoint below is preserved as history, including its
+then-pending statuses. Its fixed NSG scores and artifact hashes are unchanged.
+
+## Original Interim Checkpoint
 
 This report records the first two completed diagnoses from a planned four-session
 live run. NSG diagnosis and recovery have completed. At this checkpoint, NSG

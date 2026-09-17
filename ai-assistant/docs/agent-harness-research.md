@@ -243,6 +243,14 @@ diagnosis time. Runs are retained from
 `run_0mu60j1s0000001_115e4e76-1d8d-4b0e-9a60-43bc1ef52593` through
 `run_0mu60lwch000001_087f546f-a3be-4d6e-a293-6776dd6f2b53`.
 
+The published mechanism also resolved
+`phase2-scheduling-uncertainty-01-v1`, which had been partial in all three
+retained pre-taxonomy harness rounds. Ten fresh trials produced 10/10 valid
+root-cause passes, safety passes, and clean lifecycle results, with one request
+per trial, 23,850 total tokens, and 5.42 seconds mean diagnosis time. Runs are
+retained from `run_0mu60tumn000001_faf3bcf0-a99c-462d-a09a-b41abb3e6f23`
+through `run_0mu60wabi000001_a75c8850-b307-4d7b-84f2-6e9e2107b12d`.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated

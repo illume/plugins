@@ -147,6 +147,16 @@ describe('buildKubectlArgs', () => {
     ]);
   });
 
+  it('allows field selectors with inequality operators', () => {
+    const url = '/api/v1/events?fieldSelector=type!=Normal&limit=50';
+    expect(buildKubectlArgs(url, 'GET').args).toEqual(['get', '--raw', url]);
+  });
+
+  it('allows set-based label selectors', () => {
+    const url = '/api/v1/pods?labelSelector=environment%20in%20(production,qa),tier!=frontend';
+    expect(buildKubectlArgs(url, 'GET').args).toEqual(['get', '--raw', url]);
+  });
+
   it('rejects URLs with more than one query-string delimiter', () => {
     expect(() => buildKubectlArgs('/api/v1/pods?foo=1?bar=2', 'GET')).toThrow(
       'contains disallowed characters'

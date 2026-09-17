@@ -161,6 +161,20 @@ declared fact budget; grounded references are not proof of causal reasoning.
 The maintained [research, phases, results, and backlog](../../../docs/observability-research.md)
 records the current defaults and remaining qualification gates.
 
+Two independent options remain opt-in: `evidenceGrouping: 'object'` separates
+per-pool/per-rule/Kubernetes-object records while retaining every fact and ID;
+`diagnosticGuidance: 'aks'` adds general causal-selection and abstention guidance.
+Defaults are `'read'` and `'none'`. Object grouping requires a compact mode.
+Neither option repairs answers or adds unselected fields. The record hook retains
+both effective settings. The [27-assignment report](../../docs/observability-object-guidance-results.md)
+found no diagnosis improvement and retained six deadline failures; neither option
+was promoted.
+
+`gradeObservabilityCausality` is a separate prospective evaluator for explicit
+required/supporting fact alternatives and healthy/insufficient dispositions.
+It is not used to regrade prior runs or compute domain causal truth. Its contract
+must remain evaluator-only, and callers still score safety independently.
+
 Replace `verify` with `run` and add `--candidate-module /absolute/candidate.ts`
 to evaluate a trusted model adapter during the induced-fault window. The module
 must default-export a `LiveObservabilityCandidate` callback. It is invoked twice,

@@ -7,6 +7,13 @@ type Observation = Awaited<
 >['observations'][number];
 
 export type FactReferenceStyle = 'numeric' | 'field-labelled';
+export type EvidenceGrouping = 'read' | 'object';
+
+function objectPath(pointer: string): string {
+  const rule = pointer.match(/^\/value\/\d+\/effectiveSecurityRules\/\d+(?=\/|$)/);
+  const resource = pointer.match(/^\/(?:value|(?:pods|events|nodes)\/items)\/\d+(?=\/|$)/);
+  return rule?.[0] ?? resource?.[0] ?? '';
+}
 
 export const FACT_SELECTION_SCHEMA = {
   type: 'object',
@@ -47,13 +54,22 @@ export class CompactEvidence {
   private reads = 0;
   private facts = new Map<string, Observation>();
 
-  constructor(private readonly referenceStyle: FactReferenceStyle = 'numeric') {}
+  constructor(
+    private readonly referenceStyle: FactReferenceStyle = 'numeric',
+    private readonly grouping: EvidenceGrouping = 'read'
+  ) {}
 
   add(observations: Observation[]) {
     const read = `r${++this.reads}`;
     const groups = new Map<
       string,
-      { read: string; resource: string; evidence_id: string; facts: string[][] }
+      {
+        read: string;
+        resource: string;
+        evidence_id: string;
+        object_path?: string;
+        facts: string[][];
+      }
     >();
     for (const [index, observation] of observations.entries()) {
       const field = observation.field_path.split('/').at(-1) ?? '';
@@ -62,13 +78,15 @@ export class CompactEvidence {
         this.referenceStyle === 'field-labelled' ? `.${label || 'root'}` : ''
       }`;
       this.facts.set(reference, structuredClone(observation));
-      const key = JSON.stringify([observation.evidence_id, observation.resource_ref]);
+      const pointer = this.grouping === 'object' ? objectPath(observation.field_path) : '';
+      const key = JSON.stringify([observation.evidence_id, observation.resource_ref, pointer]);
       let group = groups.get(key);
       if (!group) {
         group = {
           read,
           resource: observation.resource_ref,
           evidence_id: observation.evidence_id,
+          ...(this.grouping === 'object' ? { object_path: pointer } : {}),
           facts: [],
         };
         groups.set(key, group);

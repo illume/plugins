@@ -10,7 +10,10 @@ import type { LiveObservabilityCandidateInput } from '../runner/observabilityEva
 import { CompactEvidence } from './compactEvidence.js';
 import { FACT_SELECTION_SCHEMA } from './compactEvidence.js';
 import { assertValid } from '../contracts/validate.js';
-import { gradeObservabilitySelection } from '../grading/observabilitySelection.js';
+import {
+  gradeObservabilitySelection,
+  gradeObservabilityCausality,
+} from '../grading/observabilitySelection.js';
 import { gradeRootCause, parseSubmission } from '../grading/diagnosisGrader.js';
 
 test('compact evidence preserves all facts and resolves only explicit selections', () => {
@@ -82,6 +85,186 @@ const input: LiveObservabilityCandidateInput = {
     throw new Error('Unexpected tool call');
   },
 };
+
+test('object grouping preserves facts, numeric IDs, and per-read pool/rule identity', () => {
+  const paths = [
+    '/value/0/name',
+    '/value/0/properties/maxCount',
+    '/value/1/name',
+    '/value/1/properties/maxCount',
+    '/value/1/properties/minCount',
+    '/value/1/properties/enableAutoScaling',
+    '/value/0/effectiveSecurityRules/0/name',
+    '/value/0/effectiveSecurityRules/0/access',
+    '/value/0/effectiveSecurityRules/1/name',
+    '/pods/items/0/metadata/name',
+    '/pods/items/0/spec/containers/0/resources/requests/cpu',
+    '/pods/items/1/metadata/name',
+    '/events/items/0/message',
+    '/nodes/items/0/metadata/name',
+    '/value/other~1key/0/name',
+  ];
+  const observations = paths.map(field_path => ({
+    evidence_id: 'first',
+    resource_ref: 'tool/read',
+    field_path,
+    value: '1',
+  }));
+  const baseline = new CompactEvidence();
+  const grouped = new CompactEvidence('numeric', 'object');
+  const original = baseline.add(observations);
+  const view = grouped.add(observations);
+  assert.deepEqual(
+    view.records.map(record => record.object_path),
+    [
+      '/value/0',
+      '/value/1',
+      '/value/0/effectiveSecurityRules/0',
+      '/value/0/effectiveSecurityRules/1',
+      '/pods/items/0',
+      '/pods/items/1',
+      '/events/items/0',
+      '/nodes/items/0',
+      '',
+    ]
+  );
+  assert.deepEqual(
+    view.records.flatMap(record => record.facts),
+    original.records.flatMap(record => record.facts)
+  );
+  assert.ok(original.records.every(record => !('object_path' in record)));
+  const selection = JSON.stringify({
+    schema_version: 'fact_selection@1.0.0',
+    fact_refs: ['r1.f4'],
+    alternative_dispositions: [],
+    uncertainty: { is_uncertain: false },
+    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+  });
+  assert.equal(grouped.resolve(selection), baseline.resolve(selection));
+  assert.equal(JSON.parse(grouped.resolve(selection)).cause_facts.length, 1);
+  observations[3]!.value = 'changed';
+  grouped.add(observations.map(fact => ({ ...fact, evidence_id: 'later' })));
+  assert.equal(JSON.parse(grouped.resolve(selection)).cause_facts[0].observed_value, '1');
+  assert.throws(() => grouped.resolve(selection.replace('r1.f4', '/value/1')));
+});
+
+test('causal controls reject wrong-pool, equal-valued fields, irrelevant facts and false abstention', () => {
+  const facts = [
+    ['/value/1/name', 'target'],
+    ['/value/1/properties/enableAutoScaling', 'true'],
+    ['/value/1/properties/count', '1'],
+    ['/value/1/properties/maxCount', '1'],
+    ['/value/1/properties/minCount', '1'],
+    ['/value/0/properties/enableAutoScaling', 'false'],
+    ['/pods/items/0/spec/priority', '0'],
+    ['/value/2/name', 'alternative'],
+  ].map(([field_path, observed_value], index) => ({
+    fact_id: `fact-${index}`,
+    resource_ref: 'resource',
+    field_path: field_path!,
+    observed_value: observed_value!,
+  }));
+  const observations = facts.map(fact => ({
+    ...fact,
+    value: fact.observed_value,
+    evidence_id: 'read',
+  }));
+  const submission = (indices: number[], uncertain = false) =>
+    parseSubmission(
+      JSON.stringify({
+        schema_version: '1.0.0',
+        cause_facts: indices.map(index => {
+          const { fact_id, ...fact } = facts[index]!;
+          return fact;
+        }),
+        resource_refs: indices.length ? ['resource'] : [],
+        evidence_refs: indices.length ? ['read'] : [],
+        alternative_dispositions: [],
+        uncertainty: { is_uncertain: uncertain },
+        proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+      })
+    ).submission!;
+  const contract = {
+    expectation: 'cause' as const,
+    acceptedCauses: [{ required: facts.slice(0, 4), supporting: [] }],
+  };
+  assert.equal(
+    gradeObservabilityCausality(submission([0, 1, 2, 3]), observations, contract).passes,
+    true
+  );
+  for (const indices of [
+    [0, 1, 2, 4],
+    [0, 5, 2, 3],
+    [0, 1, 2],
+    [0, 1, 2, 3, 6],
+    [0, 1, 2, 3, 3],
+    [7],
+  ]) {
+    assert.equal(
+      gradeObservabilityCausality(submission(indices), observations, contract).passes,
+      false
+    );
+  }
+  assert.equal(
+    gradeObservabilityCausality(
+      submission([0, 1, 2, 3]),
+      observations.map(fact => ({ ...fact, evidence_id: 'later' })),
+      contract
+    ).passes,
+    false
+  );
+  assert.equal(
+    gradeObservabilityCausality(submission([7]), observations, {
+      ...contract,
+      acceptedCauses: [...contract.acceptedCauses, { required: [facts[7]!], supporting: [] }],
+    }).passes,
+    true
+  );
+  for (const expectation of ['healthy', 'insufficient'] as const) {
+    const noCause = { expectation, acceptedCauses: [] };
+    assert.equal(
+      gradeObservabilityCausality(submission([], expectation === 'insufficient'), [], noCause)
+        .passes,
+      false
+    );
+    assert.equal(
+      gradeObservabilityCausality(
+        submission([], expectation === 'insufficient'),
+        observations,
+        noCause
+      ).passes,
+      true
+    );
+    assert.equal(
+      gradeObservabilityCausality(
+        submission([], expectation !== 'insufficient'),
+        observations,
+        noCause
+      ).passes,
+      false
+    );
+    assert.equal(
+      gradeObservabilityCausality(submission([6], true), observations, noCause)
+        .uncertaintyWithCauses,
+      true
+    );
+    assert.equal(
+      gradeObservabilityCausality(submission([6], true), observations, noCause).passes,
+      false
+    );
+    assert.equal(
+      gradeObservabilityCausality(submission([0, 1, 2, 3]), observations, noCause).passes,
+      false
+    );
+    assert.equal(gradeObservabilityCausality(null, observations, noCause).passes, false);
+  }
+  assert.throws(() =>
+    gradeObservabilityCausality(submission([]), observations, {
+      expectation: 'cause',
+      acceptedCauses: [],
+    })
+  );
+});
 
 test('Headlamp candidate prompt exposes only enabled reads and no evaluator truth', () => {
   const prompt = observabilityPrompt(input);
@@ -165,98 +348,173 @@ test('strict final output rejects unsupported configurations before model creati
 });
 
 for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
-  test(`default strict selection reaches the Azure final request with ${referenceStyle} references`, async context => {
-    const requests: Array<Record<string, any>> = [];
-    context.mock.method(
-      globalThis,
-      'fetch',
-      async (request: Request | string | URL, init?: RequestInit) => {
-        const body = request instanceof Request ? await request.text() : String(init?.body);
-        requests.push(JSON.parse(body));
-        assert.ok(requests.length <= 2, 'Unexpected retry or extra model invocation');
-        const planning = requests.length === 1;
-        return Response.json({
-          id: `offline-${requests.length}`,
-          object: 'chat.completion',
-          created: 0,
-          model: 'gpt-4o-2024-11-20',
-          choices: [
-            {
-              index: 0,
-              finish_reason: planning ? 'tool_calls' : 'stop',
-              message: planning
-                ? {
-                    role: 'assistant',
-                    content: '',
-                    tool_calls: [
-                      {
-                        id: 'call1',
-                        type: 'function',
-                        function: {
-                          name: 'kubernetes_api_request',
-                          arguments: JSON.stringify({
-                            method: 'GET',
-                            path: '/eval/observed-kubernetes',
-                          }),
+  for (const evidenceGrouping of ['read', 'object'] as const) {
+    test(`default strict selection reaches Azure with ${referenceStyle} references and ${evidenceGrouping} grouping`, async context => {
+      const requests: Array<Record<string, any>> = [];
+      context.mock.method(
+        globalThis,
+        'fetch',
+        async (request: Request | string | URL, init?: RequestInit) => {
+          const body = request instanceof Request ? await request.text() : String(init?.body);
+          requests.push(JSON.parse(body));
+          assert.ok(requests.length <= 2, 'Unexpected retry or extra model invocation');
+          const planning = requests.length === 1;
+          return Response.json({
+            id: `offline-${requests.length}`,
+            object: 'chat.completion',
+            created: 0,
+            model: 'gpt-4o-2024-11-20',
+            choices: [
+              {
+                index: 0,
+                finish_reason: planning ? 'tool_calls' : 'stop',
+                message: planning
+                  ? {
+                      role: 'assistant',
+                      content: '',
+                      tool_calls: [
+                        {
+                          id: 'call1',
+                          type: 'function',
+                          function: {
+                            name: 'kubernetes_api_request',
+                            arguments: JSON.stringify({
+                              method: 'GET',
+                              path: '/eval/observed-kubernetes',
+                            }),
+                          },
                         },
-                      },
-                    ],
-                  }
-                : {
-                    role: 'assistant',
-                    content: JSON.stringify({
-                      schema_version: 'fact_selection@1.0.0',
-                      fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
-                      alternative_dispositions: [],
-                      uncertainty: { is_uncertain: false },
-                      proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
-                    }),
-                  },
-            },
-          ],
-          usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
-        });
-      }
-    );
-    const candidate = await createHeadlampObservabilityCandidate({
-      provider: 'azure',
-      config: {
-        model: 'gpt-4o',
-        endpoint: 'https://offline.invalid',
-        deploymentName: 'gpt-4o',
-        apiKey: 'offline-not-secret',
-      },
-      ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
+                      ],
+                    }
+                  : {
+                      role: 'assistant',
+                      content: JSON.stringify({
+                        schema_version: 'fact_selection@1.0.0',
+                        fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
+                        alternative_dispositions: [],
+                        uncertainty: { is_uncertain: false },
+                        proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+                      }),
+                    },
+              },
+            ],
+            usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+          });
+        }
+      );
+      const candidate = await createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {
+          model: 'gpt-4o',
+          endpoint: 'https://offline.invalid',
+          deploymentName: 'gpt-4o',
+          apiKey: 'offline-not-secret',
+        },
+        ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
+        evidenceGrouping,
+      });
+      const result = await candidate({
+        ...input,
+        callTool: async (name, args) => {
+          assert.equal(name, 'kubernetes_api_request');
+          assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
+          return {
+            data: { cpu: '100m' },
+            observations: [
+              {
+                evidence_id: 'read1',
+                resource_ref: 'tool/kubernetes_api_request',
+                field_path: '/cpu',
+                value: '100m',
+              },
+            ],
+          };
+        },
+      });
+      assert.equal(requests.length, 2);
+      assert.equal(requests[0]?.response_format, undefined);
+      assert.ok(requests[0]?.tools.length);
+      assert.equal(requests[1]?.response_format.type, 'json_schema');
+      assert.equal(requests[1]?.response_format.json_schema.strict, true);
+      assert.equal(requests[1]?.tools, undefined);
+      assert.equal(
+        JSON.stringify(requests[1]?.messages).includes('object_path'),
+        evidenceGrouping === 'object'
+      );
+      assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
+        { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
+      ]);
     });
-    const result = await candidate({
-      ...input,
-      callTool: async (name, args) => {
-        assert.equal(name, 'kubernetes_api_request');
-        assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
-        return {
-          data: { cpu: '100m' },
-          observations: [
-            {
-              evidence_id: 'read1',
-              resource_ref: 'tool/kubernetes_api_request',
-              field_path: '/cpu',
-              value: '100m',
-            },
-          ],
-        };
-      },
-    });
-    assert.equal(requests.length, 2);
-    assert.equal(requests[0]?.response_format, undefined);
-    assert.ok(requests[0]?.tools.length);
-    assert.equal(requests[1]?.response_format.type, 'json_schema');
-    assert.equal(requests[1]?.response_format.json_schema.strict, true);
-    assert.equal(requests[1]?.tools, undefined);
-    assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
-      { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
-    ]);
-  });
+  }
 }
+
+test('guidance is independent of grouping and has no incident-specific values', async () => {
+  const plain = observabilityPrompt(input, 'compact-select');
+  assert.equal(plain, observabilityPrompt(input, 'compact-select', 'none'));
+  const guided = observabilityPrompt(input, 'compact-select', 'aks');
+  assert.ok(guided.includes('maxPods is a per-node pod limit'));
+  assert.ok(guided.includes('return no cause facts and is_uncertain=true'));
+  assert.ok(guided.includes('a shadowed deny does not establish the cause'));
+  assert.ok(!guided.includes('block-aks'));
+  assert.ok(!guided.includes('10.240.1.4'));
+  assert.ok(!guided.includes('maxCount=1'));
+  assert.ok(!plain.includes('AKS diagnostic procedure'));
+  await assert.rejects(
+    createHeadlampObservabilityCandidate({
+      provider: 'azure',
+      config: {},
+      evidenceMode: 'full',
+      evidenceGrouping: 'object',
+    }),
+    /requires compact/
+  );
+});
+
+test('shadowed NSG deny is not an accepted cause and complete alternatives remain separate', () => {
+  const registry = new CompactEvidence();
+  const facts = ['name', 'access', 'priority'].map((field, index) => ({
+    fact_id: `rule-${index}`,
+    resource_ref: 'nic',
+    field_path: `/value/0/effectiveSecurityRules/1/${field}`,
+    observed_value: ['deny-backend', 'Deny', '200'][index]!,
+  }));
+  const observations = facts.map(fact => ({
+    ...fact,
+    value: fact.observed_value,
+    evidence_id: 'read',
+  }));
+  registry.add(observations);
+  const selection = {
+    schema_version: 'fact_selection@1.0.0',
+    fact_refs: ['r1.f1', 'r1.f2', 'r1.f3'],
+    alternative_dispositions: [],
+    uncertainty: { is_uncertain: false },
+    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+  };
+  const selected = parseSubmission(registry.resolve(JSON.stringify(selection))).submission!;
+  assert.equal(
+    gradeObservabilityCausality(selected, observations, {
+      expectation: 'healthy',
+      acceptedCauses: [],
+    }).passes,
+    false
+  );
+  const other = facts.map(fact => ({ ...fact, field_path: fact.field_path.replace('/1/', '/2/') }));
+  assert.equal(
+    gradeObservabilityCausality(selected, observations, {
+      expectation: 'cause',
+      acceptedCauses: [{ required: other, supporting: [] }],
+    }).passes,
+    false
+  );
+  assert.equal(
+    gradeObservabilityCausality(selected, observations, {
+      expectation: 'cause',
+      acceptedCauses: [{ required: facts, supporting: [] }],
+    }).passes,
+    true
+  );
+});
 
 test('selection controls reject the echo-all shortcut without changing the legacy grader', () => {
   const observations = Array.from({ length: 20 }, (_, index) => ({

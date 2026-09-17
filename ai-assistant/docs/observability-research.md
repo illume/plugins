@@ -143,6 +143,24 @@ accuracy effect across experiments.
 
 ## Research Findings
 
+### Object Grouping And Guidance Experiment
+
+The [27-assignment comparison](../evals/docs/observability-object-guidance-results.md)
+is complete: two live snapshots repeated twice per arm, plus five controls per
+arm. Baseline and object grouping each passed 1/4 incident attempts; guidance
+passed 0/4. Control passes were 1/5, 0/5, and 2/5 respectively. Six deadlines and
+two duplicate-reference failures remain in the results. No failed assignment was
+retried; continuations ran only previously untouched assignments.
+
+Neither option is promoted. The current defaults remain strict numeric selection
+with read grouping and no extra guidance. New options are `evidenceGrouping:
+'object'` and `diagnosticGuidance: 'aks'`, independently selectable. Grouping
+preserves all facts/IDs and does not automatically select related fields. Guidance
+helped a healthy-capacity and NSG abstention control but did not fix capacity
+diagnosis. Incremental telemetry and deadline handling are now the next priority:
+six attempts lack complete response/usage records, so recorded usage is a lower
+bound, not a complete cost estimate.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to
@@ -219,10 +237,13 @@ autoscaler reproduction/recovery/cleanup, but failed autoscaler diagnoses.
 
 ### OBS-3: Causal And Abstention Controls
 
-**Status: next, before another accuracy claim.** Add a prospective versioned
-contract separating localization, cause-to-symptom support, citation relevance,
-uncertainty, safety, and lifecycle validity. Start with wrong-pool, shadowed-rule,
-healthy, and insufficient-evidence examples, plus valid alternative explanations.
+**Status: initial fact-selection/disposition controls implemented and tested.**
+`observability_causal_selection@1.0.0` requires one complete source-bound causal
+alternative, rejects irrelevant extras, and checks healthy versus clean abstention.
+Model-free and model controls cover wrong-pool, minimum/maximum confusion,
+shadowed-rule, healthy, and insufficient-evidence cases. The evaluator supplies
+the contract; this does not compute domain causal truth or grade arbitrary prose.
+Full cause-to-symptom, retrieval-sufficiency, and lifecycle qualification remain.
 
 **Exit:** known-bad echoes, wrong-resource joins, and confident unsupported causes
 fail; supported diagnoses and appropriate abstention pass. Test graders without
@@ -230,10 +251,11 @@ model calls first. Freeze contracts before new scored runs; historical grades st
 
 ### OBS-4: Preserve Object Identity, Then Constrain Choices
 
-**Status: planned; depends on OBS-3.** First compare strict numeric with a
-deterministic per-pool/per-rule view that keeps identity and related settings
-together, preserving every observation and selection granularity. Use reordered
-arrays, repeated equal values, and unrelated pools/rules as discriminating cases.
+**Status: first grouping and separate guidance comparison completed; not promoted.**
+The 27-assignment report above found no diagnosis-pass improvement. The opt-in
+per-pool/per-rule view preserves every fact and reference; regression tests cover
+read identity and equal-valued fields. A more compact field layout remains a
+different prospective experiment, not a reinterpretation of these results.
 
 Then, in a separate ablation, enumerate only retrieved references in the final
 schema. Handle empty evidence and provider schema-size limits explicitly. An enum
@@ -250,6 +272,11 @@ new experiment identity, not repairs to old suffixes or scores.
 observed emptiness, source/resource/read/time identity, raw digests, and explicit
 missing/denied/truncated/error states. Expose caps, omissions, and continuations
 without automatically expanding access or query scope.
+
+The completed grouping/guidance run exposed six deadline failures without complete
+candidate records. Prioritize incremental usage/error capture and cancellation
+verification before more paid comparisons; an exited local process does not prove
+the remote provider immediately stopped billing or work.
 
 Verify cancellation and telemetry through planning, tools, synthesis, and cluster
 changes in the actual shared session. Preserve immutable snapshots and approvals;
@@ -307,12 +334,12 @@ remaining item with a dated result and an explicit default decision.
 
 | ID | Priority / phase | Status | Question and next discriminating check |
 | --- | --- | --- | --- |
-| R01 | P0 / OBS-3 | Next | Do causal/abstention contracts reject wrong-pool, shadowed-rule, healthy, and insufficient-evidence false passes while accepting alternatives? Run model-free controls first. |
-| R02 | P0 / OBS-4 | Planned | Does grouping reduce wrong joins and missing identity? Compare strict numeric against matched reordered/equal-valued multi-object evidence. |
+| R01 | P0 / OBS-3 | Initial controls implemented/tested | Fact-alternative/relevance and disposition checks added; full causal/retrieval-sufficiency validation remains. Preserve historical grades. |
+| R02 | P0 / OBS-4 | First comparison complete; not promoted | Object grouping did not improve diagnosis passes. Keep the option and test any more compact field representation as a distinct experiment. |
 | R03 | P1 / OBS-4 | Planned | Do retrieved-ID enums remove unknown refs without changing access? Test empty/large registries and wrong-but-valid selections. |
 | R04 | P1 / OBS-5 | Planned | Can typed snapshots preserve empty/null/missing and source/time identity? Test stale reads, cluster switches, and array reordering. |
 | R05 | P1 / OBS-5 | Planned | Do completeness states prevent absent-versus-truncated confusion? Reproduce the 101-item cap and content budget; test denied/failed/paginated reads. |
-| R06 | P1 / OBS-5 | Partly implemented | Strict synthesis cancellation exists; verify planning/tool/general-synthesis cancellation and telemetry before increasing budgets. |
+| R06 | P0 / OBS-5 | Next; six observed deadlines | Verify end-to-end cancellation and incremental telemetry. Completed grouping/guidance attempts lost usage/response records on timeout; resolve measurement gaps before more paid comparisons. |
 | R07 | P1 / OBS-6 | Planned | Does one public-validator repair help at matched cost without gold feedback? Count good-to-bad and bad-to-good changes. |
 | R08 | P1 / OBS-7 | Planned | Can a bounded loop discover the needed next read? Use tasks not solvable from prescribed initial requests. |
 | R09 | P0 before OBS-8 | Recovery verified; retry-path coverage separate | Latest owned autoscaler lifecycle recovered and cleaned up successfully. Check retained command evidence before claiming the specific concurrent-operation retry path was exercised. |

@@ -2562,6 +2562,119 @@ describe('userSend — cache hit via history reset', () => {
 // ---------------------------------------------------------------------------
 
 describe('handleDirectToolCallingRequest — error fallback', () => {
+  it('returns cancellation after an ordinary post-tool invocation aborts', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => 'observed',
+    });
+    let requests = 0;
+    const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+      if (++requests === 1)
+        return {
+          content: '',
+          tool_calls: [
+            {
+              id: 'read',
+              name: 'kubernetes_api_request',
+              args: { method: 'GET', url: '/api/v1/pods' },
+            },
+          ],
+        };
+      expect(requests).toBe(2);
+      manager.abort();
+      expect(options.signal.aborted).toBe(true);
+      return { content: 'late answer', tool_calls: [] };
+    });
+    privateManager(manager).model = { invoke };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
+  it('does not start a model after cancellation during approval initialization', async () => {
+    const manager = createIntegrationManager();
+    const invoke = vi.fn();
+    privateManager(manager).model = { invoke };
+    const initialize = vi
+      .spyOn(inlineToolApprovalManager, 'loadAndApplyAutoApproveSettings')
+      .mockImplementation(async () => {
+        manager.abort();
+      });
+    try {
+      await expect(manager.userSend('inspect pods')).rejects.toMatchObject({ name: 'AbortError' });
+      expect(invoke).not.toHaveBeenCalled();
+      expect(privateManager(manager).currentAbortController).toBeNull();
+    } finally {
+      initialize.mockRestore();
+    }
+  });
+
+  it('does not fall back after cancellation of direct planning', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+      manager.abort();
+      expect(options.signal.aborted).toBe(true);
+      throw new DOMException('aborted', 'AbortError');
+    });
+    const fallback = vi.fn();
+    privateManager(manager).boundModel = { invoke };
+    privateManager(manager).model = { invoke: fallback };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(fallback).not.toHaveBeenCalled();
+    expect(privateManager(manager).useDirectToolCalling).toBe(true);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
+  it('does not invoke the model after cancellation during skill preparation', async () => {
+    const manager = createIntegrationManager();
+    const invoke = vi.fn();
+    privateManager(manager).model = { invoke };
+    vi.spyOn(privateManager(manager), 'getSkillsPromptForQuery').mockImplementation(async () => {
+      manager.abort();
+      return '';
+    });
+    expect((await manager.userSend('inspect pods')).content).toBe('Request cancelled.');
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it('retains cancellation through tool execution and prevents later tools or synthesis', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    const laterTool = vi.fn();
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => {
+        expect(privateManager(manager).currentAbortController).not.toBeNull();
+        manager.abort();
+        return 'observed';
+      },
+    });
+    privateManager(manager).extraTools.set('later_read', { name: 'later_read', invoke: laterTool });
+    const invoke = vi.fn().mockResolvedValue({
+      content: '',
+      tool_calls: [
+        {
+          id: 'first',
+          name: 'kubernetes_api_request',
+          args: { url: '/api/v1/pods', method: 'GET' },
+        },
+        { id: 'later', name: 'later_read', args: {} },
+      ],
+    });
+    privateManager(manager).model = { invoke };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(laterTool).not.toHaveBeenCalled();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
   it('falls back to handleChainBasedRequest and disables direct tool calling when invoke throws', async () => {
     const manager = createIntegrationManager();
     privateManager(manager).useDirectToolCalling = true;
@@ -3678,16 +3791,14 @@ describe('optional structured final response', () => {
     const events: AssistantTelemetryEvent[] = [];
     const manager = managerWithHistory(event => events.push(event));
     const content = '{ "fact_refs": ["kubectl"] }';
-    const invoke = vi
-      .fn()
-      .mockResolvedValue({
-        raw: new AIMessage({
-          content,
-          usage_metadata: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
-          response_metadata: { finish_reason: 'stop' },
-        }),
-        parsed: { fact_refs: ['kubectl'] },
-      });
+    const invoke = vi.fn().mockResolvedValue({
+      raw: new AIMessage({
+        content,
+        usage_metadata: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+        response_metadata: { finish_reason: 'stop' },
+      }),
+      parsed: { fact_refs: ['kubectl'] },
+    });
     const structured = vi.fn().mockReturnValue({ invoke });
     const ordinary = vi.fn();
     privateManager(manager).model = { invoke: ordinary, withStructuredOutput: structured };

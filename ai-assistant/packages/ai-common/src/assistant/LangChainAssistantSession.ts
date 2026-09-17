@@ -1050,73 +1050,81 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @returns Final assistant, tool-derived, denial, or error message.
    */
   async userSend(message: string): Promise<ConversationMessage> {
-    // Sync MCP auto-approve settings before processing
-    await inlineToolApprovalManager.loadAndApplyAutoApproveSettings();
-
-    // Clear previous progress steps
-
-    const userPrompt: ConversationMessage = { role: 'user', content: message };
-    this.history.push(userPrompt);
-
-    // Check cache first for non-tool-dependent queries
-    const cacheKey = generateCacheKey(this.history, message, this.currentContext);
-    const cached = this.responseCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
-      // Cache hit - return cached response
-      this.history.push(cached.value);
-      this.recordTelemetry({ type: 'turn_complete' });
-      return cached.value;
-    }
-
-    // Create abort controller for this request
-    this.currentAbortController = new AbortController();
-
+    const controller = new AbortController();
+    this.currentAbortController = controller;
     try {
-      // Route skills for this query (async, with graceful fallback)
-      this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
+      // Sync MCP auto-approve settings before processing
+      await inlineToolApprovalManager.loadAndApplyAutoApproveSettings();
+      controller.signal.throwIfAborted();
 
-      // FIRST: Try to orchestrate multiple relevant tools before making LLM call
-      // This enables multi-tool execution for comprehensive responses
-      const recommendedTools = await this.orchestrateToolsForRequest(message);
+      // Clear previous progress steps
 
-      if (recommendedTools && recommendedTools.length > 0) {
-        // Execute multiple tools together for a comprehensive response
-        return await this.handleMultipleToolExecution(message, recommendedTools);
+      const userPrompt: ConversationMessage = { role: 'user', content: message };
+      this.history.push(userPrompt);
+
+      // Check cache first for non-tool-dependent queries
+      const cacheKey = generateCacheKey(this.history, message, this.currentContext);
+      const cached = this.responseCache.get(cacheKey);
+
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+        // Cache hit - return cached response
+        this.history.push(cached.value);
+        this.recordTelemetry({ type: 'turn_complete' });
+        return cached.value;
       }
 
-      // FALLBACK: Use direct tool calling if enabled
-      if (this.useDirectToolCalling) {
-        return await this.handleDirectToolCallingRequest(message);
-      }
-      const modelToUse = this.boundModel || this.model;
+      try {
+        // Route skills for this query (async, with graceful fallback)
+        this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
+        controller.signal.throwIfAborted();
 
-      // For local models, use simplified approach
-      if (this.providerId === 'local') {
-        return await this.handleLocalModelRequest(message, modelToUse);
-      }
+        // FIRST: Try to orchestrate multiple relevant tools before making LLM call
+        // This enables multi-tool execution for comprehensive responses
+        const recommendedTools = await this.orchestrateToolsForRequest(message);
+        controller.signal.throwIfAborted();
 
-      // Use chain-based approach for other models
-      const response = await this.handleChainBasedRequest(message, modelToUse);
-
-      // Cache successful non-tool responses
-      if (shouldCacheResponse(response)) {
-        this.responseCache.set(cacheKey, {
-          value: { ...response },
-          timestamp: Date.now(),
-        });
-
-        // Clean cache periodically
-        if (this.responseCache.size % 5 === 0) {
-          this.cleanResponseCache();
+        if (recommendedTools && recommendedTools.length > 0) {
+          // Execute multiple tools together for a comprehensive response
+          return await this.handleMultipleToolExecution(message, recommendedTools);
         }
-      }
 
-      return response;
-    } catch (error) {
-      return this.handleUserSendError(error);
+        // FALLBACK: Use direct tool calling if enabled
+        if (this.useDirectToolCalling) {
+          return await this.handleDirectToolCallingRequest(message);
+        }
+        const modelToUse = this.boundModel || this.model;
+
+        // For local models, use simplified approach
+        if (this.providerId === 'local') {
+          return await this.handleLocalModelRequest(message, modelToUse);
+        }
+
+        // Use chain-based approach for other models
+        const response = await this.handleChainBasedRequest(message, modelToUse);
+
+        // Cache successful non-tool responses
+        if (shouldCacheResponse(response)) {
+          this.responseCache.set(cacheKey, {
+            value: { ...response },
+            timestamp: Date.now(),
+          });
+
+          // Clean cache periodically
+          if (this.responseCache.size % 5 === 0) {
+            this.cleanResponseCache();
+          }
+        }
+
+        return response;
+      } catch (error) {
+        return this.handleUserSendError(
+          controller.signal.aborted ? controller.signal.reason : error
+        );
+      } finally {
+        this.recordTelemetry({ type: 'turn_complete' });
+      }
     } finally {
-      this.recordTelemetry({ type: 'turn_complete' });
+      if (this.currentAbortController === controller) this.currentAbortController = null;
     }
   }
 
@@ -1129,7 +1137,10 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @returns Assistant text or tool-derived response.
    */
   private async handleDirectToolCallingRequest(message: string): Promise<ConversationMessage> {
+    const controller = this.currentAbortController ?? new AbortController();
+    this.currentAbortController = controller;
     try {
+      controller.signal.throwIfAborted();
       const modelToUse = this.boundModel || this.model;
 
       // Prepare input for the model with tools
@@ -1155,12 +1166,11 @@ export default class LangChainAssistantSession extends AssistantSession {
       const capture = createLLMResultCapture();
 
       const result = await modelToUse.invoke(messages, {
-        signal: this.currentAbortController?.signal,
+        signal: controller.signal,
         callbacks: [capture.callback],
       });
       this.recordModelUsage(result);
-
-      this.currentAbortController = null;
+      controller.signal.throwIfAborted();
 
       const allToolCalls = mergeToolCallsAcrossGenerations(
         result.tool_calls ?? [],
@@ -1178,7 +1188,9 @@ export default class LangChainAssistantSession extends AssistantSession {
           content: result.content,
           tool_calls: allToolCalls,
         };
-        return await this.handleToolCalls(mergedResponse);
+        const response = await this.handleToolCalls(mergedResponse);
+        controller.signal.throwIfAborted();
+        return response;
       } else {
         // Handle regular response
         const assistantPrompt: ConversationMessage = {
@@ -1190,6 +1202,10 @@ export default class LangChainAssistantSession extends AssistantSession {
         return assistantPrompt;
       }
     } catch (error) {
+      controller.signal.throwIfAborted();
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') {
+        throw error;
+      }
       console.error('Error in direct tool calling request:', error);
 
       // If direct tool calling fails, fall back to regular approach
@@ -1197,6 +1213,8 @@ export default class LangChainAssistantSession extends AssistantSession {
 
       const modelToUse = this.boundModel || this.model;
       return await this.handleChainBasedRequest(message, modelToUse);
+    } finally {
+      if (this.currentAbortController === controller) this.currentAbortController = null;
     }
   }
 
@@ -1694,6 +1712,8 @@ Please analyze this data and provide a specific, detailed response that directly
    * @returns Assistant message or generated follow-up after tool execution.
    */
   private async handleToolCalls(response: ModelToolResponse): Promise<ConversationMessage> {
+    const signal = this.currentAbortController?.signal;
+    signal?.throwIfAborted();
     const enabledToolIds = [...this.toolManager.getToolNames(), ...this.extraTools.keys()];
 
     // If no tools are enabled but LLM is returning tool calls, this indicates a bug
@@ -1857,10 +1877,12 @@ Please analyze this data and provide a specific, detailed response that directly
       }
 
       // Process approved tool calls
+      signal?.throwIfAborted();
       if (approvedToolCalls.length > 0) {
         await this.processToolCalls(approvedToolCalls, assistantPrompt);
       }
     } catch (error) {
+      signal?.throwIfAborted();
       // Add denial responses for all tools
       for (const toolCall of toolCalls) {
         this.history.push({
@@ -1878,6 +1900,7 @@ Please analyze this data and provide a specific, detailed response that directly
       }
     }
 
+    signal?.throwIfAborted();
     // Check if we should process follow-up
     const toolResponses = this.history.filter(
       prompt => prompt.role === 'tool' && toolCalls.some(tc => tc.id === prompt.toolCallId)
@@ -2060,8 +2083,10 @@ Please analyze this data and provide a specific, detailed response that directly
     assistantPrompt: ConversationMessage
   ): Promise<void> {
     const failedOperations: string[] = [];
+    const signal = this.currentAbortController?.signal;
 
     for (const toolCall of toolCalls) {
+      signal?.throwIfAborted();
       const args = parseSerializedToolArguments(toolCall.function.arguments);
       const startedAt = performance.now();
 
@@ -2449,12 +2474,20 @@ Please analyze this data and provide a specific, detailed response that directly
             if (this.currentAbortController === controller) this.currentAbortController = null;
           }
         }
-        const response = await model.invoke([
-          this.createSystemMessage(input.systemPrompt),
-          ...input.messages,
-        ]);
-        this.recordModelUsage(response);
-        return response;
+        const controller = this.currentAbortController ?? new AbortController();
+        this.currentAbortController = controller;
+        try {
+          controller.signal.throwIfAborted();
+          const response = await model.invoke(
+            [this.createSystemMessage(input.systemPrompt), ...input.messages],
+            { signal: controller.signal }
+          );
+          this.recordModelUsage(response);
+          controller.signal.throwIfAborted();
+          return response;
+        } finally {
+          if (this.currentAbortController === controller) this.currentAbortController = null;
+        }
       },
     };
   }

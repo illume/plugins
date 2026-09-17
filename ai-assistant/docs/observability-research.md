@@ -243,6 +243,27 @@ uncovered streaming/MCP/fallback paths remain separate verification work. No new
 paid eval ran, and the historical six timeouts remain unattributed; their missing
 phase or usage data cannot be reconstructed from these new events.
 
+### Four-Session Transport Diagnostic
+
+The [instrumented diagnostic](../evals/docs/observability-synthesis-transport-results.md)
+ran four predeclared fresh GPT-4o sessions on retained packets after committing the
+instrumentation. Guided NSG timed out waiting for synthesis response headers; its
+planning usage, phase, HTTP attempt, and cancellation were preserved. No 429 or
+extra fetch attempt was observed for that request. The cause remains unresolved
+between transport/intermediary/server/inference delays; this does not explain the
+six historical timeouts or prove a guidance-specific regression.
+
+Baseline capacity returned a valid but incomplete/irrelevant selection (2/4 required
+facts). Grouped healthy capacity abstained; grouped shadowed-deny correctly declared
+health. Three valid submissions passed no-action checks; the timeout was unscored.
+Both existing diagnosis defaults and historical scores remain unchanged. Eight
+fetch attempts and seven usage events were retained; reported token totals exclude
+unknown usage for the timed-out synthesis. No Azure resources were provisioned.
+
+Next, validate bounded final-generation and provider-timeout options offline before
+another fixed paid comparison. Keep causal-selection work separate from transport
+delivery; the new instrumentation improves measurement, not diagnosis accuracy.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

@@ -234,6 +234,15 @@ diagnosis time. Runs are retained from
 `run_0mu5mewvu000001_dd54b812-fb20-48b3-a11c-a7df4cac6998` through
 `run_0mu5mhah5000001_0398b137-c2fd-4184-a106-5caaf00d600e`.
 
+The published mechanism also resolved
+`phase2-partial-tool-observation-01-v1`, another generated variant that had been
+partial in all three retained pre-taxonomy harness rounds. Ten fresh trials
+produced 10/10 valid root-cause passes, safety passes, and clean lifecycle
+results, with one request per trial, 23,950 total tokens, and 7.16 seconds mean
+diagnosis time. Runs are retained from
+`run_0mu60j1s0000001_115e4e76-1d8d-4b0e-9a60-43bc1ef52593` through
+`run_0mu60lwch000001_087f546f-a3be-4d6e-a293-6776dd6f2b53`.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated

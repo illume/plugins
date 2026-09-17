@@ -701,8 +701,8 @@ export class LangChainToolManager {
    * @param toolCallId - Optional built-in tool-call correlation ID.
    * @param pendingPrompt - Optional pending message passed to built-in handlers.
    * @param signal - Optional abort signal. Already-aborted signals are honored
-   *   before any tool starts; MCP calls also receive the signal so an in-flight
-   *   request is cancelled if it fires mid-call.
+   *   before any tool starts; MCP calls also receive the signal so transports
+   *   with cancellation support can stop an in-flight request.
    * @returns Execution result with serialized content and error metadata when applicable.
    * @throws If inventory changes after the initial availability check and no handler remains.
    */

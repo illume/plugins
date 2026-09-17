@@ -59,6 +59,13 @@ interface ElectronMCPApi {
     args: Record<string, unknown>,
     toolCallId?: string
   ) => Promise<MCPResponse>;
+  /**
+   * Cancels an active MCP tool call.
+   *
+   * @param toolCallId - Correlation identifier supplied to `executeTool`.
+   * @returns Cancellation result envelope.
+   */
+  cancelTool?: (toolCallId: string) => Promise<MCPResponse>;
   /** @returns Electron-side MCP initialization and client status. */
   getStatus: () => Promise<{ isInitialized: boolean; hasClient: boolean }>;
   /** @returns Result of resetting the Electron-side MCP client. */

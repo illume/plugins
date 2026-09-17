@@ -359,6 +359,38 @@ assignments to pass for fields, no format/transport failures, and more causal
 passes than both comparison arms. Otherwise the layout stays opt-in. No score
 retry, rubric change, or oracle expansion is permitted.
 
+### Object-Relative Field Layout: Twenty-Seven-Session Results
+
+The [fixed layout comparison](../evals/docs/observability-object-fields-results.md)
+completed all 27 assignments after committing the renderer. Read rows, object rows,
+and object fields achieved **0/4, 0/4, and 2/4 incident causal passes** respectively;
+fields passed both NSG attempts, but capacity failed in every arm. Each arm passed
+only **1/5 controls**. Fields passed clean Kubernetes-only NSG abstention, but failed
+shadowed-deny health where both row arms passed. Wrong-pool/minimum and capacity
+abstention remained failures. The two field-layout capacity answers still omitted
+the explicit target pool name despite its retrieval.
+
+Read rows and fields each returned nine valid selections. Object rows retained one
+120.041-second healthy-control timeout before synthesis response headers and one
+duplicate-reference rejection. Neither was repaired/retried. All 25 resolved
+selections passed grounding/budget/no-action checks. No extra fetch attempt or
+retry delay was observed; the timeout's planning usage is retained and synthesis
+usage remains unknown. There were 54 fetch attempts, 53 HTTP 200 responses, and
+53 usage events reporting 460,955 input and 4,612 output tokens as observed
+subtotals, not complete billing. No new resources or active evaluator remain.
+
+Across the four completed incident attempts per arm, fields used 81,719 synthesis
+input tokens versus object rows' 94,213 and read rows' 90,269: 13.3% and 9.5% less.
+Mean incident duration was 12.763 seconds for fields, 10.802 for object rows, and
+8.970 for read rows, so no latency improvement was observed. This small familiar
+packet comparison is not independent incident breadth or a reliability claim.
+
+The predeclared all-incidents/all-controls promotion gate failed: **fields remain
+opt-in**, with defaults unchanged. Next investigate explicitly identity-bearing
+causal claims and healthy/insufficient dispositions with offline source validation
+and the same counterexamples. Do not auto-append oracle identity, weaken historical
+graders, or repeat the batch merely to obtain passes.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

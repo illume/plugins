@@ -310,7 +310,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.responseCache.clear();
   }
 
-  private recordTelemetry(event: AssistantTelemetryEvent): void {
+  protected recordTelemetry(event: AssistantTelemetryEvent): void {
     try {
       this.telemetryObserver?.(event);
     } catch {
@@ -318,7 +318,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     }
   }
 
-  private recordModelUsage(response: unknown): void {
+  protected recordModelUsage(response: unknown): void {
     const value = response as {
       usage_metadata?: Record<string, unknown>;
       response_metadata?: Record<string, unknown>;
@@ -430,7 +430,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     }
   }
 
-  private isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
+  protected isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
     if (toolName !== 'kubernetes_api_request') return false;
     return typeof args.method !== 'string' || args.method.toUpperCase() !== 'GET';
   }

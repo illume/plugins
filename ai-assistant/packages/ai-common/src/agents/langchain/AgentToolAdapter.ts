@@ -44,7 +44,16 @@ export interface AgentToolAdapterOptions {
   /** Clears the inline approval placeholder after a call has settled. */
   clearToolConfirmation?: () => void;
   /** Records runtime result policy for session-history reconciliation. */
-  onRuntimeResult?: (toolCallId: string, result: ToolExecutionResult) => void;
+  onRuntimeResult?: (
+    toolCallId: string,
+    result: ToolExecutionResult,
+    context: {
+      toolName: string;
+      args: Record<string, unknown>;
+      status: 'success' | 'error' | 'denied';
+      durationNs: string;
+    }
+  ) => void;
   /** Signal used to cancel approval waits and prevent post-cancel execution. */
   signal?: AbortSignal;
 }
@@ -129,6 +138,7 @@ export class AgentToolAdapter {
   private wrapRuntimeTool(source: StructuredToolInterface): StructuredToolInterface {
     return tool(
       async (args, config) => {
+        const startedAt = performance.now();
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
         let releaseExecution!: () => void;
@@ -144,7 +154,7 @@ export class AgentToolAdapter {
             config?.signal ?? this.options.signal
           );
           if (!approved) {
-            return this.deniedResult(source.name, toolCallId);
+            return this.deniedResult(source.name, normalizedArgs, toolCallId, startedAt);
           }
 
           const result = await this.runtime.executeTool(
@@ -154,7 +164,7 @@ export class AgentToolAdapter {
             this.createPendingPrompt(source.name, normalizedArgs, toolCallId),
             config?.signal ?? this.options.signal
           );
-          this.options.onRuntimeResult?.(toolCallId, result);
+          this.reportRuntimeResult(toolCallId, source.name, normalizedArgs, result, startedAt);
           const content = redactSecrets(result.content);
           if (
             result.metadata?.requiresConfirmation === true ||
@@ -183,6 +193,7 @@ export class AgentToolAdapter {
   private wrapExtraTool(source: StructuredToolInterface): StructuredToolInterface {
     return tool(
       async (args, config) => {
+        const startedAt = performance.now();
         const normalizedArgs = args as Record<string, unknown>;
         const toolCallId = this.getToolCallId(source.name, config);
         let releaseExecution!: () => void;
@@ -198,7 +209,7 @@ export class AgentToolAdapter {
             config?.signal ?? this.options.signal
           );
           if (!approved) {
-            return this.deniedResult(source.name, toolCallId);
+            return this.deniedResult(source.name, normalizedArgs, toolCallId, startedAt);
           }
 
           const result = await source.invoke(normalizedArgs, {
@@ -220,12 +231,18 @@ export class AgentToolAdapter {
           const isError =
             (ToolMessage.isInstance(result) && result.status === 'error') ||
             (parsedContent !== undefined && parsedContent.error === true);
-          this.options.onRuntimeResult?.(toolCallId, {
-            content: redactedContent,
-            shouldAddToHistory: true,
-            shouldProcessFollowUp: true,
-            ...(isError ? { error: true, isError: true, success: false } : { success: true }),
-          });
+          this.reportRuntimeResult(
+            toolCallId,
+            source.name,
+            normalizedArgs,
+            {
+              content: redactedContent,
+              shouldAddToHistory: true,
+              shouldProcessFollowUp: true,
+              ...(isError ? { error: true, isError: true, success: false } : { success: true }),
+            },
+            startedAt
+          );
           return isError
             ? new ToolMessage({
                 status: 'error',
@@ -382,25 +399,61 @@ export class AgentToolAdapter {
     return this.descriptions.get(toolName) ?? `Execute ${toolName}`;
   }
 
-  private deniedResult(toolName: string, toolCallId: string): ToolMessage {
+  private deniedResult(
+    toolName: string,
+    args: Record<string, unknown>,
+    toolCallId: string,
+    startedAt: number
+  ): ToolMessage {
     const content = JSON.stringify({
       error: true,
       message: 'Tool execution denied by user',
       userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
     });
-    this.options.onRuntimeResult?.(toolCallId, {
-      content,
-      shouldAddToHistory: true,
-      shouldProcessFollowUp: true,
-      error: true,
-      isError: true,
-      success: false,
-    });
+    this.reportRuntimeResult(
+      toolCallId,
+      toolName,
+      args,
+      {
+        content,
+        shouldAddToHistory: true,
+        shouldProcessFollowUp: true,
+        error: true,
+        isError: true,
+        success: false,
+      },
+      startedAt,
+      'denied'
+    );
     return new ToolMessage({
       status: 'error',
       tool_call_id: toolCallId,
       name: toolName,
       content,
+    });
+  }
+
+  private reportRuntimeResult(
+    toolCallId: string,
+    toolName: string,
+    args: Record<string, unknown>,
+    result: ToolExecutionResult,
+    startedAt: number,
+    explicitStatus?: 'success' | 'error' | 'denied'
+  ): void {
+    const status =
+      explicitStatus ??
+      (result.success === false ||
+      result.isError === true ||
+      Boolean(result.error) ||
+      Boolean(result.metadata?.error || result.metadata?.isError)
+        ? 'error'
+        : 'success');
+    this.options.onRuntimeResult?.(toolCallId, result, {
+      toolName,
+      args,
+      status,
+      durationNs: String(Math.round((performance.now() - startedAt) * 1_000_000)),
     });
   }
 }

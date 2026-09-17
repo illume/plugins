@@ -27,6 +27,7 @@ import { createMockApprovalManager } from '../tools/approval/testing/MockApprova
 import { createMockToolManager } from '../tools/testing/MockToolManager';
 import type { ToolExecutionResult } from '../tools/ToolRuntime';
 import AgentHarnessSession from './AgentHarnessSession';
+import type { AssistantTelemetryEvent } from './telemetry';
 
 describe('AgentHarnessSession', () => {
   afterEach(() => {
@@ -323,6 +324,40 @@ describe('AgentHarnessSession', () => {
     expect(session.history.find(message => message.role === 'tool')?.content).toBe(
       'kubectl output'
     );
+  });
+
+  it('emits sanitized tool and turn telemetry', async () => {
+    const telemetry: AssistantTelemetryEvent[] = [];
+    const kubectl = tool(async () => 'kubectl output', {
+      name: 'kubectl',
+      description: 'Run an approved kubectl operation',
+      schema: z.object({ command: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [[{ id: 'cli-call-1', name: 'kubectl', args: { command: 'get pods' } }], []],
+      }),
+      toolManager: createMockToolManager(),
+      telemetryObserver: event => telemetry.push(event),
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    await session.enableDirectToolCalling([kubectl]);
+
+    await session.userSend('List pods');
+
+    expect(telemetry).toEqual([
+      expect.objectContaining({
+        type: 'tool_call',
+        tool_name: 'kubectl',
+        mutating: false,
+        status: 'success',
+      }),
+      { type: 'turn_complete' },
+    ]);
+    expect(JSON.stringify(telemetry)).not.toContain('get pods');
+    expect(JSON.stringify(telemetry)).not.toContain('kubectl output');
   });
 
   it('does not make a follow-up model call after a strict-false runtime result', async () => {

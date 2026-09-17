@@ -23,7 +23,6 @@ import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
 import type { ProviderSettings } from '../providers/savedConfigs';
 import { redactSecrets } from '../security/redactSecrets';
-import type { AssistantTelemetryObserver } from './telemetry';
 import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
 import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse';
 import type { ToolExecutionResult } from '../tools/ToolRuntime';
@@ -80,7 +79,16 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         approvalContext: this,
         extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
         clearToolConfirmation: () => this.clearToolConfirmation(),
-        onRuntimeResult: (toolCallId, result) => runtimeResults.set(toolCallId, result),
+        onRuntimeResult: (toolCallId, result, context) => {
+          runtimeResults.set(toolCallId, result);
+          this.recordTelemetry({
+            type: 'tool_call',
+            tool_name: context.toolName,
+            mutating: this.isMutatingToolCall(context.toolName, context.args),
+            status: context.status,
+            duration_ns: context.durationNs,
+          });
+        },
         signal: abortController.signal,
       });
       const adaptedTools = toolAdapter.createTools();
@@ -102,32 +110,40 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       for await (const state of stream) {
         latestMessages = state.messages as BaseMessage[];
       }
+      for (const generatedMessage of this.getGeneratedMessages(latestMessages, inputMessages)) {
+        if (AIMessage.isInstance(generatedMessage)) this.recordModelUsage(generatedMessage);
+      }
 
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       this.currentAbortController = null;
       const deferredResult = this.getDeferredResultsContent(runtimeResults);
       if (deferredResult) {
-        return { role: 'assistant', content: deferredResult };
+        return this.completeTurn({ role: 'assistant', content: deferredResult });
       }
-      return this.lastAssistantMessage();
+      return this.completeTurn(this.lastAssistantMessage());
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       const halt = this.asToolExecutionHalt(error);
       if (halt) {
         this.currentAbortController = null;
         if (halt.requiresConfirmation) {
-          return this.lastAssistantMessage();
+          return this.completeTurn(this.lastAssistantMessage());
         }
         const deferredResult =
           this.getDeferredResultsContent(runtimeResults, true) ?? halt.resultContent;
         if (deferredResult) {
-          return { role: 'assistant', content: deferredResult };
+          return this.completeTurn({ role: 'assistant', content: deferredResult });
         }
-        return this.lastAssistantMessage();
+        return this.completeTurn(this.lastAssistantMessage());
       }
 
-      return this.handleUserSendError(error);
+      return this.completeTurn(await this.handleUserSendError(error));
     }
+  }
+
+  private completeTurn(response: ConversationMessage): ConversationMessage {
+    this.recordTelemetry({ type: 'turn_complete' });
+    return response;
   }
 
   /**

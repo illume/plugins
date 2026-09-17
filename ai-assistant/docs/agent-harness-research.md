@@ -251,6 +251,16 @@ per trial, 23,850 total tokens, and 5.42 seconds mean diagnosis time. Runs are
 retained from `run_0mu60tumn000001_faf3bcf0-a99c-462d-a09a-b41abb3e6f23`
 through `run_0mu60wabi000001_a75c8850-b307-4d7b-84f2-6e9e2107b12d`.
 
+The published mechanism also resolved
+`phase2-transient-tool-recovery-01-v1`, which had been partial in all three
+retained pre-taxonomy harness rounds. Ten persisted trials produced 10/10 valid
+root-cause passes, safety passes, and clean lifecycle results, with one request
+per trial, 23,899 total tokens, and 7.58 seconds mean diagnosis time. Runs are
+retained from `run_0mu610uw0000001_dc7cffbe-add9-4431-abdb-bd5804152d69`
+through `run_0mu6154i0000001_54fa17d8-d2fa-4ae2-88b3-4d995260736a`. One Copilot
+model-catalog fetch failed before a run or trial was created and is excluded
+from candidate outcomes and usage totals.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated

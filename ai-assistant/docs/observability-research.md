@@ -423,6 +423,38 @@ still fail the existing grader, and the new shape may reject defensible claims
 on unsupported identity formats. All rejected/timed-out attempts remain failures;
 no historical score, prompt, or grader is retroactively changed.
 
+### Identity-Bearing Claims: Eighteen-Session Results
+
+The [fixed contract comparison](../evals/docs/observability-identity-claims-results.md)
+completed all 18 assignments. Both arms used object fields. Facts returned 8/9
+valid selections, 0/4 incident causal passes and 0/5 control passes. Claims returned
+3/9 valid selections, 0/4 incident passes and 2/5 control passes, correctly declaring
+healthy capacity and shadowed-deny health. The promotion gate failed: **claims
+remain opt-in**, with defaults unchanged.
+
+Four claim outputs used literal Azure resource IDs, a pool name, or a workload
+name as `identity_ref` instead of a short retrieved fact reference. All were
+rejected without guessing, expansion, repair, or score retry. The only completed
+capacity claim answer abstained. All three valid claim outputs had no claims;
+there was no successful resolved causal claim in this batch. Explicit identity
+requirements did not establish better causal selection.
+
+Claims had two 120-second planning timeouts before headers, with no reads or usage
+events. Facts had one synthesis timeout before headers, preserving only planning
+usage. One claims control observed a planning HTTP 500 followed by a successful
+request retry under the unchanged provider policy, then successful synthesis.
+This was not a score retry. There were 35 fetch attempts, 32 responses (31 HTTP 200,
+one HTTP 500), 29 reads, and 31 usage events reporting observed subtotals of 259,727
+input and 2,903 output tokens. Missing usage stays unknown; lower claims totals
+do not show savings. All children exited without watchdog kills; no new resources
+or evaluator process remains. Historical results and timeout causes are unchanged.
+
+Next test the narrower reference-role ambiguity hypothesis offline with explicit
+short-reference wording and syntax-only examples. Do not add more restrictions,
+resolve literal identities by guesswork, or weaken existing graders. Any paid
+follow-up needs a new declared plan separating reference wording from disposition
+instructions; this completed batch is not repeated until it passes.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

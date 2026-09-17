@@ -118,7 +118,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
         if (halt.requiresConfirmation) {
           return this.lastAssistantMessage();
         }
-        const deferredResult = this.getDeferredResultsContent(runtimeResults) ?? halt.resultContent;
+        const deferredResult =
+          this.getDeferredResultsContent(runtimeResults, true) ?? halt.resultContent;
         if (deferredResult) {
           return { role: 'assistant', content: deferredResult };
         }
@@ -162,11 +163,13 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
    * others even though they are still recorded in session history.
    */
   private getDeferredResultsContent(
-    runtimeResults: Map<string, ToolExecutionResult>
+    runtimeResults: Map<string, ToolExecutionResult>,
+    includeFollowUpResults = false
   ): string | undefined {
     const deferred = [...runtimeResults.values()].filter(
       result =>
-        result.shouldProcessFollowUp === false && result.metadata?.requiresConfirmation !== true
+        result.metadata?.requiresConfirmation !== true &&
+        (includeFollowUpResults || result.shouldProcessFollowUp === false)
     );
     if (deferred.length === 0) return undefined;
     return deferred.map(result => redactSecrets(result.content)).join('\n\n');

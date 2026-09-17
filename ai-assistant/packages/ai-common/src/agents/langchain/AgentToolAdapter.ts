@@ -105,7 +105,8 @@ export class AgentToolAdapter {
       content: string
     ): ToolMessage =>
       new ToolMessage({
-        content,
+        status: 'error',
+        content: redactSecrets(content),
         tool_call_id: request.toolCall.id ?? '',
         name: request.toolCall.name ?? 'unknown',
       });
@@ -219,6 +220,12 @@ export class AgentToolAdapter {
           const isError =
             (ToolMessage.isInstance(result) && result.status === 'error') ||
             (parsedContent !== undefined && parsedContent.error === true);
+          this.options.onRuntimeResult?.(toolCallId, {
+            content: redactedContent,
+            shouldAddToHistory: true,
+            shouldProcessFollowUp: true,
+            ...(isError ? { error: true, isError: true, success: false } : { success: true }),
+          });
           return isError
             ? new ToolMessage({
                 status: 'error',
@@ -376,15 +383,24 @@ export class AgentToolAdapter {
   }
 
   private deniedResult(toolName: string, toolCallId: string): ToolMessage {
+    const content = JSON.stringify({
+      error: true,
+      message: 'Tool execution denied by user',
+      userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
+    });
+    this.options.onRuntimeResult?.(toolCallId, {
+      content,
+      shouldAddToHistory: true,
+      shouldProcessFollowUp: true,
+      error: true,
+      isError: true,
+      success: false,
+    });
     return new ToolMessage({
       status: 'error',
       tool_call_id: toolCallId,
       name: toolName,
-      content: JSON.stringify({
-        error: true,
-        message: 'Tool execution denied by user',
-        userFriendlyMessage: `The execution of ${toolName} was denied by the user.`,
-      }),
+      content,
     });
   }
 }

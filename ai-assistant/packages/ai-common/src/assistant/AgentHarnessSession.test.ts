@@ -162,6 +162,39 @@ describe('AgentHarnessSession', () => {
     );
   });
 
+  it('redacts and preserves thrown errors from host-provided tools', async () => {
+    const kubectl = tool(
+      async () => {
+        throw new Error('command failed: password=do-not-store');
+      },
+      {
+        name: 'kubectl',
+        description: 'Run kubectl',
+        schema: z.object({ command: z.string() }),
+      }
+    );
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [{ id: 'thrown-error-call', name: 'kubectl', args: { command: 'get pods' } }],
+          [],
+        ],
+      }),
+      toolManager: createMockToolManager(),
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    await session.enableDirectToolCalling([kubectl]);
+
+    await session.userSend('List pods');
+
+    const errorEntry = session.history.find(message => message.toolCallId === 'thrown-error-call');
+    expect(errorEntry).toEqual(expect.objectContaining({ error: true }));
+    expect(errorEntry?.content).toContain('password=[REDACTED]');
+    expect(errorEntry?.content).not.toContain('do-not-store');
+  });
+
   it('uses createAgent and stores an aligned model-tool-model history', async () => {
     const execute = vi.fn();
     const toolManager = createMockToolManager({
@@ -255,7 +288,7 @@ describe('AgentHarnessSession', () => {
       createMockApprovalManager({ mode: 'approve-all' })
     );
 
-    await session.userSend('Query metrics');
+    const response = await session.userSend('Query metrics');
 
     expect(execute).toHaveBeenCalledWith({ query: 'up' }, 'mcp-call-1');
   });
@@ -329,7 +362,7 @@ describe('AgentHarnessSession', () => {
       createMockApprovalManager({ mode: 'approve-all' })
     );
 
-    await session.userSend('Query metrics');
+    const response = await session.userSend('Query metrics');
 
     expect(executeTool).toHaveBeenCalledTimes(2);
     expect(executeTool).not.toHaveBeenCalledWith(
@@ -347,6 +380,53 @@ describe('AgentHarnessSession', () => {
     // the graph's default tool-error recovery.
     expect(session.history.find(message => message.toolCallId === 'strict-false-call')).toEqual(
       expect.objectContaining({ content: JSON.stringify({ value: 'strict-false-call' }) })
+    );
+    expect(response.content).toContain(JSON.stringify({ value: 'strict-false-call' }));
+    expect(response.content).toContain(JSON.stringify({ value: 'sibling-call' }));
+  });
+
+  it('preserves completed host-tool output when a runtime sibling halts', async () => {
+    const toolManager = createMockToolManager({ enabledToolNames: ['metrics__query'] });
+    vi.spyOn(toolManager, 'executeTool').mockResolvedValue({
+      content: '{"value":3}',
+      shouldAddToHistory: true,
+      shouldProcessFollowUp: false,
+    });
+    vi.spyOn(toolManager, 'getLangChainTools').mockReturnValue([
+      tool(async () => '', {
+        name: 'metrics__query',
+        description: 'Query metrics',
+        schema: z.object({ query: z.string() }),
+      }),
+    ]);
+    const kubectl = tool(async () => 'kubectl output', {
+      name: 'kubectl',
+      description: 'Run kubectl',
+      schema: z.object({ command: z.string() }),
+    });
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FakeToolCallingModel({
+        toolCalls: [
+          [
+            { id: 'strict-false-call', name: 'metrics__query', args: { query: 'up' } },
+            { id: 'cli-call', name: 'kubectl', args: { command: 'get pods' } },
+          ],
+          [],
+        ],
+      }),
+      toolManager,
+    });
+    inlineToolApprovalManager.setApprovalHandler(
+      createMockApprovalManager({ mode: 'approve-all' })
+    );
+    await session.enableDirectToolCalling([kubectl]);
+
+    const response = await session.userSend('Query metrics and list pods');
+
+    expect(response.content).toContain('{"value":3}');
+    expect(response.content).toContain('kubectl output');
+    expect(session.history.find(message => message.toolCallId === 'cli-call')).toEqual(
+      expect.objectContaining({ content: 'kubectl output' })
     );
   });
 

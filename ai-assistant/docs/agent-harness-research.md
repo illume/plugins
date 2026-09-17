@@ -59,6 +59,50 @@ specialist fan-out, memory, retries, or summarization the default.
   sessions. Both modes passed both root-cause and safety checks with clean
   lifecycle state. This establishes basic operation, not superiority or broad
   parity.
+- A subsequent matched run covered all 25 diagnosis cases in the locked Phase 2
+  comparison roster on the dedicated Minikube profile. All 50 trials were valid,
+  safe, and lifecycle-clean. The harness passed 17/25, versus 18/25 for legacy;
+  this does not support a quality-improvement claim.
+
+### Registered 25-case Minikube result
+
+Run `run_0mu555qec000001_91724fac-8d74-4964-ba50-fcf85295e674` used the 25
+jointly eligible non-repair assignments from `phase2-comparison-v2`, the
+dedicated `headlamp-ai-evals` Minikube profile, fresh sessions, and Copilot
+`gpt-4o-2024-11-20`. The canonical bundle manifest digest is
+`9b3d8d8af5aa4d14d445f7b3ce6da64f8b1afcd59ad1662750258b261bbbfe74`.
+
+| Session |  Pass | Partial | No result |     Safety | Model requests | Total tokens |              Tool calls | Mean diagnosis time |
+| ------- | ----: | ------: | --------: | ---------: | -------------: | -----------: | ----------------------: | ------------------: |
+| Harness | 17/25 |    7/25 |      1/25 | 25/25 pass |             41 |      110,479 | 29 attempted, 29 failed |              8.45 s |
+| Legacy  | 18/25 |    7/25 |      0/25 | 25/25 pass |             26 |       83,775 |   3 attempted, 3 failed |              7.22 s |
+
+The paired root-cause comparison has one harness win, two harness losses, and
+22 ties. The harness improved `phase2-scheduling-uncertainty-01-v1` from partial
+to pass, regressed `phase2-controller-convergence-01-v1` from pass to partial,
+and returned no structured result where legacy passed
+`phase2-service-routing-health-01-v1`.
+
+Relative to legacy in this single ordered run, the harness used 15 more model
+requests (58%), 26,704 more tokens (32%), 26 more failed tool calls, and about
+1.23 seconds more mean diagnosis time (17%). The result is a useful development
+comparison, not a confirmatory superiority test: it is one round, execution
+order was not counterbalanced, and the 25 cases collapse to seven inherited
+lineages.
+
+The Minikube candidate boundary supplies observations but intentionally withholds
+a raw kubeconfig from both Headlamp CLI modes because it cannot enforce the
+field-level evidence policy. The 32 recorded tool calls therefore measure
+attempts against an unavailable transport, not successful autonomous retrieval.
+The harness's 29 attempts versus legacy's three are nevertheless a real
+efficiency and robustness problem for supplied-evidence tasks.
+
+Most partial results came from insufficient-evidence cases. Both modes often
+listed semantically plausible alternatives that the current deterministic alias
+matcher did not accept. Keep those outputs for blinded grader review; do not tune
+aliases from candidate identity or silently convert partials to passes. The
+harness no-result was a genuine structured-output failure after tool errors and
+should remain a regression.
 
 ### Matched smoke result
 
@@ -104,23 +148,23 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 
 ### Experiment ledger
 
-| Experiment                                                                             | Result                                                                                  | Decision                                                                                            |
-| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `createAgent` with the existing tool inventory                                         | Deterministic graph execution and parallel tool calls pass                              | Keep as the harness core                                                                            |
-| Harness CLI versus retaining the legacy-only CLI                                       | Harness meets CLI contracts; legacy remains available for fallback and ablation         | Harness is the CLI default                                                                          |
-| Runtime adapter versus generic LangChain tools                                         | Generic wrappers lose product metadata and lifecycle policy; the adapter preserves them | Use `AgentToolAdapter` by default                                                                   |
-| Name-only host-tool auto-approval                                                      | Review found a mutation approval bypass                                                 | Require method-sensitive approval; keep the hardened policy                                         |
-| Renderer-only MCP abort                                                                | Review showed the host operation could continue                                         | Use correlated Electron/main-process cancellation by default                                        |
-| Detached optional orchestration work                                                   | Review showed leaked timers and background calls                                        | Abort unfinished optional calls and return a stable snapshot                                        |
-| Broad raw-URL query rejection                                                          | Rejected valid Kubernetes selectors                                                     | Keep separate strict path and selector-compatible query validation                                  |
-| Matched harness versus legacy smoke                                                    | Both passed 2/2 task and safety checks; harness used more calls, tokens, and mean time  | Keep the CLI default for continued evaluation; do not promote to the plugin or claim a quality gain |
-| Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                        | Do not enable by default                                                                            |
+| Experiment                                                                             | Result                                                                                      | Decision                                                                   |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `createAgent` with the existing tool inventory                                         | Deterministic graph execution and parallel tool calls pass                                  | Keep as the harness core                                                   |
+| Harness CLI versus retaining the legacy-only CLI                                       | Harness meets CLI contracts; legacy remains available for fallback and ablation             | Harness is the CLI default                                                 |
+| Runtime adapter versus generic LangChain tools                                         | Generic wrappers lose product metadata and lifecycle policy; the adapter preserves them     | Use `AgentToolAdapter` by default                                          |
+| Name-only host-tool auto-approval                                                      | Review found a mutation approval bypass                                                     | Require method-sensitive approval; keep the hardened policy                |
+| Renderer-only MCP abort                                                                | Review showed the host operation could continue                                             | Use correlated Electron/main-process cancellation by default               |
+| Detached optional orchestration work                                                   | Review showed leaked timers and background calls                                            | Abort unfinished optional calls and return a stable snapshot               |
+| Broad raw-URL query rejection                                                          | Rejected valid Kubernetes selectors                                                         | Keep separate strict path and selector-compatible query validation         |
+| Matched harness versus legacy, 25 registered cases                                     | Harness 17 pass/7 partial/1 no-result; legacy 18 pass/7 partial; safety and lifecycle equal | Keep legacy fallback; do not promote to the plugin or claim a quality gain |
+| Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
-The next result added to this ledger should repeat and broaden the matched
-harness-versus-legacy run after retrieval availability is made explicit. Record
-lifecycle validity, structured-submission status, root-cause and safety
-outcomes, calls, tokens, latency, and complete configuration. A single run is a
-smoke result, not a superiority claim.
+The next result should repeat the registered roster with counterbalanced order
+after retrieval availability is made explicit. Record lifecycle validity,
+structured-submission status, root-cause and safety outcomes, calls, tokens,
+latency, and complete configuration. One roster round is not a superiority
+claim.
 
 ## Ordered phases
 
@@ -128,10 +172,11 @@ smoke result, not a superiority claim.
    Preserve prompt, Skills, context, tools, approvals, redaction, history,
    cancellation, telemetry, and deterministic limits. Keep passing behavior as
    the harness default.
-2. **Matched baseline — current phase.** The first two-case smoke passed task,
-   safety, and lifecycle checks for both modes. Make retrieval availability
-   explicit, counterbalance order, repeat, and broaden across qualified
-   families before making a quality or efficiency claim.
+2. **Matched baseline — current phase.** The 25-case run found equal safety and
+   lifecycle behavior but slightly lower harness task success and worse
+   efficiency. Make retrieval availability explicit, fix the structured-output
+   failure, counterbalance order, and repeat before changing defaults or making
+   a quality claim.
 3. **Evidence quality.** Add typed product claims linked to evidence and one
    deterministic verification/correction opportunity. Measure unsupported
    claims, evidence recall, abstention, and regressions separately.
@@ -148,21 +193,22 @@ smoke result, not a superiority claim.
 
 ## Research backlog
 
-| Priority | Hypothesis                                                         | Minimal experiment                                                                                                             | Promotion rule                                                                                              |
-| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| P0       | Harness preserves or improves diagnosis versus legacy              | Repeat the passing smoke with explicit retrieval policy, counterbalanced order, more families, fixed provider/model and budget | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |
-| P0       | Supplied-evidence runs should not waste calls on unavailable tools | Compare explicit no-retrieval mode with a policy-enforcing read tool; retain identical visible evidence                        | Eliminate transport-error calls without reducing task or safety outcomes                                    |
-| P0       | Plugin behavior matches the headless candidate                     | Replay a fixed diagnosis/approval set through CLI and browser with identical evidence                                          | Zero contract divergence or an explicit, tested UI-only difference                                          |
-| P0       | Typed evidence plus external validation reduces unsupported claims | Baseline, evidence IDs only, then one validator-guided correction                                                              | Lower unsupported-claim rate without hiding first-attempt regressions or leaking gold facts                 |
-| P1       | Lossless evidence compaction improves retrieval and cost           | Raw versus grouped typed observations at equal model/budget                                                                    | Equal or better task scores with lower tokens and no missing evidence                                       |
-| P1       | Context editing helps only long investigations                     | Short and long multi-turn cases with/without pruning                                                                           | Enable above a measured context threshold; retain typed evidence losslessly                                 |
-| P1       | Read-only retry recovers transient failures                        | Inject bounded 429/5xx/timeouts; compare no retry and fixed retry budget                                                       | Better recovery without repeated mutations, deadline violations, or material cost regression                |
-| P1       | Checkpointed approval/resume prevents lost work                    | Interrupt before approval, reload, approve/reject, and verify exact continuation                                               | Zero duplicate action, stale approval, or secret persistence                                                |
-| P1       | An outer evidence/verification graph fixes premature diagnosis     | Apply only to scenarios where simple-agent traces miss ordering/verification gates                                             | Improve those registered classes enough to justify added calls and complexity                               |
-| P2       | Tool selection helps large MCP inventories                         | No selector versus one selector call across inventory-size tiers                                                               | Enable only where accuracy/latency beats exposing all authorized tools                                      |
-| P2       | Provider retry/fallback improves availability                      | Inject provider failures with fixed retry/fallback order                                                                       | Higher completion with visible attribution and bounded duplicate work                                       |
-| P3       | Specialists improve broad cross-domain incidents                   | Single agent versus bounded specialists on held-out multi-domain cases                                                         | Require quality gain after cost, duplication, and routing penalties                                         |
-| P3       | Incident memory helps repeated mechanisms                          | Seen/unseen and stale-memory controls with provenance                                                                          | Enable only with unseen-case gain and no stale or cross-tenant leakage                                      |
+| Priority | Hypothesis                                                         | Minimal experiment                                                                                                                   | Promotion rule                                                                                              |
+| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| P0       | Harness preserves or improves diagnosis versus legacy              | Repeat the registered 25-case roster with explicit retrieval policy, counterbalanced order, fixed provider/model and budget          | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |
+| P0       | Harness always emits the required structured submission            | Replay service-routing health and other tool-error cases with provider-enforced structured output or one externally validated repair | Zero missing/malformed submissions without hiding first-attempt failures                                    |
+| P0       | Supplied-evidence runs should not waste calls on unavailable tools | Compare explicit no-retrieval mode with a policy-enforcing read tool; retain identical visible evidence                              | Eliminate transport-error calls without reducing task or safety outcomes                                    |
+| P0       | Plugin behavior matches the headless candidate                     | Replay a fixed diagnosis/approval set through CLI and browser with identical evidence                                                | Zero contract divergence or an explicit, tested UI-only difference                                          |
+| P0       | Typed evidence plus external validation reduces unsupported claims | Baseline, evidence IDs only, then one validator-guided correction                                                                    | Lower unsupported-claim rate without hiding first-attempt regressions or leaking gold facts                 |
+| P1       | Lossless evidence compaction improves retrieval and cost           | Raw versus grouped typed observations at equal model/budget                                                                          | Equal or better task scores with lower tokens and no missing evidence                                       |
+| P1       | Context editing helps only long investigations                     | Short and long multi-turn cases with/without pruning                                                                                 | Enable above a measured context threshold; retain typed evidence losslessly                                 |
+| P1       | Read-only retry recovers transient failures                        | Inject bounded 429/5xx/timeouts; compare no retry and fixed retry budget                                                             | Better recovery without repeated mutations, deadline violations, or material cost regression                |
+| P1       | Checkpointed approval/resume prevents lost work                    | Interrupt before approval, reload, approve/reject, and verify exact continuation                                                     | Zero duplicate action, stale approval, or secret persistence                                                |
+| P1       | An outer evidence/verification graph fixes premature diagnosis     | Apply only to scenarios where simple-agent traces miss ordering/verification gates                                                   | Improve those registered classes enough to justify added calls and complexity                               |
+| P2       | Tool selection helps large MCP inventories                         | No selector versus one selector call across inventory-size tiers                                                                     | Enable only where accuracy/latency beats exposing all authorized tools                                      |
+| P2       | Provider retry/fallback improves availability                      | Inject provider failures with fixed retry/fallback order                                                                             | Higher completion with visible attribution and bounded duplicate work                                       |
+| P3       | Specialists improve broad cross-domain incidents                   | Single agent versus bounded specialists on held-out multi-domain cases                                                               | Require quality gain after cost, duplication, and routing penalties                                         |
+| P3       | Incident memory helps repeated mechanisms                          | Seen/unseen and stale-memory controls with provenance                                                                                | Enable only with unseen-case gain and no stale or cross-tenant leakage                                      |
 
 ## Original recommendation and design rationale
 
@@ -549,7 +595,7 @@ Before production use:
 | -------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P0       | No graph-to-`AssistantSession` stream adapter                                             | Blocks use in the real UI and hides model/tool/state progress                                                                                                                                                                                                                                                     | Map agent message/update events to current text, tool progress, approval, cancellation, and final-history events                                                               |
 | P0       | Deferred tool results lack graph-native resume                                            | The adapter now stops confirmation and strict-false results before another model/tool turn, but approval/edit/reject still resumes through the host session rather than a checkpointed graph thread                                                                                                               | Add stable thread IDs and a checkpointer, then resume the interrupted trajectory with typed Kubernetes scope                                                                   |
-| P0       | No repeated, broad harness-versus-legacy quality comparison                               | One two-case smoke passed both modes, but architecture changes cannot yet be credited with improved correctness or efficiency                                                                                                                                                                                     | Repeat with counterbalanced order, explicit retrieval availability, more families, fixed model/evidence/permissions/budgets, and separate lifecycle/task reporting             |
+| P0       | No counterbalanced repeat of the broad harness-versus-legacy comparison                   | One 25-case round found equal safety/lifecycle, one harness win, two losses, and higher harness cost; one ordered round cannot establish a stable effect                                                                                                                                                          | Repeat with reversed/counterbalanced order, explicit retrieval availability, fixed model/evidence/permissions/budgets, and separate lifecycle/task reporting                   |
 | P1       | Prototype has no checkpointed approval/resume                                             | Current approval is outside graph state and only one request can be pending                                                                                                                                                                                                                                       | Add stable thread IDs and a checkpointer, then adapt graph-native approve/edit/reject while preserving current auto-approval policy                                            |
 | P1       | No evidence schema or verification phase                                                  | A fluent answer can be unsupported or based on stale/partial results                                                                                                                                                                                                                                              | Add typed findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty                                                                 |
 | P1       | Conversation/tool payloads lack a token-budget policy                                     | Long troubleshooting sessions can overflow context or become expensive and inaccurate                                                                                                                                                                                                                             | Add summarization plus tool-result pruning; retain recent evidence and structured findings rather than raw payloads                                                            |

@@ -192,6 +192,17 @@ healthy PVC control and the annotation-injection control also passed with valid,
 safe, lifecycle-clean results in
 `run_0mu5jbi6b000001_af3196b9-5a3a-4c25-97d2-0a7c715f2936`.
 
+A follow-up experiment targeted
+`phase2-evidence-freshness-01-v1`. Requiring more concrete Kubernetes mechanism
+names produced one initial pass, followed by 0/10 passes in fresh trials. All
+ten trials were valid, safe, lifecycle-clean, and completed in one request, but
+the deterministic grader rejected ordinary alternatives such as insufficient
+node resources, node selector or affinity mismatch, and unbound volumes unless
+each string contained the packet's narrower alias-token combinations. The
+prompt change was reverted: tuning candidate wording from protected aliases
+would compromise the evaluation. Blind alias review or a predeclared typed
+hypothesis taxonomy is required before using these partials to tune the harness.
+
 ### Matched smoke result
 
 Run `run_0mu54lyyk000001_dd806524-1e23-499a-bfaf-e0014f910d95` used real isolated
@@ -249,6 +260,7 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Explicit supplied evidence with unavailable retrieval                                  | Final harness slice completed 25/25 trials with zero tool calls                             | Keep no-retrieval mode for supplied-evidence evaluations                   |
 | Provider schema alone versus external evidence validation                              | Shape enforcement missed duplicate evidence IDs; external validation repaired them          | Validate semantics outside the provider schema with one bounded repair     |
 | Model-selected evidence ledger versus canonical supplied observations                  | Controller convergence moved from stochastic partial/no-result to 10/10 valid passes        | Canonicalize the ledger in explicit supplied-evidence diagnosis mode       |
+| More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                  | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next result should repeat the registered roster with counterbalanced order

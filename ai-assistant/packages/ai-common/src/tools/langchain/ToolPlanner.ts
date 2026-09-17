@@ -116,6 +116,15 @@ export interface RecommendedTool {
   priority: 'high' | 'medium' | 'low';
   /** Explanation of why this tool was selected. */
   reason: string;
+  /**
+   * Whether the assistant must wait for this tool before responding.
+   * Defaults to `true` so existing recommendations that predate this field
+   * keep the original "wait for everything" behavior. Set to `false` for
+   * supplementary tools (e.g. extra logs/metrics) whose data is nice to have
+   * but not required to answer the user's question, so a slow optional tool
+   * never holds up a response another, faster tool has already answered.
+   */
+  required?: boolean;
 }
 
 /** The full tool orchestration recommendation for a user request. */
@@ -161,6 +170,14 @@ const ToolRecommendationSchema = z.object({
             .enum(['high', 'medium', 'low'])
             .default('medium')
             .describe('Execution priority - high priority tools run first'),
+          required: z
+            .boolean()
+            .default(true)
+            .describe(
+              'Whether the assistant must wait for this tool before responding. Set to ' +
+                'false for supplementary/best-effort tools whose data is not required to ' +
+                "answer the user's question."
+            ),
           reason: z.string().describe('Why this tool is needed to answer the user question'),
         })
         .transform(tool => ({
@@ -262,6 +279,11 @@ DECISION LOGIC:
 - Are there dependencies? If tool B needs output from tool A, note this in priority
 - Does the user need complete information? If yes, recommend complementary tools
 - Are there failure cases? Include tools that help diagnose problems
+- Is this tool essential to answer the question, or just supplementary? Mark supplementary
+  tools (e.g. extra logs/metrics/traces alongside a core status check) as "required": false
+  so a slow optional tool never delays the response once the essential tools have answered
+  the question. Only mark "required": false when the answer is still useful without this
+  tool's data.
 
 RESPONSE FORMAT:
 Return a JSON object with EXACTLY this structure:
@@ -273,13 +295,14 @@ Return a JSON object with EXACTLY this structure:
       "description": "What this tool does",
       "arguments": { "key": "value" },
       "priority": "high|medium|low",
+      "required": true,
       "reason": "Why this tool is needed"
     }
   ],
   "shouldExecuteAll": true
 }
 
-IMPORTANT: Use "name" (not "tool_name") for the tool field. Each tool object must have: name, description, arguments (as object), priority, and reason.`;
+IMPORTANT: Use "name" (not "tool_name") for the tool field. Each tool object must have: name, description, arguments (as object), priority, required, and reason.`;
 
     const userPrompt = `User request: "${userMessage}"
 

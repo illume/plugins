@@ -9,7 +9,7 @@ import {
   type HeadlampObservabilityRecord,
 } from './headlampObservability.js';
 import type { LiveObservabilityCandidateInput } from '../runner/observabilityEvaluation.js';
-import { CompactEvidence } from './compactEvidence.js';
+import { CompactEvidence, objectFieldEvidence } from './compactEvidence.js';
 import { FACT_SELECTION_SCHEMA } from './compactEvidence.js';
 import { assertValid } from '../contracts/validate.js';
 import {
@@ -144,6 +144,72 @@ test('compact evidence preserves all facts and resolves only explicit selections
       .cause_facts[0].observed_value,
     'target'
   );
+});
+
+test('object fields preserve source identity, duplicate paths, escaped keys, and explicit selection', () => {
+  const source = [
+    ['/value/0/name', 'system'],
+    ['/value/1/name', 'target'],
+    ['/value/1/properties/maxCount', '1'],
+    ['/value/1/properties/maxCount', '2'],
+    ['/value/1/properties/a~1b~0c', 'quoted "value"'],
+    ['/value/1/effectiveSecurityRules/0/name', 'deny'],
+    ['/value/1/effectiveSecurityRules/0', 'rule-root'],
+    ['/pods/items/0/metadata/name', 'workload'],
+    ['/__proto__', 'literal'],
+    ['', 'root'],
+  ].map(([field_path, value]) => ({
+    evidence_id: 'read-one',
+    resource_ref: 'tool/source',
+    field_path: field_path!,
+    value: value!,
+  }));
+  source.push({ ...source[2]!, resource_ref: 'tool/other', value: '3' });
+  source.push({ ...source[2]!, evidence_id: 'other-evidence', value: '4' });
+  const evidence = new CompactEvidence('numeric', 'object');
+  const original = evidence.add(source);
+  const saved = structuredClone(original);
+  const fields = objectFieldEvidence(original);
+  assert.deepEqual(original, saved);
+  const reconstructed = fields.records.flatMap(record =>
+    Object.entries(record.fields).flatMap(([relativePath, entries]) =>
+      entries.map(([reference, value]) => ({
+        reference,
+        evidence_id: record.evidence_id,
+        resource_ref: record.resource,
+        field_path: `${record.object_path}${relativePath}`,
+        value,
+      }))
+    )
+  );
+  assert.deepEqual(
+    reconstructed.sort(
+      (left, right) =>
+        Number(left.reference!.split('f')[1]) - Number(right.reference!.split('f')[1])
+    ),
+    source.map((observation, index) => ({ reference: `r1.f${index + 1}`, ...observation }))
+  );
+  assert.deepEqual(fields.records[1]!.fields['/properties/maxCount'], [
+    ['r1.f3', '1'],
+    ['r1.f4', '2'],
+  ]);
+  const selection = JSON.stringify({
+    schema_version: 'fact_selection@1.0.0',
+    fact_refs: ['r1.f3'],
+    alternative_dispositions: [],
+    uncertainty: { is_uncertain: false },
+    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+  });
+  fields.records[1]!.fields['/properties/maxCount']![0]![1] = 'tampered';
+  evidence.add(source.map(observation => ({ ...observation, value: 'later-read' })));
+  assert.deepEqual(JSON.parse(evidence.resolve(selection)).cause_facts, [
+    {
+      resource_ref: 'tool/source',
+      field_path: '/value/1/properties/maxCount',
+      observed_value: '1',
+    },
+  ]);
+  assert.throws(() => objectFieldEvidence(new CompactEvidence().add(source)), /object grouping/);
 });
 
 const input: LiveObservabilityCandidateInput = {
@@ -426,8 +492,12 @@ test('strict final output rejects unsupported configurations before model creati
 });
 
 for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
-  for (const evidenceGrouping of ['read', 'object'] as const) {
-    test(`default strict selection reaches Azure with ${referenceStyle} references and ${evidenceGrouping} grouping`, async context => {
+  for (const [evidenceGrouping, evidenceLayout] of [
+    ['read', 'rows'],
+    ['object', 'rows'],
+    ['object', 'fields'],
+  ] as const) {
+    test(`default strict selection reaches Azure with ${referenceStyle} references and ${evidenceGrouping}/${evidenceLayout}`, async context => {
       const requests: Array<Record<string, any>> = [];
       context.mock.method(
         globalThis,
@@ -490,8 +560,10 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         },
         ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
         evidenceGrouping,
+        ...(evidenceLayout === 'fields' ? { evidenceLayout } : {}),
         record: value => {
           assert.equal(value.status, 'completed');
+          assert.equal(value.evidenceLayout, evidenceLayout);
           assert.equal(value.error, null);
           assert.ok(value.resolvedSubmission);
           assert.equal(
@@ -541,6 +613,13 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
       assert.equal(
         JSON.stringify(requests[1]?.messages).includes('object_path'),
         evidenceGrouping === 'object'
+      );
+      assert.equal(
+        requests[1]?.messages
+          .map((message: any) => message.content)
+          .join('\n')
+          .includes('"fields":'),
+        evidenceLayout === 'fields'
       );
       assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
         { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
@@ -1190,6 +1269,20 @@ test('guidance is independent of grouping and has no incident-specific values', 
   assert.ok(!guided.includes('10.240.1.4'));
   assert.ok(!guided.includes('maxCount=1'));
   assert.ok(!plain.includes('AKS diagnostic procedure'));
+  for (const overrides of [
+    { evidenceGrouping: 'read' as const },
+    { evidenceGrouping: 'object' as const, evidenceMode: 'full' as const },
+  ]) {
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {},
+        evidenceLayout: 'fields',
+        ...overrides,
+      }),
+      /Field layout requires/
+    );
+  }
   await assert.rejects(
     createHeadlampObservabilityCandidate({
       provider: 'azure',

@@ -8,6 +8,30 @@ type Observation = Awaited<
 
 export type FactReferenceStyle = 'numeric' | 'field-labelled';
 export type EvidenceGrouping = 'read' | 'object';
+export type EvidenceLayout = 'rows' | 'fields';
+
+export function objectFieldEvidence(evidence: ReturnType<CompactEvidence['add']>) {
+  return {
+    columns: ['reference', 'observed_value'],
+    records: evidence.records.map(({ facts, ...record }) => {
+      assert.equal(typeof record.object_path, 'string', 'Field layout requires object grouping');
+      const prefix = record.object_path!;
+      const fields = new Map<string, string[][]>();
+      for (const [reference, pointer, value] of facts) {
+        assert.ok(reference !== undefined && pointer !== undefined && value !== undefined);
+        assert.ok(
+          pointer === prefix || pointer.startsWith(`${prefix}/`),
+          'Field path must belong to its object'
+        );
+        const relativePath = pointer.slice(prefix.length);
+        const entries = fields.get(relativePath) ?? [];
+        entries.push([reference, value]);
+        fields.set(relativePath, entries);
+      }
+      return { ...record, fields: Object.fromEntries(fields) };
+    }),
+  };
+}
 
 function objectPath(pointer: string): string {
   const rule = pointer.match(/^\/value\/\d+\/effectiveSecurityRules\/\d+(?=\/|$)/);

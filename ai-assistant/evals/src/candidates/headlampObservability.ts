@@ -9,9 +9,11 @@ import { extractJsonBlock } from './headlampCli.js';
 import { loadSchema } from '../contracts/schemas.js';
 import {
   CompactEvidence,
+  objectFieldEvidence,
   FACT_SELECTION_SCHEMA,
   type FactReferenceStyle,
   type EvidenceGrouping,
+  type EvidenceLayout,
 } from './compactEvidence.js';
 
 export type EvidenceMode = 'full' | 'compact' | 'compact-select';
@@ -31,6 +33,7 @@ export interface HeadlampObservabilityOptions {
   referenceStyle?: FactReferenceStyle;
   strictFinalOutput?: boolean;
   evidenceGrouping?: EvidenceGrouping;
+  evidenceLayout?: EvidenceLayout;
   diagnosticGuidance?: DiagnosticGuidance;
   finalResponseMaxOutputTokens?: number;
   finalResponseTimeoutMs?: number;
@@ -47,6 +50,7 @@ export interface HeadlampObservabilityRecord {
   referenceStyle: FactReferenceStyle;
   strictFinalOutput: boolean;
   evidenceGrouping: EvidenceGrouping;
+  evidenceLayout: EvidenceLayout;
   diagnosticGuidance: DiagnosticGuidance;
   finalResponseMaxOutputTokens: number | null;
   finalResponseTimeoutMs: number | null;
@@ -112,7 +116,13 @@ export async function createHeadlampObservabilityCandidate(
     options.evidenceMode ?? (supportsStrictOutput ? 'compact-select' : 'compact');
   const referenceStyle = options.referenceStyle ?? 'numeric';
   const evidenceGrouping = options.evidenceGrouping ?? 'read';
+  const evidenceLayout = options.evidenceLayout ?? 'rows';
   const diagnosticGuidance = options.diagnosticGuidance ?? 'none';
+  assert.ok(['rows', 'fields'].includes(evidenceLayout), 'Unknown evidence layout');
+  assert.ok(
+    evidenceLayout !== 'fields' || (evidenceGrouping === 'object' && evidenceMode !== 'full'),
+    'Field layout requires object grouping and compact evidence'
+  );
   assert.ok(
     evidenceGrouping !== 'object' || evidenceMode !== 'full',
     'Object grouping requires compact evidence'
@@ -183,6 +193,7 @@ export async function createHeadlampObservabilityCandidate(
       referenceStyle,
       strictFinalOutput,
       evidenceGrouping,
+      evidenceLayout,
       diagnosticGuidance,
       finalResponseMaxOutputTokens,
       finalResponseTimeoutMs,
@@ -252,7 +263,10 @@ export async function createHeadlampObservabilityCandidate(
                     ? output
                     : {
                         empty_containers: emptyContainers(output.data),
-                        evidence: evidence.add(output.observations),
+                        evidence:
+                          evidenceLayout === 'fields'
+                            ? objectFieldEvidence(evidence.add(output.observations))
+                            : evidence.add(output.observations),
                       };
                 const serialized = JSON.stringify(payload);
                 toolPayloadCharacters += serialized.length;

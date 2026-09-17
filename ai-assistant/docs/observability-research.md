@@ -330,6 +330,35 @@ identity-preservation checks, retaining the missing-name, wrong-pool, and clean
 abstention counterexamples. Do not add tool calls for facts already retrieved or
 rerun this comparison merely to find a timeout or a pass.
 
+### Object-Relative Field Layout: Offline Verification
+
+The next hypothesis is that object-relative field keys make identity and settings
+easier to connect than repeated full-path rows. Added opt-in
+`evidenceLayout: 'fields'`, requiring object grouping; defaults remain read grouping
+and row layout. The renderer changes presentation only: relative keys map to lists
+of `[reference, observed_value]` tuples, including duplicate paths. The unchanged
+resolver still accepts only explicit references, never auto-adding pool identity
+or any other oracle fact.
+
+Offline tests reconstruct full source tuples across resources, evidence IDs,
+repeated reads, nested NSG rules, root values, escaped keys, and duplicate paths.
+Actual mocked Azure synthesis requests verify both numeric and labelled references
+and unchanged selection resolution. All **386 eval tests**, formatting, and
+typechecks passed, including 35 focused candidate tests. All seven retained
+packets also reconstruct exactly. Object-row versus field-view serialized evidence
+sizes are 70,627 versus 54,105 characters for NSG and 38,628 versus 32,971 for
+capacity; these are not whole-request token or accuracy measurements.
+
+The prospective plan declares 27 fresh GPT-4o sessions: read rows, object rows,
+and object fields, with two attempts per incident and one per each of five
+existing controls. Arm positions rotate evenly. Guidance and final token/deadline
+limits remain unset; prompts, raw packets, graders, and 12-fact/eight-read budgets
+stay fixed under a 120-second outer deadline. Object rows isolate the layout change
+from grouping. The promotion gate requires all four incident and all five control
+assignments to pass for fields, no format/transport failures, and more causal
+passes than both comparison arms. Otherwise the layout stays opt-in. No score
+retry, rubric change, or oracle expansion is permitted.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

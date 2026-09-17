@@ -261,6 +261,15 @@ both effective settings. The [27-assignment report](../../docs/observability-obj
 found no diagnosis improvement and retained six deadline failures; neither option
 was promoted.
 
+`evidenceLayout: 'fields'` is a separate opt-in presentation experiment requiring
+object grouping and compact evidence. The default is `'rows'`; the record hook
+retains the effective layout. Each object's `fields` map uses relative JSON-pointer
+keys and arrays of `[reference, observed_value]` tuples. Append the relative key
+to `object_path` to recover the original full path. Empty relative keys represent
+the object itself; repeated paths retain separate references and values. Read,
+resource, and evidence boundaries remain distinct. No paths are unescaped,
+observations filtered, identity fields auto-selected, or resolver behavior changed.
+
 `gradeObservabilityCausality` is a separate prospective evaluator for explicit
 required/supporting fact alternatives and healthy/insufficient dispositions.
 It is not used to regrade prior runs or compute domain causal truth. Its contract

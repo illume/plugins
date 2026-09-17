@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
 import { execFileSync } from 'child_process';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
@@ -59,6 +61,7 @@ export function detectKubectlContext(
  * @param skillSources  Git URLs for skill sources (e.g. https://github.com/microsoft/azure-skills).
  * @param mockSkills    When true, inject a built-in mock skill set (no network needed).
  * @param mockTools     When true, inject mock Kubernetes tool results (no cluster needed).
+ * @param model         Optional deterministic model override, used by tests.
  */
 export async function createManager(
   providerId: string,
@@ -69,15 +72,22 @@ export async function createManager(
     mockSkills?: boolean;
     mockTools?: boolean;
     telemetryObserver?: AssistantTelemetryObserver;
+    legacySession?: boolean;
+    model?: BaseChatModel;
   } = {}
 ): Promise<LangChainAssistantSession> {
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const manager = new LangChainAssistantSession(
+  const Session = options.legacySession ? LangChainAssistantSession : AgentHarnessSession;
+  const manager = new Session(
     providerId,
     config,
     [],
-    toolManager || options.telemetryObserver
-      ? { toolManager, telemetryObserver: options.telemetryObserver }
+    toolManager || options.telemetryObserver || options.model
+      ? {
+          toolManager,
+          telemetryObserver: options.telemetryObserver,
+          model: options.model,
+        }
       : undefined
   );
   const kubectlContext = options.mockTools ? undefined : detectKubectlContext();

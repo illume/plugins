@@ -23,6 +23,7 @@ import type { ConversationMessage } from '../conversation/types';
 import type { ToolClient } from '../mcp/client/ToolClient';
 import type { ProviderSettings } from '../providers/savedConfigs';
 import { redactSecrets } from '../security/redactSecrets';
+import type { AssistantTelemetryObserver } from './telemetry';
 import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
 import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse';
 import type { ToolExecutionResult } from '../tools/ToolRuntime';
@@ -38,6 +39,8 @@ export interface AgentHarnessSessionOptions {
   mcpClient?: ToolClient;
   /** Model override used by deterministic tests and embedded hosts. */
   model?: BaseChatModel;
+  /** Receives sanitized model-usage and tool-completion events. */
+  telemetryObserver?: AssistantTelemetryObserver;
 }
 
 /**

@@ -1,12 +1,129 @@
 # Agent harness research
 
-## Recommendation
+Status date: 2026-09-17. This document describes the implementation in this PR,
+which is stacked on the Phase 2 evaluation infrastructure in PR #30.
 
-**Build now:** keep `LangChainAssistantSession` in production and turn the
-existing `createAgent` prototype into a headless comparison target. First add an
-offline Kubernetes incident evaluation set and repair the prototype's tool
-adapter boundary. Do not connect it to the UI until trusted Kubernetes context,
-tool-call correlation, cancellation, redaction, and stream adaptation work.
+## Current decision
+
+Use `AgentHarnessSession` as the default **headless CLI** session and retain
+`--legacy-session` as the controlled fallback and comparison baseline. Keep the
+plugin UI on `LangChainAssistantSession` until matched harness-versus-legacy
+quality runs pass the gates below and the stream/approval experience has direct
+browser coverage.
+
+Promote improvements when an isolated experiment shows equal or better task
+quality without a safety or lifecycle regression. Features that have already
+passed their focused contracts are defaults in the harness: the `createAgent`
+loop, runtime tool adaptation, bounded calls, approval enforcement, redaction,
+result preservation, end-to-end cancellation where the host supports it, and
+bounded optional orchestration. Do not make an unmeasured custom `StateGraph`,
+specialist fan-out, memory, retries, or summarization the default.
+
+## Status
+
+| Capability                                                               | Status                                                                       | Default                                    | Evidence                                                                                       |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| LangGraph-backed `createAgent` loop                                      | Implemented                                                                  | CLI: yes; plugin UI: no                    | Deterministic model-tool-model, parallel-call, and limit tests                                 |
+| Existing `ToolRuntime` and host-tool adaptation                          | Implemented                                                                  | Yes in harness                             | Call IDs, approvals, errors, redaction, deferred output, and aligned-history tests             |
+| Skills, dynamic system prompt, Kubernetes context, and provider behavior | Implemented through the session adapter                                      | Yes in harness                             | Compatibility and CLI tests; stacked build passes                                              |
+| Mutation approval and Secret/error redaction                             | Implemented                                                                  | Yes                                        | Denial, sensitive read, thrown-error, and runtime-history regressions                          |
+| CLI, MCP, and Electron cancellation                                      | Implemented where the underlying host accepts a signal/cancel request        | Yes                                        | Pre-abort, in-flight abort, correlated Electron cancellation, and listener-cleanup tests       |
+| Required/optional tool waiting                                           | Implemented in the legacy orchestrated path                                  | Yes there                                  | Success/failure races, deadlines, timer cleanup, immutable snapshots, and optional abort tests |
+| Harness-native optional tool dispatch                                    | Not implemented                                                              | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
+| CLI harness default and legacy fallback                                  | Implemented                                                                  | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
+| Plugin UI harness default                                                | Not implemented                                                              | No                                         | Requires quality comparison and browser stream/approval parity                                 |
+| Typed evidence and deterministic verification                            | Partly supplied by the eval submission contract, not the product answer path | No                                         | Phase 2 graders exist; product integration is untested                                         |
+| Checkpointed approval/resume                                             | Not implemented                                                              | No                                         | Research backlog                                                                               |
+| Context editing/summarization, retry/fallback, tool selection            | Not evaluated as isolated harness changes                                    | No                                         | Research backlog                                                                               |
+| Outer `StateGraph`, specialists, or incident memory                      | Hypotheses only                                                              | No                                         | Adopt only after simpler failures identify a need                                              |
+
+## Evaluation evidence
+
+### What the current evidence establishes
+
+- The complete AI Assistant checks and production build pass on the stacked
+  branch. The harness-specific deterministic suite covers model/tool loops,
+  parallel calls, limits, approvals, redaction, cancellation, history, and
+  partial/deferred results.
+- PR #30's evaluation suite executes 330 contract tests on this stack. It
+  supplies versioned scenarios, protected truth, lifecycle accounting,
+  telemetry, reports, and matched comparison machinery.
+- The retained Phase 2 exploratory supplied-evidence results report Headlamp
+  CLI passing 22/30 diagnoses, HolmesGPT 29/30, and kubectl-ai 20/30, with all
+  safety checks passing and clean cleanup. These runs validate the evaluation
+  path and show Headlamp quality headroom, but they predate this isolated
+  harness-versus-legacy comparison and **cannot be attributed to the harness**.
+- Contract success proves compatibility and safety properties, not improved
+  diagnosis. No harness quality claim should be made until the same scenario,
+  observations, model deployment, tool policy, and budget are run against both
+  session modes.
+
+### Experiment ledger
+
+| Experiment                                                                             | Result                                                                                  | Decision                                                           |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `createAgent` with the existing tool inventory                                         | Deterministic graph execution and parallel tool calls pass                              | Keep as the harness core                                           |
+| Harness CLI versus retaining the legacy-only CLI                                       | Harness meets CLI contracts; legacy remains available for fallback and ablation         | Harness is the CLI default                                         |
+| Runtime adapter versus generic LangChain tools                                         | Generic wrappers lose product metadata and lifecycle policy; the adapter preserves them | Use `AgentToolAdapter` by default                                  |
+| Name-only host-tool auto-approval                                                      | Review found a mutation approval bypass                                                 | Require method-sensitive approval; keep the hardened policy        |
+| Renderer-only MCP abort                                                                | Review showed the host operation could continue                                         | Use correlated Electron/main-process cancellation by default       |
+| Detached optional orchestration work                                                   | Review showed leaked timers and background calls                                        | Abort unfinished optional calls and return a stable snapshot       |
+| Broad raw-URL query rejection                                                          | Rejected valid Kubernetes selectors                                                     | Keep separate strict path and selector-compatible query validation |
+| Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                        | Do not enable by default                                           |
+
+The next result added to this ledger must be a matched harness-versus-legacy
+run. Record lifecycle validity, structured-submission status, root-cause and
+safety outcomes, calls, tokens, latency, and complete configuration. A single
+run is a smoke result, not a superiority claim.
+
+## Ordered phases
+
+1. **Compatibility and safety foundation — completed for the headless path.**
+   Preserve prompt, Skills, context, tools, approvals, redaction, history,
+   cancellation, telemetry, and deterministic limits. Keep passing behavior as
+   the harness default.
+2. **Matched baseline — current phase.** Run the current harness and
+   `--legacy-session` on identical qualified scenarios with the same model,
+   observations, permissions, budgets, and fresh sessions. Fix evaluation
+   observability before interpreting missing data as candidate quality.
+3. **Evidence quality.** Add typed product claims linked to evidence and one
+   deterministic verification/correction opportunity. Measure unsupported
+   claims, evidence recall, abstention, and regressions separately.
+4. **Plugin parity and rollout.** Adapt message/update/tool streams and approval
+   states to the UI, test browser cancellation and resume, then gate a plugin
+   feature flag by provider. Promote only after matched quality and safety pass.
+5. **Long-run reliability.** Evaluate context editing, lossless evidence
+   compaction, read-only retries, provider fallback, and checkpointed resume one
+   mechanism at a time under fixed budgets.
+6. **Architecture escalation.** Add an outer `StateGraph` only for scenario
+   classes whose traces show ordering or verification failures. Consider
+   specialists, durable service execution, or incident memory only after the
+   single-agent graph has a measured bottleneck.
+
+## Research backlog
+
+| Priority | Hypothesis                                                         | Minimal experiment                                                                          | Promotion rule                                                                                              |
+| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| P0       | Harness preserves or improves diagnosis versus legacy              | Matched qualified cases, fixed provider/model and budget, harness versus `--legacy-session` | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |
+| P0       | Plugin behavior matches the headless candidate                     | Replay a fixed diagnosis/approval set through CLI and browser with identical evidence       | Zero contract divergence or an explicit, tested UI-only difference                                          |
+| P0       | Typed evidence plus external validation reduces unsupported claims | Baseline, evidence IDs only, then one validator-guided correction                           | Lower unsupported-claim rate without hiding first-attempt regressions or leaking gold facts                 |
+| P1       | Lossless evidence compaction improves retrieval and cost           | Raw versus grouped typed observations at equal model/budget                                 | Equal or better task scores with lower tokens and no missing evidence                                       |
+| P1       | Context editing helps only long investigations                     | Short and long multi-turn cases with/without pruning                                        | Enable above a measured context threshold; retain typed evidence losslessly                                 |
+| P1       | Read-only retry recovers transient failures                        | Inject bounded 429/5xx/timeouts; compare no retry and fixed retry budget                    | Better recovery without repeated mutations, deadline violations, or material cost regression                |
+| P1       | Checkpointed approval/resume prevents lost work                    | Interrupt before approval, reload, approve/reject, and verify exact continuation            | Zero duplicate action, stale approval, or secret persistence                                                |
+| P1       | An outer evidence/verification graph fixes premature diagnosis     | Apply only to scenarios where simple-agent traces miss ordering/verification gates          | Improve those registered classes enough to justify added calls and complexity                               |
+| P2       | Tool selection helps large MCP inventories                         | No selector versus one selector call across inventory-size tiers                            | Enable only where accuracy/latency beats exposing all authorized tools                                      |
+| P2       | Provider retry/fallback improves availability                      | Inject provider failures with fixed retry/fallback order                                    | Higher completion with visible attribution and bounded duplicate work                                       |
+| P3       | Specialists improve broad cross-domain incidents                   | Single agent versus bounded specialists on held-out multi-domain cases                      | Require quality gain after cost, duplication, and routing penalties                                         |
+| P3       | Incident memory helps repeated mechanisms                          | Seen/unseen and stale-memory controls with provenance                                       | Enable only with unseen-case gain and no stale or cross-tenant leakage                                      |
+
+## Original recommendation and design rationale
+
+The initial recommendation was to keep `LangChainAssistantSession` in the plugin
+while turning `createAgent` into a headless comparison target. The tool adapter,
+trusted context propagation, call correlation, cancellation, redaction, and
+evaluation foundation now exist, so the remaining decision is empirical quality
+and plugin interaction parity rather than basic feasibility.
 
 **Production decision:** promote a middleware-enhanced `createAgent` if it meets
 the evidence and safety gates below. Promote to a custom outer `StateGraph` only
@@ -27,7 +144,7 @@ smallest change—is a **hybrid custom `StateGraph` with bounded `createAgent`
 investigators**:
 
 1. A deterministic graph owns `scope → triage → collect → analyze → verify →
-   recommend/remediate` transitions.
+recommend/remediate` transitions.
 2. Read-only investigator agents choose tools within each collection phase,
    constrained by trusted cluster context, tool/call budgets, and evidence
    requirements.
@@ -49,16 +166,16 @@ durable background work, centralized credentials, or multi-user scale.
 
 ## Options
 
-| Option | Strengths | Costs and gaps | Fit |
-| --- | --- | --- | --- |
-| `langchain.createAgent` | Prebuilt ReAct loop; tools can run in parallel; middleware for limits, retries, summarization, PII, tool selection, and human review; supports streaming and checkpointing | The existing session's UI events and approval flow need adapters | **Best first step** |
-| `@langchain/langgraph/prebuilt.createReactAgent` | First-party prebuilt ReAct graph with direct LangGraph integration | Older, lower-level API with less of the current LangChain middleware surface; duplicates the role of `createAgent` | Do not start new integration here |
-| Hybrid `StateGraph` + `createAgent` nodes | Deterministic incident phases plus flexible tool-using investigators; strongest evidence, safety, audit, and evaluation boundaries | Highest design and integration effort | **Best-result hypothesis; adopt only if gates justify it** |
-| `@langchain/langgraph` `StateGraph` only | Explicit nodes, conditional edges, subgraphs, durable state, interrupts, and replay | More orchestration code; custom graphs must own routing, prompts, and error policy | Best for fixed runbook-like workflows |
-| Continue the custom LCEL/session loop | No migration and complete control of current UI behavior | Continues to own loop limits, state transitions, retries, persistence, and observability manually | Reasonable baseline, not a modern harness |
-| Multiple specialist agents with supervisor/handoffs | Strong domain separation for workloads, networking, storage, policy, and observability | More calls, latency, routing failure modes, and harder evaluation; specialists can duplicate work | Add only after one graph is measured |
-| Separate LangGraph service | Server-side credentials, durable storage, centralized policy, and long-running work | New deployment, API/stream bridge, RBAC, availability, and operations burden | Best deployment for durable/background investigations, not required for quality |
-| Existing Holmes/AG-UI path | Purpose-built Kubernetes troubleshooting and already integrated with the UI protocol | External service and third-party runtime; does not meet this issue's first-party-only constraint | Keep as a quality comparator, not the selected implementation |
+| Option                                              | Strengths                                                                                                                                                                  | Costs and gaps                                                                                                     | Fit                                                                             |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `langchain.createAgent`                             | Prebuilt ReAct loop; tools can run in parallel; middleware for limits, retries, summarization, PII, tool selection, and human review; supports streaming and checkpointing | The existing session's UI events and approval flow need adapters                                                   | **Best first step**                                                             |
+| `@langchain/langgraph/prebuilt.createReactAgent`    | First-party prebuilt ReAct graph with direct LangGraph integration                                                                                                         | Older, lower-level API with less of the current LangChain middleware surface; duplicates the role of `createAgent` | Do not start new integration here                                               |
+| Hybrid `StateGraph` + `createAgent` nodes           | Deterministic incident phases plus flexible tool-using investigators; strongest evidence, safety, audit, and evaluation boundaries                                         | Highest design and integration effort                                                                              | **Best-result hypothesis; adopt only if gates justify it**                      |
+| `@langchain/langgraph` `StateGraph` only            | Explicit nodes, conditional edges, subgraphs, durable state, interrupts, and replay                                                                                        | More orchestration code; custom graphs must own routing, prompts, and error policy                                 | Best for fixed runbook-like workflows                                           |
+| Continue the custom LCEL/session loop               | No migration and complete control of current UI behavior                                                                                                                   | Continues to own loop limits, state transitions, retries, persistence, and observability manually                  | Reasonable baseline, not a modern harness                                       |
+| Multiple specialist agents with supervisor/handoffs | Strong domain separation for workloads, networking, storage, policy, and observability                                                                                     | More calls, latency, routing failure modes, and harder evaluation; specialists can duplicate work                  | Add only after one graph is measured                                            |
+| Separate LangGraph service                          | Server-side credentials, durable storage, centralized policy, and long-running work                                                                                        | New deployment, API/stream bridge, RBAC, availability, and operations burden                                       | Best deployment for durable/background investigations, not required for quality |
+| Existing Holmes/AG-UI path                          | Purpose-built Kubernetes troubleshooting and already integrated with the UI protocol                                                                                       | External service and third-party runtime; does not meet this issue's first-party-only constraint                   | Keep as a quality comparator, not the selected implementation                   |
 
 `@langchain/langgraph` is currently installed transitively by `langchain`, so the
 prototype does not import it directly. A future custom `StateGraph` should add it
@@ -96,15 +213,15 @@ additional middleware proposed in this report.
 Use the same deterministic incident fixtures, model, tool results, and budgets
 for the current session and each candidate:
 
-| Metric | Definition | Initial gate |
-| --- | --- | --- |
-| Root-cause accuracy | Incidents whose highest-ranked cause matches the fixture's accepted cause | At least 90% |
-| Required-evidence recall | Required evidence items actually collected before the answer | At least 85% |
-| Unsupported-claim rate | Diagnostic claims with no matching collected evidence | At most 5% |
-| Unsafe-action rate | Mutation attempted without an approval interrupt and valid scope | 0% |
-| Partial-access honesty | 403/timeout/partial fixtures that explicitly preserve uncertainty | 100% |
-| Spurious-call share | Tool calls outside the accepted investigation paths divided by all calls | At most 20% |
-| Budget compliance | Runs within configured model/tool/deadline limits | 100% |
+| Metric                   | Definition                                                                | Initial gate |
+| ------------------------ | ------------------------------------------------------------------------- | ------------ |
+| Root-cause accuracy      | Incidents whose highest-ranked cause matches the fixture's accepted cause | At least 90% |
+| Required-evidence recall | Required evidence items actually collected before the answer              | At least 85% |
+| Unsupported-claim rate   | Diagnostic claims with no matching collected evidence                     | At most 5%   |
+| Unsafe-action rate       | Mutation attempted without an approval interrupt and valid scope          | 0%           |
+| Partial-access honesty   | 403/timeout/partial fixtures that explicitly preserve uncertainty         | 100%         |
+| Spurious-call share      | Tool calls outside the accepted investigation paths divided by all calls  | At most 20%  |
+| Budget compliance        | Runs within configured model/tool/deadline limits                         | 100%         |
 
 Start with at least one fixture for each major class: CrashLoopBackOff,
 OOMKilled, Pending/Unschedulable, rollout regression, image pull, DNS/service
@@ -166,20 +283,20 @@ combining them into one “agent quality” score.
 
 ### Expected effect of each recommended change
 
-| Change | Primary expected improvement | What to measure | Evidence and confidence |
-| --- | --- | --- | --- |
-| Compatibility layer (`AgentHarnessSession`, stream adapter, direct `ToolRuntime` adapter) | **Parity before improvement:** retain all built-in/MCP tools, Skills, Kubernetes context, approvals, cancellation, metadata, and UI history while changing the loop | Compatibility tests, tool-call correlation, stream/cancel behavior, provider parity, zero lost Skills/MCP calls | **High confidence from repository contracts.** This work should prevent migration regressions; it is not expected to improve diagnosis by itself |
-| Kubernetes incident evaluations and trajectory traces | Faster, safer iteration; failures become reproducible and architecture choices become evidence-based | Per-scenario outcome and trajectory scores, repeated-run consistency, regression escape rate, time to identify a failing step | **Strong rationale, no isolated effect size.** LangChain reports a fixed-model coding agent rising from 52.8% to 66.5% on Terminal-Bench 2.0 after a *bundle* of eval-guided prompt, tool, verification, and middleware changes. That 13.7-point result demonstrates harness headroom, not the effect of evaluations alone or a forecast for Kubernetes |
-| Better tool schemas and execution semantics | More correct tool selection/arguments, fewer malformed or orphaned calls, and trustworthy evidence/history | Valid-argument rate, correct-tool rate, tool errors, repeated/irrelevant calls, result-to-call alignment | **High directional confidence; unknown K8s effect size.** Function-calling benchmarks establish that name/schema/argument correctness is a major failure surface, but no transferable percentage for this adapter was found |
-| Dynamic trusted context plus routed Skills | Better scoping and runbook use without exposing credentials or filling history with static context | Wrong-cluster/namespace calls, relevant-Skill recall, stale-context errors, prompt tokens, diagnosis quality with/without routing | **Strong design guidance; effect must be measured here.** Anthropic and agent SDK guidance favors minimal, just-in-time context. It does not provide a K8s-specific accuracy delta |
-| Context editing, evidence retention, and summarization | Longer incidents remain coherent; fewer failures caused by buried evidence or oversized log/YAML payloads | Context tokens, truncations, evidence retained after compaction, long-session accuracy, latency/cost | **Moderate empirical support, unknown product delta.** Long-context studies show performance often degrades as irrelevant input grows; they do not justify a universal compaction percentage. Short incidents may see no gain and bad summaries can remove evidence |
-| Typed evidence and a bounded verification pass | Fewer unsupported diagnoses, clearer uncertainty, and more auditable root-cause claims | Required-evidence recall, unsupported-claim rate, contradiction detection, root-cause F1, verifier false accepts/rejects | **Most directly relevant research signal, but benchmark-limited.** A 2026 Kubernetes graph-guided RCA preprint reports root-cause-entity F1 increasing from 0.6087 to 0.9130 over an earlier version on 23 ITBench scenarios; removing scenario-specific hints produced 0.6958 on a 19-scenario subset. The authors explicitly limit generalization and make no production MTTR claim |
-| Call/deadline budgets, loop detection, normalized errors, and bounded read retries | More predictable latency/cost, fewer stuck loops, and better recovery from transient read failures | Budget compliance, p50/p95 calls/tokens/latency, repeated-action rate, transient-recovery rate, premature-stop rate | **High operational confidence, low accuracy-effect confidence.** Bounds guarantee a ceiling rather than an accuracy gain. Retries can recover transient failures but can also waste budget or repeat unsafe actions; writes must not be blindly retried |
-| Least privilege, redaction, and approval/resume | Prevent unapproved or mis-scoped changes while allowing consequential workflows to continue after review | Unapproved mutation rate, scope violations, approval/rejection/resume success, sensitive-data findings, time awaiting approval | **High safety confidence by construction.** The target is zero unapproved mutations, not a percentage improvement in diagnosis. Approval may increase elapsed time and must complement, not replace, Kubernetes authorization |
-| Checkpointed state | Higher completion for interrupted, long-running, or approval-gated investigations; less repeated collection | Resume success, duplicate calls after resume, lost approvals, completion after refresh/restart, checkpoint size/redaction | **Framework capability, not quantified research evidence.** It should have little benefit for short uninterrupted chats and adds persistence/privacy obligations |
-| Outer `StateGraph` evidence phases | Better collection order, read-before-write enforcement, and post-action verification only in scenario classes where the simple agent misses those steps | Gate deltas for affected scenarios, extra calls/latency, invalid transitions, premature completion | **Plausible and supported by a K8s preprint, not established generally.** Adopt only when the simpler agent's traces identify sequencing as the cause of failure |
-| Tool selection, model fallback, and later specialist agents | Lower tool confusion with very large inventories, graceful provider failure, or broader parallel investigation | Accuracy/cost by tool-count tier, fallback recovery, duplicated evidence, fan-out, specialist routing errors | **Conditional.** Anthropic reports a 90.2% gain for multi-agent over single-agent on its internal breadth-first research evaluation, but that is not a K8s forecast. Sequential causal diagnosis may become slower and less reliable; defer until local evaluations show a need |
-| Optional incident-experience memory | Faster recognition of recurring failures and improvement from resolved incidents | Seen/unseen-incident accuracy, retrieval precision, stale-memory harm, time/calls to diagnosis | **Promising later research path.** MetaKube reports Qwen3-8B increasing from 50.9 to 90.5 on its 1,873-scenario evaluation after a combined framework and domain post-training, with 15.3 points attributed to episodic memory. This is a preprint, a different system, and not evidence that adding memory alone will reproduce the result |
+| Change                                                                                    | Primary expected improvement                                                                                                                                        | What to measure                                                                                                                   | Evidence and confidence                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compatibility layer (`AgentHarnessSession`, stream adapter, direct `ToolRuntime` adapter) | **Parity before improvement:** retain all built-in/MCP tools, Skills, Kubernetes context, approvals, cancellation, metadata, and UI history while changing the loop | Compatibility tests, tool-call correlation, stream/cancel behavior, provider parity, zero lost Skills/MCP calls                   | **High confidence from repository contracts.** This work should prevent migration regressions; it is not expected to improve diagnosis by itself                                                                                                                                                                                                                                      |
+| Kubernetes incident evaluations and trajectory traces                                     | Faster, safer iteration; failures become reproducible and architecture choices become evidence-based                                                                | Per-scenario outcome and trajectory scores, repeated-run consistency, regression escape rate, time to identify a failing step     | **Strong rationale, no isolated effect size.** LangChain reports a fixed-model coding agent rising from 52.8% to 66.5% on Terminal-Bench 2.0 after a _bundle_ of eval-guided prompt, tool, verification, and middleware changes. That 13.7-point result demonstrates harness headroom, not the effect of evaluations alone or a forecast for Kubernetes                               |
+| Better tool schemas and execution semantics                                               | More correct tool selection/arguments, fewer malformed or orphaned calls, and trustworthy evidence/history                                                          | Valid-argument rate, correct-tool rate, tool errors, repeated/irrelevant calls, result-to-call alignment                          | **High directional confidence; unknown K8s effect size.** Function-calling benchmarks establish that name/schema/argument correctness is a major failure surface, but no transferable percentage for this adapter was found                                                                                                                                                           |
+| Dynamic trusted context plus routed Skills                                                | Better scoping and runbook use without exposing credentials or filling history with static context                                                                  | Wrong-cluster/namespace calls, relevant-Skill recall, stale-context errors, prompt tokens, diagnosis quality with/without routing | **Strong design guidance; effect must be measured here.** Anthropic and agent SDK guidance favors minimal, just-in-time context. It does not provide a K8s-specific accuracy delta                                                                                                                                                                                                    |
+| Context editing, evidence retention, and summarization                                    | Longer incidents remain coherent; fewer failures caused by buried evidence or oversized log/YAML payloads                                                           | Context tokens, truncations, evidence retained after compaction, long-session accuracy, latency/cost                              | **Moderate empirical support, unknown product delta.** Long-context studies show performance often degrades as irrelevant input grows; they do not justify a universal compaction percentage. Short incidents may see no gain and bad summaries can remove evidence                                                                                                                   |
+| Typed evidence and a bounded verification pass                                            | Fewer unsupported diagnoses, clearer uncertainty, and more auditable root-cause claims                                                                              | Required-evidence recall, unsupported-claim rate, contradiction detection, root-cause F1, verifier false accepts/rejects          | **Most directly relevant research signal, but benchmark-limited.** A 2026 Kubernetes graph-guided RCA preprint reports root-cause-entity F1 increasing from 0.6087 to 0.9130 over an earlier version on 23 ITBench scenarios; removing scenario-specific hints produced 0.6958 on a 19-scenario subset. The authors explicitly limit generalization and make no production MTTR claim |
+| Call/deadline budgets, loop detection, normalized errors, and bounded read retries        | More predictable latency/cost, fewer stuck loops, and better recovery from transient read failures                                                                  | Budget compliance, p50/p95 calls/tokens/latency, repeated-action rate, transient-recovery rate, premature-stop rate               | **High operational confidence, low accuracy-effect confidence.** Bounds guarantee a ceiling rather than an accuracy gain. Retries can recover transient failures but can also waste budget or repeat unsafe actions; writes must not be blindly retried                                                                                                                               |
+| Least privilege, redaction, and approval/resume                                           | Prevent unapproved or mis-scoped changes while allowing consequential workflows to continue after review                                                            | Unapproved mutation rate, scope violations, approval/rejection/resume success, sensitive-data findings, time awaiting approval    | **High safety confidence by construction.** The target is zero unapproved mutations, not a percentage improvement in diagnosis. Approval may increase elapsed time and must complement, not replace, Kubernetes authorization                                                                                                                                                         |
+| Checkpointed state                                                                        | Higher completion for interrupted, long-running, or approval-gated investigations; less repeated collection                                                         | Resume success, duplicate calls after resume, lost approvals, completion after refresh/restart, checkpoint size/redaction         | **Framework capability, not quantified research evidence.** It should have little benefit for short uninterrupted chats and adds persistence/privacy obligations                                                                                                                                                                                                                      |
+| Outer `StateGraph` evidence phases                                                        | Better collection order, read-before-write enforcement, and post-action verification only in scenario classes where the simple agent misses those steps             | Gate deltas for affected scenarios, extra calls/latency, invalid transitions, premature completion                                | **Plausible and supported by a K8s preprint, not established generally.** Adopt only when the simpler agent's traces identify sequencing as the cause of failure                                                                                                                                                                                                                      |
+| Tool selection, model fallback, and later specialist agents                               | Lower tool confusion with very large inventories, graceful provider failure, or broader parallel investigation                                                      | Accuracy/cost by tool-count tier, fallback recovery, duplicated evidence, fan-out, specialist routing errors                      | **Conditional.** Anthropic reports a 90.2% gain for multi-agent over single-agent on its internal breadth-first research evaluation, but that is not a K8s forecast. Sequential causal diagnosis may become slower and less reliable; defer until local evaluations show a need                                                                                                       |
+| Optional incident-experience memory                                                       | Faster recognition of recurring failures and improvement from resolved incidents                                                                                    | Seen/unseen-incident accuracy, retrieval precision, stale-memory harm, time/calls to diagnosis                                    | **Promising later research path.** MetaKube reports Qwen3-8B increasing from 50.9 to 90.5 on its 1,873-scenario evaluation after a combined framework and domain post-training, with 15.3 points attributed to episodic memory. This is a preprint, a different system, and not evidence that adding memory alone will reproduce the result                                           |
 
 ### Overall improvement to expect
 
@@ -216,14 +333,14 @@ efficiency/operability gain, while passing every compatibility and safety gate.
 Avoid replacing the production session in one change. Introduce a harness
 adapter behind the existing `AssistantSession` contract:
 
-| Component | Responsibility |
-| --- | --- |
-| `AgentHarnessSession` | Translate `userSend`, streaming, cancellation, reset, and history between the UI contract and the graph |
-| `AgentToolAdapter` | Convert model tool calls to `ToolRuntime.executeTool`, retain IDs/metadata/history policy, and enforce host scope |
-| `AgentPromptContext` | Build the dynamic production prompt from trusted Kubernetes context, MCP inventory, and routed Skills |
-| `InvestigationState` | Hold scoped evidence, hypotheses, missing evidence, failures, budgets, and pending action—never credentials |
-| Approval bridge | Convert graph interrupts to the current modal request and resume the same thread with approve/edit/reject |
-| Evaluation runner | Execute identical fixtures against current session, simple agent, and optional hybrid graph |
+| Component             | Responsibility                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `AgentHarnessSession` | Translate `userSend`, streaming, cancellation, reset, and history between the UI contract and the graph           |
+| `AgentToolAdapter`    | Convert model tool calls to `ToolRuntime.executeTool`, retain IDs/metadata/history policy, and enforce host scope |
+| `AgentPromptContext`  | Build the dynamic production prompt from trusted Kubernetes context, MCP inventory, and routed Skills             |
+| `InvestigationState`  | Hold scoped evidence, hypotheses, missing evidence, failures, budgets, and pending action—never credentials       |
+| Approval bridge       | Convert graph interrupts to the current modal request and resume the same thread with approve/edit/reject         |
+| Evaluation runner     | Execute identical fixtures against current session, simple agent, and optional hybrid graph                       |
 
 The minimum evidence record should include source tool, cluster, namespace,
 resource kind/name/UID/resourceVersion, observation time, redacted value or
@@ -251,25 +368,25 @@ resumption, retries, history behavior, and error propagation. Checkpointed graph
 graph-native human approval, richer streaming, retry/fallback middleware, and production
 evaluation/observability remain rollout gaps.
 
-| Area | Modern harness capability | First-party implementation option |
-| --- | --- | --- |
-| Core loop | Tool-capable model loop, parallel calls, deterministic stop conditions, recursion/call budgets | `createAgent`, `modelCallLimitMiddleware`, `toolCallLimitMiddleware` |
-| Workflow | Explicit phases, conditional routing, retries, subgraphs, parallel branches | `StateGraph` |
-| Context | Typed, read-only request context kept separate from persisted agent state | `contextSchema`, `createMiddleware` |
-| State and memory | Thread-scoped state, checkpoints, resume, replay/time travel, long-term store boundary | LangGraph checkpointer and store APIs |
-| Human control | Pause before consequential actions; approve, edit, or reject; resume safely | `humanInTheLoopMiddleware`, interrupts, and a checkpointer |
-| Tool governance | Typed schemas, allowlists, least privilege, dynamic selection, per-tool policy, idempotency | LangChain tools, `llmToolSelectorMiddleware`, custom `wrapToolCall` |
-| Reliability | Cancellation, deadlines, bounded retries/backoff, normalized tool errors, model fallback | `AbortSignal`, `toolErrorMiddleware`, `modelRetryMiddleware`, `toolRetryMiddleware`, `modelFallbackMiddleware` |
-| Context budget | Token accounting, summarization, old tool-result removal, prompt caching | `summarizationMiddleware`, `contextEditingMiddleware`, provider prompt-cache middleware |
-| Streaming | Token, message, update, task, tool-progress, and final-state events | Agent/LangGraph stream modes and stream transformers |
-| Safety and privacy | Input/output/tool-result filtering, secret redaction, prompt-injection boundaries, safe checkpoint contents | `piiRedactionMiddleware`, `piiMiddleware`, custom middleware, existing `redactSecrets` |
-| Observability | Correlated run/step/tool IDs, timings, token/cost usage, state transitions, errors, redacted traces | LangChain callbacks/middleware; host-owned telemetry destination |
-| Evidence | Provenance, timestamps, resource identity/version, confidence, contradiction and missing-evidence tracking | Custom state schema and verification nodes |
-| Planning | Explicit task list, dependency-aware steps, bounded replanning | `todoListMiddleware` or custom graph state |
-| Knowledge | Dynamic system context, routed runbooks/skills, retrieval with source attribution | `dynamicSystemPromptMiddleware` plus existing Skills |
-| Structured output | Validated incident findings, evidence, next actions, and remediation plans | `responseFormat` with Zod/JSON Schema |
-| Testing and evaluation | Deterministic models/tools, trajectory assertions, replay, golden incidents, regression and safety scoring | LangChain test models, `toolEmulatorMiddleware`, checkpoints, repository-owned evaluation suite |
-| Operations | Concurrency/rate limits, quotas, isolation, versioned graph/prompt/tool contracts, graceful recovery | Host/deployment responsibility around the graph |
+| Area                   | Modern harness capability                                                                                   | First-party implementation option                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Core loop              | Tool-capable model loop, parallel calls, deterministic stop conditions, recursion/call budgets              | `createAgent`, `modelCallLimitMiddleware`, `toolCallLimitMiddleware`                                           |
+| Workflow               | Explicit phases, conditional routing, retries, subgraphs, parallel branches                                 | `StateGraph`                                                                                                   |
+| Context                | Typed, read-only request context kept separate from persisted agent state                                   | `contextSchema`, `createMiddleware`                                                                            |
+| State and memory       | Thread-scoped state, checkpoints, resume, replay/time travel, long-term store boundary                      | LangGraph checkpointer and store APIs                                                                          |
+| Human control          | Pause before consequential actions; approve, edit, or reject; resume safely                                 | `humanInTheLoopMiddleware`, interrupts, and a checkpointer                                                     |
+| Tool governance        | Typed schemas, allowlists, least privilege, dynamic selection, per-tool policy, idempotency                 | LangChain tools, `llmToolSelectorMiddleware`, custom `wrapToolCall`                                            |
+| Reliability            | Cancellation, deadlines, bounded retries/backoff, normalized tool errors, model fallback                    | `AbortSignal`, `toolErrorMiddleware`, `modelRetryMiddleware`, `toolRetryMiddleware`, `modelFallbackMiddleware` |
+| Context budget         | Token accounting, summarization, old tool-result removal, prompt caching                                    | `summarizationMiddleware`, `contextEditingMiddleware`, provider prompt-cache middleware                        |
+| Streaming              | Token, message, update, task, tool-progress, and final-state events                                         | Agent/LangGraph stream modes and stream transformers                                                           |
+| Safety and privacy     | Input/output/tool-result filtering, secret redaction, prompt-injection boundaries, safe checkpoint contents | `piiRedactionMiddleware`, `piiMiddleware`, custom middleware, existing `redactSecrets`                         |
+| Observability          | Correlated run/step/tool IDs, timings, token/cost usage, state transitions, errors, redacted traces         | LangChain callbacks/middleware; host-owned telemetry destination                                               |
+| Evidence               | Provenance, timestamps, resource identity/version, confidence, contradiction and missing-evidence tracking  | Custom state schema and verification nodes                                                                     |
+| Planning               | Explicit task list, dependency-aware steps, bounded replanning                                              | `todoListMiddleware` or custom graph state                                                                     |
+| Knowledge              | Dynamic system context, routed runbooks/skills, retrieval with source attribution                           | `dynamicSystemPromptMiddleware` plus existing Skills                                                           |
+| Structured output      | Validated incident findings, evidence, next actions, and remediation plans                                  | `responseFormat` with Zod/JSON Schema                                                                          |
+| Testing and evaluation | Deterministic models/tools, trajectory assertions, replay, golden incidents, regression and safety scoring  | LangChain test models, `toolEmulatorMiddleware`, checkpoints, repository-owned evaluation suite                |
+| Operations             | Concurrency/rate limits, quotas, isolation, versioned graph/prompt/tool contracts, graceful recovery        | Host/deployment responsibility around the graph                                                                |
 
 LangChain provides much of the agent machinery. The host still owns Kubernetes
 authorization, tenancy, durable storage, UI behavior, telemetry destinations,
@@ -336,7 +453,7 @@ execution.
    evidence, ruled-out causes, safe next checks, rollback/remediation options,
    and any action awaiting approval.
 
-## Prototype
+## Current implementation
 
 `packages/ai-common/src/agents/langchain/createAgentHarness.ts` is a deliberately
 small adapter that:
@@ -379,29 +496,28 @@ Before production use:
 6. compare diagnosis quality, safety, latency, and calls against the production
    session using the decision gates.
 
-## Current gaps and highest-impact improvements
+## Remaining gaps and highest-impact improvements
 
-| Priority | Gap today | Why it matters | Research-backed improvement |
-| --- | --- | --- | --- |
-| P0 | No graph-to-`AssistantSession` stream adapter | Blocks use in the real UI and hides model/tool/state progress | Map agent message/update events to current text, tool progress, approval, cancellation, and final-history events |
-| P0 | Deferred tool results lack graph-native resume | The adapter now stops confirmation and strict-false results before another model/tool turn, but approval/edit/reject still resumes through the host session rather than a checkpointed graph thread | Add stable thread IDs and a checkpointer, then resume the interrupted trajectory with typed Kubernetes scope |
-| P0 | No evaluation harness for Kubernetes diagnoses | Architecture changes cannot be shown to improve correctness or safety | Build a versioned incident set covering CrashLoop, OOM, Pending, rollout, DNS/network, storage, RBAC, partial access, stale data, and unsafe remediation; score evidence, cause, calls, latency, and policy |
-| P1 | Prototype has no checkpointed approval/resume | Current approval is outside graph state and only one request can be pending | Add stable thread IDs and a checkpointer, then adapt graph-native approve/edit/reject while preserving current auto-approval policy |
-| P1 | No evidence schema or verification phase | A fluent answer can be unsupported or based on stale/partial results | Add typed findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty |
-| P1 | Conversation/tool payloads lack a token-budget policy | Long troubleshooting sessions can overflow context or become expensive and inaccurate | Add summarization plus tool-result pruning; retain recent evidence and structured findings rather than raw payloads |
-| P1 | Retry, timeout, and idempotency policy is inconsistent | Kubernetes APIs and observability endpoints fail transiently; retrying writes can be unsafe | Add operation deadlines and retry middleware for models/read-only tools only; require idempotency keys/preconditions for mutations |
-| P1 | LangGraph `ToolNode` batches wait for every parallel tool call before the graph continues | A single slow/optional tool call in a batch (e.g. supplementary logs) delays the whole turn even after the tools the answer needed have already returned — `LangChainAssistantSession`'s orchestrated path now supports a `required`/optional wait policy (see below) but the LangGraph harness has no equivalent | Add a custom tool-dispatch node/middleware that gates graph continuation on required tool calls only, synthesizing placeholder `ToolMessage`s for still-running optional calls |
-| P1 | Security is boundary-specific rather than harness-wide | Existing redaction is strong but must also cover streams, checkpoints, traces, model input, and errors | Wrap all model/tool/checkpoint/telemetry boundaries and retain Kubernetes-specific detectors |
-| P2 | Skills and system context are session-specific plumbing | A migration could silently lose runbook routing or inject stale context | Move them behind typed dynamic prompt middleware and test source attribution |
-| P2 | Current tool planning and direct-calling paths overlap | Extra planning can add latency and behavior differs by provider | Benchmark current `ToolPlanner`, direct tools, and `llmToolSelectorMiddleware`; keep the simplest winner per tool-count tier |
-| P2 | No provider fallback or uniform retry telemetry | Outages terminate investigations or trigger ad hoc fallback behavior | Add bounded model retry/fallback with visible provider transitions and usage metrics |
-| P3 | No specialist graph/subagents | Very broad incidents may benefit from domain expertise | Add only if evaluation shows the hybrid single-graph approach misses cross-domain cases; cap fan-out and deduplicate evidence |
+| Priority | Gap today                                                                                 | Why it matters                                                                                                                                                                                                                                                                                                    | Research-backed improvement                                                                                                                                                    |
+| -------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P0       | No graph-to-`AssistantSession` stream adapter                                             | Blocks use in the real UI and hides model/tool/state progress                                                                                                                                                                                                                                                     | Map agent message/update events to current text, tool progress, approval, cancellation, and final-history events                                                               |
+| P0       | Deferred tool results lack graph-native resume                                            | The adapter now stops confirmation and strict-false results before another model/tool turn, but approval/edit/reject still resumes through the host session rather than a checkpointed graph thread                                                                                                               | Add stable thread IDs and a checkpointer, then resume the interrupted trajectory with typed Kubernetes scope                                                                   |
+| P0       | No completed harness-versus-legacy quality comparison                                     | The evaluation framework exists, but architecture changes cannot yet be credited with improved correctness or safety                                                                                                                                                                                              | Run matched qualified cases with fixed model, evidence, permissions, budgets, and session modes; report lifecycle and task dimensions separately                               |
+| P1       | Prototype has no checkpointed approval/resume                                             | Current approval is outside graph state and only one request can be pending                                                                                                                                                                                                                                       | Add stable thread IDs and a checkpointer, then adapt graph-native approve/edit/reject while preserving current auto-approval policy                                            |
+| P1       | No evidence schema or verification phase                                                  | A fluent answer can be unsupported or based on stale/partial results                                                                                                                                                                                                                                              | Add typed findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty                                                                 |
+| P1       | Conversation/tool payloads lack a token-budget policy                                     | Long troubleshooting sessions can overflow context or become expensive and inaccurate                                                                                                                                                                                                                             | Add summarization plus tool-result pruning; retain recent evidence and structured findings rather than raw payloads                                                            |
+| P1       | Retry, timeout, and idempotency policy is inconsistent                                    | Kubernetes APIs and observability endpoints fail transiently; retrying writes can be unsafe                                                                                                                                                                                                                       | Add operation deadlines and retry middleware for models/read-only tools only; require idempotency keys/preconditions for mutations                                             |
+| P1       | LangGraph `ToolNode` batches wait for every parallel tool call before the graph continues | A single slow/optional tool call in a batch (e.g. supplementary logs) delays the whole turn even after the tools the answer needed have already returned — `LangChainAssistantSession`'s orchestrated path now supports a `required`/optional wait policy (see below) but the LangGraph harness has no equivalent | Add a custom tool-dispatch node/middleware that gates graph continuation on required tool calls only, synthesizing placeholder `ToolMessage`s for still-running optional calls |
+| P1       | Security is boundary-specific rather than harness-wide                                    | Existing redaction is strong but must also cover streams, checkpoints, traces, model input, and errors                                                                                                                                                                                                            | Wrap all model/tool/checkpoint/telemetry boundaries and retain Kubernetes-specific detectors                                                                                   |
+| P2       | Skills and system context are session-specific plumbing                                   | A migration could silently lose runbook routing or inject stale context                                                                                                                                                                                                                                           | Move them behind typed dynamic prompt middleware and test source attribution                                                                                                   |
+| P2       | Current tool planning and direct-calling paths overlap                                    | Extra planning can add latency and behavior differs by provider                                                                                                                                                                                                                                                   | Benchmark current `ToolPlanner`, direct tools, and `llmToolSelectorMiddleware`; keep the simplest winner per tool-count tier                                                   |
+| P2       | No provider fallback or uniform retry telemetry                                           | Outages terminate investigations or trigger ad hoc fallback behavior                                                                                                                                                                                                                                              | Add bounded model retry/fallback with visible provider transitions and usage metrics                                                                                           |
+| P3       | No specialist graph/subagents                                                             | Very broad incidents may benefit from domain expertise                                                                                                                                                                                                                                                            | Add only if evaluation shows the hybrid single-graph approach misses cross-domain cases; cap fan-out and deduplicate evidence                                                  |
 
-### Recommended sequence for big gains
+### Original implementation sequence
 
-1. **Create the measurement contract:** add incident fixtures and baseline the
-   current production session. Run the prototype headlessly only with emulated
-   tools until its Kubernetes adapter is safe.
+1. **Create the measurement contract:** completed by the stacked Phase 2
+   evaluation framework; the harness-specific matched baseline remains open.
 2. **Repair the harness boundary:** adapt `ToolRuntime.executeTool()`, trusted
    context, call correlation, cancellation/deadlines, and end-to-end redaction.
 3. **Reach UI parity:** add the stream adapter, dynamic prompt/Skills context,

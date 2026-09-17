@@ -290,6 +290,13 @@ well-formed wrong-object claims still reach the unchanged evaluator and can fail
 This combines new instructions, output schema, and source validation, not a test
 of schema alone. General UI chat and the default fact-selection path are unchanged.
 
+Parent objects and effective rules are separate claim groups. An observed nested
+NSG ID does not substitute for a rule's own name reference when selecting that
+rule's settings. Even a supported parent identity cannot cross that boundary;
+matching ID/name values do not merge groups. The
+[offline identity audit](../../../docs/observability-research.md#nested-nsg-identity-audit-offline-results-2026-09-18)
+records the observed parent/rule mismatch without repairing or rescoring outputs.
+
 `claimReferenceHint: 'example'` appends a syntax-only reference/value example to
 the claim prompt. It requires `selectionContract: 'claims'`; its default is
 `'none'`, and records retain the effective hint. The example distinguishes the

@@ -320,6 +320,77 @@ test('claims require explicit same-object identities and never repair invalid se
   }
 });
 
+test('NSG claim audit keeps parent identity, effective rules, and sibling rules separate', () => {
+  const registry = new CompactEvidence('numeric', 'object');
+  const observations = [
+    ['/value/0/networkSecurityGroup/id', '/nsg/example'],
+    ['/value/0/id', '/nsg/example'],
+    ['/value/0/effectiveSecurityRules/0/name', 'securityRules/example'],
+    ['/value/0/effectiveSecurityRules/0/access', 'Deny'],
+    ['/value/0/effectiveSecurityRules/0/direction', 'Inbound'],
+    ['/value/0/effectiveSecurityRules/1/name', 'securityRules/example'],
+    ['/value/0/effectiveSecurityRules/1/access', 'Allow'],
+    ['/value/1/effectiveSecurityRules/0/name', 'securityRules/example'],
+    ['/value/1/effectiveSecurityRules/0/access', 'Deny'],
+  ].map(([field_path, value]) => ({
+    evidence_id: 'nsg-read',
+    resource_ref: 'tool/azure_network_config_read',
+    field_path: field_path!,
+    value: value!,
+  }));
+  const view = registry.add(observations);
+  assert.deepEqual(
+    view.records.map(record => record.object_path),
+    [
+      '/value/0',
+      '/value/0/effectiveSecurityRules/0',
+      '/value/0/effectiveSecurityRules/1',
+      '/value/1/effectiveSecurityRules/0',
+    ]
+  );
+  const claim = (identity_ref: string, fact_refs: string[]) =>
+    JSON.stringify({
+      schema_version: 'claim_selection@1.0.0',
+      disposition: 'cause',
+      claims: [{ identity_ref, fact_refs }],
+      alternative_dispositions: [],
+      proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+    });
+  assert.throws(
+    () => registry.resolveClaims(claim('r1.f1', ['r1.f4'])),
+    /identity must reference an observed object name or ID/
+  );
+  assert.throws(
+    () => registry.resolveClaims(claim('r1.f2', ['r1.f4'])),
+    /same read, resource, evidence, and object/
+  );
+  const selected = JSON.parse(registry.resolveClaims(claim('r1.f3', ['r1.f4', 'r1.f5'])));
+  assert.deepEqual(
+    selected.cause_facts,
+    observations.slice(2, 5).map(observation => ({
+      resource_ref: observation.resource_ref,
+      field_path: observation.field_path,
+      observed_value: observation.value,
+    }))
+  );
+  assert.equal(selected.cause_facts.length, 3);
+  for (const reference of ['r1.f1', 'r1.f2', 'r1.f7', 'r1.f9']) {
+    assert.throws(
+      () => registry.resolveClaims(claim('r1.f3', [reference])),
+      /same read, resource, evidence, and object/
+    );
+  }
+  registry.add(observations);
+  assert.throws(
+    () => registry.resolveClaims(claim('r1.f3', ['r2.f4'])),
+    /same read, resource, evidence, and object/
+  );
+  assert.equal(
+    JSON.parse(registry.resolveClaims(claim('r1.f6', ['r1.f7']))).cause_facts[1].observed_value,
+    'Allow'
+  );
+});
+
 test('claim reference example changes only reference guidance and cannot resolve literal identities', async () => {
   const baseline = observabilityPrompt(input, 'compact-select', 'none', 'claims');
   assert.equal(baseline, observabilityPrompt(input, 'compact-select', 'none', 'claims', 'none'));

@@ -512,6 +512,66 @@ tests and a prospective plan, not historical regrading. Retain the wrong-pool an
 insufficient-evidence false causes separately: better ID resolution is not causal
 validation. Do not repeat paid runs merely to obtain passes.
 
+### Nested NSG Identity Audit: Offline Results (2026-09-18)
+
+Audited the two hinted NSG rejections from the
+[reference-wording comparison](../evals/docs/observability-reference-hint-results.md)
+without changing their outputs or invoking the resolver or graders on them.
+Reconstructing the original reads and reference ordinals shows two independent
+contract boundaries, not just a missing accepted identity path:
+
+| Assignment | Selected identity | Identity object group | Explanatory fact group | Cross-object facts | Rule name already selected |
+| ---: | --- | --- | --- | ---: | --- |
+| 2 | `r2.f1` | `/value/0` | `/value/0/effectiveSecurityRules/0` | 9 | `r2.f3` |
+| 5 | `r2.f1` | `/value/0` | `/value/0/effectiveSecurityRules/0` | 7 | `r2.f3` |
+
+In both records, `r2.f1` is the real observed nested
+`/value/0/networkSecurityGroup/id`. Every selected explanatory fact belongs to
+the first effective rule, whose own `/name` reference `r2.f3` is already in
+`fact_refs`. The problem is not absence of rule identity in the retrieved or
+selected evidence: the model assigned the parent identity to a child-rule claim.
+Accepting `/networkSecurityGroup/id` alone would still leave the same-object
+condition unsatisfied. Replacing the identity and dropping the now-duplicate rule
+name would repair the model's answer; this audit does neither.
+
+Added a focused synthetic regression in the
+[existing candidate tests](../evals/src/candidates/headlampObservability.test.ts).
+It independently checks the unsupported nested identity, then uses a deliberately
+supported parent `/id` fixture to expose the parent/rule group mismatch. A claim
+explicitly selecting a rule's own name plus that rule's fields resolves with exactly
+those facts. Parent fields, sibling rules, another NSG, and repeated reads remain
+separate, even when rule names or ID values match. A sibling rule's own well-formed
+claim can still resolve; validation establishes source membership, not causality.
+The synthetic parent `/id` is a test fixture, not a field inserted into saved reads.
+
+All **396 eval tests**, formatting, and typechecks passed, including the new
+focused audit. No runtime code, schema, prompt, identity whitelist, renderer,
+resolver, default, or grader changed. The previous reports and scores remain
+unchanged. There were **no paid model calls or resource provisioning** in this
+slice: the audit does not justify loosening the validator or rerunning the same
+candidate. It also does not establish that the experimental identity contract
+supports every valid ARM relationship.
+
+The read-only audit used assignments 2 and 5 in private root
+`.tmp/pr25-reference-hint-comparison-20260917`. The unchanged summary digest is
+`9bae2b4dbe2757937e8871a90a17722a4aac14d7e567ef0da58dd5fa1c16edfd`.
+The saved terminal records and observations were checked against these digests:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Assignment 2 terminal record | `50206929cf5636aeec7f4f8d734da3bbb8498c6980aa5f5ac646e016d0da9756` |
+| Assignment 2 observations | `0cfb24c85f5c7b89b0978f700f87aed35ef9e652441b7867337e8d54f35ed91e` |
+| Assignment 5 terminal record | `4f8c701224512565fb5a9d06d33ded5b93740cdbc0b61a7c337278ff15a009a0` |
+| Assignment 5 observations | `4c5a2c1cbea0edb3486d7eda04fab8a94be9a4bbf93424866920ce136cfbdb0b` |
+
+Next, a candidate-facing list of eligible identity references per existing object
+group is a testable presentation hypothesis. It must derive only from observed
+fields and the declared contract, preserve every fact and ordinal, and never
+preselect an identity, expose oracle facts, or combine parent and child groups.
+Evaluate that change offline first, then declare a new comparison if warranted.
+Keep capacity abstention and wrong-pool false causes as separate counterexamples;
+making object membership clearer cannot by itself prove causal correctness.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

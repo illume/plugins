@@ -203,6 +203,7 @@ export default class LangChainAssistantSession extends AssistantSession {
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
   private extraTools: Map<string, ExtraTool> = new Map();
   private telemetryObserver?: AssistantTelemetryObserver;
+  private modelInvocationSequence = 0;
   private cacheCopilotClaudeSystemPrompt: boolean;
   private readonly finalResponseSchema?: { name: string; schema: Record<string, unknown> };
 
@@ -545,6 +546,56 @@ export default class LangChainAssistantSession extends AssistantSession {
     if (this.currentAbortController) {
       this.currentAbortController.abort();
       this.currentAbortController = null;
+    }
+  }
+
+  private async observeModelInvocation<Result>(
+    phase: 'planning' | 'synthesis',
+    signal: AbortSignal,
+    invoke: () => Promise<Result>
+  ): Promise<Result> {
+    const invocationId = ++this.modelInvocationSequence;
+    const started = performance.now();
+    let finished = false;
+    const finish = (status: 'completed' | 'failed' | 'cancelled', httpStatus?: number) => {
+      if (finished) return;
+      finished = true;
+      this.recordTelemetry({
+        type: 'model_invocation',
+        invocation_id: invocationId,
+        phase,
+        status,
+        duration_ns: String(Math.round((performance.now() - started) * 1_000_000)),
+        ...(httpStatus === undefined ? {} : { http_status: httpStatus }),
+      });
+    };
+    const abort = () => finish('cancelled');
+    signal.addEventListener('abort', abort, { once: true });
+    this.recordTelemetry({
+      type: 'model_invocation',
+      invocation_id: invocationId,
+      phase,
+      status: 'started',
+    });
+    try {
+      signal.throwIfAborted();
+      const result = await invoke();
+      finish(signal.aborted ? 'cancelled' : 'completed');
+      return result;
+    } catch (error) {
+      const status =
+        error && typeof error === 'object' && 'status' in error ? error.status : undefined;
+      const httpStatus =
+        typeof status === 'number' && Number.isInteger(status) && status >= 100 && status <= 599
+          ? status
+          : undefined;
+      const cancelled =
+        signal.aborted ||
+        (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError');
+      finish(cancelled ? 'cancelled' : 'failed', httpStatus);
+      throw error;
+    } finally {
+      signal.removeEventListener('abort', abort);
     }
   }
 
@@ -1165,10 +1216,12 @@ export default class LangChainAssistantSession extends AssistantSession {
       // The callback fires synchronously before invoke() returns.
       const capture = createLLMResultCapture();
 
-      const result = await modelToUse.invoke(messages, {
-        signal: controller.signal,
-        callbacks: [capture.callback],
-      });
+      const result = await this.observeModelInvocation('planning', controller.signal, () =>
+        modelToUse.invoke(messages, {
+          signal: controller.signal,
+          callbacks: [capture.callback],
+        })
+      );
       this.recordModelUsage(result);
       controller.signal.throwIfAborted();
 
@@ -2438,19 +2491,22 @@ Please analyze this data and provide a specific, detailed response that directly
        */
       invoke: async (input: ToolResponseChainInput) => {
         if (this.finalResponseSchema) {
+          const finalResponseSchema = this.finalResponseSchema;
           const controller = this.currentAbortController ?? new AbortController();
           this.currentAbortController = controller;
           try {
-            const result = await model
-              .withStructuredOutput(this.finalResponseSchema.schema, {
-                name: this.finalResponseSchema.name,
-                method: 'jsonSchema',
-                strict: true,
-                includeRaw: true,
-              })
-              .invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
-                signal: controller.signal,
-              });
+            const result = await this.observeModelInvocation('synthesis', controller.signal, () =>
+              model
+                .withStructuredOutput(finalResponseSchema.schema, {
+                  name: finalResponseSchema.name,
+                  method: 'jsonSchema',
+                  strict: true,
+                  includeRaw: true,
+                })
+                .invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
+                  signal: controller.signal,
+                })
+            );
             const raw = result.raw as BaseMessage;
             this.recordModelUsage(raw);
             if (controller.signal.aborted) throw new Error('Structured response cancelled');
@@ -2478,9 +2534,10 @@ Please analyze this data and provide a specific, detailed response that directly
         this.currentAbortController = controller;
         try {
           controller.signal.throwIfAborted();
-          const response = await model.invoke(
-            [this.createSystemMessage(input.systemPrompt), ...input.messages],
-            { signal: controller.signal }
+          const response = await this.observeModelInvocation('synthesis', controller.signal, () =>
+            model.invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
+              signal: controller.signal,
+            })
           );
           this.recordModelUsage(response);
           controller.signal.throwIfAborted();

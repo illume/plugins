@@ -943,7 +943,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
       { role: 'assistant', content: 'Checking...' }
     );
 
-    expect(events).toEqual([
+    expect(events.filter(event => event.type !== 'model_invocation')).toEqual([
       {
         type: 'model_usage',
         provider: 'mock-testing-model',
@@ -1039,7 +1039,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events).toEqual([
+    expect(events.filter(event => event.type === 'model_usage')).toEqual([
       {
         type: 'model_usage',
         provider: 'mock-testing-model',
@@ -1092,7 +1092,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'openai',
       input_token_semantics: 'total_including_cache',
       model: 'gpt-5',
@@ -1133,7 +1133,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'anthropic',
       input_token_semantics: 'uncached_only',
       model: 'claude-sonnet-4-5',
@@ -1185,7 +1185,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'anthropic',
       input_token_semantics: 'total_including_cache',
       model: 'claude-sonnet-4-5',
@@ -3815,6 +3815,72 @@ describe('optional structured final response', () => {
     expect(invoke.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
     expect(ordinary).not.toHaveBeenCalled();
     expect(events.some(event => event.type === 'model_usage')).toBe(true);
+    const invocations = events.filter(event => event.type === 'model_invocation');
+    expect(invocations).toEqual([
+      { type: 'model_invocation', invocation_id: 1, phase: 'synthesis', status: 'started' },
+      {
+        type: 'model_invocation',
+        invocation_id: 1,
+        phase: 'synthesis',
+        status: 'completed',
+        duration_ns: expect.any(String),
+      },
+    ]);
+  });
+
+  it('records sanitized structured invocation failure without retry or error contents', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    const invoke = vi.fn().mockRejectedValue(
+      Object.assign(new Error('private-provider-details'), {
+        status: 429,
+        headers: { authorization: 'private-header' },
+        body: 'private-body',
+      })
+    );
+    const ordinary = vi.fn();
+    privateManager(manager).model = { invoke: ordinary, withStructuredOutput: () => ({ invoke }) };
+    expect((await manager.processToolResponses()).error).toBe(true);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(ordinary).not.toHaveBeenCalled();
+    expect(events.filter(event => event.type === 'model_invocation')).toEqual([
+      { type: 'model_invocation', invocation_id: 1, phase: 'synthesis', status: 'started' },
+      {
+        type: 'model_invocation',
+        invocation_id: 1,
+        phase: 'synthesis',
+        status: 'failed',
+        http_status: 429,
+        duration_ns: expect.any(String),
+      },
+    ]);
+    expect(JSON.stringify(events)).not.toContain('private-');
+  });
+
+  it('records cancellation before a stalled invocation settles, without a late completion event', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+    const pending = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+      release = resolve;
+    });
+    privateManager(manager).model = {
+      withStructuredOutput: () => ({
+        invoke: async () => {
+          manager.abort();
+          expect(
+            events.filter(event => event.type === 'model_invocation').map(event => event.status)
+          ).toEqual(['started', 'cancelled']);
+          return pending;
+        },
+      }),
+    };
+    const response = manager.processToolResponses();
+    release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+    expect((await response).error).toBe(true);
+    expect(
+      events.filter(event => event.type === 'model_invocation').map(event => event.status)
+    ).toEqual(['started', 'cancelled']);
   });
 
   it.each(['refusal', 'length', 'malformed', 'unparsed'])(

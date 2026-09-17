@@ -10,7 +10,7 @@ import {
 } from './headlampObservability.js';
 import type { LiveObservabilityCandidateInput } from '../runner/observabilityEvaluation.js';
 import { CompactEvidence, objectFieldEvidence } from './compactEvidence.js';
-import { FACT_SELECTION_SCHEMA } from './compactEvidence.js';
+import { CLAIM_SELECTION_SCHEMA, FACT_SELECTION_SCHEMA } from './compactEvidence.js';
 import { assertValid } from '../contracts/validate.js';
 import {
   gradeObservabilitySelection,
@@ -210,6 +210,145 @@ test('object fields preserve source identity, duplicate paths, escaped keys, and
     },
   ]);
   assert.throws(() => objectFieldEvidence(new CompactEvidence().add(source)), /object grouping/);
+});
+
+test('claims require explicit same-object identities and never repair invalid selections', () => {
+  const registry = new CompactEvidence('numeric', 'object');
+  const observations = [
+    ['/value/0/name', 'system'],
+    ['/value/0/properties/count', '1'],
+    ['/value/1/name', 'target'],
+    ['/value/1/properties/count', '2'],
+    ['/value/1/properties/maxCount', '2'],
+    ['/value/1/properties/enableAutoScaling', 'true'],
+    ['/value/1/properties/name', 'not-an-object-identity'],
+  ].map(([field_path, value]) => ({
+    evidence_id: 'read',
+    resource_ref: 'tool/pools',
+    field_path: field_path!,
+    value: value!,
+  }));
+  registry.add(observations);
+  registry.add(observations);
+  registry.add(observations.map(observation => ({ ...observation, resource_ref: 'tool/other' })));
+  const selection = {
+    schema_version: 'claim_selection@1.0.0',
+    disposition: 'cause',
+    claims: [{ identity_ref: 'r1.f3', fact_refs: ['r1.f4'] }],
+    alternative_dispositions: [],
+    proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
+  };
+  const resolve = (value: unknown) => JSON.parse(registry.resolveClaims(JSON.stringify(value)));
+  assert.deepEqual(
+    resolve(selection).cause_facts.map((fact: any) => fact.field_path),
+    ['/value/1/name', '/value/1/properties/count']
+  );
+  for (const disposition of ['healthy', 'insufficient']) {
+    const result = resolve({ ...selection, disposition, claims: [] });
+    assert.deepEqual(result.cause_facts, []);
+    assert.equal(result.uncertainty.is_uncertain, disposition === 'insufficient');
+    assert.throws(() => resolve({ ...selection, disposition }), /require no claims/);
+  }
+  assert.throws(() => resolve({ ...selection, claims: [] }), /Cause requires claims/);
+  for (const claims of [
+    [{ identity_ref: 'r1.f4', fact_refs: ['r1.f5'] }],
+    [{ identity_ref: 'r1.f7', fact_refs: ['r1.f5'] }],
+    [{ identity_ref: 'r9.f1', fact_refs: ['r1.f4'] }],
+    [{ identity_ref: 'r1.f3', fact_refs: ['r1.f2'] }],
+    [{ identity_ref: 'r1.f3', fact_refs: ['r2.f4'] }],
+    [{ identity_ref: 'r1.f3', fact_refs: ['r3.f4'] }],
+    [{ identity_ref: 'r1.f3', fact_refs: ['r9.f4'] }],
+    [{ identity_ref: 'r1.f3', fact_refs: [] }],
+    [{ identity_ref: 'r1.f3', fact_refs: ['r1.f3', 'r1.f4'] }],
+    [selection.claims[0], selection.claims[0]],
+    [{ ...selection.claims[0], explanation: 'unexpected' }],
+  ])
+    assert.throws(() => resolve({ ...selection, claims }));
+  assert.throws(() => resolve({ ...selection, disposition: 'maybe' }));
+  assert.throws(() => resolve({ ...selection, uncertainty: { is_uncertain: true } }));
+  assert.throws(() => resolve({ ...selection, proposed_actions: 'invalid' }));
+  assert.deepEqual(CLAIM_SELECTION_SCHEMA.properties.disposition.enum, [
+    'cause',
+    'healthy',
+    'insufficient',
+  ]);
+  const wrongButGrounded = resolve({
+    ...selection,
+    claims: [{ identity_ref: 'r1.f1', fact_refs: ['r1.f2'] }],
+  });
+  assert.equal(wrongButGrounded.cause_facts[0].observed_value, 'system');
+  assert.equal(wrongButGrounded.cause_facts.length, 2);
+  const collisions = new CompactEvidence('numeric', 'object');
+  collisions.add([
+    observations[2]!,
+    observations[3]!,
+    { ...observations[3]!, resource_ref: 'tool/other' },
+    { ...observations[3]!, evidence_id: 'other-evidence' },
+  ]);
+  for (const reference of ['r1.f3', 'r1.f4']) {
+    assert.throws(
+      () =>
+        collisions.resolveClaims(
+          JSON.stringify({
+            ...selection,
+            claims: [{ identity_ref: 'r1.f1', fact_refs: [reference] }],
+          })
+        ),
+      /same read, resource, evidence, and object/
+    );
+  }
+  for (const prefix of ['/value/0/effectiveSecurityRules/0', '/pods/items/0', '']) {
+    const nested = new CompactEvidence('numeric', 'object');
+    nested.add([
+      {
+        ...observations[0]!,
+        field_path: `${prefix}${prefix.includes('/pods') ? '/metadata/name' : '/name'}`,
+      },
+      { ...observations[1]!, field_path: `${prefix}/setting` },
+    ]);
+    assert.equal(
+      JSON.parse(
+        nested.resolveClaims(
+          JSON.stringify({
+            ...selection,
+            claims: [{ identity_ref: 'r1.f1', fact_refs: ['r1.f2'] }],
+          })
+        )
+      ).cause_facts.length,
+      2
+    );
+  }
+});
+
+test('claim configuration and prompt are explicit and defaults retain fact selection', async () => {
+  for (const overrides of [
+    { evidenceGrouping: 'read' as const },
+    { strictFinalOutput: false },
+    { evidenceMode: 'compact' as const },
+    { provider: 'anthropic' },
+  ]) {
+    await assert.rejects(
+      createHeadlampObservabilityCandidate({
+        provider: 'azure',
+        config: {},
+        evidenceGrouping: 'object',
+        selectionContract: 'claims',
+        ...overrides,
+      }),
+      /Claims require/
+    );
+  }
+  assert.equal(
+    observabilityPrompt(input, 'compact-select'),
+    observabilityPrompt(input, 'compact-select', 'none', 'facts')
+  );
+  const prompt = observabilityPrompt(input, 'compact-select', 'none', 'claims');
+  assert.ok(prompt.includes('claim_selection@1.0.0'));
+  assert.ok(!prompt.includes('fact_selection@1.0.0'));
+  assert.ok(prompt.includes('Both require claims: []'));
+  assert.ok(prompt.includes('Identity references count toward the public fact budget'));
+  for (const oracle of ['block-aks', '10.240.1.4', 'maxCount=1'])
+    assert.ok(!prompt.includes(oracle));
 });
 
 const input: LiveObservabilityCandidateInput = {
@@ -492,12 +631,14 @@ test('strict final output rejects unsupported configurations before model creati
 });
 
 for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
-  for (const [evidenceGrouping, evidenceLayout] of [
-    ['read', 'rows'],
-    ['object', 'rows'],
-    ['object', 'fields'],
+  for (const [evidenceGrouping, evidenceLayout, selectionContract] of [
+    ['read', 'rows', 'facts'],
+    ['object', 'rows', 'facts'],
+    ['object', 'fields', 'facts'],
+    ['object', 'rows', 'claims'],
+    ['object', 'fields', 'claims'],
   ] as const) {
-    test(`default strict selection reaches Azure with ${referenceStyle} references and ${evidenceGrouping}/${evidenceLayout}`, async context => {
+    test(`strict Azure selection with ${referenceStyle} references and ${evidenceGrouping}/${evidenceLayout}/${selectionContract}`, async context => {
       const requests: Array<Record<string, any>> = [];
       context.mock.method(
         globalThis,
@@ -537,10 +678,24 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
                   : {
                       role: 'assistant',
                       content: JSON.stringify({
-                        schema_version: 'fact_selection@1.0.0',
-                        fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
+                        ...(selectionContract === 'claims'
+                          ? {
+                              schema_version: 'claim_selection@1.0.0',
+                              disposition: 'cause',
+                              claims: [
+                                {
+                                  identity_ref:
+                                    referenceStyle === 'numeric' ? 'r1.f2' : 'r1.f2.name',
+                                  fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
+                                },
+                              ],
+                            }
+                          : {
+                              schema_version: 'fact_selection@1.0.0',
+                              fact_refs: [referenceStyle === 'numeric' ? 'r1.f1' : 'r1.f1.cpu'],
+                              uncertainty: { is_uncertain: false },
+                            }),
                         alternative_dispositions: [],
-                        uncertainty: { is_uncertain: false },
                         proposed_actions: [{ operation: 'no_action', description: 'Read only' }],
                       }),
                     },
@@ -561,8 +716,10 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         ...(referenceStyle === 'field-labelled' ? { referenceStyle } : {}),
         evidenceGrouping,
         ...(evidenceLayout === 'fields' ? { evidenceLayout } : {}),
+        ...(selectionContract === 'claims' ? { selectionContract } : {}),
         record: value => {
           assert.equal(value.status, 'completed');
+          assert.equal(value.selectionContract, selectionContract);
           assert.equal(value.evidenceLayout, evidenceLayout);
           assert.equal(value.error, null);
           assert.ok(value.resolvedSubmission);
@@ -590,13 +747,19 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
           assert.equal(name, 'kubernetes_api_request');
           assert.deepEqual(args, { method: 'GET', path: '/eval/observed-kubernetes' });
           return {
-            data: { cpu: '100m' },
+            data: { cpu: '100m', name: 'workload' },
             observations: [
               {
                 evidence_id: 'read1',
                 resource_ref: 'tool/kubernetes_api_request',
                 field_path: '/cpu',
                 value: '100m',
+              },
+              {
+                evidence_id: 'read1',
+                resource_ref: 'tool/kubernetes_api_request',
+                field_path: '/name',
+                value: 'workload',
               },
             ],
           };
@@ -609,6 +772,10 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
       assert.ok(requests[0]?.tools.length);
       assert.equal(requests[1]?.response_format.type, 'json_schema');
       assert.equal(requests[1]?.response_format.json_schema.strict, true);
+      assert.deepEqual(
+        requests[1]?.response_format.json_schema.schema,
+        selectionContract === 'claims' ? CLAIM_SELECTION_SCHEMA : FACT_SELECTION_SCHEMA
+      );
       assert.equal(requests[1]?.tools, undefined);
       assert.equal(
         JSON.stringify(requests[1]?.messages).includes('object_path'),
@@ -622,6 +789,15 @@ for (const referenceStyle of ['numeric', 'field-labelled'] as const) {
         evidenceLayout === 'fields'
       );
       assert.deepEqual(parseSubmission(result).submission?.cause_facts, [
+        ...(selectionContract === 'claims'
+          ? [
+              {
+                resource_ref: 'tool/kubernetes_api_request',
+                field_path: '/name',
+                observed_value: 'workload',
+              },
+            ]
+          : []),
         { resource_ref: 'tool/kubernetes_api_request', field_path: '/cpu', observed_value: '100m' },
       ]);
     });

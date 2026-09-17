@@ -9,6 +9,7 @@ type Observation = Awaited<
 export type FactReferenceStyle = 'numeric' | 'field-labelled';
 export type EvidenceGrouping = 'read' | 'object';
 export type EvidenceLayout = 'rows' | 'fields';
+export type SelectionContract = 'facts' | 'claims';
 
 export function objectFieldEvidence(evidence: ReturnType<CompactEvidence['add']>) {
   return {
@@ -74,9 +75,40 @@ export const FACT_SELECTION_SCHEMA = {
   additionalProperties: false,
 };
 
+export const CLAIM_SELECTION_SCHEMA = {
+  type: 'object',
+  properties: {
+    schema_version: { type: 'string', enum: ['claim_selection@1.0.0'] },
+    disposition: { type: 'string', enum: ['cause', 'healthy', 'insufficient'] },
+    claims: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          identity_ref: { type: 'string' },
+          fact_refs: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['identity_ref', 'fact_refs'],
+        additionalProperties: false,
+      },
+    },
+    alternative_dispositions: FACT_SELECTION_SCHEMA.properties.alternative_dispositions,
+    proposed_actions: FACT_SELECTION_SCHEMA.properties.proposed_actions,
+  },
+  required: [
+    'schema_version',
+    'disposition',
+    'claims',
+    'alternative_dispositions',
+    'proposed_actions',
+  ],
+  additionalProperties: false,
+};
+
 export class CompactEvidence {
   private reads = 0;
   private facts = new Map<string, Observation>();
+  private factGroups = new Map<string, string>();
 
   constructor(
     private readonly referenceStyle: FactReferenceStyle = 'numeric',
@@ -104,6 +136,7 @@ export class CompactEvidence {
       this.facts.set(reference, structuredClone(observation));
       const pointer = this.grouping === 'object' ? objectPath(observation.field_path) : '';
       const key = JSON.stringify([observation.evidence_id, observation.resource_ref, pointer]);
+      this.factGroups.set(reference, `${read}:${key}`);
       let group = groups.get(key);
       if (!group) {
         group = {
@@ -121,6 +154,56 @@ export class CompactEvidence {
       columns: ['reference', 'field_path', 'observed_value'],
       records: [...groups.values()],
     };
+  }
+
+  resolveClaims(text: string): string {
+    assert.equal(this.grouping, 'object', 'Claims require object grouping');
+    const selected: unknown = JSON.parse(text);
+    assert.ok(selected && typeof selected === 'object' && !Array.isArray(selected));
+    const value = selected as Record<string, unknown>;
+    assert.deepEqual(Object.keys(value).sort(), [...CLAIM_SELECTION_SCHEMA.required].sort());
+    assert.equal(value.schema_version, 'claim_selection@1.0.0');
+    assert.ok(['cause', 'healthy', 'insufficient'].includes(String(value.disposition)));
+    assert.ok(Array.isArray(value.claims));
+    assert.equal(
+      value.claims.length > 0,
+      value.disposition === 'cause',
+      'Cause requires claims; healthy and insufficient require no claims'
+    );
+    const references: string[] = [];
+    for (const claim of value.claims) {
+      assert.ok(claim && typeof claim === 'object' && !Array.isArray(claim));
+      assert.deepEqual(Object.keys(claim).sort(), ['fact_refs', 'identity_ref']);
+      assert.equal(typeof claim.identity_ref, 'string');
+      const identity = this.facts.get(claim.identity_ref);
+      assert.ok(identity, 'Claim identity was not retrieved in this session');
+      const relativePath = identity.field_path.slice(objectPath(identity.field_path).length);
+      assert.ok(
+        ['/name', '/id', '/metadata/name', '/metadata/uid'].includes(relativePath),
+        'Claim identity must reference an observed object name or ID'
+      );
+      assert.ok(Array.isArray(claim.fact_refs) && claim.fact_refs.length > 0);
+      references.push(claim.identity_ref);
+      for (const reference of claim.fact_refs) {
+        assert.equal(typeof reference, 'string');
+        assert.ok(this.facts.has(reference), 'Claim fact was not retrieved in this session');
+        assert.equal(
+          this.factGroups.get(reference),
+          this.factGroups.get(claim.identity_ref),
+          'Claim facts must belong to the same read, resource, evidence, and object as identity'
+        );
+        references.push(reference);
+      }
+    }
+    return this.resolve(
+      JSON.stringify({
+        schema_version: 'fact_selection@1.0.0',
+        fact_refs: references,
+        alternative_dispositions: value.alternative_dispositions,
+        uncertainty: { is_uncertain: value.disposition === 'insufficient' },
+        proposed_actions: value.proposed_actions,
+      })
+    );
   }
 
   resolve(text: string): string {

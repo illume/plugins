@@ -391,6 +391,38 @@ causal claims and healthy/insufficient dispositions with offline source validati
 and the same counterexamples. Do not auto-append oracle identity, weaken historical
 graders, or repeat the batch merely to obtain passes.
 
+### Identity-Bearing Claims: Offline Verification
+
+Added opt-in `selectionContract: 'claims'`, requiring strict Azure/OpenAI compact
+selection and object grouping. Each claim explicitly selects an observed object
+name/ID and explanatory fact references from the same read/resource/evidence/object.
+The model separately chooses cause, healthy, or insufficient. Cause requires
+claims; healthy/insufficient require no claims and translate to uncertainty
+false/true. Duplicate, unknown, cross-object, missing-identity, and contradictory
+selections fail without repair. Only explicit references reach the unchanged fact
+resolver; no name, setting, or evaluator oracle is auto-added.
+
+Tests cover same-read resource/evidence collisions, repeated reads, nested rule
+and Kubernetes identities, duplicate rejection, unchanged default prompts, invalid
+options, and actual mocked Azure request schemas for row/field layouts and
+numeric/labelled IDs. All **392 eval tests**, formatting, and typechecks passed,
+including 41 focused candidate tests. Shared runtime and graders remain unchanged.
+
+The next fixed comparison declares 18 fresh GPT-4o sessions, facts versus claims
+on the same object-field layout: two attempts per each of two incidents plus
+five controls per arm. Block order alternates arm positions; no final limits or
+guidance are enabled. Raw packets, graders, 12-fact/eight-read budgets, and the
+120-second outer deadline stay fixed. Claims must pass all four incident and all
+five control assignments, with no format/transport failures, and exceed facts in
+causal passes for promotion. Otherwise they remain opt-in.
+
+This treatment bundles schema, instructions, identity validation, and disposition
+translation. Enforcing explicit identity partly controls identity completeness;
+it is not independent evidence of causal reasoning. Well-formed wrong-pool claims
+still fail the existing grader, and the new shape may reject defensible claims
+on unsupported identity formats. All rejected/timed-out attempts remain failures;
+no historical score, prompt, or grader is retroactively changed.
+
 ### Representation And Identity
 
 A model-free tokenizer probe reduced the observation component from 36,882 to

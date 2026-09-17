@@ -270,6 +270,26 @@ the object itself; repeated paths retain separate references and values. Read,
 resource, and evidence boundaries remain distinct. No paths are unescaped,
 observations filtered, identity fields auto-selected, or resolver behavior changed.
 
+`selectionContract: 'claims'` is an opt-in output-contract experiment; the default
+is `'facts'`. Claims require strict Azure/OpenAI compact selection and object
+grouping, with either row or field layout. The candidate record retains the
+effective contract. The model returns `claim_selection@1.0.0` with `disposition`
+(`cause`, `healthy`, or `insufficient`), `claims`, `alternative_dispositions`, and
+`proposed_actions`. Each claim explicitly selects `identity_ref` plus nonempty
+`fact_refs`. Identity must be a retrieved object's `/name`, `/id`, `/metadata/name`,
+or `/metadata/uid`; every fact must share its read, resource, evidence ID, and
+object group. Other identity shapes are not supported by this experiment.
+
+Cause requires at least one claim. Healthy and insufficient require no claims;
+they translate to no cause facts and uncertainty false/true respectively. Identity
+references count toward the same fact budget. Unknown, duplicate, cross-object,
+or contradictory selections fail without repair or automatic field expansion.
+The resolver only translates explicitly selected identities/settings into the
+existing submission schema. Grounded identities do not prove causal relevance;
+well-formed wrong-object claims still reach the unchanged evaluator and can fail.
+This combines new instructions, output schema, and source validation, not a test
+of schema alone. General UI chat and the default fact-selection path are unchanged.
+
 `gradeObservabilityCausality` is a separate prospective evaluator for explicit
 required/supporting fact alternatives and healthy/insufficient dispositions.
 It is not used to regrade prior runs or compute domain causal truth. Its contract

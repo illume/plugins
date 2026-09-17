@@ -1,6 +1,6 @@
 # Agent harness research
 
-Status date: 2026-09-17. This document describes the implementation in this PR,
+Status date: 2026-09-18. This document describes the implementation in this PR,
 which is stacked on the Phase 2 evaluation infrastructure in PR #30.
 
 ## Current decision
@@ -75,6 +75,11 @@ default.
   not improved diagnosis quality. The intended legacy half was invalidated by
   a provider rate limit after five valid trials and cannot support a paired
   comparison.
+- After canonical evidence and Pending-Pod hypothesis ledgers were added, a
+  fresh harness-only round on the same locked roster passed 25/25 diagnoses.
+  Every trial was valid, safe, lifecycle-clean, and tool-free. This establishes
+  full-roster harness success for one round, but it is not a fresh paired legacy
+  comparison or a superiority claim.
 
 ### Registered 25-case Minikube result
 
@@ -161,9 +166,38 @@ these final control-flow changes. A four-case real-provider probe
 (`run_0mu59g9sy000001_05facc03-9d93-4120-9bb3-31318e710475`) attempted every
 broad-run repair case plus the duplicate-citation case, but all four candidate
 stages received the continuing HTTP 429 capacity limit with a 5,907-second
-retry window and were invalidated before grading. Real-provider confirmation of
-the final repair revision therefore remains pending; no outcome is inferred
-from that probe.
+retry window and were invalidated before grading. No outcome is inferred from
+that probe; the later current-harness full-roster run provides real-provider
+coverage of the final repair revision.
+
+### Current 25-case harness result
+
+Run `run_0mu61zl7y000001_a30692c6-9c7b-462f-b2ec-49a74afb86e7` executed the 25
+eligible non-repair assignments from the locked `phase2-comparison-v2` roster on
+the dedicated `headlamp-ai-evals` Minikube profile. The candidate manifest
+records clean product revision `3d36145404a56db68e907e7d8bd2344510d7e717`,
+`agent-harness` session mode, `supplied-evidence-only` retrieval, provider-native
+structured output, and Copilot `gpt-4o-2024-11-20`. The canonical bundle
+manifest SHA-256 is
+`3c8b5b1b55720e9a14ba41e3a752dc84d9e4b3ac886be39acb98bd148a0087c2`.
+
+|  Pass | Partial | No result |     Safety | Lifecycle | Model requests | Total tokens | Tool calls | Mean diagnosis time |
+| ----: | ------: | --------: | ---------: | --------: | -------------: | -----------: | ---------: | ------------------: |
+| 25/25 |    0/25 |      0/25 | 25/25 pass |  25 clean |             28 |       68,506 |          0 |              6.61 s |
+
+All 25 submissions and candidate stages were valid. Twenty-two trials completed
+in one model request; controller convergence, storage binding health, and the
+healthy PVC control used the single bounded repair. Every registered non-repair
+stratum passed: fault diagnosis 7/7, healthy control 5/5, insufficient evidence
+4/4, multi-turn tool failure 4/4, and security prompt injection 5/5.
+
+Relative to the earlier supplied-evidence harness round, task passes increased
+from 15 to 25 with the same 28 requests, 294 fewer tokens, and mean diagnosis
+time reduced from 7.64 to 6.61 seconds. Relative to the original matched harness
+half, passes increased from 17 to 25 while requests fell from 41 to 28, tokens
+from 110,479 to 68,506, and failed tool calls from 29 to zero. These are
+descriptive cross-round comparisons. A fresh counterbalanced harness-versus-
+legacy round is still required for a paired parity or superiority claim.
 
 ### Controller-convergence evidence-ledger result
 
@@ -320,13 +354,13 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Model-selected evidence ledger versus canonical supplied observations                  | Controller convergence moved from stochastic partial/no-result to 10/10 valid passes        | Canonicalize the ledger in explicit supplied-evidence diagnosis mode       |
 | More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                 | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
 | Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
+| Current harness on the locked 25-case diagnosis roster                                 | 25/25 valid, safe, lifecycle-clean passes with zero tool calls                              | Retain defaults; repeat a paired legacy comparison before broader claims   |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
-The next result should repeat the registered roster with counterbalanced order
-after the provider rate-limit window resets. Use the now-explicit retrieval
-policy and record lifecycle validity, first-attempt and final structured status,
-root-cause and safety outcomes, calls, tokens, latency, and complete
-configuration. One valid ordered roster round plus one invalid repeat is not a
+The next comparison should pair this harness with legacy on the registered
+roster in counterbalanced order. Record lifecycle validity, first-attempt and
+final structured status, root-cause and safety outcomes, calls, tokens, latency,
+and complete configuration. One successful harness-only roster round is not a
 superiority claim.
 
 ## Ordered phases
@@ -338,9 +372,9 @@ superiority claim.
 2. **Matched baseline — current phase.** The first 25-case run found equal safety
    and lifecycle behavior but slightly lower harness task success and worse
    efficiency. Retrieval availability and structured submission are now
-   explicit, and the improved harness completed the roster cleanly. Repeat the
-   legacy comparison after provider cooldown with counterbalanced order before
-   changing defaults or making a quality claim.
+   explicit, and the current harness passed the full roster cleanly. Repeat the
+   legacy comparison with counterbalanced order before changing plugin defaults
+   or making a paired quality claim.
 3. **Evidence quality.** Add typed product claims linked to evidence and one
    deterministic verification/correction opportunity. Measure unsupported
    claims, evidence recall, abstention, and regressions separately.

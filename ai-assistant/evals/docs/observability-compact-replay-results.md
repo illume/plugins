@@ -2,6 +2,12 @@
 
 Date: 2026-09-17. PR: https://github.com/illume/plugins/pull/25.
 
+Subsequent configuration decision: the operator requested enabling `compact`
+for its efficiency benefit. It is now the observability eval adapter default;
+`full` remains an explicit override and `compact-select` remains opt-in. The
+experiment and recommendation below describe the state at the time of the replay;
+no recorded scores or claims of accuracy improvement have changed.
+
 ## Result
 
 Compact evidence reduced input tokens and latency, but did not improve diagnosis
@@ -149,3 +155,86 @@ selection, with fresh counterexamples and the same budget. Do not silently strip
 invalid JSON, deduplicate selections, expand gold-required fields, or regrade
 these attempts as successful. A bounded correction loop and new live Azure runs
 were deliberately not included in this implementation.
+
+## Follow-Up Research
+
+After the replay, the operator chose compact-only as the eval default for its
+efficiency benefit. The next accuracy experiments should separate output-format
+reliability from evidence selection; neither improvement is assumed to follow
+from enabling compaction.
+
+### 1. Constrain The Final Output
+
+Two of four enabled fact-selection attempts failed because their JSON contained
+an extra closing brace. Use provider-enforced structured output on the final
+answer call, not another prompt requesting valid JSON and not post-hoc repair.
+Leave retrieval and the model version fixed. The installed Azure LangChain client
+supports `withStructuredOutput(schema, { method: 'jsonSchema', strict: true,
+includeRaw: true })`; a fully mocked HTTP probe confirmed the request contains
+`response_format.type=json_schema`, `strict=true`, no forced tool call, and retains
+both parsed content and raw usage metadata. This is a client integration check,
+not a live service test or evidence of improved diagnosis.
+
+[Azure documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/structured-outputs)
+lists GPT-4o `2024-11-20` as supported. All fields must be required, optional
+values need an appropriate nullable representation, and unsupported schema
+keywords cannot be relied on. In particular, continue enforcing duplicate
+selection and fact-budget rules locally; schema validity does not mean a cited
+fact supports a claim. Handle refusal and incomplete responses explicitly.
+
+The production session currently calls the unbound model for synthesis. Introduce
+an explicit optional structured-final-response contract at that boundary rather
+than replacing the actual assistant with a separate bare model client or mutating
+private model state. Preserve the original task, telemetry, cancellation, and
+read-only authorization. Avoid constraining the initial tool-planning turn with
+the final-answer schema. Structured decoding can affect reasoning quality:
+[Tam et al.](https://arxiv.org/abs/2408.02442) observed degradation under format
+restrictions in their tested tasks, not proof of degradation for this Azure
+deployment. Measure correctness as well as format compliance.
+
+### 2. Make References Distinguishable
+
+In the retained capacity response, `r2.f42` means `maxCount`, `r2.f43` means
+`minCount`, and both values are `1`. The model selected the latter while discussing
+the former. Test references that retain the field name, for example
+`r2.pool1.maxCount` versus `r2.pool1.minCount`, with identity held in a per-read
+registry. Generate names from the observed schema, not gold labels or the presumed
+fault. Escape collisions and keep source identity; do not reinterpret a reference
+against a later reordered response.
+
+[Anthropic's tool-design guidance](https://www.anthropic.com/engineering/writing-tools-for-agents)
+reports benefits from interpretable identifiers, but that is vendor experience,
+not a measured GPT-4o result here. The current references already save tokens;
+the next test concerns selection mistakes, not a claim that every longer label
+is better.
+
+### 3. Group Related Fields Without Filling Answers
+
+Compact-only omitted the NSG rule name in one attempt, direction in another,
+and the pool name in one capacity attempt. Current grouping is by whole tool
+response, not by individual NSG rule or node pool. Test one labelled record per
+rule/pool, with identity and related configuration fields displayed together.
+Keep every observed field accessible and preserve empty/incomplete states.
+Require explicit field selections: automatically expanding a record into every
+gold-required field would conceal omissions and inflate the current score.
+
+### Proposed Comparison
+
+Keep compact-only as the operational baseline. Before adding a correction loop,
+compare a small factorial experiment within fact-selection mode:
+
+| Arm | Final JSON Constraint | Reference Labels |
+| --- | --- | --- |
+| A | Prompt only | Existing sequential IDs |
+| B | Strict schema | Existing sequential IDs |
+| C | Prompt only | Field-labelled IDs |
+| D | Strict schema | Field-labelled IDs |
+
+Use the same tasks, model, budgets, and observation records across arms, with
+counterbalanced order and a fixed run count. Measure schema failures, duplicate
+or unknown references, wrong-field selections, required-fact omissions, appropriate
+abstention, tokens, and latency separately. Include renamed/reordered pools,
+equal `minCount`/`maxCount` values, unrelated capped pools, and NSG rules for the
+wrong port or direction. Retained incidents are development data; check new
+incident instances before claiming a reliability improvement. No new paid model
+or Azure execution was performed for this follow-up research.

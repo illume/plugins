@@ -157,6 +157,9 @@ test('selection controls reject the echo-all shortcut without changing the legac
 });
 
 test('compact modes use their explicit input and output contracts', () => {
+  assert.equal(observabilityPrompt(input), observabilityPrompt(input, 'compact'));
+  assert.ok(!observabilityPrompt(input).includes('fact_selection@1.0.0'));
+  assert.ok(observabilityPrompt(input, 'full').includes('Each tool returns observations'));
   assert.ok(observabilityPrompt(input, 'compact').includes('navigation only'));
   const selection = observabilityPrompt(input, 'compact-select');
   assert.ok(selection.includes('fact_selection@1.0.0'));
@@ -219,7 +222,7 @@ test('selection resolution rejects invalid envelopes and never auto-corrects fac
 });
 
 test('Headlamp candidate uses the real session and honours pre-start cancellation', async () => {
-  const records: unknown[] = [];
+  const records: Array<{ evidenceMode: string }> = [];
   const candidate = await createHeadlampObservabilityCandidate({
     provider: 'mock-testing-model',
     config: {},
@@ -229,4 +232,21 @@ test('Headlamp candidate uses the real session and honours pre-start cancellatio
   controller.abort();
   await assert.rejects(candidate({ ...input, signal: controller.signal }), /already cancelled/);
   assert.equal(records.length, 1);
+  assert.equal(records[0]?.evidenceMode, 'compact');
+});
+
+test('Headlamp candidate preserves explicit full and fact-selection overrides', async () => {
+  for (const evidenceMode of ['full', 'compact-select'] as const) {
+    const records: Array<{ evidenceMode: string }> = [];
+    const candidate = await createHeadlampObservabilityCandidate({
+      provider: 'mock-testing-model',
+      config: {},
+      evidenceMode,
+      record: value => records.push(value),
+    });
+    const controller = new AbortController();
+    controller.abort();
+    await assert.rejects(candidate({ ...input, signal: controller.signal }), /already cancelled/);
+    assert.equal(records[0]?.evidenceMode, evidenceMode);
+  }
 });

@@ -54,7 +54,7 @@ export async function createHeadlampObservabilityCandidate(
   const { z } = await import(pathToFileURL(require.resolve('zod')).href);
   return async input => {
     const telemetry: unknown[] = [];
-    const evidenceMode = options.evidenceMode ?? 'full';
+    const evidenceMode = options.evidenceMode ?? 'compact';
     const evidence = new CompactEvidence();
     let toolPayloadCharacters = 0;
     let resolvedSubmission: string | null = null;
@@ -143,7 +143,7 @@ export function emptyContainers(
 
 export function observabilityPrompt(
   input: LiveObservabilityCandidateInput,
-  mode: EvidenceMode = 'full'
+  mode: EvidenceMode = 'compact'
 ): string {
   const requests = input.readRequests.filter(request => input.enabledTools.includes(request.tool));
   if (mode === 'compact-select') {

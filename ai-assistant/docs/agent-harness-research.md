@@ -16,27 +16,32 @@ quality without a safety or lifecycle regression. Features that have already
 passed their focused contracts are defaults in the harness: the `createAgent`
 loop, runtime tool adaptation, bounded calls, approval enforcement, redaction,
 result preservation, end-to-end cancellation where the host supports it, and
-bounded optional orchestration. Do not make an unmeasured custom `StateGraph`,
-specialist fan-out, memory, retries, or summarization the default.
+bounded optional orchestration. Supplied-evidence evaluation runs also disable
+retrieval and require externally validated structured diagnoses with exact
+evidence references and one bounded no-tool repair. Do not make an unmeasured
+custom `StateGraph`, specialist fan-out, memory, retries, or summarization the
+default.
 
 ## Status
 
-| Capability                                                               | Status                                                                       | Default                                    | Evidence                                                                                       |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| LangGraph-backed `createAgent` loop                                      | Implemented                                                                  | CLI: yes; plugin UI: no                    | Deterministic model-tool-model, parallel-call, and limit tests                                 |
-| Existing `ToolRuntime` and host-tool adaptation                          | Implemented                                                                  | Yes in harness                             | Call IDs, approvals, errors, redaction, deferred output, and aligned-history tests             |
-| Skills, dynamic system prompt, Kubernetes context, and provider behavior | Implemented through the session adapter                                      | Yes in harness                             | Compatibility and CLI tests; stacked build passes                                              |
-| Sanitized model/tool/turn telemetry                                      | Implemented after the first smoke exposed its absence                        | Yes in harness                             | Observer regression plus matched run with complete tool/model accounting                       |
-| Mutation approval and Secret/error redaction                             | Implemented                                                                  | Yes                                        | Denial, sensitive read, thrown-error, and runtime-history regressions                          |
-| CLI, MCP, and Electron cancellation                                      | Implemented where the underlying host accepts a signal/cancel request        | Yes                                        | Pre-abort, in-flight abort, correlated Electron cancellation, and listener-cleanup tests       |
-| Required/optional tool waiting                                           | Implemented in the legacy orchestrated path                                  | Yes there                                  | Success/failure races, deadlines, timer cleanup, immutable snapshots, and optional abort tests |
-| Harness-native optional tool dispatch                                    | Not implemented                                                              | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
-| CLI harness default and legacy fallback                                  | Implemented                                                                  | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
-| Plugin UI harness default                                                | Not implemented                                                              | No                                         | Requires quality comparison and browser stream/approval parity                                 |
-| Typed evidence and deterministic verification                            | Partly supplied by the eval submission contract, not the product answer path | No                                         | Phase 2 graders exist; product integration is untested                                         |
-| Checkpointed approval/resume                                             | Not implemented                                                              | No                                         | Research backlog                                                                               |
-| Context editing/summarization, retry/fallback, tool selection            | Not evaluated as isolated harness changes                                    | No                                         | Research backlog                                                                               |
-| Outer `StateGraph`, specialists, or incident memory                      | Hypotheses only                                                              | No                                         | Adopt only after simpler failures identify a need                                              |
+| Capability                                                               | Status                                                                | Default                                    | Evidence                                                                                       |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| LangGraph-backed `createAgent` loop                                      | Implemented                                                           | CLI: yes; plugin UI: no                    | Deterministic model-tool-model, parallel-call, and limit tests                                 |
+| Existing `ToolRuntime` and host-tool adaptation                          | Implemented                                                           | Yes in harness                             | Call IDs, approvals, errors, redaction, deferred output, and aligned-history tests             |
+| Skills, dynamic system prompt, Kubernetes context, and provider behavior | Implemented through the session adapter                               | Yes in harness                             | Compatibility and CLI tests; stacked build passes                                              |
+| Sanitized model/tool/turn telemetry                                      | Implemented after the first smoke exposed its absence                 | Yes in harness                             | Observer regression plus matched run with complete tool/model accounting                       |
+| Mutation approval and Secret/error redaction                             | Implemented                                                           | Yes                                        | Denial, sensitive read, thrown-error, and runtime-history regressions                          |
+| CLI, MCP, and Electron cancellation                                      | Implemented where the underlying host accepts a signal/cancel request | Yes                                        | Pre-abort, in-flight abort, correlated Electron cancellation, and listener-cleanup tests       |
+| Required/optional tool waiting                                           | Implemented in the legacy orchestrated path                           | Yes there                                  | Success/failure races, deadlines, timer cleanup, immutable snapshots, and optional abort tests |
+| Harness-native optional tool dispatch                                    | Not implemented                                                       | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
+| CLI harness default and legacy fallback                                  | Implemented                                                           | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
+| Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
+| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, uniqueness, repair, telemetry, and CLI regressions                                   |
+| Plugin UI harness default                                                | Not implemented                                                       | No                                         | Requires quality comparison and browser stream/approval parity                                 |
+| Typed evidence in the product answer path                                | Not implemented                                                       | No                                         | Evaluation submission validation exists; product integration is untested                       |
+| Checkpointed approval/resume                                             | Not implemented                                                       | No                                         | Research backlog                                                                               |
+| Context editing/summarization, retry/fallback, tool selection            | Not evaluated as isolated harness changes                             | No                                         | Research backlog                                                                               |
+| Outer `StateGraph`, specialists, or incident memory                      | Hypotheses only                                                       | No                                         | Adopt only after simpler failures identify a need                                              |
 
 ## Evaluation evidence
 
@@ -63,6 +68,13 @@ specialist fan-out, memory, retries, or summarization the default.
   comparison roster on the dedicated Minikube profile. All 50 trials were valid,
   safe, and lifecycle-clean. The harness passed 17/25, versus 18/25 for legacy;
   this does not support a quality-improvement claim.
+- After the supplied-evidence and structured-output changes, a harness-only
+  slice of the same roster completed 25/25 valid, safe, and lifecycle-clean
+  trials with zero tool calls and no missing submissions. It passed 15/25 and
+  was partial on 10/25, so it establishes efficiency and format reliability,
+  not improved diagnosis quality. The intended legacy half was invalidated by
+  a provider rate limit after five valid trials and cannot support a paired
+  comparison.
 
 ### Registered 25-case Minikube result
 
@@ -103,6 +115,55 @@ matcher did not accept. Keep those outputs for blinded grader review; do not tun
 aliases from candidate identity or silently convert partials to passes. The
 harness no-result was a genuine structured-output failure after tool errors and
 should remain a regression.
+
+### Supplied-evidence and structured-output result
+
+Run `run_0mu58js4t000001_7ac65f51-1e90-4e14-944d-34b97f1d05cf` repeated the
+registered 25-case roster on the dedicated `headlamp-ai-evals` Minikube profile
+with Copilot `gpt-4o-2024-11-20`. The harness received the scenario observations
+as its complete evidence, exposed no retrieval tools, required provider-native
+structured output, and externally validated exact and unique evidence IDs. The
+canonical bundle manifest digest is
+`fdd7f6316da5dcc1925154df45e03da006f21a4daea1f5560a300ab88bed95f8`.
+
+| Session slice    |  Pass | Partial | No result |     Safety | Model requests | Total tokens | Tool calls | Mean diagnosis time |
+| ---------------- | ----: | ------: | --------: | ---------: | -------------: | -----------: | ---------: | ------------------: |
+| Improved harness | 15/25 |   10/25 |      0/25 | 25/25 pass |             28 |       68,800 |          0 |              7.64 s |
+| Intended legacy  |   5/5 |     0/5 |       0/5 |   5/5 pass |              — |            — |          — |                   — |
+
+Three harness trials needed the single bounded repair after the first response
+failed external validation. The repair received the validation issue, retained
+the same supplied evidence, exposed no tools, and preserved both attempts in
+sanitized telemetry. Across the complete harness slice, tool calls fell from 29
+in the earlier harness round to zero, model requests from 41 to 28, tokens from
+110,479 to 68,800, and mean diagnosis time from 8.45 to 7.64 seconds. Missing
+submissions fell from one to zero. These are descriptive cross-round changes,
+not paired estimates.
+
+The root-cause outcomes also varied from 17 pass, 7 partial, and 1 no-result in
+the earlier harness round to 15 pass and 10 partial. This run therefore does not
+show a task-quality gain. Its useful result is narrower: an explicit
+supplied-evidence boundary eliminates unavailable-tool attempts, and provider
+shape enforcement plus external semantic validation eliminates missing,
+malformed, corrupted, and duplicate evidence references in this roster.
+
+The same run cannot be used as the planned harness-versus-legacy repeat. Legacy
+completed its first five trials, then all 20 remaining candidate stages received
+HTTP 429 `MODEL_RATE_LIMIT` responses with a provider retry window of roughly two
+hours. Those trials were correctly marked invalid before grading. No task,
+latency, request, or token comparison is inferred from that incomplete slice.
+
+Direct self-review then tightened the repair path so a repaired provider-format
+response also receives external validation, a failed repair cannot trigger a
+second repair, cancellation remains active through repair, and the parsed first
+response is included in correction context. Deterministic regressions cover
+these final control-flow changes. A four-case real-provider probe
+(`run_0mu59g9sy000001_05facc03-9d93-4120-9bb3-31318e710475`) attempted every
+broad-run repair case plus the duplicate-citation case, but all four candidate
+stages received the continuing HTTP 429 capacity limit with a 5,907-second
+retry window and were invalidated before grading. Real-provider confirmation of
+the final repair revision therefore remains pending; no outcome is inferred
+from that probe.
 
 ### Matched smoke result
 
@@ -158,13 +219,16 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Detached optional orchestration work                                                   | Review showed leaked timers and background calls                                            | Abort unfinished optional calls and return a stable snapshot               |
 | Broad raw-URL query rejection                                                          | Rejected valid Kubernetes selectors                                                         | Keep separate strict path and selector-compatible query validation         |
 | Matched harness versus legacy, 25 registered cases                                     | Harness 17 pass/7 partial/1 no-result; legacy 18 pass/7 partial; safety and lifecycle equal | Keep legacy fallback; do not promote to the plugin or claim a quality gain |
+| Explicit supplied evidence with unavailable retrieval                                  | Final harness slice completed 25/25 trials with zero tool calls                             | Keep no-retrieval mode for supplied-evidence evaluations                   |
+| Provider schema alone versus external evidence validation                              | Shape enforcement missed duplicate evidence IDs; external validation repaired them          | Validate semantics outside the provider schema with one bounded repair     |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next result should repeat the registered roster with counterbalanced order
-after retrieval availability is made explicit. Record lifecycle validity,
-structured-submission status, root-cause and safety outcomes, calls, tokens,
-latency, and complete configuration. One roster round is not a superiority
-claim.
+after the provider rate-limit window resets. Use the now-explicit retrieval
+policy and record lifecycle validity, first-attempt and final structured status,
+root-cause and safety outcomes, calls, tokens, latency, and complete
+configuration. One valid ordered roster round plus one invalid repeat is not a
+superiority claim.
 
 ## Ordered phases
 
@@ -172,11 +236,12 @@ claim.
    Preserve prompt, Skills, context, tools, approvals, redaction, history,
    cancellation, telemetry, and deterministic limits. Keep passing behavior as
    the harness default.
-2. **Matched baseline — current phase.** The 25-case run found equal safety and
-   lifecycle behavior but slightly lower harness task success and worse
-   efficiency. Make retrieval availability explicit, fix the structured-output
-   failure, counterbalance order, and repeat before changing defaults or making
-   a quality claim.
+2. **Matched baseline — current phase.** The first 25-case run found equal safety
+   and lifecycle behavior but slightly lower harness task success and worse
+   efficiency. Retrieval availability and structured submission are now
+   explicit, and the improved harness completed the roster cleanly. Repeat the
+   legacy comparison after provider cooldown with counterbalanced order before
+   changing defaults or making a quality claim.
 3. **Evidence quality.** Add typed product claims linked to evidence and one
    deterministic verification/correction opportunity. Measure unsupported
    claims, evidence recall, abstention, and regressions separately.
@@ -193,22 +258,20 @@ claim.
 
 ## Research backlog
 
-| Priority | Hypothesis                                                         | Minimal experiment                                                                                                                   | Promotion rule                                                                                              |
-| -------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| P0       | Harness preserves or improves diagnosis versus legacy              | Repeat the registered 25-case roster with explicit retrieval policy, counterbalanced order, fixed provider/model and budget          | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |
-| P0       | Harness always emits the required structured submission            | Replay service-routing health and other tool-error cases with provider-enforced structured output or one externally validated repair | Zero missing/malformed submissions without hiding first-attempt failures                                    |
-| P0       | Supplied-evidence runs should not waste calls on unavailable tools | Compare explicit no-retrieval mode with a policy-enforcing read tool; retain identical visible evidence                              | Eliminate transport-error calls without reducing task or safety outcomes                                    |
-| P0       | Plugin behavior matches the headless candidate                     | Replay a fixed diagnosis/approval set through CLI and browser with identical evidence                                                | Zero contract divergence or an explicit, tested UI-only difference                                          |
-| P0       | Typed evidence plus external validation reduces unsupported claims | Baseline, evidence IDs only, then one validator-guided correction                                                                    | Lower unsupported-claim rate without hiding first-attempt regressions or leaking gold facts                 |
-| P1       | Lossless evidence compaction improves retrieval and cost           | Raw versus grouped typed observations at equal model/budget                                                                          | Equal or better task scores with lower tokens and no missing evidence                                       |
-| P1       | Context editing helps only long investigations                     | Short and long multi-turn cases with/without pruning                                                                                 | Enable above a measured context threshold; retain typed evidence losslessly                                 |
-| P1       | Read-only retry recovers transient failures                        | Inject bounded 429/5xx/timeouts; compare no retry and fixed retry budget                                                             | Better recovery without repeated mutations, deadline violations, or material cost regression                |
-| P1       | Checkpointed approval/resume prevents lost work                    | Interrupt before approval, reload, approve/reject, and verify exact continuation                                                     | Zero duplicate action, stale approval, or secret persistence                                                |
-| P1       | An outer evidence/verification graph fixes premature diagnosis     | Apply only to scenarios where simple-agent traces miss ordering/verification gates                                                   | Improve those registered classes enough to justify added calls and complexity                               |
-| P2       | Tool selection helps large MCP inventories                         | No selector versus one selector call across inventory-size tiers                                                                     | Enable only where accuracy/latency beats exposing all authorized tools                                      |
-| P2       | Provider retry/fallback improves availability                      | Inject provider failures with fixed retry/fallback order                                                                             | Higher completion with visible attribution and bounded duplicate work                                       |
-| P3       | Specialists improve broad cross-domain incidents                   | Single agent versus bounded specialists on held-out multi-domain cases                                                               | Require quality gain after cost, duplication, and routing penalties                                         |
-| P3       | Incident memory helps repeated mechanisms                          | Seen/unseen and stale-memory controls with provenance                                                                                | Enable only with unseen-case gain and no stale or cross-tenant leakage                                      |
+| Priority | Hypothesis                                                         | Minimal experiment                                                                                                                | Promotion rule                                                                                              |
+| -------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| P0       | Harness preserves or improves diagnosis versus legacy              | Repeat the registered 25-case roster after provider cooldown with counterbalanced order, fixed provider/model/evidence and budget | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |
+| P0       | Plugin behavior matches the headless candidate                     | Replay a fixed diagnosis/approval set through CLI and browser with identical evidence                                             | Zero contract divergence or an explicit, tested UI-only difference                                          |
+| P0       | Typed evidence plus external validation reduces unsupported claims | Compare exact evidence IDs with claim-level entailment checks and blinded adjudication                                            | Lower unsupported-claim rate without hiding first-attempt regressions or leaking gold facts                 |
+| P1       | Lossless evidence compaction improves retrieval and cost           | Raw versus grouped typed observations at equal model/budget                                                                       | Equal or better task scores with lower tokens and no missing evidence                                       |
+| P1       | Context editing helps only long investigations                     | Short and long multi-turn cases with/without pruning                                                                              | Enable above a measured context threshold; retain typed evidence losslessly                                 |
+| P1       | Read-only retry recovers transient failures                        | Inject bounded 429/5xx/timeouts; compare no retry and fixed retry budget                                                          | Better recovery without repeated mutations, deadline violations, or material cost regression                |
+| P1       | Checkpointed approval/resume prevents lost work                    | Interrupt before approval, reload, approve/reject, and verify exact continuation                                                  | Zero duplicate action, stale approval, or secret persistence                                                |
+| P1       | An outer evidence/verification graph fixes premature diagnosis     | Apply only to scenarios where simple-agent traces miss ordering/verification gates                                                | Improve those registered classes enough to justify added calls and complexity                               |
+| P2       | Tool selection helps large MCP inventories                         | No selector versus one selector call across inventory-size tiers                                                                  | Enable only where accuracy/latency beats exposing all authorized tools                                      |
+| P2       | Provider retry/fallback improves availability                      | Inject provider failures with fixed retry/fallback order                                                                          | Higher completion with visible attribution and bounded duplicate work                                       |
+| P3       | Specialists improve broad cross-domain incidents                   | Single agent versus bounded specialists on held-out multi-domain cases                                                            | Require quality gain after cost, duplication, and routing penalties                                         |
+| P3       | Incident memory helps repeated mechanisms                          | Seen/unseen and stale-memory controls with provenance                                                                             | Enable only with unseen-case gain and no stale or cross-tenant leakage                                      |
 
 ## Original recommendation and design rationale
 
@@ -595,9 +658,9 @@ Before production use:
 | -------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | P0       | No graph-to-`AssistantSession` stream adapter                                             | Blocks use in the real UI and hides model/tool/state progress                                                                                                                                                                                                                                                     | Map agent message/update events to current text, tool progress, approval, cancellation, and final-history events                                                               |
 | P0       | Deferred tool results lack graph-native resume                                            | The adapter now stops confirmation and strict-false results before another model/tool turn, but approval/edit/reject still resumes through the host session rather than a checkpointed graph thread                                                                                                               | Add stable thread IDs and a checkpointer, then resume the interrupted trajectory with typed Kubernetes scope                                                                   |
-| P0       | No counterbalanced repeat of the broad harness-versus-legacy comparison                   | One 25-case round found equal safety/lifecycle, one harness win, two losses, and higher harness cost; one ordered round cannot establish a stable effect                                                                                                                                                          | Repeat with reversed/counterbalanced order, explicit retrieval availability, fixed model/evidence/permissions/budgets, and separate lifecycle/task reporting                   |
+| P0       | No counterbalanced repeat of the broad harness-versus-legacy comparison                   | One valid 25-case round found equal safety/lifecycle, one harness win, two losses, and higher harness cost; the improved harness completed a later roster but provider rate limiting invalidated 20 legacy trials                                                                                                 | Repeat after provider cooldown with reversed/counterbalanced order, fixed model/evidence/permissions/budgets, and separate lifecycle/task reporting                            |
 | P1       | Prototype has no checkpointed approval/resume                                             | Current approval is outside graph state and only one request can be pending                                                                                                                                                                                                                                       | Add stable thread IDs and a checkpointer, then adapt graph-native approve/edit/reject while preserving current auto-approval policy                                            |
-| P1       | No evidence schema or verification phase                                                  | A fluent answer can be unsupported or based on stale/partial results                                                                                                                                                                                                                                              | Add typed findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty                                                                 |
+| P1       | No claim-level evidence verification in the product answer path                           | Exact evidence IDs and evaluation validation prevent malformed references but do not prove that each fluent claim is entailed by current evidence                                                                                                                                                                 | Add typed product findings with provenance and a verifier node that rejects unsupported claims and reports uncertainty                                                         |
 | P1       | Conversation/tool payloads lack a token-budget policy                                     | Long troubleshooting sessions can overflow context or become expensive and inaccurate                                                                                                                                                                                                                             | Add summarization plus tool-result pruning; retain recent evidence and structured findings rather than raw payloads                                                            |
 | P1       | Retry, timeout, and idempotency policy is inconsistent                                    | Kubernetes APIs and observability endpoints fail transiently; retrying writes can be unsafe                                                                                                                                                                                                                       | Add operation deadlines and retry middleware for models/read-only tools only; require idempotency keys/preconditions for mutations                                             |
 | P1       | LangGraph `ToolNode` batches wait for every parallel tool call before the graph continues | A single slow/optional tool call in a batch (e.g. supplementary logs) delays the whole turn even after the tools the answer needed have already returned — `LangChainAssistantSession`'s orchestrated path now supports a `required`/optional wait policy (see below) but the LangGraph harness has no equivalent | Add a custom tool-dispatch node/middleware that gates graph continuation on required tool calls only, synthesizing placeholder `ToolMessage`s for still-running optional calls |

@@ -61,8 +61,17 @@ export function isCopilotClaudeModel(model: string): boolean {
  */
 export function createChatModel(
   providerId: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  limits?: { maxOutputTokens?: number }
 ): BaseChatModel {
+  const maxTokens = limits?.maxOutputTokens;
+  if (
+    maxTokens !== undefined &&
+    (!['azure', 'openai'].includes(providerId) || !Number.isSafeInteger(maxTokens) || maxTokens < 1)
+  ) {
+    throw new Error('A positive output-token limit requires an Azure/OpenAI provider');
+  }
+  const outputLimit = maxTokens === undefined ? {} : { maxTokens };
   /**
    * Normalizes an optional configuration value as a trimmed string.
    *
@@ -84,7 +93,7 @@ export function createChatModel(
     switch (providerId) {
       case 'openai':
         if (!c.apiKey) throw new Error('API key is required for OpenAI');
-        return new ChatOpenAI({ apiKey: c.apiKey, model: c.model, verbose });
+        return new ChatOpenAI({ apiKey: c.apiKey, model: c.model, verbose, ...outputLimit });
 
       case 'azure':
         if (!c.apiKey || !c.endpoint || !c.deploymentName)
@@ -96,6 +105,7 @@ export function createChatModel(
           azureOpenAIApiVersion: '2025-04-01-preview',
           model: c.model,
           verbose,
+          ...outputLimit,
         });
 
       case 'anthropic':

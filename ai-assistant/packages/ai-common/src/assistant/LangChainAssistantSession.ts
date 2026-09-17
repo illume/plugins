@@ -206,6 +206,8 @@ export default class LangChainAssistantSession extends AssistantSession {
   private modelInvocationSequence = 0;
   private cacheCopilotClaudeSystemPrompt: boolean;
   private readonly finalResponseSchema?: { name: string; schema: Record<string, unknown> };
+  private readonly finalResponseTimeoutMs?: number;
+  private readonly finalResponseModel?: BaseChatModel;
 
   // Skills system
   private skillManager: SkillManager | null = null;
@@ -257,6 +259,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       /** Skip per-call prompts for observability tools until the persisted setting is disabled. */
       autoApproveObservabilityTools?: boolean;
       finalResponseSchema?: { name: string; schema: Record<string, unknown> };
+      finalResponseTimeoutMs?: number;
+      finalResponseMaxOutputTokens?: number;
     }
   ) {
     super();
@@ -265,6 +269,28 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.finalResponseSchema = options?.finalResponseSchema
       ? structuredClone(options.finalResponseSchema)
       : undefined;
+    if (options?.finalResponseTimeoutMs !== undefined) {
+      if (
+        !this.finalResponseSchema ||
+        !Number.isInteger(options.finalResponseTimeoutMs) ||
+        options.finalResponseTimeoutMs < 1 ||
+        options.finalResponseTimeoutMs > 2_147_483_647
+      ) {
+        throw new Error('A structured final response and a positive 32-bit timeout are required');
+      }
+      this.finalResponseTimeoutMs = options.finalResponseTimeoutMs;
+    }
+    if (
+      options?.finalResponseMaxOutputTokens !== undefined &&
+      (!this.finalResponseSchema ||
+        !['azure', 'openai'].includes(providerId) ||
+        !Number.isSafeInteger(options.finalResponseMaxOutputTokens) ||
+        options.finalResponseMaxOutputTokens < 1)
+    ) {
+      throw new Error(
+        'A positive final output-token limit requires a structured Azure/OpenAI response'
+      );
+    }
     const configuredModel =
       typeof config.model === 'string' ? config.model.split('/').pop() : undefined;
     this.cacheCopilotClaudeSystemPrompt =
@@ -285,6 +311,11 @@ export default class LangChainAssistantSession extends AssistantSession {
         observabilityContext: options?.observabilityContext,
       });
     this.model = this.createModel(providerId, config);
+    if (options?.finalResponseMaxOutputTokens !== undefined) {
+      this.finalResponseModel = this.createModel(providerId, config, {
+        maxOutputTokens: options.finalResponseMaxOutputTokens,
+      });
+    }
 
     // Initialize prompt template and output parser
     this.promptTemplate = this.createPromptTemplate();
@@ -599,6 +630,30 @@ export default class LangChainAssistantSession extends AssistantSession {
     }
   }
 
+  private async invokeWithFinalDeadline<Result>(
+    controller: AbortController,
+    invoke: () => Promise<Result>
+  ): Promise<Result> {
+    if (this.finalResponseTimeoutMs === undefined) return invoke();
+    controller.signal.throwIfAborted();
+    let rejectAbort: (reason: unknown) => void = () => {};
+    const aborted = new Promise<never>((_, reject) => {
+      rejectAbort = reject;
+    });
+    const onAbort = () => rejectAbort(controller.signal.reason);
+    controller.signal.addEventListener('abort', onAbort, { once: true });
+    const timer = setTimeout(
+      () => controller.abort(new DOMException('Final response deadline exceeded', 'TimeoutError')),
+      this.finalResponseTimeoutMs
+    );
+    try {
+      return await Promise.race([aborted, invoke()]);
+    } finally {
+      clearTimeout(timer);
+      controller.signal.removeEventListener('abort', onAbort);
+    }
+  }
+
   /**
    * Replaces host context and invalidates responses generated for prior context.
    *
@@ -811,7 +866,11 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param config - Provider-specific settings.
    * @returns Configured LangChain chat model.
    */
-  private createModel(providerId: string, config: ProviderSettings): BaseChatModel {
+  private createModel(
+    providerId: string,
+    config: ProviderSettings,
+    limits?: { maxOutputTokens?: number }
+  ): BaseChatModel {
     // Delegate to the shared standalone function; handle Azure endpoint extraction here
     // since that requires the private extractAzureBaseUrl method.
     if (providerId === 'azure') {
@@ -823,9 +882,9 @@ export default class LangChainAssistantSession extends AssistantSession {
        */
       const s = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
       const endpoint = this.extractAzureBaseUrl(s(config.endpoint));
-      return createChatModel(providerId, { ...config, endpoint });
+      return createChatModel(providerId, { ...config, endpoint }, limits);
     }
-    return createChatModel(providerId, config);
+    return createChatModel(providerId, config, limits);
   }
 
   /**
@@ -2480,7 +2539,7 @@ Please analyze this data and provide a specific, detailed response that directly
 
     // Use the UNBOUND model (no tools) to force the LLM to produce a text summary
     // instead of making additional tool calls
-    const model = this.model;
+    const model = this.finalResponseModel ?? this.model;
 
     return {
       /**
@@ -2496,16 +2555,18 @@ Please analyze this data and provide a specific, detailed response that directly
           this.currentAbortController = controller;
           try {
             const result = await this.observeModelInvocation('synthesis', controller.signal, () =>
-              model
-                .withStructuredOutput(finalResponseSchema.schema, {
-                  name: finalResponseSchema.name,
-                  method: 'jsonSchema',
-                  strict: true,
-                  includeRaw: true,
-                })
-                .invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
-                  signal: controller.signal,
-                })
+              this.invokeWithFinalDeadline(controller, () =>
+                model
+                  .withStructuredOutput(finalResponseSchema.schema, {
+                    name: finalResponseSchema.name,
+                    method: 'jsonSchema',
+                    strict: true,
+                    includeRaw: true,
+                  })
+                  .invoke([this.createSystemMessage(input.systemPrompt), ...input.messages], {
+                    signal: controller.signal,
+                  })
+              )
             );
             const raw = result.raw as BaseMessage;
             this.recordModelUsage(raw);

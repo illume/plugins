@@ -3770,10 +3770,14 @@ describe('optional structured final response', () => {
     required: ['fact_refs'],
     additionalProperties: false,
   };
-  function managerWithHistory(observer?: (event: AssistantTelemetryEvent) => void) {
+  function managerWithHistory(
+    observer?: (event: AssistantTelemetryEvent) => void,
+    finalResponseTimeoutMs?: number
+  ) {
     const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
       finalResponseSchema: { name: 'selection', schema },
       telemetryObserver: observer,
+      finalResponseTimeoutMs,
     });
     privateManager(manager).history.push(
       { role: 'user', content: 'Original diagnostic request' },
@@ -3786,6 +3790,174 @@ describe('optional structured final response', () => {
     );
     return manager;
   }
+
+  it('bounds stalled structured synthesis and clears its timer without accepting a late result', async () => {
+    vi.useFakeTimers();
+    try {
+      const events: AssistantTelemetryEvent[] = [];
+      const manager = managerWithHistory(event => events.push(event), 50);
+      let signal: AbortSignal | undefined;
+      let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+      const stalled = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+        release = resolve;
+      });
+      const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+        signal = options.signal;
+        return stalled;
+      });
+      privateManager(manager).model = { withStructuredOutput: () => ({ invoke }) };
+      const response = manager.processToolResponses();
+      await vi.advanceTimersByTimeAsync(49);
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const result = await response;
+      expect(result.error).toBe(true);
+      expect(result.content).toContain('Final response deadline exceeded');
+      expect(signal?.aborted).toBe(true);
+      expect(signal?.reason.name).toBe('TimeoutError');
+      release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(
+        events.filter(event => event.type === 'model_invocation').map(event => event.status)
+      ).toEqual(['started', 'cancelled']);
+      expect(privateManager(manager).currentAbortController).toBeNull();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects invalid final deadlines before model construction', () => {
+    for (const timeout of [0, -1, 0.5, NaN, Infinity, 2_147_483_648]) {
+      expect(() => managerWithHistory(undefined, timeout)).toThrow('positive 32-bit timeout');
+    }
+    expect(
+      () =>
+        new LangChainAssistantSession('mock-testing-model', {}, [], { finalResponseTimeoutMs: 50 })
+    ).toThrow('structured final response');
+  });
+
+  it('clears the final deadline after success without aborting the completed request', async () => {
+    vi.useFakeTimers();
+    try {
+      const manager = managerWithHistory(undefined, 50);
+      let signal: AbortSignal | undefined;
+      privateManager(manager).model = {
+        withStructuredOutput: () => ({
+          invoke: async (_messages, options) => {
+            signal = (options as { signal: AbortSignal }).signal;
+            return {
+              raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+              parsed: { fact_refs: [] },
+            };
+          },
+        }),
+      };
+      expect((await manager.processToolResponses()).error).toBeFalsy();
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(signal?.aborted).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('honors user cancellation before the final deadline and removes its timer', async () => {
+    vi.useFakeTimers();
+    try {
+      const events: AssistantTelemetryEvent[] = [];
+      const manager = managerWithHistory(event => events.push(event), 50);
+      let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+      const pending = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+        release = resolve;
+      });
+      privateManager(manager).model = {
+        withStructuredOutput: () => ({ invoke: async () => pending }),
+      };
+      const response = manager.processToolResponses();
+      await vi.advanceTimersByTimeAsync(1);
+      manager.abort();
+      expect((await response).error).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(
+        events.filter(event => event.type === 'model_invocation').map(event => event.status)
+      ).toEqual(['started', 'cancelled']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('starts the final deadline after planning and tool reads, not at the start of the turn', async () => {
+    vi.useFakeTimers();
+    try {
+      const manager = managerWithHistory(undefined, 50);
+      privateManager(manager).useDirectToolCalling = true;
+      privateManager(manager).extraTools.set('kubernetes_api_request', {
+        name: 'kubernetes_api_request',
+        invoke: async () => {
+          expect(vi.getTimerCount()).toBe(0);
+          await vi.advanceTimersByTimeAsync(100);
+          return 'observed';
+        },
+      });
+      privateManager(manager).model = {
+        invoke: async () => {
+          expect(vi.getTimerCount()).toBe(0);
+          await vi.advanceTimersByTimeAsync(100);
+          return {
+            content: '',
+            tool_calls: [
+              {
+                id: 'next',
+                name: 'kubernetes_api_request',
+                args: { url: '/api/v1/pods', method: 'GET' },
+              },
+            ],
+          };
+        },
+        withStructuredOutput: () => ({
+          invoke: async () => {
+            expect(vi.getTimerCount()).toBe(1);
+            return {
+              raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+              parsed: { fact_refs: [] },
+            };
+          },
+        }),
+      };
+      const response = await manager.userSend('inspect pods');
+      expect(response.content).toBe('{"fact_refs":[]}');
+      expect(response.error).toBeFalsy();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects unsupported final token limits before model construction', () => {
+    for (const value of [0, -1, 0.5, NaN, Infinity]) {
+      expect(
+        () =>
+          new LangChainAssistantSession('azure', {}, [], {
+            finalResponseSchema: { name: 'selection', schema },
+            finalResponseMaxOutputTokens: value,
+          })
+      ).toThrow('positive final output-token');
+    }
+    expect(
+      () => new LangChainAssistantSession('azure', {}, [], { finalResponseMaxOutputTokens: 512 })
+    ).toThrow('structured Azure/OpenAI');
+    expect(
+      () =>
+        new LangChainAssistantSession('mock-testing-model', {}, [], {
+          finalResponseSchema: { name: 'selection', schema },
+          finalResponseMaxOutputTokens: 512,
+        })
+    ).toThrow('structured Azure/OpenAI');
+  });
 
   it('uses strict JSON only for final synthesis and retains raw content and usage', async () => {
     const events: AssistantTelemetryEvent[] = [];

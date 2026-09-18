@@ -13,7 +13,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "API-discovery mechanism with isolated CRDs; not installation of managed Flux or ACStor."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -80,7 +84,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -2281,7 +2285,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Kubernetes selector immutability during an owned deployment update; not the managed ArgoCD extension."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -2348,7 +2356,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -4306,7 +4314,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Real policy/v1 eviction and PodDisruptionBudget admission; not a historical AKS upgrade."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -4373,7 +4385,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7550,7 +7562,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned upstream workload-identity admission with false proxy annotation; no Azure authentication."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -7617,7 +7633,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7631,7 +7647,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned proxy injection and kubelet security-context validation; no Azure authentication."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -7698,7 +7718,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7712,7 +7732,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned proxy injection and real Job lifecycle; no Azure authentication."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -7779,7 +7803,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7793,7 +7817,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned proxy mutation and real ResourceQuota admission; no Azure authentication."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -7860,7 +7888,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7874,7 +7902,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned webhook reinvocation with two test service accounts; metadata consistency, not Azure authorization."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -7941,7 +7973,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -7955,7 +7987,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned webhook admission of a native-sidecar Pod and kubelet startup; no Azure authentication."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -8022,7 +8058,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },
@@ -8036,7 +8072,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "Pinned webhook lookup of Service versus ServiceAccount annotations; metadata only, not token exchange."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -8103,7 +8143,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     }

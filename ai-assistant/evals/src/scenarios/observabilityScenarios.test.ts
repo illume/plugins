@@ -26,7 +26,85 @@ import {
   loadAksCandidateScenarioPlans,
 } from './aksCandidateScenarios.js';
 import { listScenarioIds } from './loader.js';
-import { corednsCandidateResources } from './aksCandidateReproductions.js';
+import {
+  aksCandidateReproductions,
+  corednsCandidateResources,
+} from './aksCandidateReproductions.js';
+import {
+  cleanupAksCandidateBatch,
+  verifyAksCandidateBatch,
+} from '../cluster/provisioning/aksCandidateBatch.js';
+
+test('candidate batch requires acknowledgement and refuses unowned cleanup', async () => {
+  await assert.rejects(
+    verifyAksCandidateBatch({
+      scenario: 'aks-c094-v1',
+      stateDirectory: '/unused',
+      kubeconfig: '/unused',
+      context: 'unused',
+      acceptClusterMutations: false,
+      probeImage: `busybox@sha256:${'a'.repeat(64)}`,
+      runner: () => {
+        throw new Error('No command expected');
+      },
+    }),
+    /acknowledgement/
+  );
+  const directory = mkdtempSync(path.join(tmpdir(), 'batch-cleanup-'));
+  const owner = '11111111-2222-4333-8444-555555555555';
+  const namespace = `hl-aks-c094-${owner}`;
+  try {
+    writeFileSync(
+      path.join(directory, 'reproduction-state.json'),
+      JSON.stringify({
+        schema_version: 'aks-component-batch@1.0.0',
+        scenario: 'aks-c094-v1',
+        owner,
+        namespace,
+        kubeconfig: '/explicit/config',
+        context: 'research',
+        server: 'https://127.0.0.1:6443',
+        owned: [{ kind: 'namespace', name: namespace, uid: 'original' }],
+        phases: { cleanup: 'not-run' },
+      })
+    );
+    const calls: string[][] = [];
+    assert.throws(
+      () =>
+        cleanupAksCandidateBatch(directory, (_, args) => {
+          calls.push(args);
+          if (args.includes('config'))
+            return { status: 0, stdout: 'https://127.0.0.1:6443', stderr: '' };
+          if (args.includes('get'))
+            return {
+              status: 0,
+              stdout: JSON.stringify({
+                metadata: { uid: 'replacement', labels: { 'headlamp-research-owner': owner } },
+              }),
+              stderr: '',
+            };
+          throw new Error('Must not delete replaced resource');
+        }),
+      /cleanup failed/
+    );
+    assert.ok(calls.every(args => !args.includes('delete')));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('candidate batch declares ten additional component mechanisms without qualification', () => {
+  assert.deepEqual(
+    aksCandidateReproductions.map(item => item.candidateId).sort(),
+    ['001', '029', '054', '059', '094', '095', '096', '097', '098', '099', '100'].map(
+      number => `AKS-C${number}`
+    )
+  );
+  assert.equal(new Set(aksCandidateReproductions.map(item => item.id)).size, 11);
+  assert.ok(
+    aksCandidateReproductions.every(item => item.qualification === 'pending' && item.scope)
+  );
+});
 import {
   cleanupAksCandidateReproduction,
   verifyAksCandidateReproduction,
@@ -357,7 +435,9 @@ test('all 100 researched candidates track implementation separately from scored 
     assert.equal(plan.execution.eligible, false);
     assert.equal(
       plan.execution.implementation,
-      candidate.id === 'AKS-C059' ? 'isolated-component-implemented' : 'not-implemented'
+      aksCandidateReproductions.some(item => item.candidateId === candidate.id)
+        ? 'isolated-component-implemented'
+        : 'not-implemented'
     );
     assert.equal(plan.execution.qualification, 'pending');
     assert.deepEqual(plan.execution.results, []);
@@ -404,7 +484,7 @@ test('draft discovery is offline and does not admit drafts to the execution runn
     observabilityMain([
       'run',
       '--scenario',
-      'aks-c001-v1',
+      'aks-c002-v1',
       '--state-dir',
       '/unused-draft-state',
       '--accept-azure-costs',
@@ -417,10 +497,10 @@ test('draft discovery is offline and does not admit drafts to the execution runn
   await observabilityMain(['list-reproductions']);
   assert.deepEqual(
     (output.pop() as Array<{ id: string }>).map(item => item.id),
-    ['aks-c059-v1']
+    aksCandidateReproductions.map(item => item.id)
   );
   await assert.rejects(
-    observabilityMain(['verify-candidate', '--scenario', 'aks-c001-v1', '--state-dir', '/unused']),
+    observabilityMain(['verify-candidate', '--scenario', 'aks-c002-v1', '--state-dir', '/unused']),
     /No reproduction implementation/
   );
   await assert.rejects(

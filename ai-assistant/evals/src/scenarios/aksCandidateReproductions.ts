@@ -1,6 +1,68 @@
 import assert from 'node:assert/strict';
 
 export const aksCandidateReproductions = [
+  ...[
+    [
+      '001',
+      'crd-short-name-collision',
+      'API-discovery mechanism with isolated CRDs; not installation of managed Flux or ACStor.',
+    ],
+    [
+      '029',
+      'immutable-deployment-selector',
+      'Kubernetes selector immutability during an owned deployment update; not the managed ArgoCD extension.',
+    ],
+    [
+      '054',
+      'pdb-blocked-eviction',
+      'Real policy/v1 eviction and PodDisruptionBudget admission; not a historical AKS upgrade.',
+    ],
+    [
+      '094',
+      'identity-false-proxy-annotation',
+      'Pinned upstream workload-identity admission with false proxy annotation; no Azure authentication.',
+    ],
+    [
+      '095',
+      'identity-proxy-nonroot-conflict',
+      'Pinned proxy injection and kubelet security-context validation; no Azure authentication.',
+    ],
+    [
+      '096',
+      'identity-proxy-job-completion',
+      'Pinned proxy injection and real Job lifecycle; no Azure authentication.',
+    ],
+    [
+      '097',
+      'identity-proxy-quota',
+      'Pinned proxy mutation and real ResourceQuota admission; no Azure authentication.',
+    ],
+    [
+      '098',
+      'identity-service-account-reinvocation',
+      'Pinned webhook reinvocation with two test service accounts; metadata consistency, not Azure authorization.',
+    ],
+    [
+      '099',
+      'identity-native-sidecar-mutation',
+      'Pinned webhook admission of a native-sidecar Pod and kubelet startup; no Azure authentication.',
+    ],
+    [
+      '100',
+      'identity-service-account-annotation',
+      'Pinned webhook lookup of Service versus ServiceAccount annotations; metadata only, not token exchange.',
+    ],
+  ].map(([number, mechanism, scope]) => ({
+    id: `aks-c${number}-v1`,
+    candidateId: `AKS-C${number}`,
+    mechanism,
+    scope,
+    qualification: 'pending',
+    prerequisites:
+      number! >= '094'
+        ? 'Pinned workload-identity webhook restricted to owned namespaces'
+        : 'Disposable Kubernetes cluster',
+  })),
   {
     id: 'aks-c059-v1',
     candidateId: 'AKS-C059',

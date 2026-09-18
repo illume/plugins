@@ -54,9 +54,10 @@ All 100 reviewed AKS candidates now have
 [structured draft scenario plans](../evals/scenario-plans/aks-real-incidents.json),
 with distinct candidate tasks, baseline controls, and observation requirements.
 Original fault/recovery designs, fidelity gates, source provenance, and the
-46 K / 42 H / 12 O evidence labels are preserved. C059 now has an executable
-isolated-component lifecycle; the other 99 remain unimplemented. Zero are newly
-live-reproduced, qualified, or observability-only verified. This catalogue is separate
+46 K / 42 H / 12 O evidence labels are preserved. Eleven now have executable
+isolated-component mechanisms; 89 remain unimplemented. Ten passed local live
+component checks, with C059 still offline-only. None is a newly qualified full AKS
+reproduction or observability-only verified. This catalogue is separate
 from the two implemented AKS observability lifecycles and the locked Phase 2 roster.
 
 The [catalogue guide](aks-scenario-research.md#100-draft-scenario-plans) documents
@@ -79,9 +80,56 @@ are `list-reproductions`, `verify-candidate`, and `cleanup-candidate`.
 Nine focused resource/lifecycle checks and the full **408 eval tests**, formatting,
 and typechecks passed offline. No live cluster or paid model was invoked; the
 implementation is not a qualification result or proof of the historical AKS
-rollout. One of 100 component reproductions is implemented, 99 remain pending,
-and all 100 remain excluded from scored portfolios. A live run requires an
+rollout. That checkpoint implemented the first of 100 component reproductions;
+the following batch adds ten. All 100 remain excluded from scored portfolios. A live run requires an
 explicitly approved disposable cluster context and reviewed immutable images.
+
+### Ten-Candidate Local Live Batch
+
+The [live report](../evals/docs/aks-ten-component-results.md) records C001, C029,
+C054, and C094-C100: ten first-attempt passes for declared baseline, fault,
+recovery/control, and cleanup checks in a dedicated kind cluster. C001/C029/C054
+exercise Kubernetes mechanisms rather than managed addons or an AKS upgrade.
+C094/C098/C100 use real server-side admission dry runs; C098 explicitly uses two
+requests, not a second webhook in one request. The other identity cases observe
+real startup, Job, quota, and native-sidecar behavior. Corrected replacement
+controls are distinguished from in-place repair. No Azure token exchange or model
+diagnosis was performed, and no new scored qualification is claimed.
+
+The run used Kubernetes 1.29.2 ARM64 and workload-identity v1.1.0. kubectl 1.36.1
+was outside supported version skew. Webhook/probe requests were digest-pinned;
+injected proxy tags and observed image IDs were retained, not treated as a complete
+image lock. Setup encountered a host-port collision and a multi-platform image
+import issue before any scenario attempt; both were resolved in the owned cluster.
+
+All 12 owned resources (ten namespaces and two CRDs) were independently absent
+after the batch. The dedicated kind cluster and node were then deleted, removing
+the shared webhook. Unrelated eval resources and the host runtime were left alone.
+Evidence and source hashes remain private with a documented digest ledger; current
+source differs from the executed snapshot only by verified formatting. Post-run
+offline validation passed 410 tests, formatting, typechecks, and catalogue freshness.
+Eleven mechanisms are implemented, ten locally exercised, 89 remain unimplemented,
+and all 100 still require scored admission/qualification work. C059 was not live-run.
+
+### Full-AKS Authoring: Verification Deferred
+
+The follow-up request selected full end-to-end AKS scope for the remaining 89,
+with verification explicitly deferred. The
+[authoring guide](../evals/docs/aks-end-to-end-authoring.md) now describes all 89
+case-specific paths: C089, the next 31 handlers, and the final 57. They share
+fresh owned AKS provisioning and cleanup, but have distinct network, storage,
+Windows, identity, image-volume, scaling, addon, and telemetry controls/oracles.
+The registry now points to authored handlers rather than inventory-only entries.
+This completes the authoring coverage, not verification or qualification. Some
+paths have narrower source variants, replacement controls, or explicit operational
+workarounds; those limits and required inputs are documented in the guide.
+
+All new paths remain `authored-unverified`, with no qualification or scored
+admission. No tests, builds, typechecks, formatting, cluster commands, or model
+calls were run for this authoring work. Earlier local component passes and the
+410-test checkpoint do not validate these new paths. Missing image/version pins,
+source-specific capabilities, and environment prerequisites must fail rather than
+be replaced with simulated errors. Changes remain local and uncommitted.
 
 ### Evaluation History
 

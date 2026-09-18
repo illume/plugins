@@ -25,8 +25,9 @@ draft scenario plans derived from 100 public AKS incident reports. Stable IDs ar
 `aks-c001-v1` through `aks-c100-v1`. Each has a candidate task plus evaluator-only
 baseline, fault/oracle, recovery, observation, control, and implementation gates.
 All remain **pending qualification and excluded from scored runs**; none is
-observability-only verified. C059 has an isolated CoreDNS component reproduction;
-99 still lack implementations. The plans are not loaded from `evals/scenarios`
+observability-only verified. Eleven have component mechanism implementations:
+C001, C029, C054, C059, and C094-C100. Ten passed local live checks; C059 remains
+offline-only and 89 still lack implementations. The plans are not loaded from `evals/scenarios`
 and do not appear in `list-scenarios` or the model-evaluation `run` command.
 
 From `ai-assistant/evals`:
@@ -56,7 +57,29 @@ interruption. See [C059's execution guide](../../../docs/aks-scenario-research.m
 for commands, permissions, bounds, artifacts, and fidelity limitations. Passing
 offline tests is not an AKS reproduction or qualification result.
 
+The ten additional IDs use the same `verify-candidate` command with an immutable
+probe image; they do not require `--coredns-image`. C094-C100 require the reviewed
+workload-identity webhook already installed and restricted to research namespaces.
+`cleanup-candidate` dispatches using the saved state format and deletes only
+owned fixtures, including C001's CRDs; shared webhook/cluster cleanup remains the
+operator's responsibility. See the [batch execution guide](../../../docs/aks-scenario-research.md#ten-more-component-mechanisms)
+and [local live report](../../docs/aks-ten-component-results.md) for exact
+prerequisites, privileges, recovery semantics, image and version limitations.
+These checks do not invoke a model or add cases to the scored roster.
+
 ## Provisioned Observability Scenarios
+
+The separate [full-AKS authoring work](../../docs/aks-end-to-end-authoring.md)
+tracks the remaining 89 candidates without treating them as verified component
+cases. `list-end-to-end-authoring` exposes readiness; all 89 requested IDs now have
+authored end-to-end paths, none tested or executed. Version/configuration inputs,
+API compatibility, source fidelity, and narrower control boundaries remain review
+work, not established reproduction results.
+`run-end-to-end` accepts only authored IDs and requires explicit unverified-code and
+Azure-cost acknowledgements; `cleanup-end-to-end` uses its own state format.
+Case-specific non-secret inputs use `--case-parameters` with a JSON object.
+No verification was run for this authoring slice, and no qualification changed;
+the older 410-test result does not validate these new files.
 
 These scenarios create resources and cause an observable failure. The former
 canned-response suite is removed, including its Datadog and Splunk cases. Nothing

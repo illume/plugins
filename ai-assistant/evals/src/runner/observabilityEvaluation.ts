@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -32,9 +32,16 @@ import {
 import { loadAksCandidateScenarioPlans } from '../scenarios/aksCandidateScenarios.js';
 import { aksCandidateReproductions } from '../scenarios/aksCandidateReproductions.js';
 import {
+  cleanupAksCandidateBatch,
+  verifyAksCandidateBatch,
+} from '../cluster/provisioning/aksCandidateBatch.js';
+import {
   cleanupAksCandidateReproduction,
   verifyAksCandidateReproduction,
 } from '../cluster/provisioning/aksCandidateReproduction.js';
+import { listAksEndToEndAuthoring } from '../scenarios/aksEndToEndScenarios.js';
+import { hasAksEndToEndImplementation } from '../scenarios/aksEndToEndRegistry.js';
+import { cleanupAksEndToEnd, runAksDiskAccessModeReproduction } from '../cluster/provisioning/aksEndToEnd.js';
 
 type Observation = RootCauseGradingInput['retrievedObservations'][number];
 type ToolName = LiveAksEvidence['tool'];
@@ -354,10 +361,18 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
       'accept-cluster-mutations': { type: 'boolean' },
       'coredns-image': { type: 'string' },
       'probe-image': { type: 'string' },
+      'kubernetes-version': { type: 'string' },
+      'disk-driver-image': { type: 'string' },
+      'case-parameters': { type: 'string' },
+      'acknowledge-unverified-implementation': { type: 'boolean' },
     },
   });
   const action = positionals[0] ?? 'list';
   assert.ok(positionals.length <= 1);
+  if (action === 'list-end-to-end-authoring') {
+    console.log(JSON.stringify(listAksEndToEndAuthoring(), null, 2));
+    return;
+  }
   if (action === 'list-reproductions') {
     console.log(JSON.stringify(aksCandidateReproductions, null, 2));
     return;
@@ -396,8 +411,32 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
   }
   assert.ok(values['state-dir'], '--state-dir is required');
   const directory = path.resolve(values['state-dir']);
+  if (action === 'cleanup-end-to-end') {
+    await cleanupAksEndToEnd(directory);
+    console.log('Owned end-to-end Azure resource groups independently absent.');
+    return;
+  }
+  if (action === 'run-end-to-end') {
+    assert.ok(values.scenario && hasAksEndToEndImplementation(values.scenario), 'No authored end-to-end implementation for this ID');
+    assert.equal(values['acknowledge-unverified-implementation'], true, 'This implementation has not been tested or executed');
+    assert.ok(!values['candidate-module'], 'End-to-end reproduction does not invoke models');
+    assert.ok(values.subscription && values.location && values['kubernetes-version'] && values['node-vm-size'] && values['probe-image'], 'Explicit subscription, location, Kubernetes version, node SKU and probe digest are required');
+    const caseParameters = values['case-parameters'] ? JSON.parse(readFileSync(path.resolve(values['case-parameters']), 'utf8')) : {};
+    assert.ok(caseParameters && typeof caseParameters === 'object' && !Array.isArray(caseParameters), 'Case parameters must be a JSON object');
+    const result = await runAksDiskAccessModeReproduction({
+      scenario: values.scenario, caseParameters,
+      subscription: values.subscription, location: values.location,
+      kubernetesVersion: values['kubernetes-version'], nodeVmSize: values['node-vm-size'],
+      probeImage: values['probe-image'], expectedDiskDriverImage: values['disk-driver-image'],
+      acceptAzureCosts: values['accept-azure-costs'] === true, stateDirectory: directory,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
   if (action === 'cleanup-candidate') {
-    cleanupAksCandidateReproduction(directory);
+    const state = JSON.parse(readFileSync(path.join(directory, 'reproduction-state.json'), 'utf8'));
+    if (state.schema_version === 'aks-component-batch@1.0.0') cleanupAksCandidateBatch(directory);
+    else cleanupAksCandidateReproduction(directory);
     console.log('Owned research namespace deleted and absence verified.');
     return;
   }
@@ -407,10 +446,23 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
       'No reproduction implementation for this candidate'
     );
     assert.ok(
-      values.kubeconfig && values.context && values['coredns-image'] && values['probe-image'],
-      '--kubeconfig, --context, --coredns-image and --probe-image are required'
+      values.kubeconfig && values.context && values['probe-image'],
+      '--kubeconfig, --context and --probe-image are required'
     );
     assert.ok(!values['candidate-module'], 'verify-candidate does not invoke models');
+    if (values.scenario !== 'aks-c059-v1') {
+      const result = await verifyAksCandidateBatch({
+        scenario: values.scenario,
+        stateDirectory: directory,
+        kubeconfig: values.kubeconfig,
+        context: values.context,
+        acceptClusterMutations: values['accept-cluster-mutations'] === true,
+        probeImage: values['probe-image'],
+      });
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    assert.ok(values['coredns-image'], '--coredns-image is required for C059');
     const result = await verifyAksCandidateReproduction({
       scenario: values.scenario,
       stateDirectory: directory,

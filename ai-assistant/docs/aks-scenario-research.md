@@ -47,9 +47,10 @@ On 2026-09-18, all 100 register entries were converted one-to-one into
 [structured scenario plans](../evals/scenario-plans/aks-real-incidents.json), with
 stable IDs `aks-c001-v1` through `aks-c100-v1`. These remain **draft plans, not
 qualified scored scenarios**. Every plan has `execution.eligible: false`,
-qualification `pending`, and no qualified results. C059 now has an implemented
-isolated-component reproduction; the other 99 remain `not-implemented`. No new
-candidate has been live-verified yet. The two existing implemented AKS
+qualification `pending`, and no qualified results. Eleven isolated-component
+mechanisms are implemented: C001, C029, C054, C059, and C094-C100. Ten passed
+local live component checks; C059 remains offline-only, and the other 89 remain
+`not-implemented`. These are not full managed AKS reproductions. The two existing AKS
 observability lifecycles remain separate; the draft catalogue does not expand the
 locked Phase 2 roster or any qualified evaluation denominator.
 
@@ -196,11 +197,100 @@ success, baseline failure, unrelated fault, failed recovery, denied cleanup,
 changed owner/UID/endpoint, state-directory reuse, and idempotent cleanup. All
 408 eval tests, formatting, and typechecks passed. No cluster or model was invoked
 for this implementation. C059 remains pending live reproduction and independent
-qualification; the other 99 candidates still need implementation. Healthy and
+qualification; 89 candidates still need implementation after the separate ten-case
+batch below. Healthy and
 insufficient-evidence model trials and exact diagnosis alternatives remain future
 qualification work, not implied by this lifecycle implementation.
 
+### Ten More Component Mechanisms
+
+C001, C029, C054, and C094-C100 now have executable
+[batch lifecycle implementations](../evals/src/cluster/provisioning/aksCandidateBatch.ts).
+All ten passed their declared baseline, fault, recovery/control, and cleanup
+assertions in an isolated local kind cluster on 2026-09-18. See the
+[live results and fidelity limits](../evals/docs/aks-ten-component-results.md).
+The cluster, ten owned namespaces, two CRDs, and shared webhook are now gone.
+No model or Azure authentication ran. All 100 cases remain outside scored admission.
+
+The first three mechanisms use native Kubernetes discovery, Deployment selector
+validation, and policy/v1 eviction. They do not install Flux/ACStor or ArgoCD, drain
+a node, or upgrade AKS. The identity cases need a separately installed, reviewed
+upstream workload-identity webhook; this run used v1.1.0. C094/C098/C100 use real
+server-side dry-run admission, while C095/C096/C097/C099 also exercise persisted
+workloads or admission rejection. C098 is two admission requests separated by an
+explicit ServiceAccount mutation, not a qualified two-webhook ordering experiment.
+
+From `ai-assistant/evals`, with an approved disposable cluster and a new state
+directory for every attempt:
+
+```sh
+npm run eval:observability -- list-reproductions
+npm run eval:observability -- verify-candidate \
+   --scenario aks-c054-v1 \
+   --kubeconfig "$RESEARCH_KUBECONFIG" --context "$RESEARCH_CONTEXT" \
+   --state-dir "$TRIAL_DIR" --accept-cluster-mutations \
+   --probe-image "$PROBE_IMAGE"
+npm run eval:observability -- cleanup-candidate --state-dir "$TRIAL_DIR"
+```
+
+Replace the scenario ID with an implemented batch ID; only C059 additionally
+requires `--coredns-image`. The runner does not create a cluster or install shared
+webhooks. All cases require namespace and fixture permissions; C001 additionally
+requires cluster-scoped CRD create/read/delete. PDB checks require eviction access.
+Readiness/lifecycle checks need Pod and controller observation; identity cases need
+server dry-run admission, webhook-configuration and deployment reads, and quota
+permissions where applicable. Do not use an existing production webhook or cluster.
+
+For C094-C100, install the reviewed upstream component only in the dedicated test
+cluster. The implementation expects deployment `azure-wi-webhook-controller-manager`
+in `azure-workload-identity-system` and mutating webhook configuration
+`azure-wi-webhook-mutating-webhook-configuration`. Every webhook must have
+`namespaceSelector.matchLabels.headlamp-research-batch: "true"`; its deployment
+image must use a reviewed digest. Use synthetic tenant/client-ID metadata with no
+Azure permission. The runner checks successful identity mutation before phases.
+Review the injected proxy/proxy-init privileges and images as well: the upstream
+init container requests networking capabilities. A digest check on the webhook
+does not lock injected tags. The live report records requested tags and actual
+ARM64 content IDs; obtain an equivalent reviewed image set rather than assuming
+that current tag contents match. Missing prerequisites must fail, not simulate a pass.
+
+Each run creates a fresh owner-labelled namespace, and C001 creates two uniquely
+named CRDs. Cleanup recognizes only those resource names and checks labels, recorded
+UIDs, and the explicit cluster endpoint. It does not delete the separately installed
+webhook or cluster; the operator owns those setup resources and must clean them up.
+The completed live batch did so independently after checking per-case absence.
+
+State and requests/phase evidence are private (0700 directories, 0600 JSON files).
+Failures retain state plus available Pod/event observations. Polling is bounded to
+90 attempts and a 90-second loop deadline, subject to an in-progress process taking
+up to its 90-second limit. These bounds do not terminate remote cluster operations.
+The `baseline/fault/recovery` files are research/evaluator evidence and are not
+candidate-safe model packets. Recovery can be a corrected replacement or fresh
+admission, not an in-place repair; the report identifies which. After interruption,
+retain the state directory and rerun `cleanup-candidate` rather than reusing it.
+
+The catalogue keeps original research provenance and empty qualified results;
+local mechanism outcomes live in the separate report and do not silently change
+the source report's fidelity or claim managed-service reproduction. The full
+offline suite now passes 410 tests plus formatting/typechecks. The unsupported
+kubectl v1.36.1/server v1.29.2 skew in the local run is explicitly retained as a
+limitation; qualification needs a compatible environment and candidate controls.
+
 ## Labels And Scope
+
+### Full-AKS Authoring Follow-Up
+
+The user requested full end-to-end AKS implementations for the remaining 89 and
+explicitly deferred verification. The
+[authoring status and case lifecycles](../evals/docs/aks-end-to-end-authoring.md)
+are separate from the prior component results. All 89 requested IDs now have
+authored Azure provisioning and case-specific fault/recovery paths: C089, the next
+31 handlers, and the final 57. All remain unverified. Authoring coverage does not
+establish compilation, exact source fidelity, runtime compatibility, successful
+cleanup, or qualification. Required versions/configuration and narrower controls
+are documented explicitly. No tests, build,
+typechecks, cluster operations, or paid calls ran for this new slice, and no
+generated catalogue or historical reproduction status was promoted.
 
 Reproduction labels: `unassessed`, `feasible-not-run`, `attempted-not-reproduced`,
 `fault-reproduced`, `lifecycle-verified`, and `blocked`. Feasible means a proposed

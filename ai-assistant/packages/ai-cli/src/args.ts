@@ -48,6 +48,26 @@ export interface ParsedArgs {
   suppliedEvidenceOnly: boolean;
   /** When true, require the structured diagnosis response contract. */
   structuredDiagnosis: boolean;
+  /** When true, require the structured repair response contract. */
+  structuredRepair: boolean;
+  /** Exact repair options and evidence digest permitted by the repair contract. */
+  structuredRepairContract?: {
+    evidence_digest: string;
+    options: Array<{
+      target: {
+        api_version: string;
+        kind: string;
+        namespace: string;
+        name: string;
+        uid: string;
+      };
+      patch: Array<{
+        op: 'add' | 'replace' | 'test';
+        path: string;
+        value: string | number | boolean | null;
+      }>;
+    }>;
+  };
   /** Exact evidence IDs permitted by the structured diagnosis contract. */
   structuredDiagnosisEvidenceIds: string[];
   /** Candidate-visible observations used for post-provider validation. */
@@ -78,6 +98,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     legacySession: process.env.HEADLAMP_AI_LEGACY_SESSION === '1',
     suppliedEvidenceOnly: process.env.HEADLAMP_AI_SUPPLIED_EVIDENCE_ONLY === '1',
     structuredDiagnosis: process.env.HEADLAMP_AI_STRUCTURED_DIAGNOSIS === '1',
+    structuredRepair: false,
     structuredDiagnosisEvidenceIds: [],
     structuredDiagnosisObservations: [],
   };
@@ -131,6 +152,17 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--structured-diagnosis':
         result.structuredDiagnosis = true;
         break;
+      case '--structured-repair':
+        result.structuredRepair = true;
+        break;
+      case '--structured-repair-contract': {
+        const value: unknown = JSON.parse(args[++i] ?? 'null');
+        if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+          throw new Error('--structured-repair-contract must be a JSON object');
+        }
+        result.structuredRepairContract = value as ParsedArgs['structuredRepairContract'];
+        break;
+      }
       case '--structured-diagnosis-evidence-ids': {
         const value: unknown = JSON.parse(args[++i] ?? '[]');
         if (!Array.isArray(value) || !value.every(id => typeof id === 'string')) {

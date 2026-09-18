@@ -125,4 +125,10 @@ describe('chat', () => {
       createManager('mock-testing-model', {}, { structuredDiagnosis: true })
     ).rejects.toThrow('requires a provider with native structured output');
   });
+
+  it('requires an exact contract for structured repair', async () => {
+    await expect(createManager('copilot', {}, { structuredRepair: true })).rejects.toThrow(
+      'requires an exact repair contract'
+    );
+  });
 });

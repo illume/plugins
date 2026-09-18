@@ -194,6 +194,8 @@ async function main() {
     legacySession: parsed.legacySession,
     suppliedEvidenceOnly: parsed.suppliedEvidenceOnly,
     structuredDiagnosis: parsed.structuredDiagnosis,
+    structuredRepair: parsed.structuredRepair,
+    structuredRepairContract: parsed.structuredRepairContract,
     structuredDiagnosisEvidenceIds: parsed.structuredDiagnosisEvidenceIds,
     structuredDiagnosisObservations: parsed.structuredDiagnosisObservations,
   });

@@ -29,6 +29,8 @@ describe('parseArgs', () => {
     expect(result.legacySession).toBe(false);
     expect(result.suppliedEvidenceOnly).toBe(false);
     expect(result.structuredDiagnosis).toBe(false);
+    expect(result.structuredRepair).toBe(false);
+    expect(result.structuredRepairContract).toBeUndefined();
     expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
     expect(result.structuredDiagnosisObservations).toEqual([]);
     expect(result.help).toBe(false);
@@ -101,6 +103,19 @@ describe('parseArgs', () => {
       parseArgs([...base, '--structured-diagnosis-observations', JSON.stringify(observations)])
         .structuredDiagnosisObservations
     ).toEqual(observations);
+  });
+
+  it('parses a structured repair contract', () => {
+    const contract = { evidence_digest: 'a'.repeat(64), options: [] };
+    const parsed = parseArgs([
+      ...base,
+      '--structured-repair',
+      '--structured-repair-contract',
+      JSON.stringify(contract),
+    ]);
+
+    expect(parsed.structuredRepair).toBe(true);
+    expect(parsed.structuredRepairContract).toEqual(contract);
   });
 
   it('documents the legacy-session environment variable', () => {

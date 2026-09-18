@@ -28,8 +28,11 @@ import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
 import {
   createDiagnosisProviderSchema,
+  createRepairProviderSchema,
   type StructuredDiagnosisObservation,
+  type StructuredRepairContract,
   validateDiagnosisSubmission,
+  validateRepairSubmission,
 } from './structuredDiagnosis.js';
 
 interface KubectlContext {
@@ -87,12 +90,23 @@ export async function createManager(
     model?: BaseChatModel;
     suppliedEvidenceOnly?: boolean;
     structuredDiagnosis?: boolean;
+    structuredRepair?: boolean;
+    structuredRepairContract?: StructuredRepairContract;
     structuredDiagnosisEvidenceIds?: string[];
     structuredDiagnosisObservations?: StructuredDiagnosisObservation[];
   } = {}
 ): Promise<LangChainAssistantSession> {
-  if (options.structuredDiagnosis && providerId === 'mock-testing-model') {
-    throw new Error('Structured diagnosis requires a provider with native structured output');
+  if (options.structuredDiagnosis && options.structuredRepair) {
+    throw new Error('Structured diagnosis and structured repair are mutually exclusive');
+  }
+  if (
+    (options.structuredDiagnosis || options.structuredRepair) &&
+    providerId === 'mock-testing-model'
+  ) {
+    throw new Error('Structured output requires a provider with native structured output');
+  }
+  if (options.structuredRepair && !options.structuredRepairContract) {
+    throw new Error('Structured repair requires an exact repair contract');
   }
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
   const commonOptions = {
@@ -109,6 +123,13 @@ export async function createManager(
         ...commonOptions,
         responseFormat: options.structuredDiagnosis
           ? providerStrategy(createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds))
+          : options.structuredRepair
+          ? providerStrategy(
+              createRepairProviderSchema(
+                structuredDiagnosisEvidenceIds,
+                options.structuredRepairContract!
+              )
+            )
           : undefined,
         validateStructuredResponse: options.structuredDiagnosis
           ? response =>
@@ -116,6 +137,13 @@ export async function createManager(
                 response,
                 options.structuredDiagnosisObservations ?? [],
                 structuredDiagnosisEvidenceIds
+              )
+          : options.structuredRepair
+          ? response =>
+              validateRepairSubmission(
+                response,
+                options.structuredDiagnosisObservations ?? [],
+                options.structuredRepairContract!
               )
           : undefined,
       });

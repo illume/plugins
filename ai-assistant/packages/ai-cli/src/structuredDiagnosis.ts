@@ -26,6 +26,28 @@ export interface StructuredDiagnosisObservation {
   observed_value: string;
 }
 
+export interface StructuredRepairTarget {
+  api_version: string;
+  kind: string;
+  namespace: string;
+  name: string;
+  uid: string;
+}
+
+export interface StructuredRepairPatchOperation {
+  op: 'add' | 'replace' | 'test';
+  path: string;
+  value: string | number | boolean | null;
+}
+
+export interface StructuredRepairContract {
+  evidence_digest: string;
+  options: Array<{
+    target: StructuredRepairTarget;
+    patch: StructuredRepairPatchOperation[];
+  }>;
+}
+
 const pendingPodHypothesisFamilies = [
   {
     id: 'insufficient_node_capacity',
@@ -50,8 +72,29 @@ const causeFactSchema = z
   })
   .strict();
 
+const repairTargetSchema = z
+  .object({
+    api_version: z.string(),
+    kind: z.string(),
+    namespace: z.string(),
+    name: z.string(),
+    uid: z.string(),
+  })
+  .strict();
+
+const repairPatchOperationSchema = z
+  .object({
+    op: z.enum(['add', 'replace', 'test']),
+    path: z.string(),
+    value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+  })
+  .strict();
+
 /** Builds the strict response contract for one evidence-grounded diagnosis. */
-export function createDiagnosisSubmissionSchema(evidenceIds: string[]) {
+export function createDiagnosisSubmissionSchema(
+  evidenceIds: string[],
+  canonicalizeEvidenceRefs = false
+) {
   const evidenceRefSchema =
     evidenceIds.length > 0
       ? z.enum(evidenceIds as [string, ...string[]])
@@ -61,9 +104,14 @@ export function createDiagnosisSubmissionSchema(evidenceIds: string[]) {
       schema_version: z.literal('1.0.0'),
       cause_facts: z.array(causeFactSchema),
       resource_refs: z.array(z.string()),
-      evidence_refs: z
-        .array(evidenceRefSchema)
-        .refine(refs => new Set(refs).size === refs.length, 'Evidence references must be unique'),
+      evidence_refs: canonicalizeEvidenceRefs
+        ? z.array(evidenceRefSchema)
+        : z
+            .array(evidenceRefSchema)
+            .refine(
+              refs => new Set(refs).size === refs.length,
+              'Evidence references must be unique'
+            ),
       alternative_dispositions: z.array(z.string()),
       uncertainty: z
         .object({
@@ -89,7 +137,9 @@ export function validateDiagnosisSubmission(
   observations: StructuredDiagnosisObservation[],
   evidenceIds = observations.map(observation => observation.evidence_id)
 ): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
-  const parsed = createDiagnosisSubmissionSchema(evidenceIds).safeParse(response);
+  const parsed = createDiagnosisSubmissionSchema(evidenceIds, observations.length > 0).safeParse(
+    response
+  );
   if (!parsed.success) return { success: false, error: parsed.error.message };
   if (observations.length === 0) return { success: true, data: parsed.data };
 
@@ -144,6 +194,59 @@ export function validateDiagnosisSubmission(
             ]
           : parsed.data.alternative_dispositions,
     },
+  };
+}
+
+/** Builds the strict response contract for one evidence-bound repair proposal. */
+export function createRepairSubmissionSchema(
+  evidenceIds: string[],
+  canonicalizeEvidenceRefs = false
+) {
+  return z
+    .object({
+      schema_version: z.literal('1.0.0'),
+      diagnosis: createDiagnosisSubmissionSchema(evidenceIds, canonicalizeEvidenceRefs),
+      proposed_action: z
+        .object({
+          action_id: z.string().min(1),
+          target: repairTargetSchema,
+          operation: z.literal('json_patch'),
+          patch: z.array(repairPatchOperationSchema).min(1),
+          evidence_digest: z.string().regex(/^[a-f0-9]{64}$/),
+        })
+        .strict(),
+    })
+    .strict();
+}
+
+/** Validates repair authority and canonicalizes its nested evidence ledger. */
+export function validateRepairSubmission(
+  response: Record<string, unknown>,
+  observations: StructuredDiagnosisObservation[],
+  contract: StructuredRepairContract
+): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
+  const evidenceIds = observations.map(observation => observation.evidence_id);
+  const parsed = createRepairSubmissionSchema(evidenceIds, observations.length > 0).safeParse(
+    response
+  );
+  if (!parsed.success) return { success: false, error: parsed.error.message };
+
+  const diagnosis = validateDiagnosisSubmission(parsed.data.diagnosis, observations, evidenceIds);
+  if (!diagnosis.success) return diagnosis;
+  if (parsed.data.proposed_action.evidence_digest !== contract.evidence_digest) {
+    return { success: false, error: 'Repair evidence_digest does not match supplied evidence' };
+  }
+  const selectedAction = JSON.stringify({
+    target: parsed.data.proposed_action.target,
+    patch: parsed.data.proposed_action.patch,
+  });
+  if (!contract.options.some(option => JSON.stringify(option) === selectedAction)) {
+    return { success: false, error: 'Repair target and patch are not an allowed option' };
+  }
+
+  return {
+    success: true,
+    data: { ...parsed.data, diagnosis: diagnosis.data },
   };
 }
 
@@ -204,6 +307,59 @@ export function createDiagnosisProviderSchema(evidenceIds: string[]): ProviderJs
             },
             description: { type: 'string' },
           },
+        },
+      },
+    },
+  };
+}
+
+/** Builds the provider-native repair schema supported by strict model providers. */
+export function createRepairProviderSchema(
+  evidenceIds: string[],
+  contract: StructuredRepairContract
+): ProviderJsonSchema {
+  const diagnosisSchema = createDiagnosisProviderSchema(evidenceIds);
+  const targets = contract.options.map(option => option.target);
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['schema_version', 'diagnosis', 'proposed_action'],
+    properties: {
+      schema_version: { type: 'string', enum: ['1.0.0'] },
+      diagnosis: diagnosisSchema,
+      proposed_action: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['action_id', 'target', 'operation', 'patch', 'evidence_digest'],
+        properties: {
+          action_id: { type: 'string' },
+          target: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['api_version', 'kind', 'namespace', 'name', 'uid'],
+            properties: {
+              api_version: { type: 'string', enum: [...new Set(targets.map(t => t.api_version))] },
+              kind: { type: 'string', enum: [...new Set(targets.map(t => t.kind))] },
+              namespace: { type: 'string', enum: [...new Set(targets.map(t => t.namespace))] },
+              name: { type: 'string', enum: [...new Set(targets.map(t => t.name))] },
+              uid: { type: 'string', enum: [...new Set(targets.map(t => t.uid))] },
+            },
+          },
+          operation: { type: 'string', enum: ['json_patch'] },
+          patch: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['op', 'path', 'value'],
+              properties: {
+                op: { type: 'string', enum: ['add', 'replace', 'test'] },
+                path: { type: 'string' },
+                value: { type: ['string', 'number', 'boolean', 'null'] },
+              },
+            },
+          },
+          evidence_digest: { type: 'string', enum: [contract.evidence_digest] },
         },
       },
     },

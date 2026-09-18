@@ -606,6 +606,26 @@ export function createHeadlampCliCandidate(
         2
       );
       const repair = input.packet.required_submission_schema === 'repair_submission@1.0.0';
+      const repairContract = repair
+        ? {
+            evidence_digest: input.evidence_digest,
+            options: input.packet.action_policy!.allowed_patches.map(allowed => {
+              const target = input.action_targets?.find(
+                candidate =>
+                  `${candidate.kind.toLowerCase()}/${candidate.name}` === allowed.resource_ref
+              );
+              if (!target)
+                throw new Error(`repair target ${allowed.resource_ref} was not supplied`);
+              const patch = allowed.patch.map(operation => {
+                if (operation.op === 'remove') {
+                  throw new Error('structured repair does not support remove patch operations');
+                }
+                return operation;
+              });
+              return { target, patch };
+            }),
+          }
+        : undefined;
       const repairContext = repair
         ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
             input.packet.action_policy,
@@ -631,7 +651,14 @@ export function createHeadlampCliCandidate(
             ...(options.cliArgs ?? []),
             ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
             ...(suppliedEvidenceOnly ? ['--supplied-evidence-only'] : []),
-            ...(structuredDiagnosis ? ['--structured-diagnosis'] : []),
+            ...(structuredDiagnosis && !repair ? ['--structured-diagnosis'] : []),
+            ...(structuredDiagnosis && repair
+              ? [
+                  '--structured-repair',
+                  '--structured-repair-contract',
+                  JSON.stringify(repairContract),
+                ]
+              : []),
             ...(structuredDiagnosis
               ? [
                   '--structured-diagnosis-evidence-ids',

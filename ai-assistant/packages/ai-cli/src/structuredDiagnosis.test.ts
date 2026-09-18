@@ -18,7 +18,9 @@ import { describe, expect, it } from 'vitest';
 import {
   createDiagnosisProviderSchema,
   createDiagnosisSubmissionSchema,
+  createRepairProviderSchema,
   validateDiagnosisSubmission,
+  validateRepairSubmission,
 } from './structuredDiagnosis.js';
 
 const submission = {
@@ -36,6 +38,46 @@ const submission = {
   uncertainty: { is_uncertain: false, reason: 'The supplied evidence is decisive.' },
   proposed_actions: [{ operation: 'no_action' as const, description: 'No change required.' }],
 };
+
+const repairContract = {
+  evidence_digest: 'a'.repeat(64),
+  options: [
+    {
+      target: {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+      patch: [
+        { op: 'test' as const, path: '/spec/selector/tier', value: 'frontend' },
+        { op: 'replace' as const, path: '/spec/selector/tier', value: 'backend' },
+      ],
+    },
+  ],
+};
+
+const repairSubmission = {
+  schema_version: '1.0.0' as const,
+  diagnosis: submission,
+  proposed_action: {
+    action_id: 'repair-selector',
+    target: repairContract.options[0].target,
+    operation: 'json_patch' as const,
+    patch: repairContract.options[0].patch,
+    evidence_digest: repairContract.evidence_digest,
+  },
+};
+
+const repairObservations = [
+  {
+    evidence_id: 'evidence-1',
+    resource_ref: 'service/web',
+    field_path: 'spec.selector',
+    observed_value: '{"app":"web"}',
+  },
+];
 
 describe('createDiagnosisSubmissionSchema', () => {
   it('accepts exact evidence references', () => {
@@ -301,5 +343,59 @@ describe('createDiagnosisSubmissionSchema', () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data.alternative_dispositions).toEqual(alternatives);
+  });
+
+  it('enforces the repair response shape with exact provider metadata', () => {
+    const schema = createRepairProviderSchema(['evidence-1'], repairContract);
+    const properties = schema.properties as Record<string, any>;
+
+    expect(properties.proposed_action.properties.evidence_digest.enum).toEqual([
+      repairContract.evidence_digest,
+    ]);
+    expect(properties.proposed_action.properties.target.properties.uid.enum).toEqual([
+      'service-uid',
+    ]);
+    expect(
+      validateRepairSubmission(repairSubmission, repairObservations, repairContract).success
+    ).toBe(true);
+  });
+
+  it('rejects a repair outside the exact target, patch, or evidence contract', () => {
+    const wrongPatch = {
+      ...repairSubmission,
+      proposed_action: {
+        ...repairSubmission.proposed_action,
+        patch: [{ op: 'replace' as const, path: '/spec/selector/tier', value: 'other' }],
+      },
+    };
+    const wrongDigest = {
+      ...repairSubmission,
+      proposed_action: { ...repairSubmission.proposed_action, evidence_digest: 'b'.repeat(64) },
+    };
+
+    expect(validateRepairSubmission(wrongPatch, repairObservations, repairContract).success).toBe(
+      false
+    );
+    expect(validateRepairSubmission(wrongDigest, repairObservations, repairContract).success).toBe(
+      false
+    );
+  });
+
+  it('canonicalizes duplicate evidence references in a repair diagnosis', () => {
+    const result = validateRepairSubmission(
+      {
+        ...repairSubmission,
+        diagnosis: {
+          ...repairSubmission.diagnosis,
+          evidence_refs: ['evidence-1', 'evidence-1'],
+        },
+      },
+      repairObservations,
+      repairContract
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect((result.data.diagnosis as typeof submission).evidence_refs).toEqual(['evidence-1']);
   });
 });

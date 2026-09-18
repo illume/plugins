@@ -590,9 +590,12 @@ test('createHeadlampCliCandidate: presents exact observation fields as JSON', as
 
 test('createHeadlampCliCandidate: supplies the canonical digest for repair submissions', async () => {
   let prompt = '';
+  let capturedArgs: string[] = [];
   const repair = loadScenario('core-service-selector-repair-v1');
   const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
     processRunner: async (_command, args) => {
+      capturedArgs = args;
       prompt = args.at(-1) ?? '';
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
     },
@@ -621,6 +624,53 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
   assert.match(prompt, /property named exactly evidence_digest whose value is the supplied digest/);
   assert.match(prompt, /Do not rename or add properties/);
   assert.match(prompt, /omit it rather than using null/);
+  assert.ok(capturedArgs.includes('--structured-repair'));
+  assert.ok(!capturedArgs.includes('--structured-diagnosis'));
+  const contractIndex = capturedArgs.indexOf('--structured-repair-contract');
+  assert.deepEqual(JSON.parse(capturedArgs[contractIndex + 1]!), {
+    evidence_digest: evidenceDigest,
+    options: [
+      {
+        target: {
+          api_version: 'v1',
+          kind: 'Service',
+          namespace: 'trial',
+          name: 'web',
+          uid: 'service-uid',
+        },
+        patch: repair.candidatePacket.action_policy?.allowed_patches[0]?.patch,
+      },
+    ],
+  });
+});
+
+test('createHeadlampCliCandidate: rejects unsupported remove repair operations', async () => {
+  const repair = loadScenario('core-service-selector-repair-v1');
+  repair.candidatePacket.action_policy!.allowed_patches[0]!.patch = [
+    { op: 'remove', path: '/spec/selector/tier' },
+  ];
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    processRunner: async () => ({ stdout: '', stderr: '', exitCode: 0, timedOut: false }),
+  });
+
+  await assert.rejects(
+    candidate.invoke({
+      packet: repair.candidatePacket,
+      observations: [],
+      evidence_digest: evidenceDigest,
+      action_targets: [
+        {
+          api_version: 'v1',
+          kind: 'Service',
+          namespace: 'trial',
+          name: 'web',
+          uid: 'service-uid',
+        },
+      ],
+    }),
+    /does not support remove patch operations/
+  );
 });
 
 test('createHeadlampCliCandidate: does not forward disallowed env vars to the child process', async () => {

@@ -23,3 +23,12 @@ npm run e2e
 The cross-platform TypeScript runner builds the plugin and Headlamp image, creates the KWOK cluster, runs Headlamp and Chromium, and deletes the cluster afterward. Set `KEEP_E2E_CLUSTER=true` to retain it for debugging. Each run writes local, untracked screenshots to `e2e/screenshots`.
 
 `npm run e2e:playwright` runs only the Playwright scenarios against an already running Headlamp instance. It does not build Headlamp or create a cluster. Set `HEADLAMP_URL` if Headlamp is not available at `http://127.0.0.1:4466`.
+
+## Record a video walkthrough
+
+Run `npm run e2e:walkthrough` to run the same harness as `npm run e2e` and record a
+1920x1080 walkthrough in dark theme. The walkthrough includes a short title screen
+between features. The video is written to `e2e/walkthrough-results`.
+
+Use `npm run e2e:walkthrough:playwright` to record against an already running
+Headlamp instance.

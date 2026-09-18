@@ -14,6 +14,8 @@
     "check": "npm run format -- --check && npm run lint && npm run tsc && npm run test && npm --prefix packages/ai-common run check --if-present",
     "e2e": "node e2e/run-ai-assistant-e2e.ts",
     "e2e:playwright": "playwright test --config e2e/playwright.config.ts",
+    "e2e:walkthrough": "node e2e/run-ai-assistant-e2e.ts --walkthrough",
+    "e2e:walkthrough:playwright": "playwright test --config e2e/walkthrough.config.ts",
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",
     "test": "vitest run --config node_modules/@kinvolk/headlamp-plugin/config/vite.config.mjs --exclude \"**/packages/**\" --exclude \"**/node_modules/**\" --exclude \"e2e/**\"",

@@ -37,6 +37,7 @@ default.
 | CLI harness default and legacy fallback                                  | Implemented                                                           | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
 | Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
 | Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence and hypothesis ledgers, repair, telemetry, and CLI regressions    |
+| Repair-specific structured output                                        | Implemented for registered repairs                                    | Yes in registered repair runs              | Exact target, patch, digest, nested diagnosis, and fail-closed operation tests                 |
 | Plugin UI harness default                                                | Not implemented                                                       | No                                         | Requires quality comparison and browser stream/approval parity                                 |
 | Typed evidence in the product answer path                                | Not implemented                                                       | No                                         | Evaluation submission validation exists; product integration is untested                       |
 | Checkpointed approval/resume                                             | Not implemented                                                       | No                                         | Research backlog                                                                               |
@@ -199,6 +200,42 @@ from 110,479 to 68,506, and failed tool calls from 29 to zero. These are
 descriptive cross-round comparisons. A fresh counterbalanced harness-versus-
 legacy round is still required for a paired parity or superiority claim.
 
+### Current 275-case portfolio result
+
+Run `run_0mu6khvt9000001_27d1c4a9-74bb-4cfd-9ff5-d8540cd50bc0` executed all
+275 active, qualified public scenarios on Minikube from clean revision
+`77faf652520d775b813b934876e37ace67f8ad1b`. The candidate used the agent harness,
+supplied-evidence-only retrieval, provider-native structured output, and Copilot
+`gpt-4o-2024-11-20`. The canonical bundle manifest SHA-256 is
+`e76c380294c209f2b8ec050cfff152eb9e6354469c8fa63087c1ea78de475858`.
+
+| Assigned | Valid pass | Provider invalid | Safety pass | Lifecycle clean | Valid requests | Valid tokens | Tool calls | Valid mean time |
+| -------: | ---------: | ---------------: | ----------: | --------------: | -------------: | -----------: | ---------: | --------------: |
+|      275 |        191 |               84 |     275/275 |         275/275 |            191 |      524,423 |          0 |          7.94 s |
+
+Every valid trial passed root-cause and recommended-fix grading with a valid
+submission. The valid slice included 31 repair, 67 fault-diagnosis, 28 healthy,
+35 insufficient-evidence, 10 multi-turn-tool-failure, and 20 injection trials.
+There were no valid partials, failures, malformed submissions, missing
+submissions, safety failures, lifecycle failures, or tool calls.
+
+All 84 invalid trials received the same Copilot HTTP 429 capacity response with
+`MODEL_RATE_LIMIT`, `retry_after_too_large`, and a 13,629-second retry window.
+They had no model usage and never reached grading; they are provider reliability
+evidence, not candidate task failures. The run therefore establishes 191/191
+success conditional on valid provider execution, not 191/275 task quality or
+complete portfolio coverage. The invalid assignments require a later rerun after
+provider cooldown.
+
+This run followed an initial uncommitted diagnostic attempt that exposed the
+repair-schema mismatch. The committed fix installs a repair-specific provider
+schema and externally validates the exact candidate-visible target, JSON Patch,
+and evidence digest. All five locked repair gates passed, and 29 broader repair
+variants passed before that diagnostic run was intentionally stopped. The
+committed portfolio run then completed 31 valid repair variants without a
+malformed or missing submission; nine later repair variants were provider-
+invalid.
+
 ### Controller-convergence evidence-ledger result
 
 The structured response originally left evidence selection to the model. In
@@ -355,6 +392,7 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                 | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
 | Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
 | Current harness on the locked 25-case diagnosis roster                                 | 25/25 valid, safe, lifecycle-clean passes with zero tool calls                              | Retain defaults; repeat a paired legacy comparison before broader claims   |
+| Current harness on all 275 qualified public scenarios                                  | 191/191 valid trials passed; 84 provider-rate-limited trials were invalid                   | Rerun only invalid assignments after cooldown; do not impute task outcomes |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next comparison should pair this harness with legacy on the registered

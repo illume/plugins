@@ -1,6 +1,6 @@
 # Observability Reliability Research
 
-Updated: 2026-09-17. Work tracked in [PR #25](https://github.com/illume/plugins/pull/25).
+Updated: 2026-09-18. Work tracked in [PR #25](https://github.com/illume/plugins/pull/25).
 
 This is the maintained research, phase plan, results ledger, and backlog for
 observability-assisted diagnosis. It consolidates the earlier private research
@@ -47,6 +47,25 @@ No paid inference or cloud provisioning becomes automatic. The
 and opt-outs; OBS-8 below defines consumer rollout gates.
 
 ## Completed Work And Results
+
+### Public-Report Scenario Plans
+
+All 100 reviewed AKS candidates now have
+[structured draft scenario plans](../evals/scenario-plans/aks-real-incidents.json),
+with distinct candidate tasks, baseline controls, and observation requirements.
+Original fault/recovery designs, fidelity gates, source provenance, and the
+46 K / 42 H / 12 O evidence labels are preserved. Zero are newly reproduced,
+executable, qualified, or observability-only verified. This catalogue is separate
+from the two implemented AKS observability lifecycles and the locked Phase 2 roster.
+
+The [catalogue guide](aks-scenario-research.md#100-draft-scenario-plans) documents
+offline `list-drafts`/`show-draft` discovery, generation and freshness checks, and
+the remaining implementation/qualification gates. Catalogue coverage and runner
+isolation are tested across all 100 IDs. No paid inference or provisioning ran for
+this conversion; the next step is to implement and qualify a bounded case, not to
+count research plans as successful executions.
+
+### Evaluation History
 
 | Work | Status | Observed result | Decision |
 | --- | --- | --- | --- |

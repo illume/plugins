@@ -18,8 +18,162 @@ import {
   evaluateLiveObservabilityCandidate,
   liveAzureFaultFacts,
   readLiveAzureTool,
+  observabilityMain,
 } from '../runner/observabilityEvaluation.js';
 import { verifyLocalObservability } from '../cluster/provisioning/localObservability.js';
+import {
+  buildAksCandidateScenarioPlans,
+  loadAksCandidateScenarioPlans,
+} from './aksCandidateScenarios.js';
+import { listScenarioIds } from './loader.js';
+
+test('all 100 researched candidates have current non-executable scenario plans', () => {
+  const plans = loadAksCandidateScenarioPlans();
+  const register = JSON.parse(
+    readFileSync(new URL('../../../docs/aks-candidate-register.json', import.meta.url), 'utf8')
+  );
+  assert.equal(plans.length, 100);
+  assert.equal(new Set(plans.map(plan => plan.scenario_id)).size, 100);
+  assert.equal(new Set(plans.map(plan => plan.candidate_view.task_prompt)).size, 100);
+  assert.equal(new Set(plans.map(plan => plan.evaluator_plan.baseline.procedure)).size, 100);
+  assert.deepEqual(
+    plans.map(plan => plan.candidate_id),
+    register.candidates.map((candidate: any) => candidate.id)
+  );
+  const runnable = new Set([
+    ...listScenarioIds(),
+    ...observabilityScenarios.map(scenario => scenario.id),
+    ...localObservabilityScenarios.map(scenario => scenario.id),
+  ]);
+  for (const [index, plan] of plans.entries()) {
+    const candidate = register.candidates[index];
+    assert.equal(plan.scenario_id, `${candidate.id.toLowerCase()}-v1`);
+    assert.equal(plan.lifecycle_state, 'draft');
+    assert.equal(plan.execution.eligible, false);
+    assert.equal(plan.execution.implementation, 'not-implemented');
+    assert.equal(plan.execution.qualification, 'pending');
+    assert.deepEqual(plan.execution.results, []);
+    assert.equal(plan.provenance.source_url, candidate.source);
+    assert.equal(plan.provenance.source_body_sha256, candidate.sourceBodySha256);
+    assert.equal(plan.provenance.reproduction_status, 'feasible-not-run');
+    assert.equal(plan.evidence_classification.label, candidate.evidence);
+    assert.equal(plan.evidence_classification.observability_only_verified, false);
+    assert.equal(plan.evaluator_plan.fault.procedure, candidate.trigger);
+    assert.equal(plan.evaluator_plan.fault.pass_condition, candidate.oracle);
+    assert.equal(plan.evaluator_plan.recovery.procedure, candidate.recovery);
+    assert.deepEqual(Object.keys(plan.candidate_view).sort(), [
+      'instructions',
+      'mode',
+      'task_prompt',
+    ]);
+    assert.deepEqual(
+      plan.evaluator_plan.controls.map(control => control.kind),
+      ['healthy', 'insufficient-evidence']
+    );
+    assert.ok(plan.evaluator_plan.observations.length >= 2);
+    assert.ok(!runnable.has(plan.scenario_id));
+  }
+});
+
+test('draft discovery is offline and does not admit drafts to the execution runner', async context => {
+  const output: unknown[] = [];
+  context.mock.method(console, 'log', (value: string) => output.push(JSON.parse(value)));
+  await observabilityMain(['list-drafts']);
+  const listing = output.pop() as Array<{ scenario_id: string; execution_eligible: boolean }>;
+  assert.equal(listing.length, 100);
+  assert.ok(listing.every(plan => plan.execution_eligible === false));
+  await observabilityMain(['show-draft', '--scenario', 'aks-c100-v1']);
+  assert.deepEqual(
+    output.pop(),
+    loadAksCandidateScenarioPlans().find(plan => plan.scenario_id === 'aks-c100-v1')
+  );
+  await assert.rejects(observabilityMain(['show-draft']), /listed draft/);
+  await assert.rejects(
+    observabilityMain(['show-draft', '--scenario', 'aks-c999-v1']),
+    /listed draft/
+  );
+  await assert.rejects(
+    observabilityMain([
+      'run',
+      '--scenario',
+      'aks-c001-v1',
+      '--state-dir',
+      '/unused-draft-state',
+      '--accept-azure-costs',
+    ]),
+    /listed AKS case/
+  );
+  await observabilityMain(['list']);
+  const implemented = output.pop() as Array<{ id: string }>;
+  assert.ok(implemented.every(plan => !listing.some(draft => draft.scenario_id === plan.id)));
+});
+
+test('research scenario plans preserve provenance and separate tasks from evaluator truth', () => {
+  const candidate = {
+    id: 'AKS-C001',
+    source: 'https://github.com/Azure/AKS/issues/1',
+    family: 'network',
+    scenario: 'Private evaluator diagnosis',
+    trigger: 'Private injection procedure',
+    oracle: 'Private oracle observation',
+    recovery: 'Private recovery procedure',
+    fidelity: 'version-dependent',
+    environment: 'A pinned historical environment',
+    evidence: 'O',
+    sourceTitle: 'Private source title',
+    sourceCreatedAt: '2026-01-01',
+    sourceUpdatedAt: '2026-01-02',
+    sourceBodySha256: 'a'.repeat(64),
+    reproductionStatus: 'feasible-not-run',
+  };
+  const register = { target: 1, researchDate: '2026-09-17', candidates: [candidate] };
+  const designs = [
+    {
+      candidateId: 'AKS-C001',
+      task: 'Investigate the failed request.',
+      baseline: 'The request succeeds in the control.',
+      evidence: ['Request result and network observations'],
+    },
+  ];
+  const [plan] = buildAksCandidateScenarioPlans(register, designs);
+  assert.equal(plan!.scenario_id, 'aks-c001-v1');
+  assert.equal(plan!.execution.eligible, false);
+  assert.equal(plan!.execution.qualification, 'pending');
+  assert.equal(plan!.evidence_classification.observability_only_verified, false);
+  assert.equal(plan!.provenance.source_body_sha256, candidate.sourceBodySha256);
+  assert.equal(plan!.evaluator_plan.fault.procedure, candidate.trigger);
+  assert.equal(plan!.evaluator_plan.fault.pass_condition, candidate.oracle);
+  assert.equal(plan!.evaluator_plan.recovery.procedure, candidate.recovery);
+  assert.ok(plan!.evaluator_plan.availability_gate.includes('Mark blocked'));
+  assert.ok(!JSON.stringify(plan!.candidate_view).includes('Private'));
+  designs[0]!.evidence.push('later mutation');
+  assert.equal(plan!.evaluator_plan.observations.length, 1);
+  assert.throws(() => buildAksCandidateScenarioPlans(register, []));
+  assert.throws(
+    () => buildAksCandidateScenarioPlans(register, [{ ...designs[0], candidateId: 'AKS-C002' }]),
+    /Missing scenario design/
+  );
+  assert.throws(() =>
+    buildAksCandidateScenarioPlans(
+      { ...register, candidates: [{ ...candidate, evidence: 'verified' }] },
+      designs
+    )
+  );
+  assert.throws(() =>
+    buildAksCandidateScenarioPlans(
+      { ...register, candidates: [{ ...candidate, reproductionStatus: 'passed' }] },
+      designs
+    )
+  );
+  assert.throws(
+    () =>
+      buildAksCandidateScenarioPlans(
+        { ...register, target: 2, candidates: [candidate, candidate] },
+        [designs[0], designs[0]]
+      ),
+    /Duplicate candidate/
+  );
+});
 
 test('AKS observability scenarios have real baseline, fault, and recovery definitions', () => {
   assert.equal(observabilityScenarios.length, 2);

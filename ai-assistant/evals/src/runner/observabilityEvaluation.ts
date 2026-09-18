@@ -29,6 +29,7 @@ import {
   cleanupLocalObservability,
   verifyLocalObservability,
 } from '../cluster/provisioning/localObservability.js';
+import { loadAksCandidateScenarioPlans } from '../scenarios/aksCandidateScenarios.js';
 
 type Observation = RootCauseGradingInput['retrievedObservations'][number];
 type ToolName = LiveAksEvidence['tool'];
@@ -351,6 +352,33 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
     console.log(JSON.stringify(observabilityScenarios, null, 2));
     return;
   }
+  if (action === 'list-drafts' || action === 'show-draft') {
+    const plans = loadAksCandidateScenarioPlans();
+    if (action === 'show-draft') {
+      const plan = plans.find(item => item.scenario_id === values.scenario);
+      assert.ok(plan, '--scenario must name a listed draft, such as aks-c001-v1');
+      console.log(JSON.stringify(plan, null, 2));
+    } else {
+      console.log(
+        JSON.stringify(
+          plans.map(plan => ({
+            scenario_id: plan.scenario_id,
+            candidate_id: plan.candidate_id,
+            title: plan.title,
+            family: plan.family,
+            evidence_label: plan.evidence_classification.label,
+            fidelity: plan.provenance.fidelity,
+            lifecycle_state: plan.lifecycle_state,
+            execution_eligible: plan.execution.eligible,
+            qualification: plan.execution.qualification,
+          })),
+          null,
+          2
+        )
+      );
+    }
+    return;
+  }
   assert.ok(values['state-dir'], '--state-dir is required');
   const directory = path.resolve(values['state-dir']);
   if (action === 'cleanup-local') {
@@ -377,7 +405,10 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
     console.log(JSON.stringify(result, null, 2));
     return;
   }
-  assert.ok(action === 'verify' || action === 'run', 'Use list, verify, run, or cleanup');
+  assert.ok(
+    action === 'verify' || action === 'run',
+    'Use list, list-drafts, show-draft, verify, run, or cleanup'
+  );
   assert.equal(values['accept-azure-costs'], true, '--accept-azure-costs is required');
   const scenario = aksObservabilityScenarios.find(item => item.id === values.scenario);
   assert.ok(scenario, '--scenario must name a listed AKS case');

@@ -41,6 +41,90 @@ evidence, prioritize C075 (orphaned share), C080 (subnet policy mutation), and C
 (stale role assignment), plus the initial SNAT lead once metric dimensions are
 supported. All cloud attempts require bounded cost/scope and owned cleanup.
 
+## 100 Draft Scenario Plans
+
+On 2026-09-18, all 100 register entries were converted one-to-one into
+[structured scenario plans](../evals/scenario-plans/aks-real-incidents.json), with
+stable IDs `aks-c001-v1` through `aks-c100-v1`. These are **draft plans, not runnable
+or qualified scenarios**. Every plan has `execution.eligible: false`, implementation
+`not-implemented`, qualification `pending`, and no results. The two implemented AKS
+observability lifecycles remain separate; the draft catalogue does not expand the
+locked Phase 2 roster or any qualified evaluation denominator.
+
+Each plan contains a distinct symptom-focused candidate task, a case-specific
+baseline/healthy control and observation list, and the original source-specific
+fault trigger, fault oracle, recovery procedure, environment, fidelity, and source
+dates/body digest. These plans propose experiments; they do not claim that the
+reported versions are still deployable or that the proposed fault will reproduce.
+The 46 K / 42 H / 12 O research labels are preserved, with **zero observability-only
+verified**. Version-dependent plans explicitly require blocking unavailable
+prerequisites instead of silently substituting a current managed version.
+
+### Inspect Offline
+
+From `ai-assistant/evals`, after installing the eval dependencies:
+
+```sh
+npm run eval:observability -- list-drafts
+npm run eval:observability -- show-draft --scenario aks-c001-v1
+npm run eval:observability -- list
+```
+
+`list-drafts` returns a summary of the 100 plans and their ineligible status.
+`show-draft` returns the full selected plan, including evaluator-only details.
+Neither needs Azure credentials, a state directory, or paid inference. `list`
+continues to show only implemented observability scenarios. The regular
+`list-scenarios` command also excludes these drafts; `run` and `verify` cannot
+execute their IDs.
+
+Only `candidate_view` is intended for eventual candidate exposure. The title,
+source report, provenance, evidence classification, and `evaluator_plan` can reveal
+the intended fault and must not be passed wholesale to a diagnosing model. The
+current tests check structural separation, not proof that every future packet is
+free of answer leakage; qualification requires a case-specific review.
+
+### Maintain And Generate
+
+Edit the source [candidate register](aks-candidate-register.json) for research
+corrections and [case designs](../evals/scenario-plans/aks-candidate-designs.json)
+for candidate tasks, baselines, and observation requirements. Do not hand-edit the
+generated catalogue. From `ai-assistant/evals`:
+
+```sh
+node_modules/.bin/tsx src/scenarios/aksCandidateScenarios.ts --write
+node_modules/.bin/tsx src/scenarios/aksCandidateScenarios.ts --check
+npm run check
+```
+
+The [builder](../evals/src/scenarios/aksCandidateScenarios.ts) validates the input
+shape, unique source/candidate/design mappings, complete coverage, and the fixed
+100-case count. The catalogue records the register SHA-256. Loading drafts compares
+the generated content with the committed JSON and rejects stale or edited output;
+`--check` does not rewrite files. Tests exercise all 100 mappings, preservation of
+source fault/recovery plans, CLI inspection, and exclusion from runnable discovery.
+
+### Qualify One Case
+
+1. Resolve source/version availability and exact reproduction fidelity; record
+   blocked or non-reproduced cases honestly.
+2. Implement bounded setup, fault injection, observation capture, recovery, and
+   ownership-checked cleanup in an explicitly authorized disposable environment.
+   Declare resource, time, and cost budgets before provisioning.
+3. Demonstrate baseline, fault, recovery, and cleanup on real resources. A deleted
+   cluster alone is not a successful recovery; a rendered manifest is not an AKS
+   lifecycle reproduction.
+4. Construct separate candidate/evaluator packets and exact source-bound grading
+   facts and alternatives. The prose fault oracle is not a diagnosis rubric.
+   Implement healthy and insufficient-evidence controls and test the declared
+   Kubernetes-only evidence boundary before claiming observability necessity.
+5. Add runnable scenario packets and focused case logic through the existing
+   [scenario admission process](../evals/src/scenarios/README.md). Admit qualified
+   evidence only after its gates pass and use a fixed plan for model evaluation.
+
+Do not enable a draft by flipping `eligible` in generated JSON. Executable manifests,
+capture tools, exact grading facts, and lifecycle qualification are still required.
+No new cloud resources or paid model calls were used to create these 100 plans.
+
 ## Labels And Scope
 
 Reproduction labels: `unassessed`, `feasible-not-run`, `attempted-not-reproduced`,

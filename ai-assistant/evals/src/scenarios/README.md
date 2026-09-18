@@ -18,6 +18,32 @@ admission control passes. An active scenario must be qualified, and generated or
 transformed descendants must identify a qualified parent before they can enter
 eligible evidence.
 
+## Researched AKS Drafts
+
+The [100-case catalogue](../../scenario-plans/aks-real-incidents.json) contains
+draft scenario plans derived from 100 public AKS incident reports. Stable IDs are
+`aks-c001-v1` through `aks-c100-v1`. Each has a candidate task plus evaluator-only
+baseline, fault/oracle, recovery, observation, control, and implementation gates.
+All remain **not implemented, not executable, and pending qualification**; none
+is observability-only verified. They are not loaded from `evals/scenarios`, do not
+appear in `list-scenarios`, and cannot be run by the observability runner.
+
+From `ai-assistant/evals`:
+
+```sh
+npm run eval:observability -- list-drafts
+npm run eval:observability -- show-draft --scenario aks-c001-v1
+node_modules/.bin/tsx src/scenarios/aksCandidateScenarios.ts --check
+```
+
+These commands are offline and provision nothing. `show-draft` includes hidden
+evaluator material; expose only `candidate_view` to a model after packet review.
+The existing `npm run eval:observability -- list` remains the implemented-case list.
+See the [research catalogue guide](../../../docs/aks-scenario-research.md#100-draft-scenario-plans)
+for generation inputs, commands, K/H/O labels, blocked-version handling, and the
+steps to implement and qualify one case. Do not hand-edit generated plans or mark
+them executable to bypass those gates.
+
 ## Provisioned Observability Scenarios
 
 These scenarios create resources and cause an observable failure. The former

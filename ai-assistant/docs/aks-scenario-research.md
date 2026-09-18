@@ -45,9 +45,11 @@ supported. All cloud attempts require bounded cost/scope and owned cleanup.
 
 On 2026-09-18, all 100 register entries were converted one-to-one into
 [structured scenario plans](../evals/scenario-plans/aks-real-incidents.json), with
-stable IDs `aks-c001-v1` through `aks-c100-v1`. These are **draft plans, not runnable
-or qualified scenarios**. Every plan has `execution.eligible: false`, implementation
-`not-implemented`, qualification `pending`, and no results. The two implemented AKS
+stable IDs `aks-c001-v1` through `aks-c100-v1`. These remain **draft plans, not
+qualified scored scenarios**. Every plan has `execution.eligible: false`,
+qualification `pending`, and no qualified results. C059 now has an implemented
+isolated-component reproduction; the other 99 remain `not-implemented`. No new
+candidate has been live-verified yet. The two existing implemented AKS
 observability lifecycles remain separate; the draft catalogue does not expand the
 locked Phase 2 roster or any qualified evaluation denominator.
 
@@ -68,6 +70,7 @@ From `ai-assistant/evals`, after installing the eval dependencies:
 npm run eval:observability -- list-drafts
 npm run eval:observability -- show-draft --scenario aks-c001-v1
 npm run eval:observability -- list
+npm run eval:observability -- list-reproductions
 ```
 
 `list-drafts` returns a summary of the 100 plans and their ineligible status.
@@ -75,7 +78,8 @@ npm run eval:observability -- list
 Neither needs Azure credentials, a state directory, or paid inference. `list`
 continues to show only implemented observability scenarios. The regular
 `list-scenarios` command also excludes these drafts; `run` and `verify` cannot
-execute their IDs.
+execute their IDs. `list-reproductions` separately lists the component lifecycles
+available through `verify-candidate`; implementation does not grant scored admission.
 
 Only `candidate_view` is intended for eventual candidate exposure. The title,
 source report, provenance, evidence classification, and `evaluator_plan` can reveal
@@ -124,6 +128,77 @@ source fault/recovery plans, CLI inspection, and exclusion from runnable discove
 Do not enable a draft by flipping `eligible` in generated JSON. Executable manifests,
 capture tools, exact grading facts, and lifecycle qualification are still required.
 No new cloud resources or paid model calls were used to create these 100 plans.
+
+### First Executable Reproduction: C059
+
+[C059's definition](../evals/src/scenarios/aksCandidateReproductions.ts) and
+[lifecycle runner](../evals/src/cluster/provisioning/aksCandidateReproduction.ts)
+implement the leading-dot CoreDNS zone failure described in
+[Azure/AKS #3683](https://github.com/Azure/AKS/issues/3683). The report identifies
+CoreDNS 1.9.4 and later rejecting leading-dot zones. Use a reviewed immutable image
+of the affected CoreDNS component and an immutable BusyBox-compatible probe image;
+do not assume a tag is immutable or that any current image reproduces the issue.
+
+This creates an isolated namespace on an **explicitly selected, authorized
+disposable Kubernetes cluster**. It does not create AKS or modify managed DNS,
+`kube-system`, node settings, or existing workloads. A local run tests the component
+mechanism only, not the historical AKS rollout. An AKS run must separately document
+the actual cluster/node/image versions and fidelity before qualification.
+
+The lifecycle performs these checks against real kubectl reads, not canned data:
+
+1. Start the pinned CoreDNS workload with `example.test`, and obtain three successful
+   A-record responses for `answer.example.test` containing `192.0.2.10`.
+2. Change only the zone's leading dot to `.example.test` and restart the same named
+   workload. Require at least one restart, an unready Pod, and the specific
+   `zone is not a valid domain name` error. An image-pull or unrelated failure is
+   not a reproduced fault.
+3. Restore the valid configuration, restart that workload, and verify readiness
+   plus three successful queries again. Keep recovery separate from cleanup.
+4. Delete the owned namespace and independently check absence. Refuse deletion
+   if its owner label, UID, or the kubeconfig's cluster endpoint has changed.
+
+From `ai-assistant/evals`, set `RESEARCH_KUBECONFIG` to an absolute dedicated config
+path, `RESEARCH_CONTEXT` to the approved context, and `COREDNS_IMAGE`/`PROBE_IMAGE`
+to reviewed `repository@sha256:<64 hex characters>` references. `TRIAL_DIR` must be
+a new directory under an existing parent. These are operator-supplied inputs, not
+automatic selection of the current kubectl context:
+
+```sh
+npm run eval:observability -- verify-candidate \
+  --scenario aks-c059-v1 \
+  --kubeconfig "$RESEARCH_KUBECONFIG" --context "$RESEARCH_CONTEXT" \
+  --state-dir "$TRIAL_DIR" --accept-cluster-mutations \
+  --coredns-image "$COREDNS_IMAGE" --probe-image "$PROBE_IMAGE"
+
+npm run eval:observability -- cleanup-candidate --state-dir "$TRIAL_DIR"
+```
+
+Requires kubectl, permission to create a namespace and its Pods/Service/ConfigMaps,
+Pod exec/log access, and sufficient quota. Workloads run non-root, without mounted
+ServiceAccount tokens, privilege escalation, host mounts, or published endpoints.
+Two Pods, one ClusterIP Service and one ConfigMap are used in the owned namespace;
+the DNS Pod is replaced between phases. Polling is limited to 60 attempts and a
+60-second loop deadline; an in-progress command can extend that deadline. Kubectl
+requests have a ten-second request timeout and each process is capped at 90 seconds.
+Those are local bounds, not a guarantee that cluster operations have stopped.
+
+The private state directory records per-phase status, actual Pod/config/log evidence,
+DNS answers, separate candidate/evaluator evidence, pinned images, context, server,
+namespace ownership, and cleanup outcome. The candidate artifact excludes the fault
+oracle; the evaluator artifact is not a qualified grading contract. New state
+directories are mode 0700 and generated files mode 0600. State contains a kubeconfig
+path, not copied credentials. Preserve it on failure and use `cleanup-candidate`
+after interruption; do not reuse it for a fresh attempt or delete another namespace.
+
+**Validation so far is offline only:** nine focused lifecycle/resource checks cover
+success, baseline failure, unrelated fault, failed recovery, denied cleanup,
+changed owner/UID/endpoint, state-directory reuse, and idempotent cleanup. All
+408 eval tests, formatting, and typechecks passed. No cluster or model was invoked
+for this implementation. C059 remains pending live reproduction and independent
+qualification; the other 99 candidates still need implementation. Healthy and
+insufficient-evidence model trials and exact diagnosis alternatives remain future
+qualification work, not implied by this lifecycle implementation.
 
 ## Labels And Scope
 

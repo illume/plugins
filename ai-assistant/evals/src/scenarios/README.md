@@ -24,15 +24,17 @@ The [100-case catalogue](../../scenario-plans/aks-real-incidents.json) contains
 draft scenario plans derived from 100 public AKS incident reports. Stable IDs are
 `aks-c001-v1` through `aks-c100-v1`. Each has a candidate task plus evaluator-only
 baseline, fault/oracle, recovery, observation, control, and implementation gates.
-All remain **not implemented, not executable, and pending qualification**; none
-is observability-only verified. They are not loaded from `evals/scenarios`, do not
-appear in `list-scenarios`, and cannot be run by the observability runner.
+All remain **pending qualification and excluded from scored runs**; none is
+observability-only verified. C059 has an isolated CoreDNS component reproduction;
+99 still lack implementations. The plans are not loaded from `evals/scenarios`
+and do not appear in `list-scenarios` or the model-evaluation `run` command.
 
 From `ai-assistant/evals`:
 
 ```sh
 npm run eval:observability -- list-drafts
 npm run eval:observability -- show-draft --scenario aks-c001-v1
+npm run eval:observability -- list-reproductions
 node_modules/.bin/tsx src/scenarios/aksCandidateScenarios.ts --check
 ```
 
@@ -43,6 +45,16 @@ See the [research catalogue guide](../../../docs/aks-scenario-research.md#100-dr
 for generation inputs, commands, K/H/O labels, blocked-version handling, and the
 steps to implement and qualify one case. Do not hand-edit generated plans or mark
 them executable to bypass those gates.
+
+`verify-candidate --scenario aks-c059-v1` executes the first implemented research
+mechanism: valid CoreDNS zone and DNS queries, leading-dot zone failure, corrected
+configuration and recovered queries, then owned-namespace cleanup. It requires an
+explicit kubeconfig/context, new state directory, immutable CoreDNS/probe images,
+and `--accept-cluster-mutations`; it never changes managed cluster DNS or runs a
+model. `cleanup-candidate --state-dir ...` retries ownership-checked cleanup after
+interruption. See [C059's execution guide](../../../docs/aks-scenario-research.md#first-executable-reproduction-c059)
+for commands, permissions, bounds, artifacts, and fidelity limitations. Passing
+offline tests is not an AKS reproduction or qualification result.
 
 ## Provisioned Observability Scenarios
 

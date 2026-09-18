@@ -30,6 +30,11 @@ import {
   verifyLocalObservability,
 } from '../cluster/provisioning/localObservability.js';
 import { loadAksCandidateScenarioPlans } from '../scenarios/aksCandidateScenarios.js';
+import { aksCandidateReproductions } from '../scenarios/aksCandidateReproductions.js';
+import {
+  cleanupAksCandidateReproduction,
+  verifyAksCandidateReproduction,
+} from '../cluster/provisioning/aksCandidateReproduction.js';
 
 type Observation = RootCauseGradingInput['retrievedObservations'][number];
 type ToolName = LiveAksEvidence['tool'];
@@ -344,10 +349,19 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
       'node-vm-size': { type: 'string' },
       'accept-azure-costs': { type: 'boolean' },
       'candidate-module': { type: 'string' },
+      kubeconfig: { type: 'string' },
+      context: { type: 'string' },
+      'accept-cluster-mutations': { type: 'boolean' },
+      'coredns-image': { type: 'string' },
+      'probe-image': { type: 'string' },
     },
   });
   const action = positionals[0] ?? 'list';
   assert.ok(positionals.length <= 1);
+  if (action === 'list-reproductions') {
+    console.log(JSON.stringify(aksCandidateReproductions, null, 2));
+    return;
+  }
   if (action === 'list') {
     console.log(JSON.stringify(observabilityScenarios, null, 2));
     return;
@@ -370,6 +384,7 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
             fidelity: plan.provenance.fidelity,
             lifecycle_state: plan.lifecycle_state,
             execution_eligible: plan.execution.eligible,
+            implementation: plan.execution.implementation,
             qualification: plan.execution.qualification,
           })),
           null,
@@ -381,6 +396,33 @@ export async function observabilityMain(args = process.argv.slice(2)): Promise<v
   }
   assert.ok(values['state-dir'], '--state-dir is required');
   const directory = path.resolve(values['state-dir']);
+  if (action === 'cleanup-candidate') {
+    cleanupAksCandidateReproduction(directory);
+    console.log('Owned research namespace deleted and absence verified.');
+    return;
+  }
+  if (action === 'verify-candidate') {
+    assert.ok(
+      values.scenario && aksCandidateReproductions.some(item => item.id === values.scenario),
+      'No reproduction implementation for this candidate'
+    );
+    assert.ok(
+      values.kubeconfig && values.context && values['coredns-image'] && values['probe-image'],
+      '--kubeconfig, --context, --coredns-image and --probe-image are required'
+    );
+    assert.ok(!values['candidate-module'], 'verify-candidate does not invoke models');
+    const result = await verifyAksCandidateReproduction({
+      scenario: values.scenario,
+      stateDirectory: directory,
+      kubeconfig: values.kubeconfig,
+      context: values.context,
+      acceptClusterMutations: values['accept-cluster-mutations'] === true,
+      corednsImage: values['coredns-image'],
+      probeImage: values['probe-image'],
+    });
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
   if (action === 'cleanup-local') {
     await cleanupLocalObservability(directory);
     console.log('Owned local services deleted.');

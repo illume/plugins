@@ -1,7 +1,7 @@
 {
   "schema_version": "aks-scenario-catalogue@1.0.0",
   "source_register_sha256": "81aeed1b18ee28c04d734aaccc775cae605a369d12f61b52970bfb3f2df872fa",
-  "status": "draft-plans-not-executable",
+  "status": "draft-plans-not-qualified",
   "scenarios": [
     {
       "schema_version": "aks-scenario-plan@1.0.0",
@@ -4711,7 +4711,11 @@
       "lifecycle_state": "draft",
       "execution": {
         "eligible": false,
-        "implementation": "not-implemented",
+        "implementation": "isolated-component-implemented",
+        "reproduction": {
+          "command": "verify-candidate",
+          "scope": "An isolated CoreDNS workload, not the managed cluster DNS service or historical AKS rollout."
+        },
         "qualification": "pending",
         "profile": "aks",
         "results": []
@@ -4778,7 +4782,7 @@
           "Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.",
           "Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.",
           "Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.",
-          "Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario."
+          "Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft."
         ]
       }
     },

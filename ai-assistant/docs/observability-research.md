@@ -54,8 +54,9 @@ All 100 reviewed AKS candidates now have
 [structured draft scenario plans](../evals/scenario-plans/aks-real-incidents.json),
 with distinct candidate tasks, baseline controls, and observation requirements.
 Original fault/recovery designs, fidelity gates, source provenance, and the
-46 K / 42 H / 12 O evidence labels are preserved. Zero are newly reproduced,
-executable, qualified, or observability-only verified. This catalogue is separate
+46 K / 42 H / 12 O evidence labels are preserved. C059 now has an executable
+isolated-component lifecycle; the other 99 remain unimplemented. Zero are newly
+live-reproduced, qualified, or observability-only verified. This catalogue is separate
 from the two implemented AKS observability lifecycles and the locked Phase 2 roster.
 
 The [catalogue guide](aks-scenario-research.md#100-draft-scenario-plans) documents
@@ -64,6 +65,23 @@ the remaining implementation/qualification gates. Catalogue coverage and runner
 isolation are tested across all 100 IDs. No paid inference or provisioning ran for
 this conversion; the next step is to implement and qualify a bounded case, not to
 count research plans as successful executions.
+
+### C059 CoreDNS Reproduction Implementation
+
+The [first executable candidate](aks-scenario-research.md#first-executable-reproduction-c059)
+now has pinned-image, explicit-context Kubernetes setup, baseline DNS queries,
+the source-reported leading-dot zone fault, matching startup-error/restart checks,
+restored configuration and queries, and ownership/UID/endpoint-checked cleanup.
+It uses a fresh namespace and does not touch managed cluster DNS. Private artifacts
+preserve actual observations and separate candidate/evaluator evidence. CLI commands
+are `list-reproductions`, `verify-candidate`, and `cleanup-candidate`.
+
+Nine focused resource/lifecycle checks and the full **408 eval tests**, formatting,
+and typechecks passed offline. No live cluster or paid model was invoked; the
+implementation is not a qualification result or proof of the historical AKS
+rollout. One of 100 component reproductions is implemented, 99 remain pending,
+and all 100 remain excluded from scored portfolios. A live run requires an
+explicitly approved disposable cluster context and reviewed immutable images.
 
 ### Evaluation History
 

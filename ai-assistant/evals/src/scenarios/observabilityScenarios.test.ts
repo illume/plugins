@@ -26,8 +26,313 @@ import {
   loadAksCandidateScenarioPlans,
 } from './aksCandidateScenarios.js';
 import { listScenarioIds } from './loader.js';
+import { corednsCandidateResources } from './aksCandidateReproductions.js';
+import {
+  cleanupAksCandidateReproduction,
+  verifyAksCandidateReproduction,
+} from '../cluster/provisioning/aksCandidateReproduction.js';
 
-test('all 100 researched candidates have current non-executable scenario plans', () => {
+function fakeCoreDns(failure?: 'baseline' | 'unrelated-fault' | 'recovery' | 'cleanup' | 'owner') {
+  let namespace: any;
+  let config: any;
+  let pod: any;
+  let configurationCount = 0;
+  let cleanupStarted = false;
+  const calls: string[][] = [];
+  const runner: CommandRunner = (command, args) => {
+    assert.equal(command, 'kubectl');
+    assert.equal(args[0], '--kubeconfig');
+    assert.equal(args[2], '--context');
+    assert.equal(args[3], 'research-only');
+    assert.equal(args[4], '--request-timeout=10s');
+    const operation = args.slice(5);
+    const scoped = operation[0] === '--namespace' ? operation.slice(2) : operation;
+    if (operation[0] === '--namespace') assert.equal(operation[1], namespace.metadata.name);
+    calls.push(scoped);
+    const result = (value: unknown = '', status = 0) => ({
+      status,
+      stdout: typeof value === 'string' ? value : JSON.stringify(value),
+      stderr: '',
+    });
+    if (scoped[0] === 'config') {
+      if (configurationCount >= 3) cleanupStarted = true;
+      return result('https://127.0.0.1:6443');
+    }
+    if (scoped[0] === 'auth') return result('yes');
+    if (['create', 'replace'].includes(scoped[0]!)) {
+      const resource = JSON.parse(readFileSync(scoped[2]!, 'utf8'));
+      if (resource.kind === 'Namespace')
+        namespace = { ...resource, metadata: { ...resource.metadata, uid: 'owned-uid' } };
+      if (resource.kind === 'ConfigMap') {
+        config = resource;
+        configurationCount++;
+      }
+      if (resource.kind === 'Pod' && resource.metadata.name === 'dns') pod = resource;
+      return result();
+    }
+    if (scoped[0] === 'get' && scoped[1] === 'namespace') {
+      if (failure === 'owner' && cleanupStarted && namespace)
+        return result({ ...namespace, metadata: { ...namespace.metadata, labels: {} } });
+      return result(namespace ?? '');
+    }
+    if (scoped[0] === 'delete' && scoped[1] === 'namespace') {
+      if (failure === 'cleanup') return result('', 1);
+      namespace = undefined;
+      return result();
+    }
+    if (scoped[0] === 'delete' && scoped[1] === 'pod') return result();
+    if (scoped[0] === 'get' && scoped[1] === 'service')
+      return result({ spec: { clusterIP: '10.96.0.10' } });
+    if (scoped[0] === 'get' && scoped[1] === 'configmap') return result(config);
+    if (scoped[0] === 'get' && scoped[1] === 'pod') {
+      const fault = config?.data.Corefile.startsWith('.');
+      const ready =
+        scoped[2] === 'probe' ||
+        (!fault &&
+          !(failure === 'baseline' && configurationCount === 1) &&
+          !(failure === 'recovery' && configurationCount === 3));
+      return result({
+        ...pod,
+        status: {
+          conditions: [{ type: 'Ready', status: ready ? 'True' : 'False' }],
+          containerStatuses: [{ name: 'coredns', restartCount: fault ? 1 : 0 }],
+        },
+      });
+    }
+    if (scoped[0] === 'logs')
+      return result(
+        failure === 'unrelated-fault'
+          ? 'unrelated plugin failure'
+          : 'zone is not a valid domain name: .example.test'
+      );
+    if (scoped[0] === 'exec') return result('Name: answer.example.test\nAddress: 192.0.2.10');
+    throw new Error(`Unexpected kubectl operation ${scoped[0]}`);
+  };
+  return { runner, calls };
+}
+
+test('CoreDNS candidate verifies real-read lifecycle boundaries and retains private evidence', async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'aks-c059-'));
+  const stateDirectory = path.join(directory, 'trial');
+  const fake = fakeCoreDns();
+  try {
+    const result = await verifyAksCandidateReproduction({
+      scenario: 'aks-c059-v1',
+      stateDirectory,
+      kubeconfig: path.join(directory, 'kubeconfig'),
+      context: 'research-only',
+      acceptClusterMutations: true,
+      corednsImage: `coredns@sha256:${'a'.repeat(64)}`,
+      probeImage: `busybox@sha256:${'b'.repeat(64)}`,
+      runner: fake.runner,
+      wait: async () => {},
+    });
+    assert.deepEqual(result.phases, {
+      baseline: 'passed',
+      fault: 'passed',
+      recovery: 'passed',
+      cleanup: 'passed',
+    });
+    assert.equal(result.qualification, 'pending');
+    assert.equal(result.modelInvocations, 0);
+    assert.equal(fake.calls.filter(args => args[0] === 'exec').length, 6);
+    assert.equal(fake.calls.filter(args => args[0] === 'delete' && args[1] === 'pod').length, 2);
+    const candidate = JSON.parse(
+      readFileSync(path.join(stateDirectory, 'candidate-evidence.json'), 'utf8')
+    );
+    assert.ok(!('required' in candidate));
+    assert.equal(candidate.observations.pod.status.containerStatuses[0].restartCount, 1);
+    const evaluator = JSON.parse(
+      readFileSync(path.join(stateDirectory, 'evaluator-evidence.json'), 'utf8')
+    );
+    assert.equal(evaluator.required[0].field_path, '/data/Corefile');
+    assert.equal(statSync(stateDirectory).mode & 0o777, 0o700);
+    assert.equal(
+      statSync(path.join(stateDirectory, 'reproduction-state.json')).mode & 0o777,
+      0o600
+    );
+    cleanupAksCandidateReproduction(stateDirectory, fake.runner);
+    assert.equal(
+      fake.calls.filter(args => args[0] === 'delete' && args[1] === 'namespace').length,
+      1
+    );
+    const callsBeforeReuse = fake.calls.length;
+    await assert.rejects(
+      verifyAksCandidateReproduction({
+        scenario: 'aks-c059-v1',
+        stateDirectory,
+        kubeconfig: path.join(directory, 'kubeconfig'),
+        context: 'research-only',
+        acceptClusterMutations: true,
+        corednsImage: `coredns@sha256:${'a'.repeat(64)}`,
+        probeImage: `busybox@sha256:${'b'.repeat(64)}`,
+        runner: fake.runner,
+      }),
+      /EEXIST/
+    );
+    assert.ok(
+      fake.calls.slice(callsBeforeReuse).every(args => ['config', 'auth'].includes(args[0]!))
+    );
+    await assert.rejects(
+      verifyAksCandidateReproduction({
+        scenario: 'aks-c059-v1',
+        stateDirectory,
+        kubeconfig: path.join(directory, 'kubeconfig'),
+        context: 'research-only',
+        acceptClusterMutations: false,
+        corednsImage: `coredns@sha256:${'a'.repeat(64)}`,
+        probeImage: `busybox@sha256:${'b'.repeat(64)}`,
+        runner: () => {
+          throw new Error('Must not invoke kubectl');
+        },
+      }),
+      /acknowledgement/
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+for (const changed of ['server', 'uid'] as const) {
+  test(`CoreDNS candidate cleanup refuses changed ${changed}`, () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'aks-c059-cleanup-'));
+    const owner = '11111111-2222-4333-8444-555555555555';
+    const state = {
+      schema_version: 'aks-component-reproduction@1.0.0',
+      scenario: 'aks-c059-v1',
+      owner,
+      namespace: `hl-aks-c059-${owner}`,
+      namespaceUid: 'original',
+      kubeconfig: '/explicit/kubeconfig',
+      context: 'research-only',
+      server: 'https://127.0.0.1:6443',
+      phases: { cleanup: 'not-run' },
+    };
+    const calls: string[][] = [];
+    const runner: CommandRunner = (_, args) => {
+      calls.push(args);
+      if (args.includes('config'))
+        return {
+          status: 0,
+          stdout: changed === 'server' ? 'https://127.0.0.1:7443' : state.server,
+          stderr: '',
+        };
+      if (args.includes('get'))
+        return {
+          status: 0,
+          stdout: JSON.stringify({
+            metadata: { uid: 'replacement', labels: { 'headlamp-research-owner': owner } },
+          }),
+          stderr: '',
+        };
+      throw new Error('Deletion must not be attempted');
+    };
+    try {
+      writeFileSync(path.join(directory, 'reproduction-state.json'), JSON.stringify(state));
+      assert.throws(
+        () => cleanupAksCandidateReproduction(directory, runner),
+        changed === 'server' ? /different cluster/ : /UID changed/
+      );
+      assert.ok(calls.every(args => !args.includes('delete')));
+      assert.equal(
+        JSON.parse(readFileSync(path.join(directory, 'reproduction-state.json'), 'utf8')).phases
+          .cleanup,
+        'failed'
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const failure of ['baseline', 'unrelated-fault', 'recovery', 'cleanup', 'owner'] as const) {
+  test(`CoreDNS candidate retains ${failure} failure and does not claim lifecycle success`, async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'aks-c059-failure-'));
+    const stateDirectory = path.join(directory, 'trial');
+    const fake = fakeCoreDns(failure);
+    try {
+      await assert.rejects(
+        verifyAksCandidateReproduction({
+          scenario: 'aks-c059-v1',
+          stateDirectory,
+          kubeconfig: path.join(directory, 'kubeconfig'),
+          context: 'research-only',
+          acceptClusterMutations: true,
+          corednsImage: `coredns@sha256:${'a'.repeat(64)}`,
+          probeImage: `busybox@sha256:${'b'.repeat(64)}`,
+          runner: fake.runner,
+          wait: async () => {},
+        })
+      );
+      const state = JSON.parse(
+        readFileSync(path.join(stateDirectory, 'reproduction-state.json'), 'utf8')
+      );
+      assert.equal(
+        state.phases[
+          failure === 'unrelated-fault'
+            ? 'fault'
+            : ['cleanup', 'owner'].includes(failure)
+            ? 'cleanup'
+            : failure
+        ],
+        'failed'
+      );
+      if (failure === 'owner')
+        assert.equal(
+          fake.calls.filter(args => args[0] === 'delete' && args[1] === 'namespace').length,
+          0
+        );
+      if (failure === 'baseline') {
+        assert.equal(state.phases.fault, 'not-run');
+        assert.equal(state.phases.recovery, 'not-run');
+      }
+      if (failure === 'unrelated-fault') assert.equal(state.phases.recovery, 'not-run');
+      if (!['cleanup', 'owner'].includes(failure)) assert.equal(state.phases.cleanup, 'passed');
+      state.namespace = 'kube-system';
+      writeFileSync(path.join(stateDirectory, 'reproduction-state.json'), JSON.stringify(state));
+      assert.throws(() =>
+        cleanupAksCandidateReproduction(stateDirectory, () => {
+          throw new Error('Must not invoke kubectl');
+        })
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+test('CoreDNS candidate manifests isolate baseline fault and recovery without changing cluster DNS', () => {
+  const owner = '11111111-2222-4333-8444-555555555555';
+  const options = {
+    owner,
+    namespace: `hl-aks-c059-${owner}`,
+    corednsImage: `coredns/coredns@sha256:${'a'.repeat(64)}`,
+    probeImage: `busybox@sha256:${'b'.repeat(64)}`,
+  };
+  const baseline = corednsCandidateResources({ ...options, phase: 'baseline' });
+  const fault = corednsCandidateResources({ ...options, phase: 'fault' });
+  const recovery = corednsCandidateResources({ ...options, phase: 'recovery' });
+  assert.equal(fault.config.data.Corefile, `.${baseline.config.data.Corefile}`);
+  assert.equal(recovery.config.data.Corefile, baseline.config.data.Corefile);
+  for (const resources of [baseline, fault, recovery]) {
+    for (const resource of Object.values(resources)) {
+      assert.equal(resource.metadata.namespace, options.namespace);
+      assert.equal(resource.metadata.labels['headlamp-research-owner'], owner);
+    }
+    assert.equal(resources.pod.spec.automountServiceAccountToken, false);
+    assert.equal(resources.service.spec.selector.app, resources.pod.metadata.name);
+    assert.ok(!JSON.stringify(resources).includes('kube-system'));
+  }
+  assert.throws(() =>
+    corednsCandidateResources({ ...options, namespace: 'kube-system', phase: 'fault' })
+  );
+  assert.throws(
+    () => corednsCandidateResources({ ...options, corednsImage: 'coredns:latest', phase: 'fault' }),
+    /immutable/
+  );
+});
+
+test('all 100 researched candidates track implementation separately from scored eligibility', () => {
   const plans = loadAksCandidateScenarioPlans();
   const register = JSON.parse(
     readFileSync(new URL('../../../docs/aks-candidate-register.json', import.meta.url), 'utf8')
@@ -50,7 +355,10 @@ test('all 100 researched candidates have current non-executable scenario plans',
     assert.equal(plan.scenario_id, `${candidate.id.toLowerCase()}-v1`);
     assert.equal(plan.lifecycle_state, 'draft');
     assert.equal(plan.execution.eligible, false);
-    assert.equal(plan.execution.implementation, 'not-implemented');
+    assert.equal(
+      plan.execution.implementation,
+      candidate.id === 'AKS-C059' ? 'isolated-component-implemented' : 'not-implemented'
+    );
     assert.equal(plan.execution.qualification, 'pending');
     assert.deepEqual(plan.execution.results, []);
     assert.equal(plan.provenance.source_url, candidate.source);
@@ -106,6 +414,19 @@ test('draft discovery is offline and does not admit drafts to the execution runn
   await observabilityMain(['list']);
   const implemented = output.pop() as Array<{ id: string }>;
   assert.ok(implemented.every(plan => !listing.some(draft => draft.scenario_id === plan.id)));
+  await observabilityMain(['list-reproductions']);
+  assert.deepEqual(
+    (output.pop() as Array<{ id: string }>).map(item => item.id),
+    ['aks-c059-v1']
+  );
+  await assert.rejects(
+    observabilityMain(['verify-candidate', '--scenario', 'aks-c001-v1', '--state-dir', '/unused']),
+    /No reproduction implementation/
+  );
+  await assert.rejects(
+    observabilityMain(['verify-candidate', '--scenario', 'aks-c059-v1', '--state-dir', '/unused']),
+    /--kubeconfig/
+  );
 });
 
 test('research scenario plans preserve provenance and separate tasks from evaluator truth', () => {

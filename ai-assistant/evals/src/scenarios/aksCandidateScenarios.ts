@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertValid } from '../contracts/validate.js';
+import { aksCandidateReproductions } from './aksCandidateReproductions.js';
 
 export interface AksScenarioDesign {
   candidateId: string;
@@ -143,6 +144,7 @@ export function buildAksCandidateScenarioPlans(registerValue: unknown, designsVa
   return register.candidates.map(candidate => {
     const design = byId.get(candidate.id);
     assert.ok(design, `Missing scenario design for ${candidate.id}`);
+    const reproduction = aksCandidateReproductions.find(item => item.candidateId === candidate.id);
     assert.match(candidate.source, /^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\d+$/);
     return {
       schema_version: 'aks-scenario-plan@1.0.0' as const,
@@ -154,7 +156,10 @@ export function buildAksCandidateScenarioPlans(registerValue: unknown, designsVa
       lifecycle_state: 'draft' as const,
       execution: {
         eligible: false as const,
-        implementation: 'not-implemented' as const,
+        implementation: reproduction ? 'isolated-component-implemented' : 'not-implemented',
+        ...(reproduction
+          ? { reproduction: { command: 'verify-candidate', scope: reproduction.scope } }
+          : {}),
         qualification: 'pending' as const,
         profile: 'aks',
         results: [],
@@ -223,7 +228,9 @@ export function buildAksCandidateScenarioPlans(registerValue: unknown, designsVa
           'Demonstrate baseline, fault, recovery and cleanup with real resources; record blocked or non-reproduced outcomes without substitution.',
           'Validate a symptom-only candidate packet, exact evaluator facts, no answer leakage, and healthy/insufficient controls.',
           'Approve explicit resource/time/cost budgets and a fixed evaluation plan before any paid run.',
-          'Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario.',
+          reproduction
+            ? 'Only then admit runnable scenario packets to scored evaluation; a component reproduction alone does not qualify this draft.'
+            : 'Only then create runnable scenario packets and qualify admission; this draft is not an executable scenario.',
         ],
       },
     };
@@ -254,7 +261,7 @@ export function generateAksCandidateScenarioCatalogue() {
   return {
     schema_version: 'aks-scenario-catalogue@1.0.0',
     source_register_sha256: createHash('sha256').update(registerBytes).digest('hex'),
-    status: 'draft-plans-not-executable',
+    status: 'draft-plans-not-qualified',
     scenarios,
   };
 }
@@ -280,5 +287,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       `${JSON.stringify(generateAksCandidateScenarioCatalogue(), null, 2)}\n`
     );
   } else loadAksCandidateScenarioPlans();
-  console.log('100 AKS draft scenario plans validated; none are executable or qualified.');
+  console.log(
+    `100 AKS draft scenario plans validated; ${aksCandidateReproductions.length} component reproduction implemented; none qualified for scored runs.`
+  );
 }

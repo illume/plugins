@@ -48,6 +48,28 @@ and opt-outs; OBS-8 below defines consumer rollout gates.
 
 ## Completed Work And Results
 
+### Additional Performance And Energy Research
+
+The [150-candidate expansion](aks-candidate-expansion.md) adds C101-C250 without
+changing the original 100-plan catalogue or any executable scenario. Twenty bounded
+searches yielded 534 unique additional issue bodies; 199 received tracked
+excerpt/section review, with 150 proposed designs and 49 explicit non-admissions.
+The [register](aks-candidate-expansion.json) records source hashes, scope,
+limitations, experiment controls, oracles and proposed evidence.
+
+There are 99 AKS-context reports and 51 upstream transfer candidates, not 150
+verified AKS customer incidents. Overlapping coverage includes 95 performance
+designs, 30 energy designs and 54 efficiency proxies. Gadget has 65 proposed
+diagnostic uses, 17 observer-reliability cases and nine energy-context proposals;
+it is not an energy meter. Evidence labels are provisional: 7 K / 77 H / 66 O.
+
+Research-data consistency checks passed; no scenario verification, cloud resources,
+model calls or energy measurements were performed. All 150 are not run and
+ineligible, including 39 conditional-trigger and five evidence-gap designs.
+Next gates are full-thread/fix review, managed-AKS portability, source prerequisites,
+bounded triggers and independent controls. Implementation/reproduction requires a
+separate decision; the prior full-AKS authoring remains unverified as requested.
+
 ### Public-Report Scenario Plans
 
 All 100 reviewed AKS candidates now have

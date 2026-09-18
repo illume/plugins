@@ -9,6 +9,22 @@ An incident report, proposed script, or model answer is not a verified reproduct
 No newly discovered case below has been provisioned, reproduced, or model-evaluated
 by this research. Existing live runs are recorded separately.
 
+## Additional 150-Candidate Research
+
+The 2026-09-18 [expansion guide](aks-candidate-expansion.md) and
+[structured expansion register](aks-candidate-expansion.json) add C101-C250:
+99 reports with AKS context and 51 upstream transfer candidates, including
+95 performance-related and 30 energy-related designs. Public operator reports,
+engineering observations and relayed incidents are distinguished; these are not
+150 independently confirmed customer outages or current AKS defects.
+
+The provisional evidence split is 7 K / 77 H / 66 O. All 150 remain research-only,
+not run, not qualified and not execution-eligible. Thirty-nine have conditional
+triggers and five are evidence-gap adaptations. Source hashes, review limitations,
+49 non-admissions, tool prerequisites and energy measurement-versus-proxy boundaries
+are recorded separately. The original 100 register and generated plans stay frozen;
+the expansion does not enter draft discovery, scenario loaders or scored results.
+
 ## 100-Candidate Review
 
 The [structured register](aks-candidate-register.json) now contains **100 distinct

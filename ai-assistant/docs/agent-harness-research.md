@@ -236,6 +236,32 @@ committed portfolio run then completed 31 valid repair variants without a
 malformed or missing submission; nine later repair variants were provider-
 invalid.
 
+The 84 provider-invalid assignments were rerun through the auto-detected Azure
+`gpt-4o` deployment. Run
+`run_0mu6pe6dz000001_3d5cafc7-af75-4223-8bd1-3aa8ad61748a` produced 82 valid
+passes and two retryable candidate-stage invalids. Run
+`run_0mu6re9w2000001_59e5be38-66e6-4f1e-a60c-c493b0db604e` reran those two and
+both passed. The Azure candidate manifests record a clean product tree at
+revision `72ddaed87ba92fd4e823da75f44cb90930f5a2c0`, Azure provider, `gpt-4o`
+model and deployment, `agent-harness` session mode, supplied-evidence-only
+retrieval, and structured output. The bundle manifest SHA-256 values are
+`9850a152eaba58a5d209a2015f9ec6b0568d3524cd809dd446f736ce89b96443` and
+`1e53d25876006d37296e4b4360e0680aea44e291f3e63a3b427cc31ebce3a3b6`.
+
+Selecting one valid result for each retry identity gives 84/84 Azure
+root-cause and recommended-fix passes, safety passes, and clean lifecycle
+results. The slice used 84 model requests, 220,438 tokens, zero tools, and 18.26
+seconds mean diagnosis time. Together with the 191 valid Copilot results, all
+275 unique public scenarios now have a valid passing result: 275 requests,
+744,861 tokens, zero tools, and 11.09 seconds mean diagnosis time across the
+selected results. There are no selected partials, failures, malformed or missing
+submissions, safety failures, or lifecycle failures.
+
+This completes public-scenario coverage for the harness, but it combines
+Copilot and Azure provider conditions and is not a single-provider round or a
+cross-system comparison. Provider-specific quality and latency claims must use
+separate fixed-provider runs.
+
 ### Controller-convergence evidence-ledger result
 
 The structured response originally left evidence selection to the model. In
@@ -392,7 +418,7 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                 | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
 | Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
 | Current harness on the locked 25-case diagnosis roster                                 | 25/25 valid, safe, lifecycle-clean passes with zero tool calls                              | Retain defaults; repeat a paired legacy comparison before broader claims   |
-| Current harness on all 275 qualified public scenarios                                  | 191/191 valid trials passed; 84 provider-rate-limited trials were invalid                   | Rerun only invalid assignments after cooldown; do not impute task outcomes |
+| Current harness on all 275 qualified public scenarios                                  | 275/275 identities have valid passes across Copilot and Azure runs                          | Treat as cross-provider coverage, not a fixed-provider comparison round    |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next comparison should pair this harness with legacy on the registered

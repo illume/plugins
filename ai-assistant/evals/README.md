@@ -331,9 +331,10 @@ selected for a run.
 `--candidate` accepts `reference`, `partial`, `wrong`, `abstaining`,
 `overconfident`, `unsupported-evidence`, `unsafe-effective`, `injected`,
 `malformed`, or `unavailable` (machine-authored controls that prove the
-harness/grader and orthogonal safety gates are valid), or
-`headlamp-cli` (the real product boundary, invoked as a subprocess of
-`packages/ai-cli/src/cli.ts` through `tsx`). By default `headlamp-cli` runs
+harness/grader and orthogonal safety gates are valid), `headlamp-cli` (the
+standalone product boundary), or `headlamp-plugin` (the production browser
+plugin loaded by a separately running Headlamp server). By default
+`headlamp-cli` runs
 fully offline via `HEADLAMP_AI_MOCK_ALL=1` (the CLI's own deterministic
 `mock-testing-model`); pointing it at a real provider or cluster is opt-in
 and never happens by default.
@@ -372,6 +373,38 @@ export HEADLAMP_AI_API_KEY='<token>'
 export HEADLAMP_AI_MODEL='<model>'
 npm run eval:local:kwok -- --execute real --candidate headlamp-cli
 ```
+
+## Browser plugin candidate
+
+`headlamp-plugin` evaluates the production plugin bundle in a fresh headless
+Chromium process and browser context for every trial. Start Headlamp with the
+plugin revision being evaluated, then pass its URL. The plugin evaluation
+bridge is installed only on page loads carrying `?headlamp-ai-eval=1`; it uses
+`AgentHarnessSession` with no cluster tools and returns provider-structured
+output plus sanitized telemetry. Candidate-visible observations are supplied
+by the evaluator, so protected evaluator truth and workstation plugin settings
+never enter the browser context.
+
+```sh
+export HEADLAMP_AI_PROVIDER=copilot
+export HEADLAMP_AI_API_KEY='<token>'
+export HEADLAMP_AI_MODEL='gpt-5.4'
+# Set only when the Headlamp server requires token login.
+export HEADLAMP_TOKEN='<headlamp-token>'
+
+npm run eval:local:kwok -- \
+  --execute real \
+  --candidate headlamp-plugin \
+  --headlamp-url http://127.0.0.1:4466 \
+  --case core-service-selector-fault-v1
+```
+
+The normal `--provider`, `--api-key`, `--model`, `--endpoint`, and
+`--deployment-name` flags are also accepted. Prefer environment variables so
+credentials do not enter shell history. Provider credentials are passed only
+to the ephemeral browser invocation and are not written to local storage,
+candidate identity, or run artifacts. The browser candidate currently supports
+diagnosis contracts only; repair scenarios fail admission before cluster setup.
 
 For Azure OpenAI:
 

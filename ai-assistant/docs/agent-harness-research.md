@@ -1,15 +1,14 @@
 # Agent harness research
 
-Status date: 2026-09-18. This document describes the implementation in this PR,
+Status date: 2026-09-19. This document describes the implementation in this PR,
 which is stacked on the Phase 2 evaluation infrastructure in PR #30.
 
 ## Current decision
 
-Use `AgentHarnessSession` as the default **headless CLI** session and retain
-`--legacy-session` as the controlled fallback and comparison baseline. Keep the
-plugin UI on `LangChainAssistantSession` until matched harness-versus-legacy
-quality runs pass the gates below and the stream/approval experience has direct
-browser coverage.
+Use `AgentHarnessSession` as the default headless CLI and browser plugin session,
+and retain `--legacy-session` as the controlled CLI fallback and comparison
+baseline. Proactive plugin diagnosis uses keyed packed groups of at most 32
+events with isolated harness fallback.
 
 Promote improvements when an isolated experiment shows equal or better task
 quality without a safety or lifecycle regression. Features that have already
@@ -26,7 +25,7 @@ default.
 
 | Capability                                                               | Status                                                                | Default                                    | Evidence                                                                                       |
 | ------------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| LangGraph-backed `createAgent` loop                                      | Implemented                                                           | CLI: yes; plugin UI: no                    | Deterministic model-tool-model, parallel-call, and limit tests                                 |
+| LangGraph-backed `createAgent` loop                                      | Implemented                                                           | CLI and plugin UI: yes                     | Deterministic model-tool-model, parallel-call, and limit tests                                 |
 | Existing `ToolRuntime` and host-tool adaptation                          | Implemented                                                           | Yes in harness                             | Call IDs, approvals, errors, redaction, deferred output, and aligned-history tests             |
 | Skills, dynamic system prompt, Kubernetes context, and provider behavior | Implemented through the session adapter                               | Yes in harness                             | Compatibility and CLI tests; stacked build passes                                              |
 | Sanitized model/tool/turn telemetry                                      | Implemented after the first smoke exposed its absence                 | Yes in harness                             | Observer regression plus matched run with complete tool/model accounting                       |
@@ -38,7 +37,8 @@ default.
 | Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
 | Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence and hypothesis ledgers, repair, telemetry, and CLI regressions    |
 | Repair-specific structured output                                        | Implemented for registered repairs                                    | Yes in registered repair runs              | Exact target, patch, digest, nested diagnosis, and fail-closed operation tests                 |
-| Plugin UI harness default                                                | Not implemented                                                       | No                                         | Requires quality comparison and browser stream/approval parity                                 |
+| Plugin UI harness default                                                | Implemented                                                           | Yes                                        | Full plugin E2E plus scored browser-plugin candidate run                                       |
+| Browser plugin evaluator candidate                                       | Implemented for diagnosis contracts                                   | Explicit `headlamp-plugin` candidate       | Production bundle, fresh browser context, structured output, telemetry, and canonical bundle   |
 | Typed evidence in the product answer path                                | Not implemented                                                       | No                                         | Evaluation submission validation exists; product integration is untested                       |
 | Checkpointed approval/resume                                             | Not implemented                                                       | No                                         | Research backlog                                                                               |
 | Context editing/summarization, retry/fallback, tool selection            | Not evaluated as isolated harness changes                             | No                                         | Research backlog                                                                               |
@@ -1093,6 +1093,29 @@ was concise prose checked against accepted mechanisms rather than the complete
 structured diagnosis contract. It also shows that fewer provider requests do
 not necessarily reduce completion latency. Keep 32 as a hard experimental cap,
 start user-facing tuning below it, and retain automatic isolated fallback.
+
+##### Browser plugin candidate
+
+The evaluator now has a first-class `headlamp-plugin` diagnosis candidate. Each
+trial opens a fresh headless Chromium process and context against a separately
+running production Headlamp bundle. A query-gated bridge invokes the plugin's
+default `AgentHarnessSession` with no cluster tools, a provider-native compact
+schema, candidate-visible observations, and sanitized telemetry. Credentials
+remain ephemeral and are excluded from plugin storage, candidate identity, and
+run artifacts. Repair contracts fail admission until browser repair approval is
+implemented and separately qualified.
+
+The first real GPT-5.4 trial used `core-service-selector-fault-v1`:
+
+- run: `run_0mu8oldtf000001_42e73fc0-ee4b-4e37-af2e-d24744877ea8`;
+- canonical manifest SHA-256:
+  `24a759b3ba26571b776b292dc6008f1bf849a3b25e103cc9244b5196e8f99203`;
+- valid root-cause and recommended-fix passes, safety pass, and clean lifecycle;
+- one model request, 478 input tokens, 118 output tokens, and zero tool calls;
+- 2.419 seconds total harness time, including 2.403 seconds in the model request.
+
+This proves the browser candidate boundary, structured grading, telemetry, and
+cleanup for one diagnosis. It is not a browser-versus-CLI quality comparison.
 
 Then compare three execution strategies behind the same API:
 

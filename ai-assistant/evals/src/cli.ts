@@ -49,6 +49,7 @@ import { parseProviderDetectionOutput } from './candidates/providerDetection.js'
 import { writeExportProjections } from './exporters/writeExports.js';
 import type { TokenPricingSnapshot } from './candidates/candidateAdapter.js';
 import { validateTokenPricingSnapshot } from './candidates/headlampCli.js';
+import type { HeadlampPluginCandidateOptions } from './candidates/headlampPlugin.js';
 import {
   comparisonRegistrationStatus,
   loadComparisonRegistration,
@@ -271,7 +272,7 @@ function requireCandidateSpec(
 ): CandidateSpec {
   if (typeof value !== 'string' || !isCandidateSpec(value)) {
     throw new Error(
-      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli|headlamp-cli-legacy|holmesgpt|k8sgpt|kubectl-ai`
+      `--${flagName} must be one of reference|wrong|malformed|unavailable|headlamp-cli|headlamp-cli-legacy|headlamp-plugin|holmesgpt|k8sgpt|kubectl-ai`
     );
   }
   return value;
@@ -286,8 +287,16 @@ function requireCandidateSpec(
 async function resolveProviderInvocation(
   flags: Flags,
   autoDetectCopilot: boolean
-): Promise<{ cliArgs: string[]; extraEnv: Record<string, string> }> {
-  const provider = flags.provider ?? (autoDetectCopilot ? 'copilot' : undefined);
+): Promise<{
+  cliArgs: string[];
+  extraEnv: Record<string, string>;
+  providerId?: string;
+  providerConfig?: Record<string, unknown>;
+}> {
+  const provider =
+    flags.provider ??
+    process.env.HEADLAMP_AI_PROVIDER ??
+    (autoDetectCopilot ? 'copilot' : undefined);
   if (provider === undefined) return { cliArgs: [], extraEnv: {} };
   if (typeof provider !== 'string') throw new Error('--provider <id> requires a value');
 
@@ -355,10 +364,17 @@ async function resolveProviderInvocation(
         HEADLAMP_AI_DEPLOYMENT_NAME: String(config.deploymentName),
         HEADLAMP_AI_MODEL: model,
       },
+      providerId: 'azure',
+      providerConfig: {
+        apiKey,
+        endpoint: String(config.endpoint),
+        deploymentName: String(config.deploymentName),
+        model,
+      },
     };
   }
 
-  let apiKey = flags['api-key'];
+  let apiKey = flags['api-key'] ?? process.env.HEADLAMP_AI_API_KEY;
   if (apiKey === undefined && provider === 'copilot') {
     const result = createRealCommandRunner()('gh', ['auth', 'token']);
     if (result.status !== 0 || !result.stdout.trim()) {
@@ -370,7 +386,8 @@ async function resolveProviderInvocation(
     throw new Error(`--api-key <key> is required for provider ${provider}`);
   }
 
-  let model = typeof flags.model === 'string' ? flags.model : undefined;
+  let model =
+    typeof flags.model === 'string' ? flags.model : process.env.HEADLAMP_AI_MODEL || undefined;
   if (provider === 'copilot') {
     const enabledModels = await listCopilotChatModels(apiKey);
     if (model && !enabledModels.includes(model)) {
@@ -389,14 +406,53 @@ async function resolveProviderInvocation(
     ...(model ? { HEADLAMP_AI_MODEL: model } : {}),
   };
   if (provider === 'azure') {
-    if (typeof flags.endpoint !== 'string' || typeof flags['deployment-name'] !== 'string') {
+    const endpoint =
+      typeof flags.endpoint === 'string' ? flags.endpoint : process.env.HEADLAMP_AI_ENDPOINT;
+    const deploymentName =
+      typeof flags['deployment-name'] === 'string'
+        ? flags['deployment-name']
+        : process.env.HEADLAMP_AI_DEPLOYMENT_NAME;
+    if (!endpoint || !deploymentName) {
       throw new Error('--endpoint and --deployment-name are required for provider azure');
     }
-    args.push('--endpoint', flags.endpoint, '--deployment-name', flags['deployment-name']);
-    extraEnv.HEADLAMP_AI_ENDPOINT = flags.endpoint;
-    extraEnv.HEADLAMP_AI_DEPLOYMENT_NAME = flags['deployment-name'];
+    args.push('--endpoint', endpoint, '--deployment-name', deploymentName);
+    extraEnv.HEADLAMP_AI_ENDPOINT = endpoint;
+    extraEnv.HEADLAMP_AI_DEPLOYMENT_NAME = deploymentName;
   }
-  return { cliArgs: args, extraEnv };
+  return {
+    cliArgs: args,
+    extraEnv,
+    providerId: provider,
+    providerConfig: {
+      apiKey,
+      ...(model ? { model } : {}),
+      ...(provider === 'azure'
+        ? {
+            endpoint: extraEnv.HEADLAMP_AI_ENDPOINT,
+            deploymentName: extraEnv.HEADLAMP_AI_DEPLOYMENT_NAME,
+          }
+        : {}),
+    },
+  };
+}
+
+function headlampPluginOptions(
+  flags: Flags,
+  providerInvocation: Awaited<ReturnType<typeof resolveProviderInvocation>>
+): HeadlampPluginCandidateOptions {
+  if (!providerInvocation.providerId || !providerInvocation.providerConfig) {
+    throw new Error('headlamp-plugin requires a resolved provider configuration');
+  }
+  return {
+    url:
+      typeof flags['headlamp-url'] === 'string' ? flags['headlamp-url'] : 'http://127.0.0.1:4466',
+    providerId: providerInvocation.providerId,
+    providerConfig: providerInvocation.providerConfig,
+    ...(process.env.HEADLAMP_TOKEN ? { headlampToken: process.env.HEADLAMP_TOKEN } : {}),
+    ...(flags['headlamp-plugin-timeout-ms'] !== undefined
+      ? { timeoutMs: Number(flags['headlamp-plugin-timeout-ms']) }
+      : {}),
+  };
 }
 
 /**
@@ -418,16 +474,18 @@ async function commandRun(flags: Flags): Promise<void> {
   const contractStoreRoot =
     typeof flags['contracts-dir'] === 'string' ? flags['contracts-dir'] : undefined;
   const runId = generateRunId();
-  const headlampCandidateSelected =
+  const headlampCliSelected =
     candidate === 'headlamp-cli' ||
     candidate === 'headlamp-cli-legacy' ||
     baseline === 'headlamp-cli' ||
     baseline === 'headlamp-cli-legacy';
-  if (headlampCandidateSelected) buildHeadlampCli();
-  const providerInvocation = await resolveProviderInvocation(
-    flags,
-    mode === 'real' && headlampCandidateSelected
-  );
+  const headlampPluginSelected = candidate === 'headlamp-plugin' || baseline === 'headlamp-plugin';
+  const headlampCandidateSelected = headlampCliSelected || headlampPluginSelected;
+  if (headlampCliSelected) buildHeadlampCli();
+  const providerInvocation =
+    headlampCandidateSelected || flags.provider !== undefined
+      ? await resolveProviderInvocation(flags, mode === 'real')
+      : { cliArgs: [], extraEnv: {} };
   const candidateCliArgs = [
     ...providerInvocation.cliArgs,
     ...(flags['full-structured-output'] === true
@@ -455,6 +513,9 @@ async function commandRun(flags: Flags): Promise<void> {
     baseline,
     candidateCliArgs: candidateCliArgs.length > 0 ? candidateCliArgs : undefined,
     candidateExtraEnv: providerInvocation.extraEnv,
+    headlampPluginOptions: headlampPluginSelected
+      ? headlampPluginOptions(flags, providerInvocation)
+      : undefined,
     pricing,
     holmesModel: typeof flags['holmes-model'] === 'string' ? flags['holmes-model'] : undefined,
     k8sGptModel: typeof flags['k8sgpt-model'] === 'string' ? flags['k8sgpt-model'] : undefined,
@@ -591,11 +652,17 @@ async function commandRerun(flags: Flags): Promise<void> {
     isCandidateSpec(source.candidate_id.replace('scripted-', ''))
       ? (source.candidate_id.replace('scripted-', '') as CandidateSpec)
       : 'headlamp-cli';
-  const providerInvocation = await resolveProviderInvocation(
-    flags,
-    source.execution_mode === 'real' &&
-      (candidate === 'headlamp-cli' || candidate === 'headlamp-cli-legacy')
-  );
+  const headlampCandidateSelected =
+    candidate === 'headlamp-cli' ||
+    candidate === 'headlamp-cli-legacy' ||
+    candidate === 'headlamp-plugin';
+  const providerInvocation =
+    headlampCandidateSelected || flags.provider !== undefined
+      ? await resolveProviderInvocation(
+          flags,
+          source.execution_mode === 'real' && headlampCandidateSelected
+        )
+      : { cliArgs: [], extraEnv: {} };
   const candidateCliArgs = [
     ...providerInvocation.cliArgs,
     ...(flags['full-structured-output'] === true
@@ -623,6 +690,10 @@ async function commandRerun(flags: Flags): Promise<void> {
         : Number(flags['kubectl-ai-timeout-ms']),
     candidateCliArgs: candidateCliArgs.length > 0 ? candidateCliArgs : undefined,
     candidateExtraEnv: providerInvocation.extraEnv,
+    headlampPluginOptions:
+      candidate === 'headlamp-plugin'
+        ? headlampPluginOptions(flags, providerInvocation)
+        : undefined,
     pricing: pricingFromFlags(flags),
   });
   console.log(

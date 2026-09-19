@@ -18,7 +18,7 @@ import { sha256OfJson, type JsonValue } from '../canonicalJson.js';
 import type { ActionRequest, CandidatePacket } from '../contracts/evaluationContracts.js';
 
 /** Candidate implementation families supported by the shared trial pipeline. */
-export type CandidateKind = 'scripted' | 'headlamp-cli' | 'reference-system';
+export type CandidateKind = 'scripted' | 'headlamp-cli' | 'headlamp-plugin' | 'reference-system';
 
 export type UsageRateCategory =
   | 'uncached_input_tokens'

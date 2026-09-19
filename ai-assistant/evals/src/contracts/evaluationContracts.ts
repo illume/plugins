@@ -865,7 +865,7 @@ export interface TrialResult {
   /** Candidate implementation identifier. */
   candidate_id: string;
   /** Candidate adapter category. */
-  candidate_kind: 'scripted' | 'headlamp-cli' | 'reference-system';
+  candidate_kind: 'scripted' | 'headlamp-cli' | 'headlamp-plugin' | 'reference-system';
   /** Whether the trial used simulated or real cluster execution. */
   execution_mode: 'dry-run' | 'real';
   /** Cluster profile selected for the trial. */

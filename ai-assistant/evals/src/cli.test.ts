@@ -126,6 +126,28 @@ test('cli run: rejects an incompatible --case on local-kwok with a non-zero exit
   }
 });
 
+test('cli run: browser plugin candidate requires explicit real execution', () => {
+  const dir = makeScratchDir('cli-run-headlamp-plugin-mode');
+  try {
+    const result = runCli([
+      'run',
+      '--profile',
+      'local-kwok',
+      '--candidate',
+      'headlamp-plugin',
+      '--case',
+      'core-service-selector-fault-v1',
+      '--runs-dir',
+      dir,
+    ]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /headlamp-plugin requires --execute real/);
+    assert.deepEqual(readdirSync(dir), []);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
 test('cli run: forwards kubectl-ai configuration and rejects mutable images before setup', () => {
   const dir = makeScratchDir('cli-kubectl-ai');
   try {

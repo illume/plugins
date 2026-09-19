@@ -37,7 +37,7 @@
     "candidate_id": { "type": "string" },
     "candidate_kind": {
       "type": "string",
-      "enum": ["scripted", "headlamp-cli", "reference-system"]
+      "enum": ["scripted", "headlamp-cli", "headlamp-plugin", "reference-system"]
     },
     "execution_mode": { "type": "string", "enum": ["dry-run", "real"] },
     "cluster_profile": { "type": "string" },

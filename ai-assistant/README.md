@@ -16,6 +16,12 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 [Evaluation results](evals/results/README.md) — the Phase 1 local developer evaluation loop's redacted, GitHub-rendered report. See [evals/README.md](evals/README.md) for how to reproduce it and [evals/docs/implementation-phases.md](evals/docs/implementation-phases.md) for the roadmap.
 
+The evaluator includes a `headlamp-plugin` candidate for scoreable diagnosis
+runs through the production browser plugin. It connects to a separately running
+Headlamp server, creates a fresh headless browser context per trial, invokes the
+default `AgentHarnessSession`, and retains only structured output and sanitized
+telemetry. See [the evaluator instructions](evals/README.md#browser-plugin-candidate).
+
 ## Batched event diagnosis
 
 The standalone CLI can discover recent Kubernetes Warning events from the

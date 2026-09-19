@@ -697,21 +697,91 @@ snapshots, or event-loop histograms in production by default.
 
 #### Batching and model-call optimization
 
-Do not use “batching” as one undifferentiated optimization. There are three
+Do not use “batching” as one undifferentiated optimization. There are four
 different mechanisms with different goals and risks:
 
-1. **Runnable batching:** LangChain's `batch()` with `maxConcurrency` schedules
+1. **Product issue batching:** one authenticated request asks the assistant to
+   diagnose several explicit issues from one cluster/incident snapshot. This is
+   a real user workflow and must be a stable API regardless of whether its
+   implementation uses one or many model requests.
+2. **Runnable batching:** LangChain's `batch()` with `maxConcurrency` schedules
    multiple independent model invocations. It is client-side concurrency unless
    a provider integration explicitly documents a native batch implementation.
-2. **Evaluation concurrency:** `runCandidatePass` currently awaits each scenario
+3. **Evaluation concurrency:** `runCandidatePass` currently awaits each scenario
    serially while sharing one cluster adapter and bundle writer. A worker pool
    could reduce total portfolio wall time, but it must preserve namespace,
    artifact, ordering, cleanup, and provider-budget isolation.
-3. **Provider asynchronous batch jobs:** investigate Azure batch support only as
+4. **Provider asynchronous batch jobs:** investigate Azure batch support only as
    an offline evaluation/cost path. It cannot improve interactive user latency,
    may have delayed completion, and must retain per-request identity, usage,
    errors, deployment revision, and cancellation semantics before it is usable
    for scored evidence.
+
+##### Product multi-issue batch API
+
+Make batching a product-owned contract above LangChain rather than exposing a
+provider's batching shape. The initial API should resemble
+`diagnoseBatch(request)` and carry:
+
+- one request ID, tenant/security context, cluster snapshot identity, deadline,
+  and immutable observation catalog;
+- an ordered list of caller-assigned issue IDs, each with a task, allowed
+  evidence IDs, and optional diagnosis or repair contract;
+- request-level limits for maximum issues, total input tokens, total output
+  tokens, concurrency, and provider requests; and
+- ordered per-issue results with `completed`, `invalid`, `failed`, `cancelled`,
+  or `not_started` status, usage, timing, and an independently validated
+  diagnosis or repair result.
+
+Evidence may be stored once in the request catalog, but every issue must declare
+its allowed evidence-ID scope. Validation must reject cross-issue evidence
+references even when the referenced observation exists elsewhere in the same
+batch. Repair authority remains per issue: each proposed action must match that
+issue's evidence digest and allowed target/patch set, and each action requires
+its own approval. A batch diagnosis must never imply batch approval or atomic
+execution of repairs.
+
+Do not implement this by invoking `userSend()` concurrently on one
+`AgentHarnessSession`. The session owns mutable conversation history, context,
+and one current abort controller. Introduce a stateless batch coordinator over
+isolated diagnosis runners instead; preserve `userSend()` as the one-item
+adapter until browser and CLI batch semantics are proven. Support both whole
+batch cancellation and per-issue cancellation, and return completed siblings
+when another issue fails or times out.
+
+The first implementation should execute one independently validated model call
+per issue behind a bounded scheduler. This provides the API and real-world
+workflow without coupling correctness to prompt packing. It also creates one
+place for warm model-client reuse, connection pooling, stable schema/prompt
+prefixes, compiled-validator reuse, token budgeting, backpressure, retries, and
+telemetry. Measure those gains before changing model-call cardinality.
+
+Then compare three execution strategies behind the same API:
+
+1. **Isolated:** one call per issue with adaptive bounded concurrency. This is
+   the correctness baseline and preserves clean partial failures.
+2. **Packed:** one strict response containing an array of keyed issue results
+   for a compatible subset. This can amortize request, cached-prefix, and schema
+   overhead, but increases context/output size and malformed-response blast
+   radius.
+3. **Hybrid:** partition by tenant, provider/deployment, schema version, repair
+   mode, security policy, and token budget; pack only small compatible diagnosis
+   groups and run oversized or repair issues independently.
+
+Packing is promoted only when traces show fixed per-request provider overhead is
+material and paired tests show lower per-issue latency or token cost. The packer
+must use deterministic ordering and stable issue IDs, predict the complete
+request and response token budget, split before provider limits, and bisect a
+failed/malformed group into isolated retries within the original deadline and
+request budget. Record both logical issue count and physical model-call count so
+one-call claims remain auditable.
+
+For a free-form request that mentions several possible problems but does not
+provide explicit issue boundaries, keep issue discovery separate from batch
+execution. Compare deterministic resource/event grouping with one bounded
+decomposition call, then freeze the discovered issue IDs and evidence scopes
+before diagnosis. Never let protected evaluator labels or repair options define
+the partition.
 
 Never batch prompts from different users or tenants into one model request. Do
 not cache/reuse one generated answer across scenario variants in a scored run;
@@ -729,6 +799,7 @@ experiments:
 | M1       | Stable prompt/schema prefix                | Put stable system instructions and the canonical schema before volatile task/evidence fields, keep bytes and ordering stable, and measure provider cache-read accounting.                                 | Reordering can change answer quality; assumed cache hits are not evidence.                                                                                                                        | Observable cache-read tokens or lower provider-stage latency with byte-identical semantic inputs and unchanged outcomes.                    |
 | M1       | Persistent Azure client and HTTP transport | Reuse the model client, connection pool, TLS session, and immutable structured schema within an isolated worker lifetime.                                                                                 | Credential lifetime, stale deployment configuration, and cross-request callbacks/history.                                                                                                         | Stage traces show lower connection/client setup time; no credential or state leakage; no increased invalid rate.                            |
 | M1       | Direct `withStructuredOutput()` A/B        | Compare LangChain's model-level structured runnable with `createAgent` provider strategy using the same full and compact schemas. This isolates agent graph semantics from provider constrained decoding. | API paths may differ in usage telemetry, retries, cancellation, or schema enforcement.                                                                                                            | Contract/telemetry parity plus a latency improvement above measurement noise. Keep the agent path if there is no measured win.              |
+| M1       | Multi-issue packed inference A/B           | Amortize request, cached-prefix, and schema overhead across compatible issue diagnoses behind the product batch API.                                                                                      | One malformed output can affect several issues; larger contexts can slow all results or mix evidence. Compare isolated, packed, and hybrid modes with strict per-issue scopes and fallback.       | Lower per-issue p50/p95 or token cost, unchanged outcomes, zero cross-issue references, and bounded partial-failure recovery.               |
 | M2       | Bounded eval worker pool (`1`, `2`, `4`)   | Reduce wall-clock time for independent evaluation trials.                                                                                                                                                 | Azure throttling, Minikube contention, non-thread-safe bundle writes, cleanup overlap, and biased order. Use independent namespaces, serialized bundle commits, and a fixed token/request budget. | Higher trials/hour with unchanged per-case outcomes and no material p95 increase or provider-invalid growth.                                |
 | M2       | LangChain `batch()` on the direct lane     | Simplify bounded parallel invocation once the direct structured lane exists.                                                                                                                              | `batch()` may merely wrap parallel `invoke()` calls and does not guarantee fewer provider requests.                                                                                               | Confirm request accounting remains one per input, compare with the worker pool, and keep only the simpler/faster implementation.            |
 | M3       | Azure asynchronous batch evaluation        | Potentially lower cost or improve large offline portfolio throughput when immediate results are unnecessary.                                                                                              | Different service tier, queue delay, cancellation, partial completion, result-ordering, and attribution semantics make it non-comparable to online interactive runs.                              | Separate non-interactive qualification; complete per-request manifests and no mixing with online latency claims.                            |

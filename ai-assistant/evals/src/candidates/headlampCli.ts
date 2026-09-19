@@ -169,6 +169,8 @@ interface CliTelemetry {
   toolEventsObserved: boolean;
   tokenUsageObserved: boolean;
   modelInvocations: NonNullable<CandidateInvocationResult['model_invocations']>;
+  stageTimings: NonNullable<CandidateInvocationResult['stage_timings']>;
+  stageTimingsObserved: boolean;
 }
 
 export function parseCliTelemetry(text: string): CliTelemetry {
@@ -184,10 +186,26 @@ export function parseCliTelemetry(text: string): CliTelemetry {
     toolEventsObserved: false,
     tokenUsageObserved: false,
     modelInvocations: [],
+    stageTimings: [],
+    stageTimingsObserved: false,
   };
   let streamValid = true;
+  let streamVersion: string | undefined;
   let sawModelUsage = false;
+  let sawStageTiming = false;
   let turnComplete = false;
+  let sawEvent = false;
+  const stageNames = new Set([
+    'turn_preparation',
+    'tool_adaptation',
+    'agent_construction',
+    'history_preparation',
+    'model_request',
+    'agent_stream_processing',
+    'structured_validation',
+    'structured_repair',
+    'turn_total',
+  ] satisfies Array<NonNullable<CandidateInvocationResult['stage_timings']>[number]['stage']>);
   const optionalTokenFields = [
     'cache_read_input_tokens',
     'cache_creation_input_tokens',
@@ -214,7 +232,10 @@ export function parseCliTelemetry(text: string): CliTelemetry {
       streamValid = false;
       continue;
     }
-    if (
+    if (event.type === 'telemetry_start') {
+      if (sawEvent || streamVersion || event.schema_version !== '1.0.0') streamValid = false;
+      else streamVersion = event.schema_version;
+    } else if (
       event.type === 'model_usage' &&
       typeof event.provider === 'string' &&
       ['total_including_cache', 'uncached_only'].includes(String(event.input_token_semantics)) &&
@@ -324,14 +345,45 @@ export function parseCliTelemetry(text: string): CliTelemetry {
       } else {
         streamValid = false;
       }
+    } else if (event.type === 'stage_timing') {
+      if (
+        streamVersion === '1.0.0' &&
+        typeof event.stage === 'string' &&
+        stageNames.has(
+          event.stage as NonNullable<CandidateInvocationResult['stage_timings']>[number]['stage']
+        ) &&
+        ['success', 'error'].includes(String(event.outcome)) &&
+        isDuration(event.duration_ns) &&
+        (event.time_to_first_token_ns === undefined ||
+          (isDuration(event.time_to_first_token_ns) &&
+            BigInt(event.time_to_first_token_ns) <= BigInt(event.duration_ns)))
+      ) {
+        telemetry.stageTimings.push({
+          stage: event.stage as NonNullable<
+            CandidateInvocationResult['stage_timings']
+          >[number]['stage'],
+          outcome: event.outcome as 'success' | 'error',
+          duration_ns: event.duration_ns,
+          ...(typeof event.time_to_first_token_ns === 'string'
+            ? { time_to_first_token_ns: event.time_to_first_token_ns }
+            : {}),
+        });
+        sawStageTiming = true;
+      } else {
+        streamValid = false;
+      }
     } else if (event.type === 'turn_complete') {
       turnComplete = true;
+    } else if (streamVersion === '1.0.0' && typeof event.type === 'string') {
+      // Preserve known telemetry when a newer producer adds a sanitized event.
     } else {
       streamValid = false;
     }
+    sawEvent = true;
   }
   telemetry.toolEventsObserved = streamValid && turnComplete;
   telemetry.tokenUsageObserved = streamValid && sawModelUsage;
+  telemetry.stageTimingsObserved = streamValid && turnComplete && sawStageTiming;
   return telemetry;
 }
 
@@ -682,7 +734,7 @@ export function createHeadlampCliCandidate(
       const telemetry = parseCliTelemetry(telemetryText);
       const observedTelemetry: Pick<
         CandidateInvocationResult,
-        'tool_events' | 'token_usage' | 'model_invocations'
+        'tool_events' | 'token_usage' | 'model_invocations' | 'stage_timings'
       > = {
         ...(telemetry.toolEventsObserved ? { tool_events: telemetry.toolEvents } : {}),
         ...(telemetry.tokenUsageObserved
@@ -691,6 +743,7 @@ export function createHeadlampCliCandidate(
               model_invocations: telemetry.modelInvocations,
             }
           : {}),
+        ...(telemetry.stageTimingsObserved ? { stage_timings: telemetry.stageTimings } : {}),
       };
       const configuredUsageEstimate =
         telemetry.tokenUsageObserved && options.pricing

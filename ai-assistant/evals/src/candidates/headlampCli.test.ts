@@ -119,6 +119,54 @@ test('parseCliTelemetry aggregates numeric usage and accepts only sanitized tool
   assert.equal(JSON.stringify(telemetry).includes('/must-not-survive'), false);
 });
 
+test('parseCliTelemetry retains versioned stage timings across unknown future events', () => {
+  const telemetry = parseCliTelemetry(
+    [
+      JSON.stringify({ type: 'telemetry_start', schema_version: '1.0.0' }),
+      JSON.stringify({
+        type: 'stage_timing',
+        stage: 'model_request',
+        outcome: 'success',
+        duration_ns: '1000',
+        time_to_first_token_ns: '400',
+      }),
+      JSON.stringify({ type: 'future_sanitized_counter', value: 1 }),
+      JSON.stringify({ type: 'turn_complete' }),
+    ].join('\n')
+  );
+
+  assert.equal(telemetry.stageTimingsObserved, true);
+  assert.deepEqual(telemetry.stageTimings, [
+    {
+      stage: 'model_request',
+      outcome: 'success',
+      duration_ns: '1000',
+      time_to_first_token_ns: '400',
+    },
+  ]);
+  assert.equal(telemetry.toolEventsObserved, true);
+});
+
+test('parseCliTelemetry rejects malformed known stage timings', () => {
+  const telemetry = parseCliTelemetry(
+    [
+      JSON.stringify({ type: 'telemetry_start', schema_version: '1.0.0' }),
+      JSON.stringify({
+        type: 'stage_timing',
+        stage: 'model_request',
+        outcome: 'success',
+        duration_ns: '1000',
+        time_to_first_token_ns: '1001',
+      }),
+      JSON.stringify({ type: 'turn_complete' }),
+    ].join('\n')
+  );
+
+  assert.equal(telemetry.stageTimingsObserved, false);
+  assert.deepEqual(telemetry.stageTimings, []);
+  assert.equal(telemetry.toolEventsObserved, false);
+});
+
 test('parseCliTelemetry keeps a truncated tool stream unobserved', () => {
   const telemetry = parseCliTelemetry(
     JSON.stringify({
@@ -757,6 +805,9 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
       writeFileSync(
         telemetryPath,
         `${JSON.stringify({
+          type: 'telemetry_start',
+          schema_version: '1.0.0',
+        })}\n${JSON.stringify({
           type: 'model_usage',
           provider: 'openai',
           input_token_semantics: 'total_including_cache',
@@ -769,6 +820,12 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
           mutating: false,
           status: 'success',
           duration_ns: '1000',
+        })}\n${JSON.stringify({
+          type: 'stage_timing',
+          stage: 'model_request',
+          outcome: 'success',
+          duration_ns: '2000',
+          time_to_first_token_ns: '500',
         })}\n${JSON.stringify({ type: 'turn_complete' })}\n`,
         { mode: 0o600 }
       );
@@ -830,6 +887,14 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
       mutating: false,
       status: 'success',
       duration_ns: '1000',
+    },
+  ]);
+  assert.deepEqual(result.stage_timings, [
+    {
+      stage: 'model_request',
+      outcome: 'success',
+      duration_ns: '2000',
+      time_to_first_token_ns: '500',
     },
   ]);
   assert.equal(existsSync(telemetryPath), false);

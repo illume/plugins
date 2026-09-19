@@ -348,17 +348,66 @@ describe('AgentHarnessSession', () => {
 
     await session.userSend('List pods');
 
-    expect(telemetry).toEqual([
+    expect(telemetry).toContainEqual(
       expect.objectContaining({
         type: 'tool_call',
         tool_name: 'kubectl',
         mutating: false,
         status: 'success',
-      }),
-      { type: 'turn_complete' },
-    ]);
+      })
+    );
+    expect(
+      telemetry.filter(event => event.type === 'stage_timing').map(event => event.stage)
+    ).toEqual(
+      expect.arrayContaining([
+        'turn_preparation',
+        'tool_adaptation',
+        'agent_construction',
+        'history_preparation',
+        'model_request',
+        'agent_stream_processing',
+        'turn_total',
+      ])
+    );
+    expect(telemetry.at(-1)).toEqual({ type: 'turn_complete' });
     expect(JSON.stringify(telemetry)).not.toContain('get pods');
     expect(JSON.stringify(telemetry)).not.toContain('kubectl output');
+  });
+
+  it('emits error timings for a failed model request and handled turn', async () => {
+    class FailingModel extends FakeToolCallingModel {
+      override bindTools() {
+        return this;
+      }
+
+      override async _generate(): Promise<never> {
+        throw new Error('provider unavailable');
+      }
+    }
+    const telemetry: AssistantTelemetryEvent[] = [];
+    const session = new AgentHarnessSession('mock-testing-model', {}, undefined, {
+      model: new FailingModel({}),
+      toolManager: createMockToolManager(),
+      telemetryObserver: event => telemetry.push(event),
+    });
+
+    await session.userSend('Diagnose this issue');
+
+    expect(telemetry).toContainEqual(
+      expect.objectContaining({
+        type: 'stage_timing',
+        stage: 'model_request',
+        outcome: 'error',
+      })
+    );
+    expect(telemetry).toContainEqual(
+      expect.objectContaining({
+        type: 'stage_timing',
+        stage: 'turn_total',
+        outcome: 'error',
+      })
+    );
+    expect(telemetry.at(-1)).toEqual({ type: 'turn_complete' });
   });
 
   it('repairs one provider-validated structured response without tools', async () => {

@@ -30,7 +30,7 @@ import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResp
 import type { ToolExecutionResult } from '../tools/ToolRuntime';
 import type { LangChainToolRuntime } from './langchain/LangChainToolBinding';
 import LangChainAssistantSession from './LangChainAssistantSession';
-import type { AssistantTelemetryObserver } from './telemetry';
+import type { AssistantTelemetryObserver, AssistantTelemetryStage } from './telemetry';
 
 /** Options accepted by the createAgent-backed assistant session. */
 export interface AgentHarnessSessionOptions {
@@ -59,6 +59,7 @@ export interface AgentHarnessSessionOptions {
 export default class AgentHarnessSession extends LangChainAssistantSession {
   private readonly responseFormat?: ResponseFormat;
   private readonly validateStructuredResponse?: AgentHarnessSessionOptions['validateStructuredResponse'];
+  private readonly stageTelemetryEnabled: boolean;
 
   constructor(
     providerId: string,
@@ -69,10 +70,13 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     super(providerId, config, enabledTools, options);
     this.responseFormat = options?.responseFormat;
     this.validateStructuredResponse = options?.validateStructuredResponse;
+    this.stageTelemetryEnabled = options?.telemetryObserver !== undefined;
   }
 
   /** Runs one complete createAgent model/tool loop. */
   override async userSend(message: string): Promise<ConversationMessage> {
+    const turnStartedAt = performance.now();
+    const preparationStartedAt = performance.now();
     await inlineToolApprovalManager.loadAndApplyAutoApproveSettings();
 
     const userPrompt: ConversationMessage = { role: 'user', content: message };
@@ -85,48 +89,109 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     let latestMessages: BaseMessage[] = [];
     let structuredResponse: Record<string, unknown> | undefined;
     let structuredRepairAttempted = false;
+    const completeTurn = (
+      response: ConversationMessage,
+      outcome: 'success' | 'error' = 'success'
+    ) => {
+      this.recordStageTiming('turn_total', turnStartedAt, outcome);
+      this.recordTelemetry({ type: 'turn_complete' });
+      return response;
+    };
 
     try {
-      await this.toolManager.waitForMCPToolsInitialization();
-      this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
+      let systemPrompt: string;
+      try {
+        await this.toolManager.waitForMCPToolsInitialization();
+        this.currentSkillsPromptText = await this.getSkillsPromptForQuery(message);
+        systemPrompt = this.createSystemPrompt();
+        this.recordStageTiming('turn_preparation', preparationStartedAt, 'success');
+      } catch (error) {
+        this.recordStageTiming('turn_preparation', preparationStartedAt, 'error');
+        throw error;
+      }
 
-      const toolAdapter = new AgentToolAdapter(this.toolManager, {
-        approvalContext: this,
-        extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
-        clearToolConfirmation: () => this.clearToolConfirmation(),
-        onRuntimeResult: (toolCallId, result, context) => {
-          runtimeResults.set(toolCallId, result);
-          this.recordTelemetry({
-            type: 'tool_call',
-            tool_name: context.toolName,
-            mutating: this.isMutatingToolCall(context.toolName, context.args),
-            status: context.status,
-            duration_ns: context.durationNs,
-          });
-        },
-        signal: abortController.signal,
-      });
-      const adaptedTools = toolAdapter.createTools();
-      const agent = await createAgentHarness({
-        model: this.model,
-        toolRuntime: {
-          waitForMCPToolsInitialization: async () => undefined,
-          getLangChainTools: () => adaptedTools,
-        },
-        systemPrompt: this.createSystemPrompt(),
-        middleware: [toolAdapter.getHaltMiddleware()],
-        responseFormat: this.responseFormat,
-      });
-      inputMessages = this.prepareChatHistory();
-      historyLengthBeforeRun = this.history.length;
-      const stream = await agent.stream(
-        { messages: inputMessages },
-        { signal: abortController.signal, streamMode: 'values' }
-      );
-      for await (const state of stream) {
-        latestMessages = state.messages as BaseMessage[];
-        structuredResponse = (state as { structuredResponse?: Record<string, unknown> })
-          .structuredResponse;
+      const toolAdaptationStartedAt = performance.now();
+      let toolAdapter: AgentToolAdapter;
+      let adaptedTools: StructuredToolInterface[];
+      try {
+        toolAdapter = new AgentToolAdapter(this.toolManager, {
+          approvalContext: this,
+          extraTools: Array.from(this.extraTools.values()) as StructuredToolInterface[],
+          clearToolConfirmation: () => this.clearToolConfirmation(),
+          onRuntimeResult: (toolCallId, result, context) => {
+            runtimeResults.set(toolCallId, result);
+            this.recordTelemetry({
+              type: 'tool_call',
+              tool_name: context.toolName,
+              mutating: this.isMutatingToolCall(context.toolName, context.args),
+              status: context.status,
+              duration_ns: context.durationNs,
+            });
+          },
+          signal: abortController.signal,
+        });
+        adaptedTools = toolAdapter.createTools();
+        this.recordStageTiming('tool_adaptation', toolAdaptationStartedAt, 'success');
+      } catch (error) {
+        this.recordStageTiming('tool_adaptation', toolAdaptationStartedAt, 'error');
+        throw error;
+      }
+      const agentConstructionStartedAt = performance.now();
+      let agent: Awaited<ReturnType<typeof createAgentHarness>>;
+      try {
+        agent = await createAgentHarness({
+          model: this.model,
+          toolRuntime: {
+            waitForMCPToolsInitialization: async () => undefined,
+            getLangChainTools: () => adaptedTools,
+          },
+          systemPrompt,
+          middleware: [toolAdapter.getHaltMiddleware()],
+          responseFormat: this.responseFormat,
+        });
+        this.recordStageTiming('agent_construction', agentConstructionStartedAt, 'success');
+      } catch (error) {
+        this.recordStageTiming('agent_construction', agentConstructionStartedAt, 'error');
+        throw error;
+      }
+      const historyPreparationStartedAt = performance.now();
+      try {
+        inputMessages = this.prepareChatHistory();
+        historyLengthBeforeRun = this.history.length;
+        this.recordStageTiming('history_preparation', historyPreparationStartedAt, 'success');
+      } catch (error) {
+        this.recordStageTiming('history_preparation', historyPreparationStartedAt, 'error');
+        throw error;
+      }
+      const modelTiming = this.stageTelemetryEnabled
+        ? this.createModelTimingCallbacks()
+        : undefined;
+      const streamStartedAt = performance.now();
+      let streamOutcome: 'success' | 'error' = 'success';
+      try {
+        const stream = await agent.stream(
+          { messages: inputMessages },
+          {
+            signal: abortController.signal,
+            streamMode: 'values',
+            ...(modelTiming ? { callbacks: [modelTiming.callbacks] } : {}),
+          }
+        );
+        for await (const state of stream) {
+          latestMessages = state.messages as BaseMessage[];
+          structuredResponse = (state as { structuredResponse?: Record<string, unknown> })
+            .structuredResponse;
+        }
+      } catch (error) {
+        streamOutcome = 'error';
+        throw error;
+      } finally {
+        const streamDurationMs = performance.now() - streamStartedAt;
+        this.recordStageDuration(
+          'agent_stream_processing',
+          Math.max(0, streamDurationMs - (modelTiming?.totalDurationMs() ?? 0)),
+          streamOutcome
+        );
       }
       for (const generatedMessage of this.getGeneratedMessages(latestMessages, inputMessages)) {
         if (AIMessage.isInstance(generatedMessage)) this.recordModelUsage(generatedMessage);
@@ -136,7 +201,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       const deferredResult = this.getDeferredResultsContent(runtimeResults);
       if (deferredResult) {
         this.currentAbortController = null;
-        return this.completeTurn({ role: 'assistant', content: deferredResult });
+        return completeTurn({ role: 'assistant', content: deferredResult });
       }
       if (structuredResponse) {
         const validated = await this.validateOrRepairStructuredResponse(
@@ -149,10 +214,10 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           }
         );
         this.currentAbortController = null;
-        return this.completeTurn(this.storeStructuredResponse(validated));
+        return completeTurn(this.storeStructuredResponse(validated));
       }
       this.currentAbortController = null;
-      return this.completeTurn(this.lastAssistantMessage());
+      return completeTurn(this.lastAssistantMessage());
     } catch (error) {
       this.appendRunMessages(latestMessages, inputMessages, runtimeResults, historyLengthBeforeRun);
       let finalError = error;
@@ -164,16 +229,18 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       ) {
         try {
           structuredRepairAttempted = true;
-          const repaired = await this.repairStructuredResponse(
-            message,
-            latestMessages,
-            undefined,
-            error,
-            abortController.signal
+          const repaired = await this.runStructuredRepair(() =>
+            this.repairStructuredResponse(
+              message,
+              latestMessages,
+              undefined,
+              error,
+              abortController.signal
+            )
           );
           const validated = this.validateStructuredResponseOnce(repaired);
           this.currentAbortController = null;
-          return this.completeTurn(this.storeStructuredResponse(validated, true));
+          return completeTurn(this.storeStructuredResponse(validated, true));
         } catch (repairError) {
           finalError = repairError;
         }
@@ -182,24 +249,89 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       if (halt) {
         this.currentAbortController = null;
         if (halt.requiresConfirmation) {
-          return this.completeTurn(this.lastAssistantMessage());
+          return completeTurn(this.lastAssistantMessage());
         }
         const deferredResult =
           this.getDeferredResultsContent(runtimeResults, true) ?? halt.resultContent;
         if (deferredResult) {
-          return this.completeTurn({ role: 'assistant', content: deferredResult });
+          return completeTurn({ role: 'assistant', content: deferredResult });
         }
-        return this.completeTurn(this.lastAssistantMessage());
+        return completeTurn(this.lastAssistantMessage());
       }
 
       this.currentAbortController = null;
-      return this.completeTurn(await this.handleUserSendError(finalError));
+      return completeTurn(await this.handleUserSendError(finalError), 'error');
     }
   }
 
-  private completeTurn(response: ConversationMessage): ConversationMessage {
-    this.recordTelemetry({ type: 'turn_complete' });
-    return response;
+  private recordStageTiming(
+    stage: AssistantTelemetryStage,
+    startedAt: number,
+    outcome: 'success' | 'error'
+  ): void {
+    if (!this.stageTelemetryEnabled) return;
+    this.recordStageDuration(stage, performance.now() - startedAt, outcome);
+  }
+
+  private recordStageDuration(
+    stage: AssistantTelemetryStage,
+    durationMs: number,
+    outcome: 'success' | 'error',
+    timeToFirstTokenMs?: number
+  ): void {
+    if (!this.stageTelemetryEnabled) return;
+    this.recordTelemetry({
+      type: 'stage_timing',
+      stage,
+      outcome,
+      duration_ns: String(Math.max(0, Math.round(durationMs * 1_000_000))),
+      ...(timeToFirstTokenMs === undefined
+        ? {}
+        : {
+            time_to_first_token_ns: String(Math.max(0, Math.round(timeToFirstTokenMs * 1_000_000))),
+          }),
+    });
+  }
+
+  private createModelTimingCallbacks(): {
+    callbacks: {
+      handleChatModelStart: (_model: unknown, _messages: unknown, runId: string) => void;
+      handleLLMNewToken: (_token: string, _indices: unknown, runId: string) => void;
+      handleLLMEnd: (_output: unknown, runId: string) => void;
+      handleLLMError: (_error: unknown, runId: string) => void;
+    };
+    totalDurationMs: () => number;
+  } {
+    const requests = new Map<string, { startedAt: number; firstTokenAt?: number }>();
+    let totalDurationMs = 0;
+    const finish = (runId: string, outcome: 'success' | 'error') => {
+      const request = requests.get(runId);
+      if (!request) return;
+      requests.delete(runId);
+      const durationMs = performance.now() - request.startedAt;
+      totalDurationMs += durationMs;
+      this.recordStageDuration(
+        'model_request',
+        durationMs,
+        outcome,
+        request.firstTokenAt === undefined ? undefined : request.firstTokenAt - request.startedAt
+      );
+    };
+    return {
+      callbacks: {
+        handleChatModelStart: (_model, _messages, runId) => {
+          requests.set(runId, { startedAt: performance.now() });
+        },
+        handleLLMNewToken: (_token, _indices, runId) => {
+          const request = requests.get(runId);
+          if (request && request.firstTokenAt === undefined)
+            request.firstTokenAt = performance.now();
+        },
+        handleLLMEnd: (_output, runId) => finish(runId, 'success'),
+        handleLLMError: (_error, runId) => finish(runId, 'error'),
+      },
+      totalDurationMs: () => totalDurationMs,
+    };
   }
 
   private isStructuredOutputError(
@@ -234,6 +366,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
       toolCallLimit: 0,
       responseFormat: this.responseFormat,
     });
+    const modelTiming = this.stageTelemetryEnabled ? this.createModelTimingCallbacks() : undefined;
     const result = await repairAgent.invoke(
       {
         messages: [
@@ -249,7 +382,7 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           },
         ],
       },
-      { signal }
+      { signal, ...(modelTiming ? { callbacks: [modelTiming.callbacks] } : {}) }
     );
     for (const generatedMessage of result.messages ?? []) {
       if (AIMessage.isInstance(generatedMessage)) this.recordModelUsage(generatedMessage);
@@ -267,15 +400,17 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     signal: AbortSignal,
     onRepairAttempt: () => void
   ): Promise<Record<string, unknown>> {
-    const validation = this.validateStructuredResponse?.(response);
+    const validation = this.runStructuredValidation(response);
     if (!validation || validation.success) return validation?.data ?? response;
     onRepairAttempt();
-    const repaired = await this.repairStructuredResponse(
-      originalTask,
-      messages,
-      response,
-      new Error(validation.error),
-      signal
+    const repaired = await this.runStructuredRepair(() =>
+      this.repairStructuredResponse(
+        originalTask,
+        messages,
+        response,
+        new Error(validation.error),
+        signal
+      )
     );
     return this.validateStructuredResponseOnce(repaired);
   }
@@ -283,9 +418,37 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
   private validateStructuredResponseOnce(
     response: Record<string, unknown>
   ): Record<string, unknown> {
-    const validation = this.validateStructuredResponse?.(response);
+    const validation = this.runStructuredValidation(response);
     if (!validation || validation.success) return validation?.data ?? response;
     throw new Error(validation.error);
+  }
+
+  private runStructuredValidation(response: Record<string, unknown>) {
+    const startedAt = performance.now();
+    try {
+      const validation = this.validateStructuredResponse?.(response);
+      this.recordStageTiming(
+        'structured_validation',
+        startedAt,
+        !validation || validation.success ? 'success' : 'error'
+      );
+      return validation;
+    } catch (error) {
+      this.recordStageTiming('structured_validation', startedAt, 'error');
+      throw error;
+    }
+  }
+
+  private async runStructuredRepair<T>(repair: () => Promise<T>): Promise<T> {
+    const startedAt = performance.now();
+    try {
+      const result = await repair();
+      this.recordStageTiming('structured_repair', startedAt, 'success');
+      return result;
+    } catch (error) {
+      this.recordStageTiming('structured_repair', startedAt, 'error');
+      throw error;
+    }
   }
 
   private storeStructuredResponse(

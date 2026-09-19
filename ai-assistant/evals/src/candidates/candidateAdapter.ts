@@ -203,6 +203,22 @@ export interface CandidateInvocationResult {
     cache_write_1h_input_tokens?: number;
     reasoning_output_tokens?: number;
   }>;
+  /** Sanitized monotonic stage durations emitted by the candidate runtime. */
+  stage_timings?: Array<{
+    stage:
+      | 'turn_preparation'
+      | 'tool_adaptation'
+      | 'agent_construction'
+      | 'history_preparation'
+      | 'model_request'
+      | 'agent_stream_processing'
+      | 'structured_validation'
+      | 'structured_repair'
+      | 'turn_total';
+    outcome: 'success' | 'error';
+    duration_ns: string;
+    time_to_first_token_ns?: string;
+  }>;
   /** Configured usage estimate; absent when no explicit pricing snapshot was configured. */
   configured_usage_estimate?: ConfiguredUsageEstimate;
   /**

@@ -453,6 +453,7 @@ export async function runTrial(input: RunTrialInput): Promise<TrialResult> {
             model_invocations: invocation.model_invocations ?? null,
             configured_usage_estimate: invocation.configured_usage_estimate ?? null,
             tool_events: invocation.tool_events ?? null,
+            stage_timings: invocation.stage_timings ?? null,
           }),
           'application/json'
         )

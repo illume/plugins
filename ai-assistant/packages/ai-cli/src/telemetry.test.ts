@@ -48,9 +48,10 @@ describe('createJsonlTelemetryObserver', () => {
         .trim()
         .split('\n')
         .map(line => JSON.parse(line));
-      expect(events).toHaveLength(2);
-      expect(events[0].total_tokens).toBe(15);
-      expect(events[1].tool_name).toBe('kubernetes_api_request');
+      expect(events).toHaveLength(3);
+      expect(events[0]).toEqual({ type: 'telemetry_start', schema_version: '1.0.0' });
+      expect(events[1].total_tokens).toBe(15);
+      expect(events[2].tool_name).toBe('kubernetes_api_request');
       expect(statSync(filePath).mode & 0o077).toBe(0);
     } finally {
       rmSync(directory, { recursive: true, force: true });

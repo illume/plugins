@@ -8,15 +8,23 @@ These are research designs, not new executable scenarios.
 
 ## Implementation Follow-Up: 2026-09-19
 
-Five candidates, C159, C186, C192, C193 and C194, now have authored handlers in the
+Nine candidates, C133, C159, C186, C190, C192, C193, C194, C244 and C249, now have authored handlers in the
 [full-AKS runner](../evals/docs/aks-end-to-end-authoring.md#c159-expansion-follow-up)
-with digest-pinned workloads, explicit affected-image versus healthy-image modes,
-independent traffic controls and owned cleanup. C159 checks kubenet hairpin
+with pinned inputs, explicit evidence controls and owned cleanup. The network
+cases distinguish affected-image from healthy-image modes. C159 checks kubenet hairpin
 traffic; C192 checks Azure NPM named-port compatibility, including deny-all and
 numeric-port controls. C186 checks overlapping CIDR exceptions, C193 additive
 allow-policy ordering and backend egress, and C194 completed-Job ipset membership.
-The other 145 expansion entries
-remain research-only. The original research snapshot below and its JSON are
+C190 compares pod-network and host-network behavior for an empty Service; C133
+compares deleted policy objects with retained target DROP rules and traffic.
+C244 checks the energy-exporter chart's removed PodSecurityPolicy API using
+Helm server dry-runs, not a running collector. C249 compares strict Prometheus 3
+scrapes with a scoped fallback protocol and requires readable host RAPL counters.
+C133, C190, C244 and C249 have offline lifecycle tests only, not live AKS results.
+The other 141 expansion entries have no authored handler. Of these, C243 now
+requires re-triage: its reporter closed the issue after finding the example was
+wrong, so the original PID-range defect hypothesis must not be treated as confirmed.
+The original research snapshot below and its JSON are
 unchanged; runtime results are separate, not retroactive changes to research data.
 Live validation is now authorized within an explicitly bounded disposable scope.
 No new case is admitted to scored evaluation or qualified as a historical fault.
@@ -25,6 +33,11 @@ failed setups and the C159 healthy-image control outcome. The NPM batch stopped
 before workloads because its declared image differed from the managed deployment;
 a retry was refused by the original time-budget guard. All trial resources are
 deleted. None of this rewrites the historical research classifications below.
+
+The [energy compatibility follow-up](../evals/docs/aks-end-to-end-authoring.md#c244-and-c249-energy-tool-compatibility)
+records the source correction, sensor constraints, local Helm capability caveat
+and pending server/runtime validation. No watts, joules or energy savings have
+been measured by this work.
 
 ## Results And Limits
 

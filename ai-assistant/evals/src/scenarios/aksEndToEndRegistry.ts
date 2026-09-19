@@ -35,6 +35,7 @@ import { aksProxyBootstrapEndToEndCases } from './aksProxyBootstrapEndToEndCases
 import { aksWindowsSqlEndToEndCases } from './aksWindowsSqlEndToEndCases.js';
 import { aksCrossTenantEndToEndCases } from './aksCrossTenantEndToEndCases.js';
 import { aksExpansionEndToEndCases } from './aksExpansionEndToEndCases.js';
+import { aksEnergyEndToEndCases } from './aksEnergyEndToEndCases.js';
 import type { AksEndToEndCase } from './aksEndToEndCases.js';
 
 export const aksEndToEndCases: Record<string, AksEndToEndCase> = {
@@ -75,6 +76,7 @@ export const aksEndToEndCases: Record<string, AksEndToEndCase> = {
   ...aksWindowsSqlEndToEndCases,
   ...aksCrossTenantEndToEndCases,
   ...aksExpansionEndToEndCases,
+  ...aksEnergyEndToEndCases,
 };
 
 export function hasAksEndToEndImplementation(id: string) {

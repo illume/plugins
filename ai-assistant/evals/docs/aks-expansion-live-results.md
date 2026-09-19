@@ -3,10 +3,12 @@
 Date: 2026-09-19. Implementation follow-up to the
 [150-candidate research expansion](../../docs/aks-candidate-expansion.md).
 
-Five additional candidates have authored handlers: C159 kubenet hairpin, C186
-CIDR exception overlap, C192 named ports, C193 additive allow policies and C194
-completed-Job ipset membership. The other 145 expansion candidates are still
-research-only. No case is a qualified historical reproduction or admitted
+Nine additional candidates have authored handlers: C133 deleted-policy state,
+C159 kubenet hairpin, C186 CIDR exception overlap, C190 endpoint-less Services,
+C192 named ports, C193 additive allow policies and C194 completed-Job ipset
+membership, plus C244 removed chart API and C249 exporter Content-Type.
+The other 141 expansion candidates have no handler; C243 requires re-triage
+after the reporter withdrew the original explanation. No case is a qualified historical reproduction or admitted
 scored scenario. The original 100-plan catalogue and research registers remain
 unchanged. No model evaluation, diagnostic accuracy or energy savings are claimed.
 
@@ -129,6 +131,51 @@ was never created. The prior C159 attempt records are unchanged.
 
 ## Policy Qualification Gates
 
+### Offline C133 And C190 Follow-Up
+
+After publishing the initial five handlers, C133 and C190 were added and tested
+offline. No new cloud resources or model calls were made and no live results are
+claimed for either. The prior attempt tables and saved evidence are unchanged.
+
+C190 compares a pod-network client with a host-network client for an empty
+Service, with structured curl timing, explicit refusal versus timeout and a
+real-backend recovery control. C133 compares deleted policy objects with retained
+target DROP rules, stable NPM identity and controlled traffic. Its intermittent
+source trigger remains unestablished, and its historical final-phase control is
+explicitly not a repair of the affected backend. Full details and prerequisites
+are in the [authoring guide](aks-end-to-end-authoring.md#c133-and-c190-offline-follow-up).
+
+Both cases use pinned images and remain mechanism adaptations with qualification
+pending. Their injected tests cover healthy and conditional fault observations,
+collection errors, unrelated rules, endpoint-state mismatch and failed independent
+controls. Those tests do not demonstrate a real kernel/network defect or current
+AKS behavior.
+
+### Offline Energy Compatibility Follow-Up
+
+C244 and C249 were authored after the network batch, with ten additional offline
+tests. Neither has a live result. C244 provisions through the owned-AKS runner
+but its chart operation is a server dry-run, not a running exporter. C249 requires
+an actual readable RAPL source, a working exporter and paired Prometheus 3.0.0
+scrapes before the Content-Type comparison can qualify. The latter may be blocked
+on ordinary AKS VM nodes that do not expose hardware counters.
+
+The full source replies and adjacent implementations were reviewed. Local Helm
+rendering of the exact affected and fixed charts produced PSP in both, because
+offline default API capabilities still include the removed API; only the fixed
+chart has the capability guard. The failed initial local expectation is retained
+as a limitation, not relabelled a successful live fix. No exporter image was
+pulled or run and the local render used a placeholder digest. Server discovery
+and actual chart API mapping remain untested.
+
+The [energy authoring guide](aks-end-to-end-authoring.md#c244-and-c249-energy-tool-compatibility)
+records input pins, host-mount permissions, exact controls and measurement limits.
+It also records C243's source correction: the reporter closed the issue because
+the example was wrong. No PID-range implementation was added. The original JSON
+research snapshot and earlier live attempts remain unchanged.
+
+### Remaining Cases
+
 C192 has local implementation tests and the setup-blocked attempt above. Its
 [source report](https://github.com/Azure/azure-container-networking/issues/550)
 and maintainer reply establish that named ports were unsupported in the reported
@@ -144,7 +191,7 @@ Their oracles cover policy union rather than ordered deny-rule semantics, both
 policy insertion orders, backend egress, and completion-before-deletion state.
 They do not run large-scale stress, force IP reuse, restart NPM or flush rules.
 
-Offline verification: **428 eval tests pass**, including 18 focused expansion
+Offline verification: **444 eval tests pass**, including 34 focused expansion
 tests; `npm run tsc` passes. Typechecking also exposed one missing brace in a
 previously authored Windows container spec, repaired to permit registry imports.
 That repair and a green test suite do not validate the original 89 live paths.
@@ -155,6 +202,8 @@ guard was reached and correctly prevented a new resource allocation.
 
 Remaining gates: recover an available affected C159 image before claiming
 historical reproduction; establish a new explicitly bounded run window before
-attempting C186/C192/C193/C194 with the reviewed managed NPM image. Then assess source fidelity,
+attempting C133/C186/C190/C192/C193/C194 with reviewed managed NPM images and
+case-specific prerequisites. C244 needs a pinned Helm server-admission attempt;
+C249 additionally needs supported and readable host energy counters. Then assess source fidelity,
 negative controls and diagnostic evidence before scored admission. No commits or
 pushes are part of this implementation/validation batch.

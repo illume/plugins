@@ -587,9 +587,232 @@ const completedJobMembership: AksEndToEndCase = {
   },
 };
 
+export function endpointProbeOutcome(result: CommandResult) {
+  let metrics: { exitcode?: number; http_code?: number; time_total?: number };
+  try { metrics = JSON.parse(result.stdout); } catch { return 'inconclusive'; }
+  if (!metrics || typeof metrics !== 'object' || metrics.exitcode !== result.status ||
+    typeof metrics.time_total !== 'number' || !Number.isFinite(metrics.time_total) || metrics.time_total < 0) return 'inconclusive';
+  if (result.status === 0 && metrics.http_code === 200) return 'healthy';
+  if (metrics.http_code !== 0) return 'inconclusive';
+  if (result.status === 7 && /Connection refused/i.test(result.stderr) && metrics.time_total < 2.5) return 'refused';
+  if (result.status === 28 && metrics.time_total >= 2.5 && metrics.time_total < 6) return 'timeout';
+  return 'inconclusive';
+}
+
+async function emptyService(context: AksCaseContext, name: string) {
+  await context.poll(() => {
+    const slices = JSON.parse(context.run(namespaced(context, [
+      'get', 'endpointslices', '-l', `kubernetes.io/service-name=${name}`, '-o', 'json',
+    ])));
+    context.save(`${name}-empty-endpoints`, slices);
+    return slices.items.every((slice: any) => (slice.endpoints ?? []).length === 0);
+  }, 'Service has no endpoints, including unready endpoints');
+}
+
+const emptyServiceCompatibility: AksEndToEndCase = {
+  nodeSubnetNetworking: true, networkPolicy: 'azure',
+  validate(parameters) { validateNpmParameters(parameters); },
+  async run(context) {
+    const expectation = requiredParameter(context.parameters, 'expectation', /^(reproduce-fault|healthy-control)$/);
+    const environment = npmEnvironment(context);
+    assert.equal(JSON.parse(context.run(namespaced(context, ['get', 'networkpolicies', '-o', 'json']))).items.length, 0);
+    const probe = httpEvidence(context);
+    let serviceIp = '';
+    let subjectIp = '';
+    let sequence = 0;
+    const connection = (name: string) => {
+      const result = context.kube(namespaced(context, ['exec', name, '-c', 'probe', '--', 'curl',
+        '--verbose', '--silent', '--show-error', '--fail', '--connect-timeout', '3', '--max-time', '5',
+        '--noproxy', '*', '--output', '/dev/null', '--write-out', '%{json}', `http://${serviceIp}:80/`]));
+      const outcome = endpointProbeOutcome(result);
+      context.save(`empty-service-probe-${++sequence}`, { at: new Date().toISOString(), name, serviceIp, result, outcome });
+      assert.notEqual(outcome, 'inconclusive', 'Connection error is not a validated refusal or timeout');
+      return outcome;
+    };
+    const controls = () => {
+      for (const client of ['client', 'host-client']) assert.equal(probe(client, subjectIp), 'healthy');
+    };
+    const changeSelector = (app: string) => {
+      const service = context.read('service', 'empty-server');
+      assert.equal(service.metadata.labels['headlamp-e2e-owner'], context.owner);
+      service.spec.selector = { app };
+      context.replace('empty-service-selector', service);
+    };
+    let subjectUid = '';
+    await context.phase('baseline', async () => {
+      context.create('empty-service-backend', serverPod(context, 'subject'));
+      context.create('empty-service-client', probePod(context, 'client'));
+      const host: any = probePod(context, 'host-client');
+      host.spec.hostNetwork = true;
+      host.spec.dnsPolicy = 'ClusterFirstWithHostNet';
+      context.create('empty-service-host-client', host);
+      context.create('empty-service', { apiVersion: 'v1', kind: 'Service', metadata: metadata(context, 'empty-server'),
+        spec: { selector: { app: 'unmatched' }, ports: [{ port: 80, targetPort: 80 }] } });
+      const subject = await readyPod(context, 'subject');
+      await readyPod(context, 'client'); await readyPod(context, 'host-client');
+      subjectIp = subject.status.podIP; subjectUid = subject.metadata.uid;
+      serviceIp = context.read('service', 'empty-server').spec.clusterIP;
+      assert.ok(isIPv4(subjectIp) && isIPv4(serviceIp));
+      await emptyService(context, 'empty-server');
+      controls();
+      const observations = { pod: connection('client'), host: connection('host-client') };
+      assert.deepEqual(observations, { pod: 'refused', host: 'refused' }, 'Empty Service must reject before the policy is added');
+      return { environment, observations, serviceIp, subjectIp };
+    });
+    await context.phase('fault', async () => {
+      context.create('empty-service-policy', { apiVersion: 'networking.k8s.io/v1', kind: 'NetworkPolicy',
+        metadata: metadata(context, 'allow-all'), spec: { podSelector: {}, policyTypes: ['Ingress', 'Egress'], ingress: [{}], egress: [{}] } });
+      await emptyService(context, 'empty-server');
+      const expected = expectation === 'reproduce-fault' ? 'timeout' : 'refused';
+      await context.poll(() => {
+        controls();
+        assert.equal(connection('host-client'), 'refused', 'Host-network control must still reject');
+        return connection('client') === expected;
+      }, 'Empty Service response under allow-all policy');
+      const samples = [];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        controls();
+        const sample = { pod: connection('client'), host: connection('host-client') };
+        samples.push(sample); assert.deepEqual(sample, { pod: expected, host: 'refused' });
+      }
+      return { expectation, faultObserved: expectation === 'reproduce-fault', samples, noFirewallCauseInferred: true };
+    });
+    await context.phase('recovery', async () => {
+      changeSelector('subject'); await serviceBackend(context, subjectUid, 'empty-server');
+      controls();
+      assert.equal(connection('client'), 'healthy'); assert.equal(connection('host-client'), 'healthy');
+      changeSelector('unmatched'); await emptyService(context, 'empty-server');
+      await removeOwnedPolicy(context, 'allow-all');
+      await context.poll(() => connection('client') === 'refused' && connection('host-client') === 'refused', 'Policy removal restores empty-Service rejection');
+      return { kind: 'real-backend-then-empty-service-without-policy', hostNetwork: true, hostConfigurationChanged: false };
+    });
+  },
+};
+
+export function destinationDropRules(snapshot: string, rules: string, address: string): string[] {
+  assert.ok(isIPv4(address));
+  const sets = parseNpmSets(snapshot);
+  const contains = (name: string, visited = new Set<string>()): boolean => {
+    assert.ok(!visited.has(name), 'Cyclic NPM list:set cannot establish target membership');
+    const set = sets.get(name); assert.ok(set, 'Referenced DROP set missing from capture');
+    if (set.kind === 'list:set') return [...set.members].some(member => contains(member, new Set([...visited, name])));
+    return ['hash:ip', 'hash:net'].includes(set.kind) && (set.members.has(address) || set.members.has(`${address}/32`));
+  };
+  return rules.split('\n').filter(line => {
+    if (!/^-A AZURE-NPM[^ ]* /.test(line) || !/ -j DROP(?: |$)/.test(line)) return false;
+    if (/(?:^|\s)(?:-p|--protocol|--dport|--dports|--sport|--sports|-s|-d|-i|-o|--ctstate|--state|--mark|--tcp-flags)\s/.test(line)) return false;
+    const matches = [...line.matchAll(/--match-set\s+(azure-npm-[a-zA-Z0-9_-]+)\s+(\S+)/g)];
+    if (!matches.length || matches.some(match => match[2] !== 'dst') || /!/.test(line)) return false;
+    return matches.every(match => contains(match[1]!));
+  }).map(line => line.trim()).sort();
+}
+
+const deletedPolicyReconciliation: AksEndToEndCase = {
+  nodeSubnetNetworking: true, networkPolicy: 'azure',
+  validate(parameters) { validateNpmParameters(parameters); },
+  async run(context) {
+    const expectation = requiredParameter(context.parameters, 'expectation', /^(reproduce-fault|healthy-control)$/);
+    if (expectation === 'reproduce-fault') assert.equal(context.kubernetesVersion, '1.19.7', 'Historical C133 requires the reported control-plane version');
+    const environment = npmEnvironment(context);
+    assert.equal(environment.pods.length, 1);
+    const npm = environment.pods[0];
+    const container = npm.spec.containers.find((item: any) => item.image === context.parameters.npmImage);
+    assert.ok(container);
+    const identity = (pod: any) => ({ uid: pod.metadata.uid,
+      containers: pod.status?.containerStatuses?.map((item: any) => ({ name: item.name, imageID: item.imageID, restartCount: item.restartCount })) });
+    const originalIdentity = identity(npm);
+    assert.ok(originalIdentity.containers?.length, 'NPM runtime identity missing');
+    let snapshots = 0;
+    let address = '';
+    let controlAddress = '';
+    const capture = () => {
+      const current = JSON.parse(context.run(['-n', 'kube-system', 'get', 'pod', npm.metadata.name, '-o', 'json']));
+      assert.deepEqual(identity(current), originalIdentity, 'NPM runtime changed; reconciliation evidence is confounded');
+      const sets = context.run(['-n', 'kube-system', 'exec', npm.metadata.name, '-c', container.name, '--', 'ipset', 'save']);
+      const rules = context.run(['-n', 'kube-system', 'exec', npm.metadata.name, '-c', container.name, '--', 'iptables-save']);
+      const evidence = { at: new Date().toISOString(), sets, rules, matchingDropRules: destinationDropRules(sets, rules, address) };
+      context.save(`policy-deletion-snapshot-${++snapshots}`, evidence);
+      return evidence;
+    };
+    const policies = () => JSON.parse(context.run(namespaced(context, ['get', 'networkpolicies', '-o', 'json']))).items;
+    const probe = httpEvidence(context);
+    const observe = () => {
+      const dataplane = capture();
+      const traffic = probe('client', address);
+      assert.equal(probe('client', controlAddress), 'healthy');
+      assert.equal(probe('subject', '127.0.0.1'), 'healthy');
+      return { dataplane, traffic };
+    };
+    const policy = () => ({ ...namedPortPolicy(context, null), metadata: metadata(context, 'deletion-test') });
+    let subjectUid = '';
+    let enforcedRules: string[] = [];
+    await context.phase('baseline', async () => {
+      assert.equal(policies().length, 0, 'Unexpected policies in owned namespace');
+      context.create('deletion-subject', serverPod(context, 'subject'));
+      context.create('deletion-control-server', serverPod(context, 'control-server'));
+      context.create('deletion-client', probePod(context, 'client'));
+      const subject = await readyPod(context, 'subject');
+      subjectUid = subject.metadata.uid;
+      address = subject.status.podIP;
+      controlAddress = (await readyPod(context, 'control-server')).status.podIP;
+      await readyPod(context, 'client');
+      assert.ok(isIPv4(address) && isIPv4(controlAddress));
+      const open = observe(); assert.equal(open.traffic, 'healthy');
+      assert.equal(open.dataplane.matchingDropRules.length, 0, 'Preexisting target DROP rules');
+      context.create('deletion-policy', policy());
+      await context.poll(() => {
+        const denied = observe();
+        enforcedRules = denied.dataplane.matchingDropRules;
+        return denied.traffic === 'timeout' && enforcedRules.length > 0;
+      }, 'Owned policy installs readable target DROP rules and blocks traffic');
+      return { environment, open, enforcedRules, subjectUid, scope: 'single-node-conditional-adaptation' };
+    });
+    await context.phase('fault', async () => {
+      await removeOwnedPolicy(context, 'deletion-test');
+      const absent = policies(); assert.equal(absent.length, 0);
+      context.save('deleted-policy-api-evidence', absent);
+      const matches = (sample: ReturnType<typeof observe>) => expectation === 'healthy-control'
+        ? sample.traffic === 'healthy' && sample.dataplane.matchingDropRules.length === 0
+        : sample.traffic === 'timeout' && sample.dataplane.matchingDropRules.some(rule => enforcedRules.includes(rule));
+      if (expectation === 'healthy-control') await context.poll(() => matches(observe()), 'Policy deletion reconciles dataplane and traffic');
+      const samples = [];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await context.wait(5000);
+        assert.equal(policies().length, 0);
+        assert.equal(context.read('pod', 'subject').metadata.uid, subjectUid);
+        const sample = observe(); samples.push(sample);
+        assert.ok(matches(sample), 'Deleted-policy outcome does not match declared rule and traffic evidence');
+      }
+      return { expectation, faultObserved: expectation === 'reproduce-fault', samples,
+        rootCause: 'initiating-reconciliation-failure-not-established' };
+    });
+    await context.phase('recovery', async () => {
+      if (expectation === 'reproduce-fault') {
+        const original = observe();
+        assert.equal(original.traffic, 'timeout');
+        assert.ok(original.dataplane.matchingDropRules.some(rule => enforcedRules.includes(rule)));
+        return { kind: 'unaffected-backend-control-not-a-repair', originalStillBlocked: true,
+          unaffectedBackendHealthy: true, hostRulesChanged: false };
+      }
+      context.create('deletion-policy-repeat', policy());
+      await context.poll(() => {
+        const sample = observe(); return sample.traffic === 'timeout' && sample.dataplane.matchingDropRules.length > 0;
+      }, 'Repeated policy still enforces');
+      await removeOwnedPolicy(context, 'deletion-test');
+      await context.poll(() => {
+        const sample = observe(); return sample.traffic === 'healthy' && sample.dataplane.matchingDropRules.length === 0;
+      }, 'Repeated deletion restores traffic');
+      assert.equal(policies().length, 0);
+      return { kind: 'repeat-owned-policy-enforcement-and-deletion', hostRulesChanged: false };
+    });
+  },
+};
+
 export const aksExpansionEndToEndCases: Record<string, AksEndToEndCase> = {
+  'aks-c133-v1': deletedPolicyReconciliation,
   'aks-c159-v1': kubenetHairpin,
   'aks-c186-v1': overlappingCidrCompatibility,
+  'aks-c190-v1': emptyServiceCompatibility,
   'aks-c192-v1': namedPortCompatibility,
   'aks-c193-v1': additivePolicyCompatibility,
   'aks-c194-v1': completedJobMembership,

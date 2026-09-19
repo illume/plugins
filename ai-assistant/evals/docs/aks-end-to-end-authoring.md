@@ -61,7 +61,7 @@ claimed. A failed first setup attempt is retained: the admin kubeconfig context
 did not match the requested name. The runner now checks a single context and the
 owned cluster endpoint before locally renaming it. No credentials are published.
 
-Local checks: 18 focused tests, 428 eval tests and the eval typecheck pass. This also exposed
+Local checks: 34 focused tests, 444 eval tests and the eval typecheck pass. This also exposed
 and repaired one missing brace in the previously unverified Windows handler
 import; it does not validate Windows behavior. The
 [live attempt report](aks-expansion-live-results.md) records the preserved setup
@@ -121,6 +121,185 @@ prepared explicit v1.6.48-0 retry was refused because less than 25 minutes
 remained in the original active-work window. No new cluster was created by that
 refusal. See the [attempt ledger](aks-expansion-live-results.md#npm-batch-attempt)
 for timing, budget and the four unvalidated cases.
+
+## C133 And C190 Offline Follow-Up
+
+These two additional cases use the same explicit `serverImage`, `nodeImageVersion`,
+`npmImage` and `expectation` parameters and owned Azure CNI/NPM lifecycle as the
+other policy cases. They are discoverable but unqualified, with no live attempt
+in this follow-up. No new Azure budget window or paid-model run was started.
+
+### C190: Endpoint-Less Service
+
+The [source report](https://github.com/Azure/azure-container-networking/issues/569)
+provides a Service with no backend, an allow-all NetworkPolicy and two clients:
+ordinary pod networking and `hostNetwork`. Its follow-up reports different behavior
+after manually moving NPM's chain; this implementation never edits host rules or
+asserts that chain ordering is the proven cause.
+
+Baseline requires the Service to have no endpoints, including unready endpoints,
+and both clients to receive a prompt connection refusal before the policy exists.
+An independent nginx Pod must remain reachable from both clients. After installing
+the source allow-all policy, historical mode requires the pod client to time out
+while the host client still receives a refusal. Healthy-control mode requires both
+to refuse. Three samples must match the declared outcome. Requests use the numeric
+Service IP to isolate DNS from routing.
+
+The pinned curl probe must support `%{json}` and `exitcode`. Verbose stderr must
+contain an explicit connection refusal, with exit 7, HTTP code zero and curl
+elapsed time below 2.5 seconds. A timeout requires exit 28, HTTP code zero and
+elapsed time from 2.5 to less than six seconds, using a three-second connect and
+five-second total timeout. Malformed/missing output, DNS errors, other connection
+errors and unsuccessful HTTP responses cannot establish either result.
+
+Recovery first attaches the real nginx backend and requires HTTP 200 from both
+clients. It then removes that endpoint and the owned policy and requires refusals
+again. This is one port and one node, using nginx/curl instead of the source's
+Python/BusyBox images. Historical NPM/kernel availability remains unestablished.
+Host-network access is limited to synthetic test traffic in the newly owned
+cluster; no privileged container, host mount, NPM restart or rules mutation is used.
+
+### C133: Deleted-Policy Reconciliation
+
+The [source report](https://github.com/Azure/AKS/issues/2225) shows stale NPM
+rules on one of two nodes after policy deletion. It does not give a deterministic
+trigger. The reporter later says a patched-node reboot resolved the incident and
+suspects an aks-link synchronization issue; that explanation is not established.
+
+This deliberately narrower one-node experiment starts policy-free, proves traffic
+to a subject and unaffected backend, then installs an owned deny-ingress policy.
+Baseline must observe blocked traffic and readable destination DROP rules tied to
+the subject's actual IP. After deleting the exact owned policy, it records API
+absence, unchanged Pod identity and NPM runtime identity, read-only ipset/rule
+snapshots, and three traffic samples while the control backend stays reachable.
+Healthy mode requires target rules gone and traffic restored; historical mode
+requires the same captured target DROP rule and timeout to persist. Historical
+mode also requires the source control-plane version 1.19.7, without claiming the
+source's 1.19.6 nodes or its multi-node failure have been reconstructed.
+
+The rule matcher intentionally accepts only non-negated destination memberships
+with direct NPM DROP actions, including nested sets. Source-address, port,
+protocol and selected conditional packet matches are excluded. Unsupported rule
+shapes, missing collection tools, missing sets or changed NPM runtime fail closed.
+This is correlated rule/traffic evidence, not a complete packet-path interpreter
+or proof of the unknown initiating synchronization failure.
+
+Healthy recovery repeats owned policy enforcement and deletion. In historical
+mode the final phase is only an unaffected-backend control and explicitly records
+`originalStillBlocked: true`, `kind: "unaffected-backend-control-not-a-repair"`.
+A passing generic `recovery` phase must not be interpreted as repairing the
+original backend. The owned-cluster cleanup removes the test infrastructure;
+no reboot, rule flushing or deliberate state corruption is performed. A real
+repair and independent qualification remain outstanding.
+
+## C244 And C249 Energy-Tool Compatibility
+
+The [energy compatibility handlers](../src/scenarios/aksEnergyEndToEndCases.ts)
+add C244 and C249 to authoring discovery. Both remain pending qualification and
+excluded from scored evaluation. They are upstream-transfer candidates, not
+reports of these failures on managed AKS. This follow-up ran only offline tests
+and local chart rendering: no cluster, collector, Prometheus process or model
+was started, and no energy was measured. A renewed bounded Azure window and
+case-specific prerequisites are required before any live attempt.
+
+### C244: Removed Chart API
+
+The [Scaphandre installation report](https://github.com/hubblo-org/scaphandre/issues/321)
+and its replies identify Kubernetes 1.25's PodSecurityPolicy removal. Upstream
+[PR #250](https://github.com/hubblo-org/scaphandre/pull/250) guards PSP and the
+related role rule with `.Capabilities.APIVersions.Has "policy/v1beta1"`.
+Reviewed affected revision: `b64497b2ff97b6f719db092d28540f5ba6264ce3`; fixed
+merge revision: `933e29b97eba2bd55e227539df795e8e1c395186`.
+
+Inputs are `affectedChartArchive`, `affectedChartSha256`, `fixedChartArchive`,
+`fixedChartSha256` and `exporterImage`. Archives must be distinct local `.tgz`
+files matching reviewed SHA-256 pins. `exporterImage` has the form
+`repository:tag@sha256:digest` because the source chart joins image name and tag.
+Helm must support `install --dry-run=server --output json`.
+
+The fresh-AKS handler confirms `policy/v1` discovery and absence of
+`policy/v1beta1`, creates a harmless ConfigMap admission witness, and checks the
+fixed chart through a server dry-run. It renders the actual affected chart,
+requires its PSP and real exporter DaemonSet with the reviewed image, then
+requires the precise missing-PSP mapping error from the affected server dry-run.
+Recovery repeats the fixed server dry-run and removes the owned witness.
+It checks Helm release inventory and the source chart's actual
+`app.kubernetes.io/name=scaphandre` labels for persisted namespaced and cluster
+objects. Unsupported resource kinds, hooks, duplicate objects and preexisting
+chart resources fail closed; no other installation is removed.
+
+This is **chart rendering/API-mapping validation**, not an installed exporter,
+exporter readiness or proof that every chart object passes admission webhooks.
+Host paths in the upstream DaemonSet are never mounted by these dry-runs.
+The source's generic "ensure CRDs are installed first" suffix is not interpreted
+as a missing custom CRD, and RBAC/network/authentication failures do not qualify
+as the reported removed-API fault.
+
+Local Helm checks downloaded only chart files at the exact revisions and
+confirmed their identities, image substitution and the fixed capability guard.
+An initial expectation that the fixed chart would omit PSP in local rendering
+was falsified: local Helm's default API capabilities still include
+`policy/v1beta1`, so **both local renders contained PSP**, even with
+`--kube-version 1.35.7`. The handler intentionally uses server discovery for the
+fixed control. No successful server admission is claimed. The private record is
+`.tmp/scaphandre-chart-review-20260919/review.json`; the local render used a
+placeholder image digest and did not pull an image. Future execution requires
+real reviewed exporter and chart pins.
+
+### C249: Missing Metrics Content-Type
+
+The [Prometheus 3 report](https://github.com/hubblo-org/scaphandre/issues/400)
+describes Scaphandre metrics served without a Content-Type header. Its reply
+suggests a per-target fallback protocol. The handler uses
+`fallback_scrape_protocol: PrometheusText0.0.4`, which the
+[Prometheus v3.0.0 configuration source](https://github.com/prometheus/prometheus/blob/v3.0.0/config/config.go)
+explicitly supports. This differs from the reply's `PrometheusText1.0.0` example
+and is a declared plain-text compatibility control, not an automatic fallback.
+
+Inputs are digest-pinned `exporterImage` and `prometheusImage`,
+`prometheusVersion: "3.0.0"`, exact `nodeImageVersion`, and
+`acceptReadOnlyHostMetrics: "true"`. The source-compatible exporter must provide
+`/usr/local/bin/scaphandre`, `/bin/sh` and `cat`. The pinned curl probe must
+support `%{json}`, including `content_type`, `http_code` and `exitcode`.
+
+On one owned Linux node, the real exporter mounts host `/proc` and `/sys`
+read-only, runs as root without extra capabilities or privilege escalation, and
+has no service-account token. This still exposes host telemetry and process
+metadata and requires explicit authorization in the disposable environment.
+No container-discovery flag is enabled. Before any comparison, the exporter must
+be Ready, a numeric RAPL energy counter must be readable through the mount, and
+HTTP 200 must contain `scaph_host_power_microwatts` while the Content-Type is
+blank or absent. Missing hardware support, permission errors, a repaired header
+or absent metric is a blocked/inconclusive setup, never zero consumption.
+Ordinary AKS VM guests must not be assumed to satisfy these prerequisites.
+
+Two digest-identical Prometheus 3.0.0 Pods scrape that unchanged exporter with
+the same three-second interval and two-second timeout. The fallback control must
+be healthy. The strict subject must report three distinct completed scrapes
+failing specifically for blank/missing Content-Type; both exporter and scraper
+UID/runtime identities are checked. Initial unscheduled scrapes remain pending,
+not healthy or failed evidence. Recovery replaces only the owned subject scraper
+with the same fallback configuration and requires healthy target status while
+the exporter still sends no Content-Type. No broad Prometheus configuration is
+changed and no policy, host sensor or driver is modified.
+
+Recorded evidence contains header/target status and metric-presence metadata,
+not raw per-process metric labels. Any private command journal can still contain
+raw responses and must not be published. Host counter availability and successful
+scraping do not validate power calibration, attribution or workload energy.
+Zero-valued samples remain measurement-validity-unknown; no energy savings,
+absolute consumption or carbon result is inferred. Owned-cluster teardown is
+responsible for final Pod, ConfigMap and emptyDir cleanup.
+
+### C243 Source Correction
+
+The [high-PID report](https://github.com/hubblo-org/scaphandre/issues/425) was
+closed by its author with the explanation that the example was wrong. This
+follow-up therefore does **not** implement or count a confirmed PID-range bug.
+C243 remains without a handler pending corrected CLI semantics and independent
+evidence. The earlier excerpt-based research register is retained as a historical
+snapshot, with this correction recorded separately rather than silently rewriting
+the provenance or inventing a reproduced defect.
 
 ## Original Scope
 

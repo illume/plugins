@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { aksNetworkArguments, type AksCaseContext, type AksEndToEndCase } from './aksEndToEndCases.js';
-import { aksExpansionEndToEndCases, additiveAllowPolicy, assertHairpinExpectation, cidrEgressPolicy, hairpinProbeOutcome, namedPortPolicy, parseNpmSets, referencedPodSets } from './aksExpansionEndToEndCases.js';
+import { aksExpansionEndToEndCases, additiveAllowPolicy, assertHairpinExpectation, cidrEgressPolicy, destinationDropRules, endpointProbeOutcome, hairpinProbeOutcome, namedPortPolicy, parseNpmSets, referencedPodSets } from './aksExpansionEndToEndCases.js';
 import { listAksEndToEndAuthoring } from './aksEndToEndScenarios.js';
 import { normalizeOwnedAksContext } from '../cluster/provisioning/aksEndToEnd.js';
 import type { CommandRunner } from '../cluster/commandRunner.js';
@@ -9,6 +9,36 @@ import type { CommandRunner } from '../cluster/commandRunner.js';
 function definition(options: Partial<AksEndToEndCase>): AksEndToEndCase {
   return { validate() {}, async run() {}, ...options };
 }
+
+test('C190 requires explicit bounded refusal/timeout evidence and separates transport failures', () => {
+  const result = (status: number, duration: number, stderr = '', httpCode = 0) => ({
+    status, stdout: JSON.stringify({ exitcode: status, http_code: httpCode, time_total: duration }), stderr,
+  });
+  assert.equal(endpointProbeOutcome(result(7, 0.02, 'connect failed: Connection refused')), 'refused');
+  assert.equal(endpointProbeOutcome(result(28, 3.001)), 'timeout');
+  assert.equal(endpointProbeOutcome(result(0, 0.1, '', 200)), 'healthy');
+  for (const invalid of [result(7, 0.1, 'No route to host'), result(7, 4, 'Connection refused'),
+    result(28, 0.02), result(6, 1), result(22, 0.1, '', 404), result(0, 0.1, '', 503),
+    { status: 7, stdout: '{}', stderr: 'Connection refused' }, { status: 1, stdout: 'not JSON', stderr: '' }]) {
+    assert.equal(endpointProbeOutcome(invalid), 'inconclusive');
+  }
+  assert.equal(listAksEndToEndAuthoring().find(entry => entry.candidate_id === 'AKS-C190')?.execution_eligible, false);
+});
+
+test('C133 requires readable non-negated destination DROP rules tied to the actual target', () => {
+  const sets = 'create azure-npm-target hash:ip\nadd azure-npm-target 10.0.0.2\ncreate azure-npm-list list:set\nadd azure-npm-list azure-npm-target';
+  const matching = '-A AZURE-NPM-TARGET-SETS -m set --match-set azure-npm-list dst -j DROP';
+  assert.deepEqual(destinationDropRules(sets, matching, '10.0.0.2'), [matching]);
+  assert.deepEqual(destinationDropRules(sets, matching, '10.0.0.3'), []);
+  for (const unrelated of [matching.replace('dst', 'src'), matching.replace('-j DROP', '-j ACCEPT'),
+    matching.replace('-m set', '-m set !'), matching.replace('AZURE-NPM-TARGET-SETS', 'KUBE-SERVICES'),
+    matching.replace('-j DROP', '-p tcp --dport 81 -j DROP'), matching.replace('-j DROP', '--ctstate INVALID -j DROP')]) {
+    assert.deepEqual(destinationDropRules(sets, unrelated, '10.0.0.2'), []);
+  }
+  assert.throws(() => destinationDropRules('', matching, '10.0.0.2'), /No readable/);
+  assert.throws(() => destinationDropRules(sets, matching.replace('azure-npm-list', 'azure-npm-missing'), '10.0.0.2'), /missing/);
+  assert.throws(() => destinationDropRules('create azure-npm-list list:set\nadd azure-npm-list azure-npm-list', matching, '10.0.0.2'), /Cyclic/);
+});
 
 test('AKS network selection preserves existing modes and explicitly supports kubenet', () => {
   assert.deepEqual(aksNetworkArguments(), ['--network-plugin', 'azure', '--network-plugin-mode', 'overlay']);
@@ -325,7 +355,14 @@ function npmPolicyContext(expectation: string, staleCompletion = false) {
       const kind = args[args.indexOf('get') + 1]!;
       if (kind === 'pods') return JSON.stringify({ items: [...objects.values()].filter(object => object.kind === 'Pod' &&
         object.metadata.namespace === namespace && object.metadata.labels['job-name'] === 'membership-job') });
-      if (kind === 'endpointslices') return JSON.stringify({ items: [{ endpoints: [{ targetRef: { uid: get(namespace, 'pod', 'subject').metadata.uid }, conditions: { ready: true } }] }] });
+      if (kind === 'endpointslices') {
+        const label = args[args.indexOf('-l') + 1]!;
+        const service = get(namespace, 'service', label.split('=')[1]!);
+        const pods = [...objects.values()].filter(object => object.kind === 'Pod' && object.metadata.namespace === namespace &&
+          Object.entries(service.spec.selector).every(([label, value]) => object.metadata.labels[label] === value));
+        return JSON.stringify({ items: [{ endpoints: pods.map(pod => ({ targetRef: { uid: pod.metadata.uid }, conditions: { ready: true } })) }] });
+      }
+      if (kind === 'networkpolicies') return JSON.stringify({ items: [...objects.values()].filter(object => object.kind === 'NetworkPolicy' && object.metadata.namespace === namespace) });
       return JSON.stringify(get(namespace, kind, args[args.indexOf('get') + 2]!));
     }
     if (args.includes('delete')) {
@@ -340,7 +377,7 @@ function npmPolicyContext(expectation: string, staleCompletion = false) {
     return '';
   };
   context.az = () => ({ networkProfile: { networkPlugin: 'azure', networkPolicy: 'azure' } });
-  const matches = (labels: Record<string, string>, wanted: Record<string, string>) => Object.entries(wanted).every(([name, value]) => labels[name] === value);
+  const matches = (labels: Record<string, string>, wanted: Record<string, string> = {}) => Object.entries(wanted).every(([name, value]) => labels[name] === value);
   context.kube = args => {
     assert.ok(args.includes('curl'));
     const namespace = namespaceFor(args);
@@ -353,11 +390,11 @@ function npmPolicyContext(expectation: string, staleCompletion = false) {
     const ingress = policies.filter(policy => policy.spec.policyTypes.includes('Ingress') && matches(subject.metadata.labels, policy.spec.podSelector.matchLabels));
     const egress = policies.filter(policy => policy.spec.policyTypes.includes('Egress') && matches(caller.metadata.labels, policy.spec.podSelector.matchLabels));
     if (target.hostname !== '127.0.0.1' && ingress.length) {
-      allowed = ingress.some(policy => policy.spec.ingress.some((rule: any) => rule.from.some((peer: any) => matches(caller.metadata.labels, peer.podSelector.matchLabels))));
+      allowed = ingress.some(policy => policy.spec.ingress.some((rule: any) => !rule.from || rule.from.some((peer: any) => matches(caller.metadata.labels, peer.podSelector.matchLabels))));
       if (ingress.length === 2 && expectation === 'reproduce-fault') allowed = false;
     }
     if (egress.length) {
-      allowed = egress.some(policy => policy.metadata.name === 'allow-range');
+      allowed = egress.some(policy => policy.metadata.name === 'allow-range' || policy.spec.egress.some((rule: any) => Object.keys(rule).length === 0));
       if (egress.length === 2 && expectation === 'reproduce-fault') allowed = false;
     }
     return { status: allowed ? 0 : 28, stdout: allowed ? '<h1>Welcome to nginx!</h1>' : '', stderr: allowed ? '' : 'synthetic timeout' };
@@ -432,4 +469,128 @@ test('policy collection errors cannot become healthy controls or successful repr
     await assert.rejects(handler.run(fixture.context), /not evidence of policy enforcement/);
     assert.deepEqual(fixture.phases, ['baseline']);
   }
+});
+
+function emptyServiceContext(expectation: string, hostTimeout = false, podError?: number) {
+  const fixture = npmPolicyContext(expectation);
+  const originalKube = fixture.context.kube;
+  const originalRun = fixture.context.run;
+  const observedCalls: string[] = [];
+  fixture.context.run = args => {
+    if (args.includes('endpointslices')) observedCalls.push('endpoint-state');
+    return originalRun(args);
+  };
+  fixture.context.kube = args => {
+    if (!args.includes('--write-out')) return originalKube(args);
+    const caller = args[args.indexOf('exec') + 1]!;
+    const service = fixture.objects.get('owned/service/empty-server');
+    const attached = service.spec.selector.app === 'subject';
+    const policy = fixture.objects.has('owned/networkpolicy/allow-all');
+    const timeout = !attached && policy && ((caller === 'client' && expectation === 'reproduce-fault') || (caller === 'host-client' && hostTimeout));
+    const status = attached ? 0 : caller === 'client' && podError !== undefined ? podError : timeout ? 28 : 7;
+    observedCalls.push(`${caller}:${attached ? 'attached' : policy ? 'policy' : 'baseline'}:${status}`);
+    return { status, stdout: JSON.stringify({ exitcode: status, http_code: attached ? 200 : 0, time_total: timeout ? 3.01 : 0.01 }),
+      stderr: status === 7 ? 'connect failed: Connection refused' : '' };
+  };
+  return { ...fixture, observedCalls };
+}
+
+test('C190 checks both network paths and real endpoint transitions in both declared modes', async () => {
+  const handler = aksExpansionEndToEndCases['aks-c190-v1']; assert.ok(handler);
+  for (const expectation of ['healthy-control', 'reproduce-fault']) {
+    const fixture = emptyServiceContext(expectation);
+    await handler.run(fixture.context);
+    assert.deepEqual(fixture.phases, ['baseline', 'fault', 'recovery']);
+    assert.deepEqual(fixture.evidence.get('baseline').observations, { pod: 'refused', host: 'refused' });
+    assert.equal(fixture.evidence.get('fault').faultObserved, expectation === 'reproduce-fault');
+    assert.equal(fixture.evidence.get('fault').samples.length, 3);
+    assert.ok(fixture.observedCalls.includes('client:attached:0') && fixture.observedCalls.includes('host-client:attached:0'));
+    assert.equal(fixture.objects.get('owned/pod/host-client').spec.hostNetwork, true);
+    assert.equal(fixture.objects.get('owned/pod/host-client').spec.dnsPolicy, 'ClusterFirstWithHostNet');
+    assert.equal(fixture.objects.get('owned/service/empty-server').spec.selector.app, 'unmatched');
+    assert.ok(!fixture.objects.has('owned/networkpolicy/allow-all'));
+    assert.equal(fixture.evidence.get('recovery').hostConfigurationChanged, false);
+  }
+});
+
+test('C190 refuses missing transport evidence and failure of the independent host control', async () => {
+  const handler = aksExpansionEndToEndCases['aks-c190-v1']; assert.ok(handler);
+  const hostFailure = emptyServiceContext('reproduce-fault', true);
+  await assert.rejects(handler.run(hostFailure.context), /Host-network control/);
+  assert.deepEqual(hostFailure.phases, ['baseline', 'fault']);
+  const dnsFailure = emptyServiceContext('reproduce-fault', false, 6);
+  await assert.rejects(handler.run(dnsFailure.context), /not a validated refusal or timeout/);
+  assert.deepEqual(dnsFailure.phases, ['baseline']);
+  const staleEndpoints = emptyServiceContext('healthy-control');
+  const run = staleEndpoints.context.run;
+  staleEndpoints.context.run = args => args.includes('endpointslices') ? JSON.stringify({ items: [{ endpoints: [{ conditions: { ready: false } }] }] }) : run(args);
+  await assert.rejects(handler.run(staleEndpoints.context), /Service has no endpoints/);
+});
+
+function deletedPolicyContext(expectation: string, missingStaleRule = false, restart = false) {
+  const fixture = npmPolicyContext(expectation);
+  fixture.context.kubernetesVersion = '1.19.7';
+  const originalRun = fixture.context.run;
+  const originalKube = fixture.context.kube;
+  let deleted = false;
+  fixture.context.run = args => {
+    if (args.includes('delete') && args.includes('networkpolicy')) deleted = true;
+    if (args[0] === '-n' && args[1] === 'kube-system') {
+      const target = fixture.objects.get('owned/pod/subject');
+      const policyPresent = fixture.objects.has('owned/networkpolicy/deletion-test');
+      const stale = deleted && expectation === 'reproduce-fault';
+      if (args.includes('ipset')) return ['create azure-npm-target hash:ip',
+        ...(target ? [`add azure-npm-target ${target.status.podIP}`] : [])].join('\n');
+      if (args.includes('iptables-save')) return policyPresent || (stale && !missingStaleRule)
+        ? '-A AZURE-NPM-TARGET-SETS -m set --match-set azure-npm-target dst -j DROP' : '*filter\nCOMMIT';
+      if (restart && deleted && args.includes('get') && args.includes('pod')) {
+        const current = JSON.parse(originalRun(args));
+        current.status.containerStatuses[0].restartCount++;
+        return JSON.stringify(current);
+      }
+    }
+    return originalRun(args);
+  };
+  fixture.context.kube = args => {
+    const caller = args[args.indexOf('exec') + 1];
+    const target = new URL(args.at(-1)!).hostname;
+    const subject = fixture.objects.get('owned/pod/subject');
+    if (caller === 'client' && deleted && expectation === 'reproduce-fault' && target === subject?.status.podIP) {
+      return { status: 28, stdout: '', stderr: 'synthetic timeout' };
+    }
+    return originalKube(args);
+  };
+  return fixture;
+}
+
+test('C133 combines API absence, unchanged runtime, target rules and traffic evidence', async () => {
+  const handler = aksExpansionEndToEndCases['aks-c133-v1']; assert.ok(handler);
+  for (const expectation of ['healthy-control', 'reproduce-fault']) {
+    const fixture = deletedPolicyContext(expectation);
+    await handler.run(fixture.context);
+    assert.deepEqual(fixture.phases, ['baseline', 'fault', 'recovery']);
+    assert.deepEqual(fixture.evidence.get('deleted-policy-api-evidence'), []);
+    assert.ok(fixture.evidence.get('baseline').enforcedRules.length > 0);
+    assert.equal(fixture.evidence.get('fault').samples.length, 3);
+    assert.equal(fixture.evidence.get('fault').faultObserved, expectation === 'reproduce-fault');
+    assert.ok(!fixture.objects.has('owned/networkpolicy/deletion-test'));
+    assert.equal(fixture.evidence.get('recovery').kind, expectation === 'healthy-control'
+      ? 'repeat-owned-policy-enforcement-and-deletion' : 'unaffected-backend-control-not-a-repair');
+    assert.equal(fixture.evidence.get('recovery').hostRulesChanged, false);
+    if (expectation === 'reproduce-fault') assert.equal(fixture.evidence.get('recovery').originalStillBlocked, true);
+  }
+});
+
+test('C133 cannot equate timeouts without stale rules or an NPM restart with reproduction', async () => {
+  const handler = aksExpansionEndToEndCases['aks-c133-v1']; assert.ok(handler);
+  const unrelatedTimeout = deletedPolicyContext('reproduce-fault', true);
+  await assert.rejects(handler.run(unrelatedTimeout.context), /rule and traffic evidence/);
+  assert.deepEqual(unrelatedTimeout.phases, ['baseline', 'fault']);
+  const restarted = deletedPolicyContext('reproduce-fault', false, true);
+  await assert.rejects(handler.run(restarted.context), /runtime changed/);
+  assert.deepEqual(restarted.phases, ['baseline', 'fault']);
+  const wrongVersion = deletedPolicyContext('reproduce-fault');
+  wrongVersion.context.kubernetesVersion = '1.35.7';
+  await assert.rejects(handler.run(wrongVersion.context), /reported control-plane version/);
+  assert.deepEqual(wrongVersion.phases, []);
 });

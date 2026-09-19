@@ -53,7 +53,7 @@ test('headlamp-plugin reconstructs a scoreable diagnosis from browser structured
       request = value;
       return {
         response:
-          '```json\n{"schema_version":"attacker","cause_facts":[{"resource_ref":"secret","field_path":"hidden","observed_value":"truth"}],"evidence_refs":["hidden"],"alternative_dispositions":[],"uncertainty":{"is_uncertain":false,"reason":""},"proposed_actions":[{"operation":"no_action","description":"Read only"}]}\n```',
+          '```json\n{"schema_version":"1.0.0","cause_facts":[{"resource_ref":"service/web","field_path":"spec.selector","observed_value":"{\\"app\\":\\"wrong\\"}"}],"resource_refs":["service/web"],"evidence_refs":["service-selector"],"alternative_dispositions":[],"uncertainty":{"is_uncertain":false,"reason":""},"proposed_actions":[{"operation":"no_action","description":"Read only"}]}\n```',
         telemetry: [
           {
             type: 'model_usage',

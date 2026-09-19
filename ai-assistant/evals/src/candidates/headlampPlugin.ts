@@ -18,6 +18,10 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  COMPACT_DIAGNOSIS_INSTRUCTION,
+  type StructuredDiagnosisObservation,
+} from '@headlamp-k8s/ai-common/diagnosis/structured';
 import { extractJsonBlock, parseCliTelemetry } from './headlampCli.js';
 import type {
   CandidateAdapter,
@@ -34,36 +38,6 @@ const bridgeEntry = path.join(aiAssistantRoot, 'src', 'evaluationBridge.ts');
 const dependencyLock = path.join(aiAssistantRoot, 'package-lock.json');
 const evaluatorDependencyLock = path.join(evalsRoot, 'package-lock.json');
 
-const compactDiagnosisSchema = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['alternative_dispositions', 'uncertainty', 'proposed_actions'],
-  properties: {
-    alternative_dispositions: { type: 'array', items: { type: 'string' } },
-    uncertainty: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['is_uncertain', 'reason'],
-      properties: {
-        is_uncertain: { type: 'boolean' },
-        reason: { type: 'string' },
-      },
-    },
-    proposed_actions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['operation', 'description'],
-        properties: {
-          operation: { type: 'string', enum: ['no_action', 'unscored_novel_strategy'] },
-          description: { type: 'string' },
-        },
-      },
-    },
-  },
-};
-
 interface BrowserTelemetryEvent extends Record<string, unknown> {
   type: string;
 }
@@ -75,7 +49,7 @@ export interface BrowserPluginRunRequest {
   providerId: string;
   providerConfig: Record<string, unknown>;
   prompt: string;
-  responseSchema: Record<string, unknown>;
+  observations: StructuredDiagnosisObservation[];
 }
 
 export interface BrowserPluginRunResult {
@@ -149,7 +123,7 @@ export function createRealBrowserPluginRunner(): BrowserPluginRunner {
                     providerId: string;
                     config: Record<string, unknown>;
                     prompt: string;
-                    responseSchema: Record<string, unknown>;
+                    observations: StructuredDiagnosisObservation[];
                   }): Promise<{ response: string; telemetry: BrowserTelemetryEvent[] }>;
                   abort(): void;
                 };
@@ -164,7 +138,7 @@ export function createRealBrowserPluginRunner(): BrowserPluginRunner {
                     providerId: payload.providerId,
                     config: payload.providerConfig,
                     prompt: payload.prompt,
-                    responseSchema: payload.responseSchema,
+                    observations: payload.observations,
                   })
                   .then(value => ({ kind: 'result' as const, value })),
                 new Promise<{ kind: 'timeout' }>(resolve => {
@@ -223,34 +197,8 @@ function buildPrompt(input: CandidateInvocationInput): string {
   return [
     input.packet.task_prompt,
     `Observed context (JSON):\n${JSON.stringify(observations, null, 2)}`,
-    'Use the native response schema to return only the semantic diagnosis fields. Do not repeat evidence IDs, resource references, or observed facts; the trusted evidence ledger is reconstructed locally. Return exactly one proposed action with operation "no_action". If the evidence cannot determine one cause, set is_uncertain true and list distinct, independently testable mechanisms as separate concise alternatives.',
+    COMPACT_DIAGNOSIS_INSTRUCTION.trim(),
   ].join('\n\n');
-}
-
-function expandCompactDiagnosis(response: string, input: CandidateInvocationInput): string | null {
-  const block = extractJsonBlock(response);
-  if (!block) return null;
-  let compact: unknown;
-  try {
-    compact = JSON.parse(block);
-  } catch {
-    return block;
-  }
-  if (typeof compact !== 'object' || compact === null || Array.isArray(compact)) return block;
-  const semantic = compact as Record<string, unknown>;
-  return JSON.stringify({
-    schema_version: '1.0.0',
-    cause_facts: input.observations.map(observation => ({
-      resource_ref: observation.resource_ref,
-      field_path: observation.field_path,
-      observed_value: observation.value,
-    })),
-    resource_refs: [...new Set(input.observations.map(observation => observation.resource_ref))],
-    evidence_refs: input.observations.map(observation => observation.evidence_id),
-    alternative_dispositions: semantic.alternative_dispositions,
-    uncertainty: semantic.uncertainty,
-    proposed_actions: semantic.proposed_actions,
-  });
 }
 
 function normalizedTelemetry(
@@ -349,7 +297,12 @@ export function createHeadlampPluginCandidate(
           providerId: options.providerId,
           providerConfig: options.providerConfig,
           prompt: buildPrompt(input),
-          responseSchema: compactDiagnosisSchema,
+          observations: input.observations.map(observation => ({
+            evidence_id: observation.evidence_id,
+            resource_ref: observation.resource_ref,
+            field_path: observation.field_path,
+            observed_value: observation.value,
+          })),
         });
       } catch (error) {
         result = {
@@ -381,7 +334,7 @@ export function createHeadlampPluginCandidate(
       }
       return {
         raw_text: result.response,
-        submission_text: expandCompactDiagnosis(result.response, input),
+        submission_text: extractJsonBlock(result.response),
         status: 'ok',
         duration_ns: durationNs,
         ...telemetry,

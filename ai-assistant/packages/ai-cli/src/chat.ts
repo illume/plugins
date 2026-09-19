@@ -17,6 +17,12 @@
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
+import {
+  createCompactDiagnosisProviderSchema,
+  SUPPLIED_EVIDENCE_CONTEXT,
+  type StructuredDiagnosisObservation,
+  validateCompactDiagnosisSubmission,
+} from '@headlamp-k8s/ai-common/diagnosis/structured';
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
@@ -27,13 +33,10 @@ import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.ts';
 import { loadSkillsFromUrls } from './skills.ts';
 import {
-  createCompactDiagnosisProviderSchema,
   createCompactRepairProviderSchema,
   createDiagnosisProviderSchema,
   createRepairProviderSchema,
-  type StructuredDiagnosisObservation,
   type StructuredRepairContract,
-  validateCompactDiagnosisSubmission,
   validateCompactRepairSubmission,
   validateDiagnosisSubmission,
   validateRepairSubmission,
@@ -43,9 +46,6 @@ interface KubectlContext {
   cluster: string;
   namespace: string;
 }
-
-const suppliedEvidenceContext =
-  'Supplied-evidence mode is active. Treat observations in the user request as the complete authorized evidence for this turn. Do not call tools. Produce the strongest supported answer from those observations, preserve explicit access or tool failures as evidence, and state uncertainty when the observations are insufficient.';
 
 /** Reads the active cluster and namespace without exposing kubeconfig credentials. */
 export function detectKubectlContext(
@@ -185,7 +185,7 @@ export async function createManager(
     );
   }
   if (options.suppliedEvidenceOnly) {
-    manager.setContext(suppliedEvidenceContext);
+    manager.setContext(SUPPLIED_EVIDENCE_CONTEXT);
   } else {
     const kubectlTool = createKubectlTool({
       readOnly: !options.allowMutations,

@@ -56,6 +56,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { execFileSync } from 'node:child_process';
+import { COMPACT_DIAGNOSIS_INSTRUCTION } from '@headlamp-k8s/ai-common/diagnosis/structured';
 import type {
   CandidateAdapter,
   CandidateInvocationInput,
@@ -582,13 +583,6 @@ const REPAIR_SIDECAR_INSTRUCTION =
   'exact allowed policy patch, and a property named exactly evidence_digest whose value is the supplied digest. ' +
   'Do not rename or add properties. Propose the action only; ' +
   'do not execute it.';
-
-const COMPACT_DIAGNOSIS_INSTRUCTION =
-  '\n\nUse the native response schema to return only the semantic diagnosis fields: ' +
-  'alternative_dispositions, uncertainty, and proposed_actions. Do not repeat evidence IDs, resource ' +
-  'references, or observed facts; the trusted evidence ledger is reconstructed locally. Return exactly one ' +
-  'proposed action with operation "no_action". If the evidence cannot determine one cause, set is_uncertain ' +
-  'true and list distinct, independently testable mechanisms as separate concise alternatives.';
 
 const COMPACT_REPAIR_INSTRUCTION =
   '\n\nUse the native response schema to return a compact diagnosis plus proposed_action.option_index. ' +

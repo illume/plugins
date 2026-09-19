@@ -26,9 +26,18 @@ describe('browser evaluation bridge', () => {
   it('invokes one harness session and returns sanitized telemetry', async () => {
     const abort = vi.fn();
     const userSend = vi.fn(async () => ({ content: '{"schema_version":"1.0.0"}' }));
-    const createSession = vi.fn((_providerId, _config, _responseSchema, observe) => {
+    const setContext = vi.fn();
+    const observations = [
+      {
+        evidence_id: 'pod-phase',
+        resource_ref: 'pod/web',
+        field_path: 'status.phase',
+        observed_value: 'Pending',
+      },
+    ];
+    const createSession = vi.fn((_providerId, _config, _observations, observe) => {
       observe({ type: 'turn_complete' } satisfies AssistantTelemetryEvent);
-      return { userSend, abort };
+      return { userSend, abort, setContext };
     });
     const bridge = createBrowserEvaluationBridge(createSession);
 
@@ -37,7 +46,7 @@ describe('browser evaluation bridge', () => {
         providerId: 'copilot',
         config: { apiKey: 'secret' },
         prompt: 'diagnose',
-        responseSchema: { type: 'object' },
+        observations,
       })
     ).resolves.toEqual({
       response: '{"schema_version":"1.0.0"}',
@@ -46,8 +55,11 @@ describe('browser evaluation bridge', () => {
     expect(createSession).toHaveBeenCalledWith(
       'copilot',
       { apiKey: 'secret' },
-      { type: 'object' },
+      observations,
       expect.any(Function)
+    );
+    expect(setContext).toHaveBeenCalledWith(
+      expect.stringContaining('complete authorized evidence')
     );
     expect(userSend).toHaveBeenCalledWith('diagnose');
   });
@@ -57,13 +69,14 @@ describe('browser evaluation bridge', () => {
     const abort = vi.fn();
     const bridge = createBrowserEvaluationBridge(() => ({
       abort,
+      setContext: vi.fn(),
       userSend: () => new Promise(resolve => (finish = resolve)),
     }));
     const running = bridge.invoke({
       providerId: 'copilot',
       config: {},
       prompt: 'first',
-      responseSchema: { type: 'object' },
+      observations: [],
     });
 
     await expect(
@@ -71,7 +84,7 @@ describe('browser evaluation bridge', () => {
         providerId: 'copilot',
         config: {},
         prompt: 'second',
-        responseSchema: { type: 'object' },
+        observations: [],
       })
     ).rejects.toThrow('already running');
     bridge.abort();

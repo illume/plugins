@@ -16,6 +16,7 @@
     "./assistant/LangChainAssistantSession": "./src/assistant/LangChainAssistantSession.ts",
     "./assistant/telemetry": "./src/assistant/telemetry.ts",
     "./diagnosis/batch": "./src/diagnosis/batch.ts",
+    "./diagnosis/structured": "./src/diagnosis/structured.ts",
     "./conversation/content": "./src/conversation/content.ts",
     "./conversation/context": "./src/conversation/context.ts",
     "./conversation/history": "./src/conversation/history.ts",

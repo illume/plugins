@@ -16,21 +16,23 @@
 
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import type { AssistantTelemetryEvent } from '@headlamp-k8s/ai-common/assistant/telemetry';
+import {
+  createCompactDiagnosisProviderSchema,
+  SUPPLIED_EVIDENCE_CONTEXT,
+  type StructuredDiagnosisObservation,
+  validateCompactDiagnosisSubmission,
+} from '@headlamp-k8s/ai-common/diagnosis/structured';
 import type { ProviderSettings } from '@headlamp-k8s/ai-common/providers/savedConfigs';
 import { providerStrategy } from 'langchain';
 
 export const BROWSER_EVALUATION_QUERY = 'headlamp-ai-eval';
-
-export interface BrowserEvaluationJsonSchema extends Record<string, unknown> {
-  type: 'object';
-}
 
 /** Candidate-visible input accepted by the browser plugin evaluation boundary. */
 export interface BrowserEvaluationRequest {
   providerId: string;
   config: ProviderSettings;
   prompt: string;
-  responseSchema: BrowserEvaluationJsonSchema;
+  observations: StructuredDiagnosisObservation[];
 }
 
 /** Sanitized browser plugin output returned to the evaluator. */
@@ -42,12 +44,13 @@ export interface BrowserEvaluationResult {
 interface EvaluationSession {
   userSend(prompt: string): Promise<{ content: string }>;
   abort(): void;
+  setContext(context: string): void;
 }
 
 type EvaluationSessionFactory = (
   providerId: string,
   config: ProviderSettings,
-  responseSchema: BrowserEvaluationJsonSchema,
+  observations: StructuredDiagnosisObservation[],
   telemetryObserver: (event: AssistantTelemetryEvent) => void
 ) => EvaluationSession;
 
@@ -64,14 +67,11 @@ declare global {
 
 /** Creates the browser-only candidate bridge around the production agent harness. */
 export function createBrowserEvaluationBridge(
-  createSession: EvaluationSessionFactory = (
-    providerId,
-    config,
-    responseSchema,
-    telemetryObserver
-  ) =>
+  createSession: EvaluationSessionFactory = (providerId, config, observations, telemetryObserver) =>
     new AgentHarnessSession(providerId, config, [], {
-      responseFormat: providerStrategy(responseSchema),
+      responseFormat: providerStrategy(createCompactDiagnosisProviderSchema()),
+      validateStructuredResponse: response =>
+        validateCompactDiagnosisSubmission(response, observations),
       telemetryObserver,
     })
 ): BrowserEvaluationBridge {
@@ -84,11 +84,12 @@ export function createBrowserEvaluationBridge(
       activeSession = createSession(
         request.providerId,
         request.config,
-        request.responseSchema,
+        request.observations,
         event => {
           telemetry.push(structuredClone(event));
         }
       );
+      activeSession.setContext(SUPPLIED_EVIDENCE_CONTEXT);
       try {
         const response = await activeSession.userSend(request.prompt);
         return { response: response.content, telemetry };

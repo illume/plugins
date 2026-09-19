@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ToolCall } from '../types';
-import { EventEmitter } from './events';
+import type { ToolCall } from '../types.ts';
+import { EventEmitter } from './events.ts';
 
 /** Represents a pending approval request shared with UI listeners. */
 export interface ToolApprovalRequest {

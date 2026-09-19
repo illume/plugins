@@ -85,6 +85,8 @@ test('isCandidateSpec: recognizes every valid spec and rejects anything else', (
   assert.equal(isCandidateSpec('unsafe-effective'), true);
   assert.equal(isCandidateSpec('injected'), true);
   assert.equal(isCandidateSpec('headlamp-cli'), true);
+  assert.equal(isCandidateSpec('headlamp-cli-legacy'), true);
+  assert.equal(isCandidateSpec('headlamp-plugin'), true);
   assert.equal(isCandidateSpec('holmesgpt'), true);
   assert.equal(isCandidateSpec('k8sgpt'), true);
   assert.equal(isCandidateSpec('kubectl-ai'), true);
@@ -105,6 +107,25 @@ test('runEvaluation: rejects Holmes repair scenarios before candidate execution'
         holmesModel: 'azure/gpt-4o',
       }),
       /holmesgpt does not support repair_submission@1\.0\.0 scenarios: core-service-selector-repair-v1/
+    );
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runEvaluation: rejects browser plugin repair scenarios before candidate execution', async () => {
+  const dir = makeScratchDir('orchestrate-plugin-repair');
+  try {
+    await assert.rejects(
+      runEvaluation({
+        runId: 'run_plugin_repair',
+        runsRoot: dir,
+        profile: 'local-minikube',
+        mode: 'real',
+        cases: ['core-service-selector-repair-v1'],
+        candidate: 'headlamp-plugin',
+      }),
+      /headlamp-plugin does not support repair_submission@1\.0\.0 scenarios/
     );
   } finally {
     removeScratchDir(dir);

@@ -15,6 +15,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { SkillsConfig } from './config';
 import {
   addSkillSource,
   DEFAULT_SKILLS_CONFIG,
@@ -23,7 +24,6 @@ import {
   isSkillEnabled,
   removeSkillSource,
   saveSkillsConfig,
-  SkillsConfig,
   toggleSkill,
 } from './config';
 import type { ParsedSkill } from './parseSkill';

@@ -14,115 +14,115 @@
  * limitations under the License.
  */
 
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { AIMessageChunk, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { AIMessageChunk, BaseMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-import { buildUserContext } from '../conversation/buildUserContext';
-import { isConversationalMessage } from '../conversation/classifyMessage';
-import { extractTextContent, processToolContent } from '../conversation/content';
+import { buildUserContext } from '../conversation/buildUserContext.ts';
+import { isConversationalMessage } from '../conversation/classifyMessage.ts';
+import { extractTextContent, processToolContent } from '../conversation/content.ts';
 import {
   findLastAssistantWithTools,
   getLastAssistantMessage,
   hasToolResponses,
   sanitizeToolAlignment,
   validateToolCallAlignment,
-} from '../conversation/history';
-import { convertPromptsToMessages } from '../conversation/langchain/messages';
-import type { ConversationMessage } from '../conversation/types';
-import type { ToolClient } from '../mcp/client/ToolClient';
-import { MCPArgumentProcessor } from '../mcp/tools/ArgumentProcessor';
-import type { MCPToolSchema, UserContext } from '../mcp/tools/types';
-import { basePrompt } from '../prompts/baseAssistantPrompt';
+} from '../conversation/history.ts';
+import { convertPromptsToMessages } from '../conversation/langchain/messages.ts';
+import type { ConversationMessage } from '../conversation/types.ts';
+import type { ToolClient } from '../mcp/client/ToolClient.ts';
+import { MCPArgumentProcessor } from '../mcp/tools/ArgumentProcessor.ts';
+import type { MCPToolSchema, UserContext } from '../mcp/tools/types.ts';
+import { basePrompt } from '../prompts/baseAssistantPrompt.ts';
 import {
   buildSystemPrompt,
   buildToolResponseSystemPrompt,
   NO_K8S_TOOLS_PROMPT,
-} from '../prompts/buildSystemPrompt';
+} from '../prompts/buildSystemPrompt.ts';
 import {
   createArgumentPreparationPrompt,
   getIntelligentDefault,
-} from '../prompts/buildToolArgumentPrompt';
+} from '../prompts/buildToolArgumentPrompt.ts';
 import {
   apiErrorPromptTemplate,
   toolFailurePromptTemplate,
-} from '../prompts/langchain/errorPrompts';
+} from '../prompts/langchain/errorPrompts.ts';
 import {
   canUseDirectToolCalling,
   createChatModel,
   isCopilotClaudeModel,
-} from '../providers/createChatModel';
-import { ProviderSettings } from '../providers/savedConfigs';
-import { redactSecrets } from '../security/redactSecrets';
-import { DEFAULT_SKILLS_CONFIG, SkillsConfig } from '../skills/config';
-import { SkillManager } from '../skills/SkillManager';
-import {
-  inlineToolApprovalManager,
-  ToolConfirmationEvent,
-} from '../tools/approval/InlineToolApprovalManager';
+} from '../providers/createChatModel.ts';
+import type { ProviderSettings } from '../providers/savedConfigs.ts';
+import { redactSecrets } from '../security/redactSecrets.ts';
+import type { SkillsConfig } from '../skills/config.ts';
+import { DEFAULT_SKILLS_CONFIG } from '../skills/config.ts';
+import type { SkillManager } from '../skills/SkillManager.ts';
+import type { ToolConfirmationEvent } from '../tools/approval/InlineToolApprovalManager.ts';
+import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager.ts';
 import {
   identifyEnhancedFields,
   parseArgumentsFromResponse,
-} from '../tools/arguments/parseToolArguments';
+} from '../tools/arguments/parseToolArguments.ts';
+import type { NormalizedToolCall } from '../tools/calls/processToolCalls.ts';
 import {
   buildDisabledToolsMessage,
   filterToolCallsByEnabled,
   mergeApprovedArguments,
-  NormalizedToolCall,
   normalizeLLMToolCalls,
   shouldProcessToolFollowUp,
-} from '../tools/calls/processToolCalls';
-import { getToolDescription } from '../tools/catalog/getToolDescription';
-import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../tools/catalog/toolDefinitions';
-import type { KubernetesToolContext } from '../tools/kubernetes/context';
-import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion';
-import { LangChainToolManager } from '../tools/langchain/LangChainToolManager';
-import { RecommendedTool, ToolPlanner } from '../tools/langchain/ToolPlanner';
+} from '../tools/calls/processToolCalls.ts';
+import { getToolDescription } from '../tools/catalog/getToolDescription.ts';
+import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../tools/catalog/toolDefinitions.ts';
+import type { KubernetesToolContext } from '../tools/kubernetes/context.ts';
+import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion.ts';
+import { LangChainToolManager } from '../tools/langchain/LangChainToolManager.ts';
+import type { RecommendedTool } from '../tools/langchain/ToolPlanner.ts';
+import { ToolPlanner } from '../tools/langchain/ToolPlanner.ts';
+import type { OrchestrationTask } from '../tools/orchestration/prepareToolPlan.ts';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
+  DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
   filterApprovedOrchestrationTools,
   shouldCacheResponse,
-} from '../tools/orchestration/prepareToolPlan';
+  waitForOrchestrationResults,
+} from '../tools/orchestration/prepareToolPlan.ts';
 import {
   assembleFallbackResponseContent,
   buildConfirmationPlaceholderJson,
   buildFailedOperationsFallback,
   buildToolExecutionErrorJson,
   detectToolResponseError,
-} from '../tools/results/buildToolResponse';
+} from '../tools/results/buildToolResponse.ts';
+import type { ToolResult } from '../tools/results/formatToolResults.ts';
 import {
   aggregateToolResults,
   formatToolResultsForLLM,
-  ToolResult,
-} from '../tools/results/formatToolResults';
+} from '../tools/results/formatToolResults.ts';
 import {
   buildToolDataAnalysisRequest,
   fillMissingRequiredFields,
   isRegularConversationMessage,
-} from '../tools/results/prepareToolResponse';
-import type { ToolCall } from '../tools/types';
-import AssistantSession from './AssistantSession';
-import {
-  CacheEntry,
-  evictExpired,
-  evictOldestToFit,
-  generateCacheKey,
-} from './cache/responseCache';
-import { isApiRelatedError, toUserFriendlyError } from './errors/formatAssistantError';
-import type { LangChainToolRuntime } from './langchain/LangChainToolBinding';
+} from '../tools/results/prepareToolResponse.ts';
+import type { ToolCall } from '../tools/types.ts';
+import AssistantSession from './AssistantSession.ts';
+import type { CacheEntry } from './cache/responseCache.ts';
+import { evictExpired, evictOldestToFit, generateCacheKey } from './cache/responseCache.ts';
+import { isApiRelatedError, toUserFriendlyError } from './errors/formatAssistantError.ts';
+import type { LangChainToolRuntime } from './langchain/LangChainToolBinding.ts';
 import {
   createLLMResultCapture,
   mergeContentAcrossGenerations,
   mergeToolCallsAcrossGenerations,
-} from './langchain/mergeGenerations';
+} from './langchain/mergeGenerations.ts';
 import {
   getRecentToolResponses,
   isEmptyLLMContent,
   isMCPFormattedOutput,
   mapCorrectedResponseToolCalls,
-} from './responses/inspectResponse';
-import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
+} from './responses/inspectResponse.ts';
+import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry.ts';
 
 /** Input required to invoke a prompt-template chain. */
 interface ChainInput {
@@ -161,9 +161,10 @@ interface ExtraTool {
    * Executes the tool with model-generated input.
    *
    * @param input - Untrusted input supplied by the model.
+   * @param config - Optional invocation config; `signal` propagates run cancellation.
    * @returns Tool-specific result synchronously or asynchronously.
    */
-  invoke(input: unknown): Promise<unknown> | unknown;
+  invoke(input: unknown, config?: { signal?: AbortSignal }): Promise<unknown> | unknown;
 }
 
 /**
@@ -185,25 +186,25 @@ function parseSerializedToolArguments(serialized: string): Record<string, unknow
 
 /** Coordinates model calls, tool execution, and chat history for the AI assistant. */
 export default class LangChainAssistantSession extends AssistantSession {
-  private model: BaseChatModel;
+  protected model: BaseChatModel;
   private boundModel: InvokableChatModel | null = null;
-  private providerId: string;
-  private toolManager: LangChainToolRuntime;
-  private kubernetesContext: KubernetesToolContext | undefined;
-  private currentAbortController: AbortController | null = null;
+  protected providerId: string;
+  protected toolManager: LangChainToolRuntime;
+  protected kubernetesContext: KubernetesToolContext | undefined;
+  protected currentAbortController: AbortController | null = null;
   private promptTemplate: ChatPromptTemplate;
   private outputParser: StringOutputParser;
   private useDirectToolCalling: boolean = false;
   /** Extra LangChain tools provided externally (e.g. kubectl for CLI). */
-  private extraTools: Map<string, ExtraTool> = new Map();
+  protected extraTools: Map<string, ExtraTool> = new Map();
   private telemetryObserver?: AssistantTelemetryObserver;
   private cacheCopilotClaudeSystemPrompt: boolean;
 
   // Skills system
-  private skillManager: SkillManager | null = null;
-  private skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
+  protected skillManager: SkillManager | null = null;
+  protected skillsConfig: SkillsConfig = DEFAULT_SKILLS_CONFIG;
   /** Skills prompt text for the current request (computed per-message, transient). */
-  private currentSkillsPromptText: string = '';
+  protected currentSkillsPromptText: string = '';
 
   // Response cache for common queries (in-memory)
   private responseCache: Map<string, CacheEntry<ConversationMessage>> = new Map();
@@ -244,6 +245,8 @@ export default class LangChainAssistantSession extends AssistantSession {
       mcpClient?: ToolClient;
       /** Receives sanitized model-usage and tool-completion events. */
       telemetryObserver?: AssistantTelemetryObserver;
+      /** Optional model supplied by an embedded host or deterministic test. */
+      model?: BaseChatModel;
     }
   ) {
     super();
@@ -263,7 +266,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.toolManager =
       options?.toolManager ??
       new LangChainToolManager({ enabledToolIds, mcpClient: options?.mcpClient });
-    this.model = this.createModel(providerId, config);
+    this.model = options?.model ?? this.createModel(providerId, config);
 
     // Initialize prompt template and output parser
     this.promptTemplate = this.createPromptTemplate();
@@ -304,7 +307,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     this.responseCache.clear();
   }
 
-  private recordTelemetry(event: AssistantTelemetryEvent): void {
+  protected recordTelemetry(event: AssistantTelemetryEvent): void {
     try {
       this.telemetryObserver?.(event);
     } catch {
@@ -312,7 +315,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     }
   }
 
-  private recordModelUsage(response: unknown): void {
+  protected recordModelUsage(response: unknown): void {
     const value = response as {
       usage_metadata?: Record<string, unknown>;
       response_metadata?: Record<string, unknown>;
@@ -424,7 +427,7 @@ export default class LangChainAssistantSession extends AssistantSession {
     }
   }
 
-  private isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
+  protected isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
     if (toolName !== 'kubernetes_api_request') return false;
     return typeof args.method !== 'string' || args.method.toUpperCase() !== 'GET';
   }
@@ -439,7 +442,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param query - User query used for skill routing.
    * @returns Routed skill prompt text, or an empty string when unavailable or failed.
    */
-  private async getSkillsPromptForQuery(query: string): Promise<string> {
+  protected async getSkillsPromptForQuery(query: string): Promise<string> {
     if (!this.skillManager) return '';
 
     try {
@@ -495,7 +498,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    * @param content - Model or message content to normalize.
    * @returns Extracted text, or an empty string for unsupported content.
    */
-  private extractTextContent(content: unknown): string {
+  protected extractTextContent(content: unknown): string {
     return extractTextContent(content);
   }
 
@@ -894,7 +897,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns LangChain messages safe for prompt invocation.
    */
-  private prepareChatHistory(): BaseMessage[] {
+  protected prepareChatHistory(): BaseMessage[] {
     // Filter out system messages and display-only messages to avoid conflicts with the system message in the prompt template
     const filteredHistory = this.history.filter(
       prompt => prompt.role !== 'system' && !prompt.isDisplayOnly
@@ -917,7 +920,7 @@ export default class LangChainAssistantSession extends AssistantSession {
    *
    * @returns System prompt text.
    */
-  private createSystemPrompt(): string {
+  protected createSystemPrompt(): string {
     return buildSystemPrompt({
       availableTools: [...this.toolManager.getToolNames(), ...this.extraTools.keys()],
       mcpTools: this.toolManager.getMCPTools(),
@@ -1441,29 +1444,38 @@ export default class LangChainAssistantSession extends AssistantSession {
       const { parallel, sequential } = ToolPlanner.groupToolsByExecutionStrategy(approvedTools);
 
       // Execute parallel tools first
-      const toolResults: Record<string, ToolResult> = {};
       const toolExecutionIds: Record<string, string> = {};
 
+      let toolResults: Record<string, ToolResult> = {};
+
       if (parallel.length > 0) {
-        const parallelPromises = parallel.map(async tool => {
+        const tasks: OrchestrationTask[] = parallel.map(tool => {
           const approvalData = toolsForApproval.find(t => t.name === tool.name);
           const toolCallId = approvalData?.id || `orchestrated-${tool.name}-${Date.now()}`;
           toolExecutionIds[tool.name] = toolCallId;
 
-          try {
-            const result = await this.toolManager.executeTool(
-              tool.name,
-              approvalData?.arguments || tool.arguments || {}
-            );
-            toolResults[tool.name] = result;
-            return result;
-          } catch (error) {
-            toolResults[tool.name] = buildOrchestrationToolError(tool.name, error as Error | null);
-          }
+          return {
+            name: tool.name,
+            // Undefined (older/mocked recommendations) defaults to required,
+            // preserving the original "wait for everything" behavior.
+            required: tool.required !== false,
+            run: signal =>
+              this.toolManager.executeTool(
+                tool.name,
+                approvalData?.arguments || tool.arguments || {},
+                toolCallId,
+                undefined,
+                signal
+              ),
+          };
         });
 
         try {
-          await Promise.all(parallelPromises);
+          toolResults = await waitForOrchestrationResults(
+            tasks,
+            DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
+            this.currentAbortController?.signal
+          );
         } catch (error) {
           console.error('Error executing parallel tools:', error);
           // Continue with sequential tools even if some parallel tools fail
@@ -1479,7 +1491,10 @@ export default class LangChainAssistantSession extends AssistantSession {
         try {
           const result = await this.toolManager.executeTool(
             tool.name,
-            approvalData?.arguments || tool.arguments || {}
+            approvalData?.arguments || tool.arguments || {},
+            toolCallId,
+            undefined,
+            this.currentAbortController?.signal
           );
           toolResults[tool.name] = result;
         } catch (error) {
@@ -2001,7 +2016,9 @@ Please analyze this data and provide a specific, detailed response that directly
 
         if (extraTool) {
           // Execute the extra LangChain tool directly
-          const result = await extraTool.invoke(args);
+          const result = await extraTool.invoke(args, {
+            signal: this.currentAbortController?.signal,
+          });
           const content = typeof result === 'string' ? result : JSON.stringify(result);
           toolResponse = {
             content,
@@ -2014,7 +2031,8 @@ Please analyze this data and provide a specific, detailed response that directly
             toolCall.function.name,
             args,
             toolCall.id,
-            assistantPrompt
+            assistantPrompt,
+            this.currentAbortController?.signal
           );
         }
 
@@ -2139,7 +2157,7 @@ Please analyze this data and provide a specific, detailed response that directly
    * @param error - Request failure of any shape.
    * @returns Error message added to history.
    */
-  private async handleUserSendError(error: unknown): Promise<ConversationMessage> {
+  protected async handleUserSendError(error: unknown): Promise<ConversationMessage> {
     // Clear abort controller in case of error
     this.currentAbortController = null;
 

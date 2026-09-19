@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from '@rstest/core';
 
 export default defineConfig({
-  test: {
-    testTimeout: 30_000,
-    globals: true,
-    passWithNoTests: true,
-  },
+  testTimeout: 30_000,
+  globals: true,
+  passWithNoTests: true,
 });

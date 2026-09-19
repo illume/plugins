@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage } from './types';
+import type { ConversationMessage } from './types.ts';
 
 /** Tool call persisted on assistant messages for result alignment. */
 export interface StoredToolCall {

@@ -16,7 +16,7 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { StructuredToolInterface } from '@langchain/core/tools';
-import type { ToolRuntime } from '../../tools/ToolRuntime';
+import type { ToolRuntime } from '../../tools/ToolRuntime.ts';
 
 /** LangChain-specific model binding supplied by a tool runtime adapter. */
 export interface LangChainToolBinding {

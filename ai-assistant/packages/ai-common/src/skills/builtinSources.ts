@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { getSkillSourceIdentity, SkillsConfig } from './config';
-import type { SkillSource } from './SkillLoader';
+import type { SkillsConfig } from './config.ts';
+import { getSkillSourceIdentity } from './config.ts';
+import type { SkillSource } from './SkillLoader.ts';
 
 /** Repository publishing the Microsoft-authored Azure skill collection. */
 export const AKS_SKILLS_REPO_URL = 'https://github.com/microsoft/azure-skills';

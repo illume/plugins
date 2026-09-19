@@ -174,11 +174,20 @@ describe('detectCopilotChatModels', () => {
 // ---------------------------------------------------------------------------
 
 describe('pickBestCopilotChatModel', () => {
-  it('prefers claude-opus over other models', () => {
+  it('prefers the qualified gpt-5.4 model when available', () => {
     const models: CopilotModelEntry[] = [
       { id: 'gpt-4o', name: 'GPT-4o', version: '1' },
       { id: 'claude-opus-4', name: 'Claude Opus', version: '1' },
       { id: 'gpt-5.4', name: 'GPT-5.4', version: '1' },
+    ];
+    expect(pickBestCopilotChatModel(models)).toBe('gpt-5.4');
+  });
+
+  it('retains the existing family fallback when gpt-5.4 is unavailable', () => {
+    const models: CopilotModelEntry[] = [
+      { id: 'gpt-4o', name: 'GPT-4o', version: '1' },
+      { id: 'claude-opus-4', name: 'Claude Opus', version: '1' },
+      { id: 'gpt-5.3-codex', name: 'GPT-5.3 Codex', version: '1' },
     ];
     expect(pickBestCopilotChatModel(models)).toBe('claude-opus-4');
   });

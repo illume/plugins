@@ -6,7 +6,7 @@
  * inputs, keeping prompt composition deterministic and independently testable.
  */
 
-import { basePrompt, cacheableReasoningInstructions } from './baseAssistantPrompt';
+import { basePrompt, cacheableReasoningInstructions } from './baseAssistantPrompt.ts';
 
 /** Minimal shape of an MCP tool needed for the system-prompt listing. */
 export interface MCPToolSummary {

@@ -16,7 +16,8 @@
 
 /**
  * The real candidate adapter: invokes the existing `@headlamp-k8s/ai-cli`
- * boundary (`packages/ai-cli/src/cli.ts`) as a subprocess through `tsx`,
+ * boundary (`packages/ai-cli/src/cli.ts`) directly through Node's TypeScript
+ * transformation,
  * exactly the same product code path the Headlamp AI Assistant UI uses.
  *
  * Credential handling: the child process receives only an explicitly
@@ -68,7 +69,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..', '..');
 const aiAssistantRoot = path.resolve(evalsRoot, '..');
 const cliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'src', 'cli.ts');
-const tsxBin = path.resolve(evalsRoot, 'node_modules', '.bin', 'tsx');
+const compiledCliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'dist', 'cli.mjs');
 const dependencyLock = path.join(aiAssistantRoot, 'package-lock.json');
 
 /** Captured completion state of one candidate subprocess. */
@@ -169,6 +170,8 @@ interface CliTelemetry {
   toolEventsObserved: boolean;
   tokenUsageObserved: boolean;
   modelInvocations: NonNullable<CandidateInvocationResult['model_invocations']>;
+  stageTimings: NonNullable<CandidateInvocationResult['stage_timings']>;
+  stageTimingsObserved: boolean;
 }
 
 export function parseCliTelemetry(text: string): CliTelemetry {
@@ -184,10 +187,26 @@ export function parseCliTelemetry(text: string): CliTelemetry {
     toolEventsObserved: false,
     tokenUsageObserved: false,
     modelInvocations: [],
+    stageTimings: [],
+    stageTimingsObserved: false,
   };
   let streamValid = true;
+  let streamVersion: string | undefined;
   let sawModelUsage = false;
+  let sawStageTiming = false;
   let turnComplete = false;
+  let sawEvent = false;
+  const stageNames = new Set([
+    'turn_preparation',
+    'tool_adaptation',
+    'agent_construction',
+    'history_preparation',
+    'model_request',
+    'agent_stream_processing',
+    'structured_validation',
+    'structured_repair',
+    'turn_total',
+  ] satisfies Array<NonNullable<CandidateInvocationResult['stage_timings']>[number]['stage']>);
   const optionalTokenFields = [
     'cache_read_input_tokens',
     'cache_creation_input_tokens',
@@ -214,7 +233,10 @@ export function parseCliTelemetry(text: string): CliTelemetry {
       streamValid = false;
       continue;
     }
-    if (
+    if (event.type === 'telemetry_start') {
+      if (sawEvent || streamVersion || event.schema_version !== '1.0.0') streamValid = false;
+      else streamVersion = event.schema_version;
+    } else if (
       event.type === 'model_usage' &&
       typeof event.provider === 'string' &&
       ['total_including_cache', 'uncached_only'].includes(String(event.input_token_semantics)) &&
@@ -324,14 +346,45 @@ export function parseCliTelemetry(text: string): CliTelemetry {
       } else {
         streamValid = false;
       }
+    } else if (event.type === 'stage_timing') {
+      if (
+        streamVersion === '1.0.0' &&
+        typeof event.stage === 'string' &&
+        stageNames.has(
+          event.stage as NonNullable<CandidateInvocationResult['stage_timings']>[number]['stage']
+        ) &&
+        ['success', 'error'].includes(String(event.outcome)) &&
+        isDuration(event.duration_ns) &&
+        (event.time_to_first_token_ns === undefined ||
+          (isDuration(event.time_to_first_token_ns) &&
+            BigInt(event.time_to_first_token_ns) <= BigInt(event.duration_ns)))
+      ) {
+        telemetry.stageTimings.push({
+          stage: event.stage as NonNullable<
+            CandidateInvocationResult['stage_timings']
+          >[number]['stage'],
+          outcome: event.outcome as 'success' | 'error',
+          duration_ns: event.duration_ns,
+          ...(typeof event.time_to_first_token_ns === 'string'
+            ? { time_to_first_token_ns: event.time_to_first_token_ns }
+            : {}),
+        });
+        sawStageTiming = true;
+      } else {
+        streamValid = false;
+      }
     } else if (event.type === 'turn_complete') {
       turnComplete = true;
+    } else if (streamVersion === '1.0.0' && typeof event.type === 'string') {
+      // Preserve known telemetry when a newer producer adds a sanitized event.
     } else {
       streamValid = false;
     }
+    sawEvent = true;
   }
   telemetry.toolEventsObserved = streamValid && turnComplete;
   telemetry.tokenUsageObserved = streamValid && sawModelUsage;
+  telemetry.stageTimingsObserved = streamValid && turnComplete && sawStageTiming;
   return telemetry;
 }
 
@@ -367,6 +420,14 @@ export interface HeadlampCliCandidateOptions {
   processRunner?: ProcessRunner;
   /** Use the CLI's deterministic mock provider. Real evals must set this false. */
   useMockProvider?: boolean;
+  /** Selects the product session implementation while keeping all other CLI inputs fixed. */
+  sessionMode?: 'agent-harness' | 'legacy';
+  /** Prevents the product CLI from exposing cluster tools when observations are pre-supplied. */
+  suppliedEvidenceOnly?: boolean;
+  /** Requires the harness to use the strict diagnosis response contract. */
+  structuredDiagnosis?: boolean;
+  /** Requests the compact semantic provider contract and deterministic full expansion. */
+  compactStructuredOutput?: boolean;
   /** Explicit pricing snapshot used to estimate configured usage. */
   pricing?: TokenPricingSnapshot;
 }
@@ -522,6 +583,19 @@ const REPAIR_SIDECAR_INSTRUCTION =
   'Do not rename or add properties. Propose the action only; ' +
   'do not execute it.';
 
+const COMPACT_DIAGNOSIS_INSTRUCTION =
+  '\n\nUse the native response schema to return only the semantic diagnosis fields: ' +
+  'alternative_dispositions, uncertainty, and proposed_actions. Do not repeat evidence IDs, resource ' +
+  'references, or observed facts; the trusted evidence ledger is reconstructed locally. Return exactly one ' +
+  'proposed action with operation "no_action". If the evidence cannot determine one cause, set is_uncertain ' +
+  'true and list distinct, independently testable mechanisms as separate concise alternatives.';
+
+const COMPACT_REPAIR_INSTRUCTION =
+  '\n\nUse the native response schema to return a compact diagnosis plus proposed_action.option_index. ' +
+  'The option index is zero-based and must select one supplied allowed repair option. Do not repeat evidence ' +
+  'IDs, observed facts, targets, patches, or the evidence digest; trusted fields are reconstructed locally. ' +
+  'Propose the action only; do not execute it.';
+
 /**
  * Builds a candidate adapter around the product Headlamp CLI process. Each
  * invocation receives a fresh Headlamp data directory that is removed in a
@@ -537,18 +611,48 @@ export function createHeadlampCliCandidate(
 ): CandidateAdapter {
   const timeoutMs = options.timeoutMs ?? 120_000;
   const runProcess = options.processRunner ?? createRealProcessRunner();
+  const sessionMode = options.sessionMode ?? 'agent-harness';
+  const suppliedEvidenceOnly = options.suppliedEvidenceOnly ?? true;
+  const structuredDiagnosis =
+    options.structuredDiagnosis ??
+    (sessionMode === 'agent-harness' && options.useMockProvider === false);
+  const cliArgs = options.cliArgs ?? [];
+  const compactStructuredOutput =
+    options.compactStructuredOutput ??
+    (structuredDiagnosis && !cliArgs.includes('--full-structured-output'));
+  const structuredOutputModeArgs =
+    cliArgs.includes('--compact-structured-output') || cliArgs.includes('--full-structured-output')
+      ? []
+      : options.compactStructuredOutput === true
+      ? ['--compact-structured-output']
+      : options.compactStructuredOutput === false
+      ? ['--full-structured-output']
+      : [];
+  const candidateId = sessionMode === 'legacy' ? 'headlamp-cli-legacy' : 'headlamp-cli';
+  const runtimeEntry = existsSync(compiledCliEntry) ? compiledCliEntry : cliEntry;
+  const runtimeArgs = existsSync(compiledCliEntry)
+    ? [compiledCliEntry]
+    : ['--experimental-transform-types', cliEntry];
   const identity = headlampCandidateIdentity(
-    options.cliArgs ?? [],
+    candidateId,
+    cliArgs,
     options.useMockProvider !== false,
+    sessionMode,
+    suppliedEvidenceOnly,
+    structuredDiagnosis,
+    compactStructuredOutput,
+    cliArgs.includes('--api-key') || options.extraEnv?.HEADLAMP_AI_API_KEY !== undefined,
+    existsSync(compiledCliEntry) ? 'compiled' : 'native-typescript',
+    existsSync(runtimeEntry) ? sha256OfText(readFileSync(runtimeEntry, 'utf8')) : '',
     options.pricing
   );
 
   return {
-    id: 'headlamp-cli',
+    id: candidateId,
     kind: 'headlamp-cli',
     identity,
     async invoke(input: CandidateInvocationInput): Promise<CandidateInvocationResult> {
-      if (!existsSync(cliEntry) || !existsSync(tsxBin)) {
+      if (!existsSync(runtimeEntry)) {
         return {
           raw_text: '',
           submission_text: null,
@@ -590,18 +694,50 @@ export function createHeadlampCliCandidate(
         2
       );
       const repair = input.packet.required_submission_schema === 'repair_submission@1.0.0';
+      const repairContract = repair
+        ? {
+            evidence_digest: input.evidence_digest,
+            options: input.packet.action_policy!.allowed_patches.map(allowed => {
+              const target = input.action_targets?.find(
+                candidate =>
+                  `${candidate.kind.toLowerCase()}/${candidate.name}` === allowed.resource_ref
+              );
+              if (!target)
+                throw new Error(`repair target ${allowed.resource_ref} was not supplied`);
+              const patch = allowed.patch.map(operation => {
+                if (operation.op === 'remove') {
+                  throw new Error('structured repair does not support remove patch operations');
+                }
+                return operation;
+              });
+              return { target, patch };
+            }),
+          }
+        : undefined;
       const repairContext = repair
-        ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
-            input.packet.action_policy,
-            null,
-            2
-          )}\n\nAction targets (JSON):\n${JSON.stringify(
-            input.action_targets ?? [],
-            null,
-            2
-          )}\n\nCanonical evidence digest: ${input.evidence_digest}`
+        ? compactStructuredOutput
+          ? `\n\nAllowed repair options in zero-based order (JSON):\n${JSON.stringify(
+              repairContract?.options ?? [],
+              null,
+              2
+            )}`
+          : `\n\nAllowed action policy (JSON):\n${JSON.stringify(
+              input.packet.action_policy,
+              null,
+              2
+            )}\n\nAction targets (JSON):\n${JSON.stringify(
+              input.action_targets ?? [],
+              null,
+              2
+            )}\n\nCanonical evidence digest: ${input.evidence_digest}`
         : '';
-      const instruction = repair ? REPAIR_SIDECAR_INSTRUCTION : DIAGNOSIS_SIDECAR_INSTRUCTION;
+      const instruction = compactStructuredOutput
+        ? repair
+          ? COMPACT_REPAIR_INSTRUCTION
+          : COMPACT_DIAGNOSIS_INSTRUCTION
+        : repair
+        ? REPAIR_SIDECAR_INSTRUCTION
+        : DIAGNOSIS_SIDECAR_INSTRUCTION;
       const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${repairContext}${instruction}`;
 
       const start = process.hrtime.bigint();
@@ -609,8 +745,33 @@ export function createHeadlampCliCandidate(
       let telemetryText = '';
       try {
         result = await runProcess(
-          tsxBin,
-          [cliEntry, ...(options.cliArgs ?? []), '--telemetry-file', telemetryPath, prompt],
+          process.execPath,
+          [
+            ...runtimeArgs,
+            ...cliArgs,
+            ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
+            ...(suppliedEvidenceOnly ? ['--supplied-evidence-only'] : []),
+            ...(structuredDiagnosis && !repair ? ['--structured-diagnosis'] : []),
+            ...structuredOutputModeArgs,
+            ...(structuredDiagnosis && repair
+              ? [
+                  '--structured-repair',
+                  '--structured-repair-contract',
+                  JSON.stringify(repairContract),
+                ]
+              : []),
+            ...(structuredDiagnosis
+              ? [
+                  '--structured-diagnosis-evidence-ids',
+                  JSON.stringify(input.observations.map(observation => observation.evidence_id)),
+                  '--structured-diagnosis-observations',
+                  observationSummary,
+                ]
+              : []),
+            '--telemetry-file',
+            telemetryPath,
+            prompt,
+          ],
           baseEnv,
           timeoutMs
         );
@@ -622,7 +783,7 @@ export function createHeadlampCliCandidate(
       const telemetry = parseCliTelemetry(telemetryText);
       const observedTelemetry: Pick<
         CandidateInvocationResult,
-        'tool_events' | 'token_usage' | 'model_invocations'
+        'tool_events' | 'token_usage' | 'model_invocations' | 'stage_timings'
       > = {
         ...(telemetry.toolEventsObserved ? { tool_events: telemetry.toolEvents } : {}),
         ...(telemetry.tokenUsageObserved
@@ -631,6 +792,7 @@ export function createHeadlampCliCandidate(
               model_invocations: telemetry.modelInvocations,
             }
           : {}),
+        ...(telemetry.stageTimingsObserved ? { stage_timings: telemetry.stageTimings } : {}),
       };
       const configuredUsageEstimate =
         telemetry.tokenUsageObserved && options.pricing
@@ -674,8 +836,16 @@ export function createHeadlampCliCandidate(
 }
 
 function headlampCandidateIdentity(
+  candidateId: string,
   cliArgs: string[],
   useMockProvider: boolean,
+  sessionMode: 'agent-harness' | 'legacy',
+  suppliedEvidenceOnly: boolean,
+  structuredDiagnosis: boolean,
+  compactStructuredOutput: boolean,
+  credentialConfigured: boolean,
+  runtimeMode: 'compiled' | 'native-typescript',
+  candidateEntryDigest: string,
   pricing?: TokenPricingSnapshot
 ): CandidateAdapter['identity'] {
   const argument = (name: string): string | null => {
@@ -688,11 +858,16 @@ function headlampCandidateIdentity(
     model: argument('--model'),
     deployment_name: argument('--deployment-name'),
     endpoint_digest: endpoint ? sha256OfText(endpoint) : null,
-    credential_configured: argument('--api-key') !== null,
+    credential_configured: credentialConfigured,
     mock_provider: useMockProvider,
+    session_mode: sessionMode,
+    retrieval_mode: suppliedEvidenceOnly ? 'supplied-evidence-only' : 'live',
+    structured_output: structuredDiagnosis,
+    structured_output_mode: compactStructuredOutput ? 'compact' : 'full',
+    runtime_mode: runtimeMode,
   };
   return {
-    candidate_id: 'headlamp-cli',
+    candidate_id: candidateId,
     kind: 'headlamp-cli',
     configuration_digest: sha256OfJson(safeConfiguration),
     ...safeConfiguration,
@@ -709,9 +884,7 @@ function headlampCandidateIdentity(
         'package.json',
         'package-lock.json',
       ]) !== '',
-    candidate_entry_digest: existsSync(cliEntry)
-      ? sha256OfText(readFileSync(cliEntry, 'utf8'))
-      : null,
+    candidate_entry_digest: candidateEntryDigest || null,
     dependency_lock_digest: existsSync(dependencyLock)
       ? sha256OfText(readFileSync(dependencyLock, 'utf8'))
       : null,

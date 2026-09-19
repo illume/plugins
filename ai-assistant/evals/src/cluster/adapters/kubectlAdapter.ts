@@ -175,6 +175,15 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     if (result.status !== 0 && !/already exists/.test(result.stderr)) {
       throw new Error(`failed to create namespace ${namespace}: ${result.stderr}`);
     }
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const serviceAccount = this.runner(
+        'kubectl',
+        this.kubectl(['get', 'serviceaccount', 'default', '-n', namespace])
+      );
+      if (serviceAccount.status === 0) return;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    throw new Error(`default ServiceAccount was not ready in namespace ${namespace}`);
   }
 
   /**

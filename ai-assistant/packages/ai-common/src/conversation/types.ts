@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ToolCall } from '../tools/types';
-import type { AssistantRequestContext } from './context';
+import type { ToolCall } from '../tools/types.ts';
+import type { AssistantRequestContext } from './context.ts';
 
 /** Represents one step in an assistant's visible activity trace. */
 export interface AssistantActivityStep {

@@ -22,8 +22,8 @@ import {
   SystemMessage,
   ToolMessage,
 } from '@langchain/core/messages';
-import { getStoredToolCalls, hasFunctionPayload } from '../toolCalls';
-import type { ConversationMessage } from '../types';
+import { getStoredToolCalls, hasFunctionPayload } from '../toolCalls.ts';
+import type { ConversationMessage } from '../types.ts';
 
 /**
  * Converts conversation messages into LangChain message instances.

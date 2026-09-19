@@ -108,7 +108,7 @@ describe('ToolBase', () => {
 
     await langchainTool.invoke({});
 
-    expect(spyFn).toHaveBeenCalledWith({}, undefined, undefined);
+    expect(spyFn).toHaveBeenCalledWith({}, undefined, undefined, undefined);
     expect(spy.lastToolCallId).toBeUndefined();
     expect(spy.lastPendingPrompt).toBeUndefined();
   });

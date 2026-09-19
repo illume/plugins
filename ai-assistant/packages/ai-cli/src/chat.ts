@@ -14,20 +14,38 @@
  * limitations under the License.
  */
 
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
 import { DEFAULT_SKILLS_CONFIG } from '@headlamp-k8s/ai-common/skills/config';
 import { createMockSkillManager } from '@headlamp-k8s/ai-common/skills/testing/MockSkillManager';
 import { createMockKubernetesToolManager } from '@headlamp-k8s/ai-common/tools/testing/MockToolManager';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { execFileSync } from 'child_process';
+import { providerStrategy } from 'langchain';
 import * as readline from 'readline';
-import { createKubectlTool } from './kubectl.js';
-import { loadSkillsFromUrls } from './skills.js';
+import { createKubectlTool } from './kubectl.ts';
+import { loadSkillsFromUrls } from './skills.ts';
+import {
+  createCompactDiagnosisProviderSchema,
+  createCompactRepairProviderSchema,
+  createDiagnosisProviderSchema,
+  createRepairProviderSchema,
+  type StructuredDiagnosisObservation,
+  type StructuredRepairContract,
+  validateCompactDiagnosisSubmission,
+  validateCompactRepairSubmission,
+  validateDiagnosisSubmission,
+  validateRepairSubmission,
+} from './structuredDiagnosis.ts';
 
 interface KubectlContext {
   cluster: string;
   namespace: string;
 }
+
+const suppliedEvidenceContext =
+  'Supplied-evidence mode is active. Treat observations in the user request as the complete authorized evidence for this turn. Do not call tools. Produce the strongest supported answer from those observations, preserve explicit access or tool failures as evidence, and state uncertainty when the observations are insufficient.';
 
 /** Reads the active cluster and namespace without exposing kubeconfig credentials. */
 export function detectKubectlContext(
@@ -59,6 +77,9 @@ export function detectKubectlContext(
  * @param skillSources  Git URLs for skill sources (e.g. https://github.com/microsoft/azure-skills).
  * @param mockSkills    When true, inject a built-in mock skill set (no network needed).
  * @param mockTools     When true, inject mock Kubernetes tool results (no cluster needed).
+ * @param model         Optional deterministic model override, used by tests.
+ * @param suppliedEvidenceOnly When true, bind no cluster tools and use only request observations.
+ * @param structuredDiagnosis When true, enforce the diagnosis response schema in the harness.
  */
 export async function createManager(
   providerId: string,
@@ -69,29 +90,109 @@ export async function createManager(
     mockSkills?: boolean;
     mockTools?: boolean;
     telemetryObserver?: AssistantTelemetryObserver;
+    legacySession?: boolean;
+    model?: BaseChatModel;
+    suppliedEvidenceOnly?: boolean;
+    structuredDiagnosis?: boolean;
+    structuredRepair?: boolean;
+    compactStructuredOutput?: boolean;
+    structuredRepairContract?: StructuredRepairContract;
+    structuredDiagnosisEvidenceIds?: string[];
+    structuredDiagnosisObservations?: StructuredDiagnosisObservation[];
   } = {}
 ): Promise<LangChainAssistantSession> {
+  if (options.structuredDiagnosis && options.structuredRepair) {
+    throw new Error('Structured diagnosis and structured repair are mutually exclusive');
+  }
+  const compactStructuredOutput =
+    options.compactStructuredOutput ??
+    Boolean(options.structuredDiagnosis || options.structuredRepair);
+  if (compactStructuredOutput && !options.structuredDiagnosis && !options.structuredRepair) {
+    throw new Error('Compact structured output requires structured diagnosis or repair');
+  }
+  if (
+    (options.structuredDiagnosis || options.structuredRepair) &&
+    providerId === 'mock-testing-model'
+  ) {
+    throw new Error('Structured output requires a provider with native structured output');
+  }
+  if (options.structuredRepair && !options.structuredRepairContract) {
+    throw new Error('Structured repair requires an exact repair contract');
+  }
   const toolManager = options.mockTools ? createMockKubernetesToolManager() : undefined;
-  const manager = new LangChainAssistantSession(
-    providerId,
-    config,
-    [],
-    toolManager || options.telemetryObserver
-      ? { toolManager, telemetryObserver: options.telemetryObserver }
-      : undefined
-  );
-  const kubectlContext = options.mockTools ? undefined : detectKubectlContext();
+  const commonOptions = {
+    toolManager,
+    telemetryObserver: options.telemetryObserver,
+    model: options.model,
+  };
+  const structuredDiagnosisEvidenceIds = options.structuredDiagnosisObservations?.length
+    ? options.structuredDiagnosisObservations.map(observation => observation.evidence_id)
+    : options.structuredDiagnosisEvidenceIds ?? [];
+  const manager = options.legacySession
+    ? new LangChainAssistantSession(providerId, config, [], commonOptions)
+    : new AgentHarnessSession(providerId, config, [], {
+        ...commonOptions,
+        responseFormat: options.structuredDiagnosis
+          ? providerStrategy(
+              compactStructuredOutput
+                ? createCompactDiagnosisProviderSchema()
+                : createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds)
+            )
+          : options.structuredRepair
+          ? providerStrategy(
+              compactStructuredOutput
+                ? createCompactRepairProviderSchema(options.structuredRepairContract!)
+                : createRepairProviderSchema(
+                    structuredDiagnosisEvidenceIds,
+                    options.structuredRepairContract!
+                  )
+            )
+          : undefined,
+        validateStructuredResponse: options.structuredDiagnosis
+          ? response =>
+              compactStructuredOutput
+                ? validateCompactDiagnosisSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    structuredDiagnosisEvidenceIds
+                  )
+                : validateDiagnosisSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    structuredDiagnosisEvidenceIds
+                  )
+          : options.structuredRepair
+          ? response =>
+              compactStructuredOutput
+                ? validateCompactRepairSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    options.structuredRepairContract!
+                  )
+                : validateRepairSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    options.structuredRepairContract!
+                  )
+          : undefined,
+      });
+  const kubectlContext =
+    options.mockTools || options.suppliedEvidenceOnly ? undefined : detectKubectlContext();
   if (kubectlContext) {
     manager.setContext(
       `Kubernetes cluster: ${kubectlContext.cluster}\nCurrent namespace: ${kubectlContext.namespace}\n` +
         `Use ${kubectlContext.namespace} for namespaced Kubernetes API requests unless the user explicitly names another namespace.`
     );
   }
-  const kubectlTool = createKubectlTool({
-    readOnly: !options.allowMutations,
-    namespace: kubectlContext?.namespace,
-  });
-  await manager.enableDirectToolCalling([kubectlTool]);
+  if (options.suppliedEvidenceOnly) {
+    manager.setContext(suppliedEvidenceContext);
+  } else {
+    const kubectlTool = createKubectlTool({
+      readOnly: !options.allowMutations,
+      namespace: kubectlContext?.namespace,
+    });
+    await manager.enableDirectToolCalling([kubectlTool]);
+  }
 
   // Inject mock skills when requested (no network needed — good for demos and tests)
   if (options.mockSkills) {

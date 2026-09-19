@@ -18,7 +18,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { cosineSimilarity } from '../../embeddings/cosineSimilarity';
 import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider';
 import { EmbeddingToolRouter } from './EmbeddingToolRouter';
-import { ToolInfo } from './ToolRouter';
+import type { ToolInfo } from './ToolRouter';
 
 /** Deterministic fake embeddings for testing. */
 class FakeEmbeddings implements EmbeddingProvider {

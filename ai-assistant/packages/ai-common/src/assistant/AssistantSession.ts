@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage } from '../conversation/types';
-import type { KubernetesAssistantContext } from '../kubernetes/types';
+import type { ConversationMessage } from '../conversation/types.ts';
+import type { KubernetesAssistantContext } from '../kubernetes/types.ts';
 
 /** Stateful assistant conversation lifecycle independent of any model framework. */
 export abstract class AssistantSession {

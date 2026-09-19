@@ -21,6 +21,7 @@ interface ElectronMCPApi {
     args: Record<string, any>,
     toolCallId?: string
   ) => Promise<MCPResponse>;
+  cancelTool?: (toolCallId: string) => Promise<MCPResponse>;
   getStatus: () => Promise<{ isInitialized: boolean; hasClient: boolean }>;
   resetClient: () => Promise<MCPResponse>;
   getConfig: () => Promise<{ success: boolean; config?: any; error?: string }>;

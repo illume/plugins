@@ -7,8 +7,8 @@
  */
 
 import type { RunAgentParameters } from '@ag-ui/client';
-import { createScriptedAgent } from '../scripted/ScriptedAgent';
-import type { ScriptedAgent, ScriptedAgentOptions } from '../scripted/types';
+import { createScriptedAgent } from '../scripted/ScriptedAgent.ts';
+import type { ScriptedAgent, ScriptedAgentOptions } from '../scripted/types.ts';
 
 /** Subscriber callbacks matching the ag-ui event interface used by HolmesAgent. */
 export interface AgentSubscriber {

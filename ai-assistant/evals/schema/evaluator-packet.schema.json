@@ -86,9 +86,65 @@
         "items": { "type": "string" }
       }
     },
-    "secret_canary": { "type": "string" }
+    "secret_canary": { "type": "string" },
+    "issues": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/issue" }
+    }
   },
   "$defs": {
+    "issue": {
+      "type": "object",
+      "required": ["issue_id", "accepted_fact_sets", "contradiction_facts", "expects_uncertainty"],
+      "properties": {
+        "issue_id": { "type": "string", "minLength": 1 },
+        "accepted_fact_sets": {
+          "type": "array",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/fact" } }
+        },
+        "required_evidence_relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relation" }
+        },
+        "contradiction_facts": { "type": "array", "items": { "$ref": "#/$defs/fact" } },
+        "expects_uncertainty": { "type": "boolean" },
+        "min_hypotheses_if_uncertain": { "type": "number" },
+        "accepted_hypotheses_if_uncertain": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "accepted_hypothesis_aliases_if_uncertain": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "relation_id",
+        "operator",
+        "left_resource_ref",
+        "left_field_path",
+        "right_resource_ref_prefix",
+        "right_field_path"
+      ],
+      "properties": {
+        "relation_id": { "type": "string", "minLength": 1 },
+        "operator": { "type": "string", "enum": ["all_kubernetes_cpu_less_than"] },
+        "left_resource_ref": { "type": "string", "minLength": 1 },
+        "left_field_path": { "type": "string", "minLength": 1 },
+        "right_resource_ref_prefix": { "type": "string", "minLength": 1 },
+        "right_field_path": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
     "fact": {
       "type": "object",
       "required": ["fact_id", "resource_ref", "field_path", "observed_value"],

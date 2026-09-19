@@ -3,9 +3,9 @@
  * for tool-response processing.
  */
 
-import type { ConversationMessage as Prompt } from '../../conversation/types';
-import type { UserContext } from '../../mcp/tools/types';
-import { getIntelligentDefault } from '../../prompts/buildToolArgumentPrompt';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
+import type { UserContext } from '../../mcp/tools/types.ts';
+import { getIntelligentDefault } from '../../prompts/buildToolArgumentPrompt.ts';
 
 // ---------------------------------------------------------------------------
 // isRegularConversationMessage

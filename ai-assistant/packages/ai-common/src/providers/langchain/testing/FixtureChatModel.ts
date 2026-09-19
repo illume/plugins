@@ -16,7 +16,7 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
-import { DEMO_CLUSTER_EXPLORATION, DIAGNOSIS_FIXTURES, GENERAL_FIXTURES } from './modelFixtures.js';
+import { DEMO_CLUSTER_EXPLORATION, DIAGNOSIS_FIXTURES, GENERAL_FIXTURES } from './modelFixtures.ts';
 
 /**
  * Extracts text from the message content forms used by test chat models.

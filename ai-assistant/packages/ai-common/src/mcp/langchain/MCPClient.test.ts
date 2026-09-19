@@ -24,7 +24,7 @@ import type { MCPClient, MCPConfirmationHandler, MCPSettingsProvider } from './M
 interface CoreToolDouble {
   name: string;
   schema: unknown;
-  invoke(input: Record<string, unknown>): Promise<unknown>;
+  invoke(input: Record<string, unknown>, config?: { signal?: AbortSignal }): Promise<unknown>;
 }
 
 interface CoreToolStateDouble {
@@ -390,6 +390,68 @@ describe('MCPClient#executeTool', () => {
     privateCore(client).mcpToolState = null;
     const res = await client.executeTool('x.y', {}, 'call-5');
     expect(res).toBeUndefined();
+  });
+
+  it('cancels the correlated in-flight tool invocation', async () => {
+    const { MCPClient: MCPClient } = await import('./MCPClient');
+    const client = new MCPClient(cfgPath, makeSettingsProvider());
+    let receivedSignal: AbortSignal | undefined;
+    const invoke = vi.fn(
+      (_input: Record<string, unknown>, config?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          receivedSignal = config?.signal;
+          config?.signal?.addEventListener(
+            'abort',
+            () => reject(new Error('tool invocation aborted')),
+            { once: true }
+          );
+        })
+    );
+
+    privateCore(client).clientTools = [{ name: 'serverA.tool1', schema: {}, invoke }];
+    privateCore(client).mcpToolState = {
+      isToolEnabled: vi.fn().mockReturnValue(true),
+      getToolStats: vi.fn().mockReturnValue(null),
+      recordToolUsage: vi.fn(),
+    };
+    privateCore(client).isClientInitialized = true;
+    privateCore(client).client = {};
+
+    const pending = client.executeTool('serverA.tool1', {}, 'call-cancel');
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalled());
+
+    expect(client.cancelTool('call-cancel')).toEqual({ success: true });
+    await expect(pending).resolves.toMatchObject({
+      success: false,
+      error: 'tool invocation aborted',
+      toolCallId: 'call-cancel',
+    });
+    expect(receivedSignal?.aborted).toBe(true);
+    expect(client.cancelTool('call-cancel').success).toBe(false);
+  });
+
+  it('registers cancellation before asynchronous initialization', async () => {
+    const { MCPClient: MCPClient } = await import('./MCPClient');
+    const client = new MCPClient(cfgPath, makeSettingsProvider());
+    const invoke = vi.fn();
+    privateCore(client).initializeClient = vi.fn(() => new Promise<void>(() => undefined));
+    privateCore(client).clientTools = [{ name: 'serverA.tool1', schema: {}, invoke }];
+    privateCore(client).mcpToolState = {
+      isToolEnabled: vi.fn().mockReturnValue(true),
+      getToolStats: vi.fn().mockReturnValue(null),
+      recordToolUsage: vi.fn(),
+    };
+    privateCore(client).client = {};
+
+    const pending = client.executeTool('serverA.tool1', {}, 'call-during-init');
+    expect(client.cancelTool('call-during-init')).toEqual({ success: true });
+
+    await expect(pending).resolves.toMatchObject({
+      success: false,
+      error: 'MCP tool execution cancelled',
+      toolCallId: 'call-during-init',
+    });
+    expect(invoke).not.toHaveBeenCalled();
   });
 });
 

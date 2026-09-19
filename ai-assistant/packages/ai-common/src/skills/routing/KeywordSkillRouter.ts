@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import {
-  DEFAULT_MAX_TOTAL_SKILL_SIZE_BYTES,
-  formatSkillsForPrompt,
-  ParsedSkill,
-} from '../parseSkill';
+import type { ParsedSkill } from '../parseSkill.ts';
+import { DEFAULT_MAX_TOTAL_SKILL_SIZE_BYTES, formatSkillsForPrompt } from '../parseSkill.ts';
 
 /**
  * A scored skill with a relevance score for a given query.

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { MCPServer, MCPSettings } from '../types';
+import type { MCPServer, MCPSettings } from '../types.ts';
 
 /** Server name used for the Azure Kubernetes Service MCP server. */
 export const AKS_MCP_SERVER_NAME = 'aks-mcp';

@@ -2,7 +2,9 @@
   "extends": "./node_modules/@kinvolk/headlamp-plugin/config/plugins-tsconfig.json",
   "compilerOptions": {
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["./src/**/*"]
 }

@@ -53,9 +53,9 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import type { LangChainToolRuntime } from '../../assistant/langchain/LangChainToolBinding';
-import type { ConversationMessage as Prompt } from '../../conversation/types';
-import type { ToolExecutionResult } from '../ToolRuntime';
+import type { LangChainToolRuntime } from '../../assistant/langchain/LangChainToolBinding.ts';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
+import type { ToolExecutionResult } from '../ToolRuntime.ts';
 
 // ---------------------------------------------------------------------------
 // Types

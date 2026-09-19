@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { ParsedSkill } from '../parseSkill';
+import type { ParsedSkill } from '../parseSkill';
 import {
   computeRelevanceScore,
   DEFAULT_ROUTER_CONFIG,

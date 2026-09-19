@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { UserContext } from '../mcp/tools/types';
+import type { UserContext } from '../mcp/tools/types.ts';
 
 /** JSON Schema fields rendered into the argument-preparation prompt. */
 interface SchemaField {

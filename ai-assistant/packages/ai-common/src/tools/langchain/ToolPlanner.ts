@@ -17,7 +17,7 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
-import type { ConversationMessage as Prompt } from '../../conversation/types';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
 
 /**
  * Extracts text from the content variants returned by chat providers.

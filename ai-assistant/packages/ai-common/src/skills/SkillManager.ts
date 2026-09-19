@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { isSkillEnabled, SkillsConfig } from './config';
-import { formatSkillsForPrompt, ParsedSkill } from './parseSkill';
-import { EmbeddingSkillRouter } from './routing/EmbeddingSkillRouter';
-import {
-  DEFAULT_ROUTER_CONFIG,
-  routeAndFormatSkills,
-  SkillRouterConfig,
-} from './routing/KeywordSkillRouter';
-import { SkillFileSystem, SkillHttpClient, SkillLoader, SkillZipExtractor } from './SkillLoader';
+import type { SkillsConfig } from './config.ts';
+import { isSkillEnabled } from './config.ts';
+import type { ParsedSkill } from './parseSkill.ts';
+import { formatSkillsForPrompt } from './parseSkill.ts';
+import type { EmbeddingSkillRouter } from './routing/EmbeddingSkillRouter.ts';
+import type { SkillRouterConfig } from './routing/KeywordSkillRouter.ts';
+import { DEFAULT_ROUTER_CONFIG, routeAndFormatSkills } from './routing/KeywordSkillRouter.ts';
+import type { SkillFileSystem, SkillHttpClient, SkillZipExtractor } from './SkillLoader.ts';
+import { SkillLoader } from './SkillLoader.ts';
 
 /** Optional per-source cache shared across SkillManager instances. */
 export interface SkillCache {
@@ -249,7 +249,10 @@ export class SkillManager {
    */
   async loadAllSkillsWithErrors(
     config: SkillsConfig,
-    onProgress?: (sourceUrl: string, progress: import('./SkillLoader').SkillLoadProgress) => void,
+    onProgress?: (
+      sourceUrl: string,
+      progress: import('./SkillLoader.ts').SkillLoadProgress
+    ) => void,
     forceReload = false
   ): Promise<{
     /** Skills loaded successfully from enabled sources. */

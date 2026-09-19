@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { KubernetesContextResource } from '../types';
+import type { KubernetesContextResource } from '../types.ts';
 
 /**
  * Context Generator - Creates human-readable context descriptions for the AI

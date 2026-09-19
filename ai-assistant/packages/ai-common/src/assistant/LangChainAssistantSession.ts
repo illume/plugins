@@ -14,118 +14,115 @@
  * limitations under the License.
  */
 
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { AIMessageChunk, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { AIMessageChunk, BaseMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-import { buildUserContext } from '../conversation/buildUserContext';
-import { isConversationalMessage } from '../conversation/classifyMessage';
-import { extractTextContent, processToolContent } from '../conversation/content';
+import { buildUserContext } from '../conversation/buildUserContext.ts';
+import { isConversationalMessage } from '../conversation/classifyMessage.ts';
+import { extractTextContent, processToolContent } from '../conversation/content.ts';
 import {
   findLastAssistantWithTools,
   getLastAssistantMessage,
   hasToolResponses,
   sanitizeToolAlignment,
   validateToolCallAlignment,
-} from '../conversation/history';
-import { convertPromptsToMessages } from '../conversation/langchain/messages';
-import type { ConversationMessage } from '../conversation/types';
-import type { ToolClient } from '../mcp/client/ToolClient';
-import { MCPArgumentProcessor } from '../mcp/tools/ArgumentProcessor';
-import type { MCPToolSchema, UserContext } from '../mcp/tools/types';
-import { basePrompt } from '../prompts/baseAssistantPrompt';
+} from '../conversation/history.ts';
+import { convertPromptsToMessages } from '../conversation/langchain/messages.ts';
+import type { ConversationMessage } from '../conversation/types.ts';
+import type { ToolClient } from '../mcp/client/ToolClient.ts';
+import { MCPArgumentProcessor } from '../mcp/tools/ArgumentProcessor.ts';
+import type { MCPToolSchema, UserContext } from '../mcp/tools/types.ts';
+import { basePrompt } from '../prompts/baseAssistantPrompt.ts';
 import {
   buildSystemPrompt,
   buildToolResponseSystemPrompt,
   NO_K8S_TOOLS_PROMPT,
-} from '../prompts/buildSystemPrompt';
+} from '../prompts/buildSystemPrompt.ts';
 import {
   createArgumentPreparationPrompt,
   getIntelligentDefault,
-} from '../prompts/buildToolArgumentPrompt';
+} from '../prompts/buildToolArgumentPrompt.ts';
 import {
   apiErrorPromptTemplate,
   toolFailurePromptTemplate,
-} from '../prompts/langchain/errorPrompts';
+} from '../prompts/langchain/errorPrompts.ts';
 import {
   canUseDirectToolCalling,
   createChatModel,
   isCopilotClaudeModel,
-} from '../providers/createChatModel';
-import { ProviderSettings } from '../providers/savedConfigs';
-import { redactSecrets } from '../security/redactSecrets';
-import { DEFAULT_SKILLS_CONFIG, SkillsConfig } from '../skills/config';
-import { SkillManager } from '../skills/SkillManager';
-import {
-  inlineToolApprovalManager,
-  ToolConfirmationEvent,
-} from '../tools/approval/InlineToolApprovalManager';
+} from '../providers/createChatModel.ts';
+import type { ProviderSettings } from '../providers/savedConfigs.ts';
+import { redactSecrets } from '../security/redactSecrets.ts';
+import type { SkillsConfig } from '../skills/config.ts';
+import { DEFAULT_SKILLS_CONFIG } from '../skills/config.ts';
+import type { SkillManager } from '../skills/SkillManager.ts';
+import type { ToolConfirmationEvent } from '../tools/approval/InlineToolApprovalManager.ts';
+import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager.ts';
 import {
   identifyEnhancedFields,
   parseArgumentsFromResponse,
-} from '../tools/arguments/parseToolArguments';
+} from '../tools/arguments/parseToolArguments.ts';
+import type { NormalizedToolCall } from '../tools/calls/processToolCalls.ts';
 import {
   buildDisabledToolsMessage,
   filterToolCallsByEnabled,
   mergeApprovedArguments,
-  NormalizedToolCall,
   normalizeLLMToolCalls,
   shouldProcessToolFollowUp,
-} from '../tools/calls/processToolCalls';
-import { getToolDescription } from '../tools/catalog/getToolDescription';
-import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../tools/catalog/toolDefinitions';
-import type { KubernetesToolContext } from '../tools/kubernetes/context';
-import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion';
-import { LangChainToolManager } from '../tools/langchain/LangChainToolManager';
-import { RecommendedTool, ToolPlanner } from '../tools/langchain/ToolPlanner';
+} from '../tools/calls/processToolCalls.ts';
+import { getToolDescription } from '../tools/catalog/getToolDescription.ts';
+import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../tools/catalog/toolDefinitions.ts';
+import type { KubernetesToolContext } from '../tools/kubernetes/context.ts';
+import { containsKubectlSuggestion } from '../tools/kubernetes/detectCliSuggestion.ts';
+import { LangChainToolManager } from '../tools/langchain/LangChainToolManager.ts';
+import type { RecommendedTool } from '../tools/langchain/ToolPlanner.ts';
+import { ToolPlanner } from '../tools/langchain/ToolPlanner.ts';
+import type { OrchestrationTask } from '../tools/orchestration/prepareToolPlan.ts';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
   DEFAULT_OPTIONAL_TOOL_TIMEOUT_MS,
   filterApprovedOrchestrationTools,
-  OrchestrationTask,
   shouldCacheResponse,
   waitForOrchestrationResults,
-} from '../tools/orchestration/prepareToolPlan';
+} from '../tools/orchestration/prepareToolPlan.ts';
 import {
   assembleFallbackResponseContent,
   buildConfirmationPlaceholderJson,
   buildFailedOperationsFallback,
   buildToolExecutionErrorJson,
   detectToolResponseError,
-} from '../tools/results/buildToolResponse';
+} from '../tools/results/buildToolResponse.ts';
+import type { ToolResult } from '../tools/results/formatToolResults.ts';
 import {
   aggregateToolResults,
   formatToolResultsForLLM,
-  ToolResult,
-} from '../tools/results/formatToolResults';
+} from '../tools/results/formatToolResults.ts';
 import {
   buildToolDataAnalysisRequest,
   fillMissingRequiredFields,
   isRegularConversationMessage,
-} from '../tools/results/prepareToolResponse';
-import type { ToolCall } from '../tools/types';
-import AssistantSession from './AssistantSession';
-import {
-  CacheEntry,
-  evictExpired,
-  evictOldestToFit,
-  generateCacheKey,
-} from './cache/responseCache';
-import { isApiRelatedError, toUserFriendlyError } from './errors/formatAssistantError';
-import type { LangChainToolRuntime } from './langchain/LangChainToolBinding';
+} from '../tools/results/prepareToolResponse.ts';
+import type { ToolCall } from '../tools/types.ts';
+import AssistantSession from './AssistantSession.ts';
+import type { CacheEntry } from './cache/responseCache.ts';
+import { evictExpired, evictOldestToFit, generateCacheKey } from './cache/responseCache.ts';
+import { isApiRelatedError, toUserFriendlyError } from './errors/formatAssistantError.ts';
+import type { LangChainToolRuntime } from './langchain/LangChainToolBinding.ts';
 import {
   createLLMResultCapture,
   mergeContentAcrossGenerations,
   mergeToolCallsAcrossGenerations,
-} from './langchain/mergeGenerations';
+} from './langchain/mergeGenerations.ts';
 import {
   getRecentToolResponses,
   isEmptyLLMContent,
   isMCPFormattedOutput,
   mapCorrectedResponseToolCalls,
-} from './responses/inspectResponse';
-import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry';
+} from './responses/inspectResponse.ts';
+import type { AssistantTelemetryEvent, AssistantTelemetryObserver } from './telemetry.ts';
 
 /** Input required to invoke a prompt-template chain. */
 interface ChainInput {

@@ -41,8 +41,8 @@
  * ```
  */
 
-import type { SkillsConfig } from '../config';
-import type { ParsedSkill } from '../parseSkill';
+import type { SkillsConfig } from '../config.ts';
+import type { ParsedSkill } from '../parseSkill.ts';
 
 export interface MockSkillManagerOptions {
   /**

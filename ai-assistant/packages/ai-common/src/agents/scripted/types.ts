@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { AgentProgressCallback, AgentThinkingStep } from '../types';
+import type { AgentProgressCallback, AgentThinkingStep } from '../types.ts';
 
 /** A single simulated tool call in a scripted agent session. */
 export interface ScriptedToolCall {

@@ -19,15 +19,15 @@ import type { StructuredToolInterface, ToolRunnableConfig } from '@langchain/cor
 import { tool } from '@langchain/core/tools';
 import type { AgentMiddleware } from 'langchain';
 import { createMiddleware, ToolInvocationError } from 'langchain';
-import { extractTextContent } from '../../conversation/content';
-import type { ConversationMessage } from '../../conversation/types';
-import { redactSecrets } from '../../security/redactSecrets';
-import type { ApprovalManagerContext } from '../../tools/approval/InlineToolApprovalManager';
-import { inlineToolApprovalManager } from '../../tools/approval/InlineToolApprovalManager';
-import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../../tools/catalog/toolDefinitions';
-import type { ToolRuntime } from '../../tools/ToolRuntime';
-import type { ToolExecutionResult } from '../../tools/ToolRuntime';
-import type { ToolCall } from '../../tools/types';
+import { extractTextContent } from '../../conversation/content.ts';
+import type { ConversationMessage } from '../../conversation/types.ts';
+import { redactSecrets } from '../../security/redactSecrets.ts';
+import type { ApprovalManagerContext } from '../../tools/approval/InlineToolApprovalManager.ts';
+import { inlineToolApprovalManager } from '../../tools/approval/InlineToolApprovalManager.ts';
+import { isBuiltInTool, isSensitiveBuiltInToolCall } from '../../tools/catalog/toolDefinitions.ts';
+import type { ToolRuntime } from '../../tools/ToolRuntime.ts';
+import type { ToolExecutionResult } from '../../tools/ToolRuntime.ts';
+import type { ToolCall } from '../../tools/types.ts';
 
 /** Runtime surface needed to expose existing tools through `createAgent`. */
 export interface AgentToolRuntime extends ToolRuntime {

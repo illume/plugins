@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage } from '../conversation/types';
+import type { ConversationMessage } from '../conversation/types.ts';
 
 /** Model-independent metadata for one available tool. */
 export interface RuntimeToolInfo {

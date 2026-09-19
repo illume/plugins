@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { AgentSubscriber, HttpAgent, RunAgentParameters } from '@ag-ui/client';
+import type { AgentSubscriber, RunAgentParameters } from '@ag-ui/client';
+import { HttpAgent } from '@ag-ui/client';
 
 /** Host globals injected by Headlamp, Electron, or Docker Desktop. */
 interface HeadlampHostWindow {

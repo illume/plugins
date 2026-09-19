@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ProviderSettings, StoredProviderConfig } from './savedConfigs';
+import type { ProviderSettings, StoredProviderConfig } from './savedConfigs.ts';
 
 /**
  * Auto-detection of AI providers (GitHub Copilot, Azure OpenAI, Ollama).

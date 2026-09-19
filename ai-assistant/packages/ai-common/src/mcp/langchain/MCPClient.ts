@@ -20,11 +20,11 @@ import {
   hasClusterDependentServers,
   makeMcpServers,
   validateToolArgs,
-} from '../config/serverConfig';
-import { FileStorage } from '../persistence/FileStorage';
-import { parseMCPToolName } from '../tools/toolName';
-import { ToolStateStore } from '../tools/ToolStateStore';
-import type { MCPSettings, MCPToolsConfig, MCPToolState } from '../types';
+} from '../config/serverConfig.ts';
+import { FileStorage } from '../persistence/FileStorage.ts';
+import { parseMCPToolName } from '../tools/toolName.ts';
+import { ToolStateStore } from '../tools/ToolStateStore.ts';
+import type { MCPSettings, MCPToolsConfig, MCPToolState } from '../types.ts';
 
 /**
  * Provides MCP settings (load/save) — implemented by consumers

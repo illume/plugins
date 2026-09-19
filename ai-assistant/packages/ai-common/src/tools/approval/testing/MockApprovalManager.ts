@@ -42,8 +42,8 @@
  * ```
  */
 
-import type { ToolCall } from '../../types';
-import type { ToolApprovalHandler } from '../ToolApprovalManager';
+import type { ToolCall } from '../../types.ts';
+import type { ToolApprovalHandler } from '../ToolApprovalManager.ts';
 
 // ---------------------------------------------------------------------------
 // Types

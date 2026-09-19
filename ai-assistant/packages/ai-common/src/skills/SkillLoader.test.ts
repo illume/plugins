@@ -15,12 +15,12 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import type { SkillFileSystem } from './SkillLoader';
 import {
   computeContentHash,
   isPathWithinBase,
   isPinnedRef,
   isValidGitUrl,
-  SkillFileSystem,
   SkillLoader,
   WELL_KNOWN_SKILL_DIRS,
 } from './SkillLoader';

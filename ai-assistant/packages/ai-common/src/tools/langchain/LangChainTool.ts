@@ -15,9 +15,9 @@
  */
 
 import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
-import type { ConversationMessage as Prompt } from '../../conversation/types';
-import type { ToolExecutionResult } from '../ToolRuntime';
+import type { z } from 'zod';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
+import type { ToolExecutionResult } from '../ToolRuntime.ts';
 
 /** Configuration used to register a tool with the AI tool system. */
 export interface ToolConfig {

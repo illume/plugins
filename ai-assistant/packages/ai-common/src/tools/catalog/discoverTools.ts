@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { isToolEnabled } from '../settings/enabledTools';
-import { getAllAvailableTools, type ToolInfo } from './toolDefinitions';
+import { isToolEnabled } from '../settings/enabledTools.ts';
+import { getAllAvailableTools, type ToolInfo } from './toolDefinitions.ts';
 
 /** Loads persisted MCP tool configuration from a host environment. */
 export type MCPToolCatalogLoader = () => Promise<{

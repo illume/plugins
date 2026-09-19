@@ -19,7 +19,8 @@ import type { BaseMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
-import { RecommendedTool, ToolPlanner } from './ToolPlanner';
+import type { RecommendedTool } from './ToolPlanner';
+import { ToolPlanner } from './ToolPlanner';
 
 /** Private static orchestrator surface exercised by text extraction tests. */
 interface OrchestratorTestHarness {

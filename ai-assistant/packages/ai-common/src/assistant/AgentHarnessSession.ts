@@ -15,22 +15,23 @@
  */
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { AIMessage, BaseMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import type { ResponseFormat } from 'langchain';
 import { MultipleStructuredOutputsError, StructuredOutputParsingError } from 'langchain';
-import { AgentToolAdapter, AgentToolExecutionHalt } from '../agents/langchain/AgentToolAdapter';
-import { createAgentHarness } from '../agents/langchain/createAgentHarness';
-import type { ConversationMessage } from '../conversation/types';
-import type { ToolClient } from '../mcp/client/ToolClient';
-import type { ProviderSettings } from '../providers/savedConfigs';
-import { redactSecrets } from '../security/redactSecrets';
-import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager';
-import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse';
-import type { ToolExecutionResult } from '../tools/ToolRuntime';
-import type { LangChainToolRuntime } from './langchain/LangChainToolBinding';
-import LangChainAssistantSession from './LangChainAssistantSession';
-import type { AssistantTelemetryObserver, AssistantTelemetryStage } from './telemetry';
+import { AgentToolAdapter, AgentToolExecutionHalt } from '../agents/langchain/AgentToolAdapter.ts';
+import { createAgentHarness } from '../agents/langchain/createAgentHarness.ts';
+import type { ConversationMessage } from '../conversation/types.ts';
+import type { ToolClient } from '../mcp/client/ToolClient.ts';
+import type { ProviderSettings } from '../providers/savedConfigs.ts';
+import { redactSecrets } from '../security/redactSecrets.ts';
+import { inlineToolApprovalManager } from '../tools/approval/InlineToolApprovalManager.ts';
+import { buildConfirmationPlaceholderJson } from '../tools/results/buildToolResponse.ts';
+import type { ToolExecutionResult } from '../tools/ToolRuntime.ts';
+import type { LangChainToolRuntime } from './langchain/LangChainToolBinding.ts';
+import LangChainAssistantSession from './LangChainAssistantSession.ts';
+import type { AssistantTelemetryObserver, AssistantTelemetryStage } from './telemetry.ts';
 
 /** Options accepted by the createAgent-backed assistant session. */
 export interface AgentHarnessSessionOptions {

@@ -20,7 +20,7 @@ import type {
   MCPToolSchema,
   ProcessedArguments,
   UserContext,
-} from './types';
+} from './types.ts';
 
 /**
  * Creates a type-appropriate placeholder for a missing required field.

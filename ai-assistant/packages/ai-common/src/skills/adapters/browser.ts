@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { ParsedSkill } from '../parseSkill';
-import type { SkillFileSystem, SkillHttpClient, SkillZipExtractor } from '../SkillLoader';
-import { MAX_ZIP_EXTRACTED_BYTES, MAX_ZIP_FILE_COUNT } from '../SkillLoader';
+import type { ParsedSkill } from '../parseSkill.ts';
+import type { SkillFileSystem, SkillHttpClient, SkillZipExtractor } from '../SkillLoader.ts';
+import { MAX_ZIP_EXTRACTED_BYTES, MAX_ZIP_FILE_COUNT } from '../SkillLoader.ts';
 
 /**
  * Browser-compatible HTTP client for fetching skill files from GitHub.

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RecommendedTool } from '../langchain/ToolPlanner';
 import type { ToolResult } from '../results/formatToolResults';
+import type { OrchestrationTask } from './prepareToolPlan';
 import {
   buildMultiToolErrorPrompt,
   buildOrchestrationToolError,
   buildPendingToolPlaceholder,
   filterApprovedOrchestrationTools,
-  OrchestrationTask,
   shouldCacheResponse,
   waitForOrchestrationResults,
 } from './prepareToolPlan';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { MCPSettings, MCPToolsConfig, MCPToolState } from '../types';
+import type { MCPSettings, MCPToolsConfig, MCPToolState } from '../types.ts';
 
 /** MCP bridge operations required by the tool runtime. */
 export interface ToolClient {

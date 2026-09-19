@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage as Prompt } from '../../conversation/types';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
 
 /** Minimal manager history used to update Kubernetes tool-call messages. */
 export interface KubernetesAIManagerContext {

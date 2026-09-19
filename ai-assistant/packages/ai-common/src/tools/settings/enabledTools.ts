@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getAllAvailableTools } from '../catalog/toolDefinitions';
+import { getAllAvailableTools } from '../catalog/toolDefinitions.ts';
 
 export type PluginToolSettings = Record<string, unknown>;
 

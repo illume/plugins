@@ -3,9 +3,9 @@
  * responses.
  */
 
-import type { ConversationMessage as Prompt } from '../../conversation/types';
-import type { RecommendedTool } from '../langchain/ToolPlanner';
-import type { ToolResult } from '../results/formatToolResults';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
+import type { RecommendedTool } from '../langchain/ToolPlanner.ts';
+import type { ToolResult } from '../results/formatToolResults.ts';
 
 // ---------------------------------------------------------------------------
 // shouldCacheResponse

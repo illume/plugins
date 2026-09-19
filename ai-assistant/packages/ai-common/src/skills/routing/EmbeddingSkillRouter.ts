@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-import { cosineSimilarity } from '../../embeddings/cosineSimilarity';
-import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider';
-import { formatSkillsForPrompt, ParsedSkill } from '../parseSkill';
-import {
-  DEFAULT_ROUTER_CONFIG,
-  routeSkills,
-  ScoredSkill,
-  SkillRouterConfig,
-} from './KeywordSkillRouter';
+import { cosineSimilarity } from '../../embeddings/cosineSimilarity.ts';
+import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider.ts';
+import type { ParsedSkill } from '../parseSkill.ts';
+import { formatSkillsForPrompt } from '../parseSkill.ts';
+import type { ScoredSkill, SkillRouterConfig } from './KeywordSkillRouter.ts';
+import { DEFAULT_ROUTER_CONFIG, routeSkills } from './KeywordSkillRouter.ts';
 
 /**
  * A skill with a pre-computed embedding vector for similarity search.

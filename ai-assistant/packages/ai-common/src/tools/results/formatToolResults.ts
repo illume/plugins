@@ -3,7 +3,7 @@
  * suitable for display or as LLM context.
  */
 
-import { redactSecrets, redactSecretsInValue } from '../../security/redactSecrets';
+import { redactSecrets, redactSecretsInValue } from '../../security/redactSecrets.ts';
 
 export interface ToolResult {
   /** Truthy when the tool failed. */

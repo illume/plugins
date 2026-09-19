@@ -24,7 +24,7 @@
 
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
-import type { Storage } from './Storage';
+import type { Storage } from './Storage.ts';
 
 export class FileStorage implements Storage {
   /**

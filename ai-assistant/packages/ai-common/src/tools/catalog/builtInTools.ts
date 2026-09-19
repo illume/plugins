@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
-import type { LangChainTool } from '../langchain/LangChainTool';
+import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool.ts';
+import type { LangChainTool } from '../langchain/LangChainTool.ts';
 
 /** Constructors for all built-in tools available to the assistant. */
 export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [KubernetesTool];

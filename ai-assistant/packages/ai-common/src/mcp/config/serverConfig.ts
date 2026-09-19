@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { MCPSettings, MCPToolState } from '../types';
+import type { MCPSettings, MCPToolState } from '../types.ts';
 
 /** Runtime MCP server configuration consumed by MultiServerMCPClient. */
 type MCPServerConfig = {

@@ -22,7 +22,8 @@
  * fix is applied.
  */
 
-import { AIMessage, AIMessageChunk, BaseMessage, ToolMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
+import { AIMessage, AIMessageChunk, ToolMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import { describe, expect, it, vi } from 'vitest';
 import { sanitizeToolAlignment } from '../conversation/history';

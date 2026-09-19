@@ -61,9 +61,7 @@ describe('browser and CLI approval parity', () => {
   it('makes denial terminal on both surfaces', async () => {
     const browserPromise = inlineToolApprovalManager.requestApproval(calls, { history: [] });
     const cliPromise = toolApprovalManager.requestApproval(calls);
-    inlineToolApprovalManager.denyTools(
-      inlineToolApprovalManager.getPendingRequest()!.requestId
-    );
+    inlineToolApprovalManager.denyTools(inlineToolApprovalManager.getPendingRequest()!.requestId);
     toolApprovalManager.denyTools(toolApprovalManager.getPendingRequest()!.requestId);
 
     await expect(browserPromise).rejects.toThrow('User denied tool execution');

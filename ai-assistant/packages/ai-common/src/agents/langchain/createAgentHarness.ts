@@ -18,7 +18,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import type { AgentMiddleware, ResponseFormat } from 'langchain';
 import { createAgent, modelCallLimitMiddleware, toolCallLimitMiddleware } from 'langchain';
-import { basePrompt } from '../../prompts/baseAssistantPrompt';
+import { basePrompt } from '../../prompts/baseAssistantPrompt.ts';
 
 const DEFAULT_MODEL_CALL_LIMIT = 8;
 const DEFAULT_TOOL_CALL_LIMIT = 12;

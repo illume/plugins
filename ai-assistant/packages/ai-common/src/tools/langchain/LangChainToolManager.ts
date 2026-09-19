@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { DynamicStructuredTool, DynamicTool, ToolSchemaBase } from '@langchain/core/tools';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { DynamicTool, ToolSchemaBase } from '@langchain/core/tools';
+import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
-import type { ConversationMessage as Prompt } from '../../conversation/types';
-import { NullToolClient, type ToolClient } from '../../mcp/client/ToolClient';
-import { MCPOutputFormatter } from '../../mcp/langchain/formatToolOutput';
-import type { MCPToolsConfig, MCPToolState } from '../../mcp/types';
-import { AVAILABLE_TOOLS, getToolByName } from '../catalog/builtInTools';
-import type { KubernetesToolContext } from '../kubernetes/context';
-import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
-import type { ToolExecutionResult } from '../ToolRuntime';
-import { LangChainTool } from './LangChainTool';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
+import { NullToolClient, type ToolClient } from '../../mcp/client/ToolClient.ts';
+import { MCPOutputFormatter } from '../../mcp/langchain/formatToolOutput.ts';
+import type { MCPToolsConfig, MCPToolState } from '../../mcp/types.ts';
+import { AVAILABLE_TOOLS, getToolByName } from '../catalog/builtInTools.ts';
+import type { KubernetesToolContext } from '../kubernetes/context.ts';
+import type { KubernetesTool } from '../kubernetes/langchain/KubernetesTool.ts';
+import type { ToolExecutionResult } from '../ToolRuntime.ts';
+import type { LangChainTool } from './LangChainTool.ts';
 
 /** Normalized MCP discovery entry used to create a LangChain tool. */
 interface MCPToolData {

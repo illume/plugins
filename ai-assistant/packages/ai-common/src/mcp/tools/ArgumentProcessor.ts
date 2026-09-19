@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import * as argumentProcessing from './processArguments';
-import { mcpToolSchemaRegistry, type MCPToolsConfigLoader } from './schemaRegistry';
+import * as argumentProcessing from './processArguments.ts';
+import { mcpToolSchemaRegistry, type MCPToolsConfigLoader } from './schemaRegistry.ts';
 import type {
   ArgumentMap,
   JSONSchemaProperty,
   MCPToolSchema,
   ProcessedArguments,
   UserContext,
-} from './types';
+} from './types.ts';
 
 /** Loads MCP schemas and orchestrates pure argument processing. */
 export class MCPArgumentProcessor {

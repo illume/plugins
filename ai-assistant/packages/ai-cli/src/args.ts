@@ -18,6 +18,7 @@ import * as path from 'path';
 import { getHeadlampDataDir } from './config.ts';
 
 export interface ParsedArgs {
+  command: 'chat' | 'diagnose-events';
   configPath?: string;
   provider?: string;
   model?: string;
@@ -36,6 +37,10 @@ export interface ParsedArgs {
   save: boolean;
   help: boolean;
   query: string;
+  eventSinceMs: number;
+  maxEvents: number;
+  batchConcurrency: number;
+  output: 'markdown' | 'json';
   /** Git repo URLs to load skills from (repeatable). */
   skillSources: string[];
   /** When true, inject a built-in mock skill set instead of loading from Git. */
@@ -82,7 +87,9 @@ export interface ParsedArgs {
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
+  const command = argv[2] === 'diagnose-events' ? 'diagnose-events' : 'chat';
   const result: ParsedArgs = {
+    command,
     interactive: false,
     autoDetect: false,
     json: false,
@@ -92,6 +99,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
     save: false,
     help: false,
     query: '',
+    eventSinceMs: 30 * 60 * 1000,
+    maxEvents: 32,
+    batchConcurrency: 2,
+    output: 'markdown',
     skillSources: [],
     mockSkills:
       process.env.HEADLAMP_AI_MOCK_SKILLS === '1' || process.env.HEADLAMP_AI_MOCK_ALL === '1',
@@ -104,7 +115,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     structuredDiagnosisEvidenceIds: [],
     structuredDiagnosisObservations: [],
   };
-  const args = argv.slice(2);
+  const args = argv.slice(command === 'diagnose-events' ? 3 : 2);
   const queryParts: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -136,6 +147,23 @@ export function parseArgs(argv: string[]): ParsedArgs {
       case '--telemetry-file':
         result.telemetryFile = args[++i];
         break;
+      case '--since':
+        result.eventSinceMs = parseDuration(args[++i] ?? '');
+        break;
+      case '--max-events':
+        result.maxEvents = parseBoundedInteger(args[++i], '--max-events', 1, 32);
+        break;
+      case '--concurrency':
+        result.batchConcurrency = parseBoundedInteger(args[++i], '--concurrency', 1, 8);
+        break;
+      case '--output': {
+        const output = args[++i];
+        if (output !== 'markdown' && output !== 'json') {
+          throw new Error('--output must be markdown or json');
+        }
+        result.output = output;
+        break;
+      }
       case '--skill-source':
         result.skillSources.push(args[++i]);
         break;
@@ -239,6 +267,7 @@ export function printUsage(): void {
 
 Usage:
   headlamp-ai [options] [query]
+  headlamp-ai diagnose-events [options]
 
 Options:
   --config <path>       Path to config JSON file
@@ -248,6 +277,10 @@ Options:
   --base-url <url>      Base URL for local/custom providers
   --system-prompt <p>   Custom system prompt
   --telemetry-file <p>  Write sanitized model/tool telemetry as private JSONL
+  --since <duration>     diagnose-events: recent event window (default: 30m)
+  --max-events <count>   diagnose-events: maximum packed events (default: 32)
+  --concurrency <count>  diagnose-events: isolated fallback concurrency (default: 2)
+  --output <format>      diagnose-events: markdown or json (default: markdown)
   --interactive, -i     Start interactive chat session
   --skill-source <url>  Git repo URL to load skills from (repeatable, e.g. https://github.com/microsoft/azure-skills)
   --mock-skills         Inject a built-in mock skill set (no network). Env: HEADLAMP_AI_MOCK_SKILLS=1
@@ -296,6 +329,29 @@ Examples:
   headlamp-ai --config ./ai-config.json "Explain services"
   headlamp-ai -i --provider anthropic --api-key sk-ant-...
   echo "List resources" | headlamp-ai --config ./config.json`);
+}
+
+function parseBoundedInteger(
+  value: string | undefined,
+  flag: string,
+  minimum: number,
+  maximum: number
+): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${flag} must be an integer between ${minimum} and ${maximum}`);
+  }
+  return parsed;
+}
+
+function parseDuration(value: string): number {
+  const match = /^(\d+)(s|m|h)$/.exec(value);
+  if (!match) throw new Error('--since must use a positive duration such as 30m or 2h');
+  const amount = Number(match[1]);
+  if (!Number.isSafeInteger(amount) || amount < 1) {
+    throw new Error('--since must use a positive duration such as 30m or 2h');
+  }
+  return amount * ({ s: 1000, m: 60_000, h: 3_600_000 }[match[2]!] ?? 0);
 }
 
 export async function readStdin(): Promise<string> {

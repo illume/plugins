@@ -16,6 +16,24 @@ The assistant is context-aware, meaning it uses information about your cluster t
 
 [Evaluation results](evals/results/README.md) — the Phase 1 local developer evaluation loop's redacted, GitHub-rendered report. See [evals/README.md](evals/README.md) for how to reproduce it and [evals/docs/implementation-phases.md](evals/docs/implementation-phases.md) for the roadmap.
 
+## Batched event diagnosis
+
+The standalone CLI can discover recent Kubernetes Warning events from the
+current context and diagnose independent root workloads with bounded
+concurrency:
+
+```bash
+headlamp-ai diagnose-events --since 30m --max-events 10 --concurrency 2
+headlamp-ai diagnose-events --output json
+```
+
+Event discovery is read-only. Events are ranked by recency, deduplicated by
+root workload, and packed into one strict model request for up to 32 events.
+Every event ID is encoded as a required response property and validated before
+use. An invalid pack falls back to isolated sessions with bounded concurrency;
+a failed issue does not discard successful sibling results. Repair approvals
+and events from different tenants are never packed together.
+
 ## Key Features
 
 - **Conversational Kubernetes Management**: Interact with your cluster using natural language. Ask questions, get explanations, and issue commands.

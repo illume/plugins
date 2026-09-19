@@ -33,7 +33,7 @@ const ALL_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']);
  * @param signal - Optional abort signal; aborting kills the child process.
  * @returns Captured stdout on success.
  */
-function runKubectl(
+export function runKubectl(
   args: string[],
   input: string | undefined,
   signal?: AbortSignal

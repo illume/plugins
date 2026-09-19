@@ -27,6 +27,7 @@
  *   args.ts    — CLI argument parsing and usage text
  */
 
+import { diagnoseBatch, diagnosePackedBatch } from '@headlamp-k8s/ai-common/diagnosis/batch';
 import * as path from 'path';
 import { parseArgs, printUsage, readStdin } from './args.ts';
 import { createManager, interactiveMode, query } from './chat.ts';
@@ -38,11 +39,20 @@ import {
   loadConfigFile,
   saveHeadlampAIConfig,
 } from './config.ts';
-import { makeNodeCommandRunner, runAutoDetect, tryAutoDetectCopilot } from './model.ts';
+import { buildEventDiagnosisPrompt, discoverActionableEvents } from './eventDiagnosis.ts';
+import {
+  createModel,
+  makeNodeCommandRunner,
+  runAutoDetect,
+  tryAutoDetectCopilot,
+} from './model.ts';
 import { createJsonlTelemetryObserver } from './telemetry.ts';
 
 async function main() {
   const parsed = parseArgs(process.argv);
+  if (parsed.command === 'diagnose-events' && parsed.output === 'json') {
+    console.debug = (...args: unknown[]) => console.error(...args);
+  }
   if (parsed.help) {
     printUsage();
     process.exit(0);
@@ -180,6 +190,109 @@ async function main() {
       createMockApprovalManager({ mode: 'approve-all' })
     );
     console.error('Auto-approving all tool calls (--auto-approve).');
+  }
+
+  if (parsed.command === 'diagnose-events') {
+    const events = await discoverActionableEvents({
+      sinceMs: parsed.eventSinceMs,
+      limit: parsed.maxEvents,
+    });
+    if (events.length === 0) {
+      console.log(
+        parsed.output === 'json'
+          ? JSON.stringify({ issues: [] })
+          : 'No recent Warning events found.'
+      );
+      return;
+    }
+    const sharedModel = await createModel(config.provider, resolvedConfig);
+    const telemetryObserver = parsed.telemetryFile
+      ? createJsonlTelemetryObserver(parsed.telemetryFile)
+      : undefined;
+    const request = {
+      requestId: `events-${Date.now()}`,
+      maxConcurrency: parsed.batchConcurrency,
+      issues: events.map(event => ({
+        issueId: event.uid,
+        prompt: buildEventDiagnosisPrompt(event),
+        allowedEvidenceIds: [event.uid],
+        context: event,
+      })),
+    };
+    let result;
+    try {
+      result = await diagnosePackedBatch(request, sharedModel);
+      const packedRequest = result.modelRequest;
+      if (packedRequest && telemetryObserver) {
+        const durationNs = BigInt(Math.round(packedRequest.durationMs * 1_000_000)).toString();
+        if (
+          packedRequest.inputTokens !== undefined &&
+          packedRequest.outputTokens !== undefined &&
+          packedRequest.totalTokens !== undefined
+        ) {
+          telemetryObserver({
+            type: 'model_usage',
+            provider: config.provider,
+            model: typeof resolvedConfig.model === 'string' ? resolvedConfig.model : undefined,
+            input_token_semantics: 'total_including_cache',
+            input_tokens: packedRequest.inputTokens,
+            output_tokens: packedRequest.outputTokens,
+            total_tokens: packedRequest.totalTokens,
+          });
+        }
+        telemetryObserver({
+          type: 'stage_timing',
+          stage: 'model_request',
+          outcome: 'success',
+          duration_ns: durationNs,
+        });
+        telemetryObserver({
+          type: 'stage_timing',
+          stage: 'turn_total',
+          outcome: 'success',
+          duration_ns: durationNs,
+        });
+        telemetryObserver({ type: 'turn_complete' });
+      }
+    } catch (error) {
+      console.error(
+        `Packed diagnosis failed; retrying issues in isolation: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      result = await diagnoseBatch(request, async issue => {
+        const manager = await createManager(config.provider, resolvedConfig, {
+          allowMutations: false,
+          model: sharedModel,
+          telemetryObserver,
+          skillSources: parsed.skillSources,
+          mockSkills: parsed.mockSkills,
+          mockTools: parsed.mockTools,
+        });
+        return { status: 'completed', output: await query(manager, issue.prompt) };
+      });
+    }
+    if (parsed.output === 'json') {
+      console.log(
+        JSON.stringify({
+          request_id: result.requestId,
+          issues: result.results.map(item => ({
+            event: events.find(candidate => candidate.uid === item.issueId),
+            ...item,
+          })),
+        })
+      );
+    } else {
+      for (const item of result.results) {
+        const event = events.find(candidate => candidate.uid === item.issueId)!;
+        console.log(`## ${event.objectKind}/${event.objectName}: ${event.reason}`);
+        console.log(
+          item.status === 'completed' ? item.output : `Diagnosis ${item.status}: ${item.error}`
+        );
+        console.log('');
+      }
+    }
+    return;
   }
 
   // Use the createAgent-backed harness by default; retain an explicit legacy escape hatch.

@@ -22,6 +22,7 @@ const base = ['node', 'headlamp-ai'];
 describe('parseArgs', () => {
   it('defaults to no query and no flags', () => {
     const result = parseArgs([...base]);
+    expect(result.command).toBe('chat');
     expect(result.query).toBe('');
     expect(result.interactive).toBe(false);
     expect(result.autoDetect).toBe(false);
@@ -36,6 +37,38 @@ describe('parseArgs', () => {
     expect(result.structuredDiagnosisObservations).toEqual([]);
     expect(result.help).toBe(false);
     expect(result.skillSources).toEqual([]);
+  });
+
+  it('parses diagnose-events controls', () => {
+    const result = parseArgs([
+      ...base,
+      'diagnose-events',
+      '--since',
+      '2h',
+      '--max-events',
+      '6',
+      '--concurrency',
+      '3',
+      '--output',
+      'json',
+    ]);
+
+    expect(result.command).toBe('diagnose-events');
+    expect(result.eventSinceMs).toBe(2 * 60 * 60 * 1000);
+    expect(result.maxEvents).toBe(6);
+    expect(result.batchConcurrency).toBe(3);
+    expect(result.output).toBe('json');
+    expect(result.query).toBe('');
+  });
+
+  it('rejects invalid diagnose-events controls', () => {
+    expect(() => parseArgs([...base, 'diagnose-events', '--since', 'forever'])).toThrow('--since');
+    expect(() => parseArgs([...base, 'diagnose-events', '--concurrency', '9'])).toThrow(
+      '--concurrency'
+    );
+    expect(() => parseArgs([...base, 'diagnose-events', '--max-events', '33'])).toThrow(
+      '--max-events'
+    );
   });
 
   it('captures positional words as the query', () => {

@@ -481,6 +481,9 @@ async function commandRun(flags: Flags): Promise<void> {
     baseline === 'headlamp-cli-legacy';
   const headlampPluginSelected = candidate === 'headlamp-plugin' || baseline === 'headlamp-plugin';
   const headlampCandidateSelected = headlampCliSelected || headlampPluginSelected;
+  if (headlampPluginSelected && mode !== 'real') {
+    throw new Error('headlamp-plugin requires --execute real');
+  }
   if (headlampCliSelected) buildHeadlampCli();
   const providerInvocation =
     headlampCandidateSelected || flags.provider !== undefined

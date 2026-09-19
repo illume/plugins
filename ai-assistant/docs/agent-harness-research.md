@@ -686,6 +686,73 @@ Implement this without multiplying evaluator semantics:
 - add resumable scheduling so provider-invalid attempts can be replaced under
   the existing invalid-row rules without repeating valid outcomes.
 
+##### Copilot model pre-screen result
+
+The pre-screen ran on 2026-09-19 from revision `936910981` against the dedicated
+`headlamp-ai-evals` Minikube profile. The authenticated catalog contained 40
+entries and 37 chat IDs. Two-case diagnosis/repair preflight admitted 20 IDs and
+excluded 17. The measured screen used the frozen six-case roster, concurrency
+one, and two complete counterbalanced rounds. A planned third round completed 19
+of 20 model rows before interruption; all third-round rows are excluded to keep
+the comparison balanced rather than selectively retaining extra observations.
+
+The excluded IDs were `gemini-3.5-flash`, `gemini-3.6-flash`,
+`gemini-3.7-flash`, `gemini-3.8-flash`, `gpt-4-0125-preview`, `gpt-5-mini`,
+`gpt-5.4-mini`, `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-sol`,
+`gpt-5.6-sol-fast`, `gpt-5.6-terra`, `gpt-6-astra`, `grok-4.5`, `grok-4.6`,
+`mai-code-1.1-flash`, and `trajectory-compaction`. Sixteen produced no valid
+preflight contract. `gpt-5-mini` produced a valid passing diagnosis but no valid
+repair, so it did not enter the common diagnosis-and-repair screen.
+
+The balanced screen contains 240 trials: 239 valid, 238 task passes, zero safety
+failures, and zero lifecycle failures. Latency below uses only valid passing
+trials; an invalid or valid task failure remains visible and blocks a clean
+screen disposition. With 12 observations per complete model, nearest-rank p95 is
+the maximum observed latency and is a screening statistic, not a final tail
+estimate.
+
+| Rank | Requested Copilot ID     | Resolved model              | Valid/pass |     p50 |      p95 | Passing tokens |
+| ---: | ------------------------ | --------------------------- | ---------- | ------: | -------: | -------------: |
+|    1 | `gpt-4o-2024-08-06`      | `gpt-4o-2024-08-06`         | 12/12      |  3.41 s |   4.05 s |         30,577 |
+|    2 | `gpt-5.4`                | `gpt-5.4`                   | 12/12      |  3.73 s |   5.46 s |         13,450 |
+|    3 | `gpt-4o-mini-2024-07-18` | `gpt-4o-mini-2024-07-18`    | 12/12      |  3.66 s |   6.09 s |         31,337 |
+|    4 | `gpt-4o-2024-11-20`      | `gpt-4o-2024-11-20`         | 12/12      |  5.15 s |   7.37 s |         31,609 |
+|    5 | `gpt-5.3-codex`          | `gpt-5.3-codex`             | 12/12      |  5.05 s |   7.43 s |         31,170 |
+|    6 | `gpt-4o`                 | `gpt-4o-2024-11-20`         | 12/12      |  4.79 s |   8.47 s |         31,097 |
+|    7 | `claude-opus-4.7`        | `claude-opus-4-7`           | 12/12      |  9.08 s |  12.78 s |         59,437 |
+|    8 | `claude-opus-4.8`        | `claude-opus-4-8`           | 12/12      |  9.70 s |  13.02 s |         59,929 |
+|    9 | `claude-opus-5`          | `claude-opus-5`             | 12/12      |  9.02 s |  13.75 s |         59,917 |
+|   10 | `gpt-4o-2024-05-13`      | `gpt-4.1-2025-04-14`        | 12/12      |  9.21 s |  22.45 s |         31,481 |
+|   11 | `gpt-4.1`                | `gpt-4.1-2025-04-14`        | 11/11      |  8.74 s |  23.66 s |         29,234 |
+|   12 | `gpt-4`                  | `gpt-4.1-2025-04-14`        | 12/12      |  9.50 s |  25.48 s |         31,930 |
+|   13 | `gpt-4-0613`             | `gpt-4.1-2025-04-14`        | 12/12      | 13.00 s |  26.01 s |         31,933 |
+|   14 | `gpt-4-o-preview`        | `gpt-4.1-2025-04-14`        | 12/12      | 10.35 s |  26.36 s |         31,725 |
+|   15 | `claude-haiku-4.5`       | `claude-haiku-4-5-20251001` | 12/12      | 15.67 s |  27.88 s |         44,515 |
+|   16 | `gpt-3.5-turbo`          | `gpt-4o-mini-2024-07-18`    | 12/12      |  4.04 s |  33.90 s |         36,225 |
+|   17 | `claude-sonnet-5`        | `claude-sonnet-5`           | 12/11      | 26.84 s |  47.13 s |         55,987 |
+|   18 | `gpt-4.1-2025-04-14`     | `gpt-4.1-2025-04-14`        | 12/12      | 11.12 s |  91.39 s |         34,371 |
+|   19 | `gpt-4o-mini`            | `gpt-4o-mini-2024-07-18`    | 12/12      |  3.43 s | 102.66 s |         31,607 |
+|   20 | `gpt-3.5-turbo-0613`     | `gpt-4o-mini-2024-07-18`    | 12/12      |  3.25 s | 107.83 s |         31,460 |
+
+`gpt-4.1` had one provider-invalid diagnosis. `claude-sonnet-5` had one valid
+healthy-control recommendation failure. No other balanced-screen row was invalid
+or failed task, repair, safety, or lifecycle checks. Aliases showed materially
+different tails despite resolving to the same backend revision, so the full run
+must retain requested and resolved IDs and must not treat aliases as independent
+evidence about model quality.
+
+Advance these requested IDs to the 275-case full evaluation:
+
+- `gpt-4o-2024-08-06`, `gpt-5.4`, and `gpt-4o-mini-2024-07-18` as the three
+  lowest-p95 screen candidates;
+- `gpt-4o` as the existing qualified/default control, resolving during this
+  screen to `gpt-4o-2024-11-20`; and
+- `claude-opus-4.7` as the current auto-selection-policy control.
+
+No additional model was within 15% of the 4.05-second leader p95. The screen is
+complete for survivor selection, but it does not qualify a new default. Only the
+planned full 235-diagnosis plus 40-repair run can do that.
+
 | Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                                   | Promotion gate                                                                                                                                                                                                                                                                                                                       |
 | ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 |     1 | Add stage-level monotonic profiling          | Instrument evaluator subprocess startup/teardown and CLI config/model creation, MCP wait, Skills lookup, tool adaptation, `createAgent` construction, history preparation, provider wait, streaming, external validation, bounded repair, and serialization. Emit sanitized duration-only telemetry with one terminal event per turn.                                                                                                              | At least 75 complete traces; stage sums reconcile with end-to-end duration; no prompt, credential, or response content enters telemetry.                                           | Keep profiling by default only if overhead is below 1% or 10 ms, whichever is larger, and no lifecycle or telemetry-schema regression occurs. Do not optimize until the dominant p50 and p95 stages are identified.                                                                                                                  |

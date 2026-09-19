@@ -32,9 +32,9 @@ describe('modelConfig', () => {
     expect(fieldNames).toContain('model');
   });
 
-  it('copilot provider default model is gpt-4o', () => {
+  it('copilot provider default model is gpt-5.4', () => {
     const defaults = getDefaultConfig('copilot');
-    expect(defaults.model).toBe('gpt-4o');
+    expect(defaults.model).toBe('gpt-5.4');
   });
 
   it('all providers have unique IDs', () => {

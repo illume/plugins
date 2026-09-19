@@ -259,8 +259,11 @@ const COPILOT_MODEL_PRIORITY: string[] = [
   'o1',
 ];
 
+/** Preferred Copilot model selected by the diagnosis and repair performance evaluation. */
+export const PREFERRED_COPILOT_MODEL = 'gpt-5.4';
+
 /**
- * Selects the best chat model from a Copilot model list based on priority.
+ * Selects the preferred chat model, then falls back to family priority.
  *
  * IDs are matched case-insensitively by priority substring.
  *
@@ -268,6 +271,8 @@ const COPILOT_MODEL_PRIORITY: string[] = [
  * @returns Highest-priority ID, first catalog ID, or `gpt-4o` when empty.
  */
 export function pickBestCopilotChatModel(models: CopilotModelEntry[]): string {
+  const preferred = models.find(m => m.id.toLowerCase() === PREFERRED_COPILOT_MODEL);
+  if (preferred) return preferred.id;
   for (const priority of COPILOT_MODEL_PRIORITY) {
     const match = models.find(m => m.id.toLowerCase().includes(priority));
     if (match) return match.id;

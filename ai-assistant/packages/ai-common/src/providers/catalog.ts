@@ -94,7 +94,7 @@ export const modelProviders: ModelProvider[] = [
           'claude-3.5-sonnet',
           'claude-3.5-haiku',
         ],
-        default: 'gpt-4o',
+        default: 'gpt-5.4',
       },
     ],
   },

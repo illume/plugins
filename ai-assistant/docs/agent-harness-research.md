@@ -695,6 +695,71 @@ separately. Keep application spans only if their overhead satisfies the normal
 promotion gate. Never enable V8 profiles, Inspector, async-hooks traces, heap
 snapshots, or event-loop histograms in production by default.
 
+#### Batching and model-call optimization
+
+Do not use “batching” as one undifferentiated optimization. There are three
+different mechanisms with different goals and risks:
+
+1. **Runnable batching:** LangChain's `batch()` with `maxConcurrency` schedules
+   multiple independent model invocations. It is client-side concurrency unless
+   a provider integration explicitly documents a native batch implementation.
+2. **Evaluation concurrency:** `runCandidatePass` currently awaits each scenario
+   serially while sharing one cluster adapter and bundle writer. A worker pool
+   could reduce total portfolio wall time, but it must preserve namespace,
+   artifact, ordering, cleanup, and provider-budget isolation.
+3. **Provider asynchronous batch jobs:** investigate Azure batch support only as
+   an offline evaluation/cost path. It cannot improve interactive user latency,
+   may have delayed completion, and must retain per-request identity, usage,
+   errors, deployment revision, and cancellation semantics before it is usable
+   for scored evidence.
+
+Never batch prompts from different users or tenants into one model request. Do
+not cache/reuse one generated answer across scenario variants in a scored run;
+that would change the sampling unit and conceal model variance. Exact duplicate
+coalescing may be studied later within one authenticated request scope, but only
+with explicit tenant, evidence-digest, policy, model, schema, and expiry keys.
+
+Use the stage profile before choosing among the following model-call
+experiments:
+
+| Priority | Model-call experiment                      | Expected benefit                                                                                                                                                                                          | Main risk and required control                                                                                                                                                                    | Promotion evidence                                                                                                                          |
+| -------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0       | Compact strict schema and response         | Reduce server-side constrained decoding, output generation, transfer, parsing, and validation. This directly targets the measured 5.08-second strict-versus-plain gap.                                    | Omitting semantic evidence or weakening repair authority. Reconstruct only mechanical ledgers from candidate-visible input; retain uncertainty and action semantics from the model.               | Same 75/75 diagnosis and 5/5 repair outcomes; no safety/lifecycle change; at least 20% fewer output tokens or 20% lower provider-stage p50. |
+| M0       | Bound output tokens per contract           | Prevent long tails and overlong descriptions by deriving a conservative output ceiling from diagnosis versus repair schema and observation count.                                                         | Truncation can create malformed output or hide uncertainty. Record finish reason and test the longest admitted packet before reducing the ceiling.                                                | Zero truncations/malformed sidecars on all 275 public contracts; lower p95 output tokens and latency.                                       |
+| M1       | Stable prompt/schema prefix                | Put stable system instructions and the canonical schema before volatile task/evidence fields, keep bytes and ordering stable, and measure provider cache-read accounting.                                 | Reordering can change answer quality; assumed cache hits are not evidence.                                                                                                                        | Observable cache-read tokens or lower provider-stage latency with byte-identical semantic inputs and unchanged outcomes.                    |
+| M1       | Persistent Azure client and HTTP transport | Reuse the model client, connection pool, TLS session, and immutable structured schema within an isolated worker lifetime.                                                                                 | Credential lifetime, stale deployment configuration, and cross-request callbacks/history.                                                                                                         | Stage traces show lower connection/client setup time; no credential or state leakage; no increased invalid rate.                            |
+| M1       | Direct `withStructuredOutput()` A/B        | Compare LangChain's model-level structured runnable with `createAgent` provider strategy using the same full and compact schemas. This isolates agent graph semantics from provider constrained decoding. | API paths may differ in usage telemetry, retries, cancellation, or schema enforcement.                                                                                                            | Contract/telemetry parity plus a latency improvement above measurement noise. Keep the agent path if there is no measured win.              |
+| M2       | Bounded eval worker pool (`1`, `2`, `4`)   | Reduce wall-clock time for independent evaluation trials.                                                                                                                                                 | Azure throttling, Minikube contention, non-thread-safe bundle writes, cleanup overlap, and biased order. Use independent namespaces, serialized bundle commits, and a fixed token/request budget. | Higher trials/hour with unchanged per-case outcomes and no material p95 increase or provider-invalid growth.                                |
+| M2       | LangChain `batch()` on the direct lane     | Simplify bounded parallel invocation once the direct structured lane exists.                                                                                                                              | `batch()` may merely wrap parallel `invoke()` calls and does not guarantee fewer provider requests.                                                                                               | Confirm request accounting remains one per input, compare with the worker pool, and keep only the simpler/faster implementation.            |
+| M3       | Azure asynchronous batch evaluation        | Potentially lower cost or improve large offline portfolio throughput when immediate results are unnecessary.                                                                                              | Different service tier, queue delay, cancellation, partial completion, result-ordering, and attribution semantics make it non-comparable to online interactive runs.                              | Separate non-interactive qualification; complete per-request manifests and no mixing with online latency claims.                            |
+
+Additional model-call ideas should remain conditional on profile evidence:
+
+- **Streaming:** measure time to first token for perceived UI responsiveness,
+  but do not display or act on structured diagnoses before full validation.
+  Streaming may improve perceived latency without reducing completion time.
+- **Speculative/hedged requests:** do not enable by default. A delayed second
+  request can reduce extreme provider tails, but doubles work in the worst case,
+  complicates cancellation and billing, and previously observed capacity limits
+  make indiscriminate hedging unsafe. Test only if provider wait dominates p99.
+- **Multiple choices in one call:** requesting several candidates and selecting
+  one can reduce repair probability but increases output cost and introduces a
+  selection policy. It is unjustified while the fixed overlap already completes
+  in one request per case.
+- **Temperature and deterministic settings:** expose and record them for
+  reproducibility, then test only if the provider honors the setting. Do not
+  assume lower temperature is faster.
+- **Repair policy:** keep exactly-once, validation-triggered repair. Never send a
+  speculative repair in parallel with the first response; fixed-overlap profiles
+  show repair is not the baseline latency source.
+
+For evaluation throughput, compare both total elapsed time and per-case latency.
+Use a token-bucket limiter keyed by provider/deployment, with independent caps
+for in-flight requests, requests/minute, and tokens/minute. On 429/5xx responses,
+honor provider retry metadata and mark unexecuted work pending rather than
+creating a tail of known-invalid trials. Persist scheduling order, queue delay,
+attempt count, and backoff separately from candidate diagnosis time.
+
 #### Experiment protocol
 
 1. Freeze the exact scenario identity list, revision, provider deployment,
@@ -738,10 +803,10 @@ shows they matter:
   Continue tracking it on broader and repair-heavy slices; improve prompts or
   deterministic normalization only when repair contributes materially to p95.
 - **Batch concurrency:** add a small concurrency sweep such as 1, 2, and 4 only
-  for evaluation throughput after single-request latency work. Stop increasing
-  concurrency when rate limits, invalid trials, cluster contention, or p95
-  latency worsen. Preserve per-trial isolation and deterministic output order in
-  the bundle.
+  for evaluation throughput after single-request latency work and after adding
+  the provider token-bucket limiter. Stop increasing concurrency when rate
+  limits, invalid trials, cluster contention, or p95 latency worsen. Preserve
+  per-trial isolation and deterministic bundle ordering.
 
 The revised optimization sequence is intentionally conservative. First add the
 low-overhead stage spans needed to split provider time from local work. Next

@@ -312,6 +312,38 @@ assignments were retried. It is therefore descriptive evidence, not a
 confirmatory superiority result. The interrupted redundant current-harness Azure
 run was excluded as requested.
 
+#### Latest compact-harness Azure comparison
+
+The optimized compact harness repeated the exact 75-case overlap on 2026-09-19
+using the same auto-detected Azure `gpt-4o` deployment identity. Provider and
+credential discovery plus the Rsbuild compilation ran once before trial timing;
+each trial retained the compiled CLI process startup and teardown in its
+end-to-end adapter duration. The closed run is
+`run_0mu8cnulr000001_0b3d7ea4-4308-41f5-9f8c-0e1f878f8337`; its bundle manifest
+SHA-256 is `653b124ef67da232981a61e637b521eaec9355502582910f093298c490157d62`.
+
+| System                 |  Pass | Partial | Mean time |     p50 |     p95 |
+| ---------------------- | ----: | ------: | --------: | ------: | ------: |
+| Latest compact harness | 75/75 |       0 |    4.32 s |  4.00 s | 10.05 s |
+| kubectl-ai             | 67/75 |       8 |    4.87 s |  5.01 s |  5.94 s |
+| Legacy session         | 66/75 |       9 |    5.95 s |  5.92 s |  7.75 s |
+| HolmesGPT              | 68/75 |       7 |   12.02 s | 12.06 s | 12.82 s |
+| Earlier full harness   | 75/75 |       0 |   17.83 s | 17.27 s | 24.35 s |
+
+The latest harness was fastest by mean and median while preserving the only
+75/75 pass result. Its p95 remained slower than kubectl-ai and legacy. Internal
+telemetry attributes nearly all of that tail to Azure: turn mean/p50/p95 were
+4.19/3.88/9.92 seconds and provider-request mean/p50/p95 were
+4.16/3.85/9.89 seconds. The remaining adapter overhead averaged about 134 ms.
+
+This remains a descriptive update, not a counterbalanced speed trial. It ran
+later, from a different network, and provider load or internet routing can move
+tail latency even though the measured Wi-Fi link had a healthy 37 dB SNR. A
+confirmatory comparison should alternate latest-harness and kubectl-ai requests
+on the same network and deployment. The quality result is independently useful:
+all 75 latest-harness trials were valid, passing, safety-clean, and
+lifecycle-clean.
+
 ### Controller-convergence evidence-ledger result
 
 The structured response originally left evidence selection to the model. In
@@ -795,6 +827,38 @@ and explicit-model execution path did not change. Treat this as a provenance
 recording limitation; it does not change the trial inputs or runtime model, but a
 future evaluator change should snapshot candidate revision and dirty state at
 run start rather than resolving them during bundle closure.
+
+##### Compact structured-output qualification and promotion
+
+The compact provider contract passed its promotion gate on 2026-09-19. The
+paired experiment reduced provider-stage p50 by 20.5% and output tokens by
+50.3%. The separately frozen 25-diagnosis plus five-repair gate then completed
+30/30 valid root-cause and recommended-fix passes, including 5/5 repairs, with
+zero safety or lifecycle failures. Its closed run is
+`run_0mu897qeb000001_5483a791-4429-4e67-9ffa-226e77ccb2c2`; the manifest SHA-256
+is `29082542321e7d00acff41bb49db6247c85afff54e4f8395bfa27971180a545e`.
+
+The full compact run subsequently completed all 275 public scenarios: 275/275
+valid root-cause and recommended-fix passes, 40/40 repairs, and zero safety or
+lifecycle failures. The repository bundle reader validated the closed bundle,
+all 275 trials, and 3,304 manifest-declared files. The closed run is
+`run_0mu89jx35000001_7d65ff35-5211-476b-b1d4-fdbf2ce7be31`; the manifest
+SHA-256 is `d9e132a7b3ee265adf9a0422dd60e05e69e4112e2ac4f61b38a68c18d4b29c94`.
+
+Across that run, median turn time was 2,495.4 ms and median provider time was
+2,457.3 ms. Median stream processing was 23.6 ms, agent construction 3.3 ms,
+and structured validation 1.6 ms. Provider wait therefore remains the dominant
+latency owner. Compact output is now the structured diagnosis/repair default;
+`--full-structured-output` retains the prior contract for rollback and A/B
+measurement. Unstructured chat is unchanged.
+
+The production CLI now uses a minified Rsbuild Node ESM bundle. In a local
+ten-sample offline process benchmark after two warm-ups, minification reduced
+the artifact from 8.73 MB to 2.73 MB and median complete process time from
+153.3 ms to 132.4 ms, a 13.7% reduction. This improves absolute startup and
+evaluation throughput but does not change the provider-dominated optimization
+order above. The packed, clean-installed CLI tarball was 669 KB and completed
+the offline executable smoke test.
 
 | Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                                   | Promotion gate                                                                                                                                                                                                                                                                                                                       |
 | ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

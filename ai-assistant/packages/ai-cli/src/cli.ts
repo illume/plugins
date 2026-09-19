@@ -195,6 +195,7 @@ async function main() {
     suppliedEvidenceOnly: parsed.suppliedEvidenceOnly,
     structuredDiagnosis: parsed.structuredDiagnosis,
     structuredRepair: parsed.structuredRepair,
+    compactStructuredOutput: parsed.compactStructuredOutput,
     structuredRepairContract: parsed.structuredRepairContract,
     structuredDiagnosisEvidenceIds: parsed.structuredDiagnosisEvidenceIds,
     structuredDiagnosisObservations: parsed.structuredDiagnosisObservations,

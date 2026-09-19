@@ -425,6 +425,8 @@ export interface HeadlampCliCandidateOptions {
   suppliedEvidenceOnly?: boolean;
   /** Requires the harness to use the strict diagnosis response contract. */
   structuredDiagnosis?: boolean;
+  /** Requests the compact semantic provider contract and deterministic full expansion. */
+  compactStructuredOutput?: boolean;
   /** Explicit pricing snapshot used to estimate configured usage. */
   pricing?: TokenPricingSnapshot;
 }
@@ -580,6 +582,19 @@ const REPAIR_SIDECAR_INSTRUCTION =
   'Do not rename or add properties. Propose the action only; ' +
   'do not execute it.';
 
+const COMPACT_DIAGNOSIS_INSTRUCTION =
+  '\n\nUse the native response schema to return only the semantic diagnosis fields: ' +
+  'alternative_dispositions, uncertainty, and proposed_actions. Do not repeat evidence IDs, resource ' +
+  'references, or observed facts; the trusted evidence ledger is reconstructed locally. Return exactly one ' +
+  'proposed action with operation "no_action". If the evidence cannot determine one cause, set is_uncertain ' +
+  'true and list distinct, independently testable mechanisms as separate concise alternatives.';
+
+const COMPACT_REPAIR_INSTRUCTION =
+  '\n\nUse the native response schema to return a compact diagnosis plus proposed_action.option_index. ' +
+  'The option index is zero-based and must select one supplied allowed repair option. Do not repeat evidence ' +
+  'IDs, observed facts, targets, patches, or the evidence digest; trusted fields are reconstructed locally. ' +
+  'Propose the action only; do not execute it.';
+
 /**
  * Builds a candidate adapter around the product Headlamp CLI process. Each
  * invocation receives a fresh Headlamp data directory that is removed in a
@@ -600,6 +615,9 @@ export function createHeadlampCliCandidate(
   const structuredDiagnosis =
     options.structuredDiagnosis ??
     (sessionMode === 'agent-harness' && options.useMockProvider === false);
+  const compactStructuredOutput =
+    options.compactStructuredOutput ??
+    (options.cliArgs ?? []).includes('--compact-structured-output');
   const candidateId = sessionMode === 'legacy' ? 'headlamp-cli-legacy' : 'headlamp-cli';
   const identity = headlampCandidateIdentity(
     candidateId,
@@ -608,6 +626,7 @@ export function createHeadlampCliCandidate(
     sessionMode,
     suppliedEvidenceOnly,
     structuredDiagnosis,
+    compactStructuredOutput,
     options.pricing
   );
 
@@ -679,17 +698,29 @@ export function createHeadlampCliCandidate(
           }
         : undefined;
       const repairContext = repair
-        ? `\n\nAllowed action policy (JSON):\n${JSON.stringify(
-            input.packet.action_policy,
-            null,
-            2
-          )}\n\nAction targets (JSON):\n${JSON.stringify(
-            input.action_targets ?? [],
-            null,
-            2
-          )}\n\nCanonical evidence digest: ${input.evidence_digest}`
+        ? compactStructuredOutput
+          ? `\n\nAllowed repair options in zero-based order (JSON):\n${JSON.stringify(
+              repairContract?.options ?? [],
+              null,
+              2
+            )}`
+          : `\n\nAllowed action policy (JSON):\n${JSON.stringify(
+              input.packet.action_policy,
+              null,
+              2
+            )}\n\nAction targets (JSON):\n${JSON.stringify(
+              input.action_targets ?? [],
+              null,
+              2
+            )}\n\nCanonical evidence digest: ${input.evidence_digest}`
         : '';
-      const instruction = repair ? REPAIR_SIDECAR_INSTRUCTION : DIAGNOSIS_SIDECAR_INSTRUCTION;
+      const instruction = compactStructuredOutput
+        ? repair
+          ? COMPACT_REPAIR_INSTRUCTION
+          : COMPACT_DIAGNOSIS_INSTRUCTION
+        : repair
+        ? REPAIR_SIDECAR_INSTRUCTION
+        : DIAGNOSIS_SIDECAR_INSTRUCTION;
       const prompt = `${input.packet.task_prompt}\n\nObserved context (JSON):\n${observationSummary}${repairContext}${instruction}`;
 
       const start = process.hrtime.bigint();
@@ -704,6 +735,7 @@ export function createHeadlampCliCandidate(
             ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
             ...(suppliedEvidenceOnly ? ['--supplied-evidence-only'] : []),
             ...(structuredDiagnosis && !repair ? ['--structured-diagnosis'] : []),
+            ...(compactStructuredOutput ? ['--compact-structured-output'] : []),
             ...(structuredDiagnosis && repair
               ? [
                   '--structured-repair',
@@ -793,6 +825,7 @@ function headlampCandidateIdentity(
   sessionMode: 'agent-harness' | 'legacy',
   suppliedEvidenceOnly: boolean,
   structuredDiagnosis: boolean,
+  compactStructuredOutput: boolean,
   pricing?: TokenPricingSnapshot
 ): CandidateAdapter['identity'] {
   const argument = (name: string): string | null => {
@@ -810,6 +843,7 @@ function headlampCandidateIdentity(
     session_mode: sessionMode,
     retrieval_mode: suppliedEvidenceOnly ? 'supplied-evidence-only' : 'live',
     structured_output: structuredDiagnosis,
+    structured_output_mode: compactStructuredOutput ? 'compact' : 'full',
   };
   return {
     candidate_id: candidateId,

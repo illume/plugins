@@ -27,7 +27,11 @@ import * as readline from 'readline';
 import { createKubectlTool } from './kubectl.js';
 import { loadSkillsFromUrls } from './skills.js';
 import {
+  createCompactDiagnosisProviderSchema,
+  createCompactRepairProviderSchema,
   createDiagnosisProviderSchema,
+  validateCompactDiagnosisSubmission,
+  validateCompactRepairSubmission,
   createRepairProviderSchema,
   type StructuredDiagnosisObservation,
   type StructuredRepairContract,
@@ -91,6 +95,7 @@ export async function createManager(
     suppliedEvidenceOnly?: boolean;
     structuredDiagnosis?: boolean;
     structuredRepair?: boolean;
+    compactStructuredOutput?: boolean;
     structuredRepairContract?: StructuredRepairContract;
     structuredDiagnosisEvidenceIds?: string[];
     structuredDiagnosisObservations?: StructuredDiagnosisObservation[];
@@ -98,6 +103,13 @@ export async function createManager(
 ): Promise<LangChainAssistantSession> {
   if (options.structuredDiagnosis && options.structuredRepair) {
     throw new Error('Structured diagnosis and structured repair are mutually exclusive');
+  }
+  if (
+    options.compactStructuredOutput &&
+    !options.structuredDiagnosis &&
+    !options.structuredRepair
+  ) {
+    throw new Error('Compact structured output requires structured diagnosis or repair');
   }
   if (
     (options.structuredDiagnosis || options.structuredRepair) &&
@@ -122,29 +134,47 @@ export async function createManager(
     : new AgentHarnessSession(providerId, config, [], {
         ...commonOptions,
         responseFormat: options.structuredDiagnosis
-          ? providerStrategy(createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds))
+          ? providerStrategy(
+              options.compactStructuredOutput
+                ? createCompactDiagnosisProviderSchema()
+                : createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds)
+            )
           : options.structuredRepair
           ? providerStrategy(
-              createRepairProviderSchema(
-                structuredDiagnosisEvidenceIds,
-                options.structuredRepairContract!
-              )
+              options.compactStructuredOutput
+                ? createCompactRepairProviderSchema(options.structuredRepairContract!)
+                : createRepairProviderSchema(
+                    structuredDiagnosisEvidenceIds,
+                    options.structuredRepairContract!
+                  )
             )
           : undefined,
         validateStructuredResponse: options.structuredDiagnosis
           ? response =>
-              validateDiagnosisSubmission(
-                response,
-                options.structuredDiagnosisObservations ?? [],
-                structuredDiagnosisEvidenceIds
-              )
+              options.compactStructuredOutput
+                ? validateCompactDiagnosisSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    structuredDiagnosisEvidenceIds
+                  )
+                : validateDiagnosisSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    structuredDiagnosisEvidenceIds
+                  )
           : options.structuredRepair
           ? response =>
-              validateRepairSubmission(
-                response,
-                options.structuredDiagnosisObservations ?? [],
-                options.structuredRepairContract!
-              )
+              options.compactStructuredOutput
+                ? validateCompactRepairSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    options.structuredRepairContract!
+                  )
+                : validateRepairSubmission(
+                    response,
+                    options.structuredDiagnosisObservations ?? [],
+                    options.structuredRepairContract!
+                  )
           : undefined,
       });
   const kubectlContext =

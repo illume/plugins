@@ -90,6 +90,26 @@ const repairPatchOperationSchema = z
   })
   .strict();
 
+const proposedActionSchema = z
+  .object({
+    operation: z.enum(['no_action', 'unscored_novel_strategy']),
+    description: z.string(),
+  })
+  .strict();
+
+const compactDiagnosisSchema = z
+  .object({
+    alternative_dispositions: z.array(z.string()),
+    uncertainty: z
+      .object({
+        is_uncertain: z.boolean(),
+        reason: z.string(),
+      })
+      .strict(),
+    proposed_actions: z.array(proposedActionSchema),
+  })
+  .strict();
+
 /** Builds the strict response contract for one evidence-grounded diagnosis. */
 export function createDiagnosisSubmissionSchema(
   evidenceIds: string[],
@@ -119,16 +139,34 @@ export function createDiagnosisSubmissionSchema(
           reason: z.string(),
         })
         .strict(),
-      proposed_actions: z.array(
-        z
-          .object({
-            operation: z.enum(['no_action', 'unscored_novel_strategy']),
-            description: z.string(),
-          })
-          .strict()
-      ),
+      proposed_actions: z.array(proposedActionSchema),
     })
     .strict();
+}
+
+/** Expands a compact semantic diagnosis into the existing evidence-bound submission. */
+export function validateCompactDiagnosisSubmission(
+  response: Record<string, unknown>,
+  observations: StructuredDiagnosisObservation[],
+  evidenceIds = observations.map(observation => observation.evidence_id)
+): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
+  const parsed = compactDiagnosisSchema.safeParse(response);
+  if (!parsed.success) return { success: false, error: parsed.error.message };
+  return validateDiagnosisSubmission(
+    {
+      schema_version: '1.0.0',
+      cause_facts: observations.map(observation => ({
+        resource_ref: observation.resource_ref,
+        field_path: observation.field_path,
+        observed_value: observation.observed_value,
+      })),
+      resource_refs: [...new Set(observations.map(observation => observation.resource_ref))],
+      evidence_refs: evidenceIds,
+      ...parsed.data,
+    },
+    observations,
+    evidenceIds
+  );
 }
 
 /** Validates a diagnosis and canonicalizes its evidence ledger from supplied observations. */
@@ -250,6 +288,41 @@ export function validateRepairSubmission(
   };
 }
 
+/** Expands a compact repair choice into the exact trusted target, patch, and digest. */
+export function validateCompactRepairSubmission(
+  response: Record<string, unknown>,
+  observations: StructuredDiagnosisObservation[],
+  contract: StructuredRepairContract
+): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
+  const parsed = z
+    .object({
+      diagnosis: compactDiagnosisSchema,
+      proposed_action: z.object({ option_index: z.number().int().nonnegative() }).strict(),
+    })
+    .strict()
+    .safeParse(response);
+  if (!parsed.success) return { success: false, error: parsed.error.message };
+  const option = contract.options[parsed.data.proposed_action.option_index];
+  if (!option) return { success: false, error: 'Repair option_index is not allowed' };
+  const diagnosis = validateCompactDiagnosisSubmission(parsed.data.diagnosis, observations);
+  if (!diagnosis.success) return diagnosis;
+  return validateRepairSubmission(
+    {
+      schema_version: '1.0.0',
+      diagnosis: diagnosis.data,
+      proposed_action: {
+        action_id: `repair-option-${parsed.data.proposed_action.option_index}`,
+        target: option.target,
+        operation: 'json_patch',
+        patch: option.patch,
+        evidence_digest: contract.evidence_digest,
+      },
+    },
+    observations,
+    contract
+  );
+}
+
 /** Builds the provider-native JSON Schema supported by strict model providers. */
 export function createDiagnosisProviderSchema(evidenceIds: string[]): ProviderJsonSchema {
   return {
@@ -313,6 +386,39 @@ export function createDiagnosisProviderSchema(evidenceIds: string[]): ProviderJs
   };
 }
 
+/** Builds the minimal provider schema whose evidence ledger is reconstructed locally. */
+export function createCompactDiagnosisProviderSchema(): ProviderJsonSchema {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['alternative_dispositions', 'uncertainty', 'proposed_actions'],
+    properties: {
+      alternative_dispositions: { type: 'array', items: { type: 'string' } },
+      uncertainty: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['is_uncertain', 'reason'],
+        properties: {
+          is_uncertain: { type: 'boolean' },
+          reason: { type: 'string' },
+        },
+      },
+      proposed_actions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['operation', 'description'],
+          properties: {
+            operation: { type: 'string', enum: ['no_action', 'unscored_novel_strategy'] },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+  };
+}
+
 /** Builds the provider-native repair schema supported by strict model providers. */
 export function createRepairProviderSchema(
   evidenceIds: string[],
@@ -360,6 +466,34 @@ export function createRepairProviderSchema(
             },
           },
           evidence_digest: { type: 'string', enum: [contract.evidence_digest] },
+        },
+      },
+    },
+  };
+}
+
+/** Builds the minimal repair schema that selects one trusted contract option by index. */
+export function createCompactRepairProviderSchema(
+  contract: StructuredRepairContract
+): ProviderJsonSchema {
+  if (contract.options.length === 0) {
+    throw new Error('Compact structured repair requires at least one allowed option');
+  }
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['diagnosis', 'proposed_action'],
+    properties: {
+      diagnosis: createCompactDiagnosisProviderSchema(),
+      proposed_action: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['option_index'],
+        properties: {
+          option_index: {
+            type: 'integer',
+            enum: contract.options.map((_option, index) => index),
+          },
         },
       },
     },

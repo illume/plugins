@@ -131,4 +131,10 @@ describe('chat', () => {
       'requires an exact repair contract'
     );
   });
+
+  it('rejects compact output without a structured contract', async () => {
+    await expect(createManager('copilot', {}, { compactStructuredOutput: true })).rejects.toThrow(
+      'requires structured diagnosis or repair'
+    );
+  });
 });

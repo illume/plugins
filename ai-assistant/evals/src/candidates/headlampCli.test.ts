@@ -464,6 +464,31 @@ test('createHeadlampCliCandidate: forwards provider configuration as CLI argumen
   assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
 });
 
+test('createHeadlampCliCandidate: forwards compact diagnosis mode and prompt', async () => {
+  let capturedArgs: string[] = [];
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    cliArgs: ['--compact-structured-output'],
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [
+      { evidence_id: 'ev1', resource_ref: 'service/web', field_path: 'spec.selector', value: '{}' },
+    ],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.ok(capturedArgs.includes('--compact-structured-output'));
+  assert.match(capturedArgs.at(-1) ?? '', /return only the semantic diagnosis fields/);
+  assert.doesNotMatch(capturedArgs.at(-1) ?? '', /return only a fenced ```json code block/);
+  assert.equal(candidate.identity?.structured_output_mode, 'compact');
+});
+
 test('createHeadlampCliCandidate: records and invokes the legacy session ablation', async () => {
   let capturedArgs: string[] = [];
   const candidate = createHeadlampCliCandidate({
@@ -690,6 +715,41 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
       },
     ],
   });
+});
+
+test('createHeadlampCliCandidate: sends indexed repair options in compact mode', async () => {
+  let prompt = '';
+  let capturedArgs: string[] = [];
+  const repair = loadScenario('core-service-selector-repair-v1');
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    compactStructuredOutput: true,
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      prompt = args.at(-1) ?? '';
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: repair.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+    action_targets: [
+      {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+    ],
+  });
+
+  assert.ok(capturedArgs.includes('--compact-structured-output'));
+  assert.match(prompt, /Allowed repair options in zero-based order/);
+  assert.match(prompt, /proposed_action\.option_index/);
+  assert.doesNotMatch(prompt, /Canonical evidence digest/);
 });
 
 test('createHeadlampCliCandidate: rejects unsupported remove repair operations', async () => {

@@ -30,6 +30,7 @@ describe('parseArgs', () => {
     expect(result.suppliedEvidenceOnly).toBe(false);
     expect(result.structuredDiagnosis).toBe(false);
     expect(result.structuredRepair).toBe(false);
+    expect(result.compactStructuredOutput).toBe(false);
     expect(result.structuredRepairContract).toBeUndefined();
     expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
     expect(result.structuredDiagnosisObservations).toEqual([]);
@@ -81,6 +82,10 @@ describe('parseArgs', () => {
 
   it('parses --structured-diagnosis', () => {
     expect(parseArgs([...base, '--structured-diagnosis']).structuredDiagnosis).toBe(true);
+  });
+
+  it('parses --compact-structured-output', () => {
+    expect(parseArgs([...base, '--compact-structured-output']).compactStructuredOutput).toBe(true);
   });
 
   it('parses exact structured diagnosis evidence IDs', () => {

@@ -378,7 +378,11 @@ async function commandRun(flags: Flags): Promise<void> {
   const contractStoreRoot =
     typeof flags['contracts-dir'] === 'string' ? flags['contracts-dir'] : undefined;
   const runId = generateRunId();
-  const candidateCliArgs = await providerCliArgs(flags);
+  const providerArgs = await providerCliArgs(flags);
+  const candidateCliArgs = [
+    ...(providerArgs ?? []),
+    ...(flags['compact-structured-output'] === true ? ['--compact-structured-output'] : []),
+  ];
   const pricing = pricingFromFlags(flags);
 
   console.log(
@@ -396,7 +400,7 @@ async function commandRun(flags: Flags): Promise<void> {
     selection: selectionFromFlags(flags),
     candidate,
     baseline,
-    candidateCliArgs,
+    candidateCliArgs: candidateCliArgs.length > 0 ? candidateCliArgs : undefined,
     pricing,
     holmesModel: typeof flags['holmes-model'] === 'string' ? flags['holmes-model'] : undefined,
     k8sGptModel: typeof flags['k8sgpt-model'] === 'string' ? flags['k8sgpt-model'] : undefined,

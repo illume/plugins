@@ -16,7 +16,11 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  createCompactDiagnosisProviderSchema,
+  createCompactRepairProviderSchema,
   createDiagnosisProviderSchema,
+  validateCompactDiagnosisSubmission,
+  validateCompactRepairSubmission,
   createDiagnosisSubmissionSchema,
   createRepairProviderSchema,
   validateDiagnosisSubmission,
@@ -184,6 +188,26 @@ describe('createDiagnosisSubmissionSchema', () => {
     ]);
     expect(result.data.resource_refs).toEqual(['deployment/web', 'event/web-old-failure']);
     expect(result.data.evidence_refs).toEqual(['deployment-evidence', 'event-evidence']);
+  });
+
+  it('expands a compact diagnosis into the canonical full submission', () => {
+    const result = validateCompactDiagnosisSubmission(
+      {
+        alternative_dispositions: [],
+        uncertainty: { is_uncertain: false, reason: 'The supplied evidence is decisive.' },
+        proposed_actions: [{ operation: 'no_action', description: 'No change required.' }],
+      },
+      repairObservations
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data).toEqual(submission);
+    expect(createCompactDiagnosisProviderSchema().required).toEqual([
+      'alternative_dispositions',
+      'uncertainty',
+      'proposed_actions',
+    ]);
   });
 
   it('accepts exact coverage of all supplied observations', () => {
@@ -358,6 +382,45 @@ describe('createDiagnosisSubmissionSchema', () => {
     expect(
       validateRepairSubmission(repairSubmission, repairObservations, repairContract).success
     ).toBe(true);
+  });
+
+  it('expands a compact repair option into the exact trusted action', () => {
+    const compact = {
+      diagnosis: {
+        alternative_dispositions: [],
+        uncertainty: { is_uncertain: false, reason: 'The supplied evidence is decisive.' },
+        proposed_actions: [{ operation: 'no_action', description: 'No change required.' }],
+      },
+      proposed_action: { option_index: 0 },
+    };
+    const result = validateCompactRepairSubmission(compact, repairObservations, repairContract);
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data).toEqual({
+      ...repairSubmission,
+      proposed_action: { ...repairSubmission.proposed_action, action_id: 'repair-option-0' },
+    });
+    const schema = createCompactRepairProviderSchema(repairContract);
+    const properties = schema.properties as Record<string, any>;
+    expect(properties.proposed_action.properties.option_index.enum).toEqual([0]);
+  });
+
+  it('rejects a compact repair option outside the trusted contract', () => {
+    const result = validateCompactRepairSubmission(
+      {
+        diagnosis: {
+          alternative_dispositions: [],
+          uncertainty: { is_uncertain: false, reason: '' },
+          proposed_actions: [{ operation: 'no_action', description: 'No change required.' }],
+        },
+        proposed_action: { option_index: 1 },
+      },
+      repairObservations,
+      repairContract
+    );
+
+    expect(result).toEqual({ success: false, error: 'Repair option_index is not allowed' });
   });
 
   it('rejects a repair outside the exact target, patch, or evidence contract', () => {

@@ -16,9 +16,43 @@
 
 import { KubernetesTool } from '../kubernetes/langchain/KubernetesTool';
 import type { LangChainTool } from '../langchain/LangChainTool';
+import {
+  AzureApplicationInsightsTool,
+  AzureControlPlaneLogsTool,
+  AzureCostCapacityTool,
+  AzureDeploymentChangesTool,
+  AzureDiagnosticsTool,
+  AzureMetricsTool,
+  AzureNetworkConfigTool,
+  AzureResourceHealthTool,
+  AzureSecurityPostureTool,
+} from '../observability/AzureAksTools';
+import {
+  AzureMonitorTracesTool,
+  DatadogTool,
+  GrafanaTool,
+  PrometheusTool,
+  SplunkTool,
+} from '../observability/ObservabilityTools';
 
 /** Constructors for all built-in tools available to the assistant. */
-export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [KubernetesTool];
+export const AVAILABLE_TOOLS: Array<new () => LangChainTool> = [
+  KubernetesTool,
+  DatadogTool,
+  SplunkTool,
+  GrafanaTool,
+  PrometheusTool,
+  AzureMonitorTracesTool,
+  AzureMetricsTool,
+  AzureResourceHealthTool,
+  AzureApplicationInsightsTool,
+  AzureDiagnosticsTool,
+  AzureControlPlaneLogsTool,
+  AzureNetworkConfigTool,
+  AzureCostCapacityTool,
+  AzureSecurityPostureTool,
+  AzureDeploymentChangesTool,
+];
 
 /**
  * Finds a configured tool instance by name.

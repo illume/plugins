@@ -65,6 +65,15 @@ describe('AIManager', () => {
     expect(mgr.currentContext).toBe('only');
   });
 
+  it('clearHistory preserves the current context', () => {
+    const mgr = new ConcreteManager();
+    mgr.history.push({ role: 'user', content: 'hello' });
+    mgr.setContext('some context');
+    mgr.clearHistory();
+    expect(mgr.history).toEqual([]);
+    expect(mgr.currentContext).toBe('some context');
+  });
+
   it('reset clears history and context', () => {
     const mgr = new ConcreteManager();
     mgr.history.push({ role: 'user', content: 'hello' });

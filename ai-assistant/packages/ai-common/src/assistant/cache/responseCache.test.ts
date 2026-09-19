@@ -45,6 +45,12 @@ describe('generateCacheKey', () => {
     expect(k1).not.toBe(k2);
   });
 
+  it('changes when host context changes', () => {
+    const k1 = generateCacheKey([], 'hi', 'cluster: aks');
+    const k2 = generateCacheKey([], 'hi', 'cluster: non-aks');
+    expect(k1).not.toBe(k2);
+  });
+
   it('only uses the last 3 history entries', () => {
     const long: Prompt[] = [
       { role: 'user', content: 'a' },

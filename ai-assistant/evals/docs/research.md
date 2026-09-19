@@ -1,5 +1,10 @@
 ## Prioritized research backlog
 
+The observability-specific results, default decisions, ordered experiments, and
+remaining backlog are maintained in
+[observability reliability research](../../docs/observability-research.md).
+That roadmap is separate from the general framework phases and locked comparisons.
+
 This backlog selects twenty-one high-leverage topics from three passes of candidates. The second pass added source discovery and provenance, user simulation, context and memory stress, MCP/tool conformance, provider drift, cost budgets, human trust, multilingual behavior, metamorphic generation, and data governance. A third pass against the best-practice guidance kept the deferred product questions but added four missing validity areas: eval integrity, ecosystem drift, concurrent operations, and offline-to-production validity.
 
 - [ ] **1. Inventory eval data sources and define provenance rules.** Find authoritative troubleshooting guides, executable failure scenarios, realistic applications, incident examples, deterministic analyzers, and security/best-practice rules. Record licenses, revisions, Kubernetes compatibility, extraction method, review status, and permitted use. **Status: started below.**

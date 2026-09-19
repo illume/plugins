@@ -17,6 +17,14 @@
 /** Sanitized runtime events exposed to trusted CLI callers. */
 export type AssistantTelemetryEvent =
   | {
+      type: 'model_invocation';
+      invocation_id: number;
+      phase: 'planning' | 'synthesis';
+      status: 'started' | 'completed' | 'failed' | 'cancelled';
+      duration_ns?: string;
+      http_status?: number;
+    }
+  | {
       /** Marks a fully handled user turn after all model and tool events were emitted. */
       type: 'turn_complete';
     }

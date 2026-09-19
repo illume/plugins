@@ -255,6 +255,61 @@ describe('createFixtureChatModel', () => {
     expect(result.content).toBe('Custom hello!');
   });
 
+  it('returns deterministic tool calls from fixtures after binding tools', async () => {
+    const model = createFixtureChatModel({
+      extraFixtures: [
+        {
+          prompt: 'Check metrics',
+          response: 'Checking metrics.',
+          toolCalls: [{ name: 'prometheus_read', args: { action: 'query', query: 'up' } }],
+        },
+      ],
+    });
+    const bound = model.bindTools!([
+      {
+        name: 'prometheus_read',
+        description: 'Read Prometheus',
+        schema: { type: 'object', properties: {} },
+      },
+    ]);
+
+    const result = await bound.invoke([new HumanMessage('Check metrics')]);
+
+    expect(result.tool_calls).toEqual([
+      {
+        id: 'fixture-tool-call-0',
+        name: 'prometheus_read',
+        args: { action: 'query', query: 'up' },
+        type: 'tool_call',
+      },
+    ]);
+  });
+
+  it('returns content and tool calls from the same matching fixture', async () => {
+    const model = createFixtureChatModel({
+      extraFixtures: [
+        { prompt: 'Check metrics', response: 'First match.' },
+        {
+          prompt: 'Check metrics',
+          response: 'Second match.',
+          toolCalls: [{ name: 'prometheus_read', args: { action: 'query', query: 'up' } }],
+        },
+      ],
+    });
+    const bound = model.bindTools!([
+      {
+        name: 'prometheus_read',
+        description: 'Read Prometheus',
+        schema: { type: 'object', properties: {} },
+      },
+    ]);
+
+    const result = await bound.invoke([new HumanMessage('Check metrics')]);
+
+    expect(result.content).toBe('First match.');
+    expect(result.tool_calls).toEqual([]);
+  });
+
   it('plays back a sequence in order', async () => {
     const model = createFixtureChatModel({
       sequenceName: 'cluster-exploration-demo',

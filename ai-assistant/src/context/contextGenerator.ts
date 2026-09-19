@@ -5,6 +5,8 @@ export {
   generateResourceSummary,
 } from '@headlamp-k8s/ai-common/kubernetes/context/buildContextDescription';
 export type {
+  ClusterPlatform,
+  ClusterPlatforms,
   ClusterWarningEvent,
   ClusterWarnings,
   ContextEventPayload,

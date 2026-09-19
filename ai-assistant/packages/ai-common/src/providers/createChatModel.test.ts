@@ -15,6 +15,7 @@
  */
 
 import { ChatAnthropic } from '@langchain/anthropic';
+import { AzureChatOpenAI, ChatOpenAI } from '@langchain/openai';
 import { describe, expect, it } from 'vitest';
 import {
   canUseDirectToolCalling,
@@ -27,6 +28,34 @@ import {
 // calls and require no API keys or mocks.
 
 describe('createLangChainModel — validation errors', () => {
+  it('applies explicit output limits only to the requested Azure/OpenAI model instance', () => {
+    for (const provider of ['azure', 'openai']) {
+      const config = {
+        apiKey: 'offline-not-secret',
+        model: 'gpt-4o',
+        endpoint: 'https://offline.invalid',
+        deploymentName: 'gpt-4o',
+      };
+      const baseline = createChatModel(provider, config) as ChatOpenAI | AzureChatOpenAI;
+      const bounded = createChatModel(provider, config, { maxOutputTokens: 512 }) as
+        | ChatOpenAI
+        | AzureChatOpenAI;
+      expect(baseline.maxTokens).toBeUndefined();
+      expect(bounded.maxTokens).toBe(512);
+      expect(config).not.toHaveProperty('maxTokens');
+    }
+  });
+
+  it('rejects invalid or unsupported output limits before constructing a model', () => {
+    for (const value of [0, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(() => createChatModel('azure', {}, { maxOutputTokens: value })).toThrow(
+        'positive output-token'
+      );
+    }
+    expect(() => createChatModel('anthropic', {}, { maxOutputTokens: 512 })).toThrow(
+      'Azure/OpenAI'
+    );
+  });
   it('throws a clear error for an unsupported provider', () => {
     expect(() => createChatModel('unknown-provider', {})).toThrow(/Unsupported provider/);
   });

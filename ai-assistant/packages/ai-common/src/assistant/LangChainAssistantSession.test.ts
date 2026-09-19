@@ -64,6 +64,12 @@ interface TestModel {
   }>;
   stream?(input: unknown, options?: unknown): AsyncIterable<unknown> | Promise<unknown>;
   bindTools?(tools: unknown[]): TestModel;
+  withStructuredOutput?(
+    schema: unknown,
+    config: unknown
+  ): {
+    invoke(messages: unknown, options?: unknown): Promise<{ raw: AIMessage; parsed: unknown }>;
+  };
 }
 
 type TestToolManager = Partial<ToolManagerAdapter>;
@@ -107,7 +113,34 @@ interface LangChainManagerTestHarness {
   handleChainBasedRequest(message: string, model: TestModel): Promise<Prompt>;
   getSkillsPromptForQuery(message: string): Promise<string>;
   extractAzureBaseUrl(endpoint: string): string;
+  requiresBuiltInToolApproval(toolName: string, args: unknown): boolean;
 }
+
+describe('persistent observability approval', () => {
+  it('bypasses approval only for observability tools when enabled', () => {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      toolManager: createMockToolManager(),
+      autoApproveObservabilityTools: true,
+    });
+
+    expect(
+      privateManager(manager).requiresBuiltInToolApproval('prometheus_read', { query: 'up' })
+    ).toBe(false);
+    expect(
+      privateManager(manager).requiresBuiltInToolApproval('kubernetes_api_request', {
+        url: '/api/v1/namespaces/default/secrets',
+      })
+    ).toBe(true);
+  });
+
+  it('keeps observability tools approval-gated by default', () => {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      toolManager: createMockToolManager(),
+    });
+
+    expect(privateManager(manager).requiresBuiltInToolApproval('datadog_read', {})).toBe(true);
+  });
+});
 
 function privateManager(manager: LangChainAssistantSession): LangChainManagerTestHarness {
   return manager as unknown as LangChainManagerTestHarness;
@@ -910,7 +943,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
       { role: 'assistant', content: 'Checking...' }
     );
 
-    expect(events).toEqual([
+    expect(events.filter(event => event.type !== 'model_invocation')).toEqual([
       {
         type: 'model_usage',
         provider: 'mock-testing-model',
@@ -1006,7 +1039,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events).toEqual([
+    expect(events.filter(event => event.type === 'model_usage')).toEqual([
       {
         type: 'model_usage',
         provider: 'mock-testing-model',
@@ -1059,7 +1092,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'openai',
       input_token_semantics: 'total_including_cache',
       model: 'gpt-5',
@@ -1100,7 +1133,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'anthropic',
       input_token_semantics: 'uncached_only',
       model: 'claude-sonnet-4-5',
@@ -1152,7 +1185,7 @@ describe('extraTools: external tools via enableDirectToolCalling', () => {
 
     await privateManager(manager).handleDirectToolCallingRequest('done');
 
-    expect(events[0]).toMatchObject({
+    expect(events.find(event => event.type === 'model_usage')).toMatchObject({
       provider: 'anthropic',
       input_token_semantics: 'total_including_cache',
       model: 'claude-sonnet-4-5',
@@ -1324,6 +1357,28 @@ describe('userSend — response caching', () => {
     // A second call should hit the model again, not the cache
     const second = await manager.userSend('test cache');
     expect(second.role).toBe('assistant');
+  });
+
+  it('clears cached responses when host context changes', async () => {
+    const manager = createIntegrationManager();
+    await manager.userSend('what is happening?');
+    expect(privateManager(manager).responseCache.size).toBe(1);
+
+    manager.setContext('Cluster platforms:\n- production: Azure Kubernetes Service (AKS)');
+
+    expect(privateManager(manager).responseCache.size).toBe(0);
+  });
+
+  it('clears history and cached responses without removing host context', async () => {
+    const manager = createIntegrationManager();
+    manager.setContext('Cluster platforms:\n- production: Azure Kubernetes Service (AKS)');
+    await manager.userSend('what is happening?');
+
+    manager.clearHistory();
+
+    expect(manager.history).toEqual([]);
+    expect(manager.currentContext).toContain('Azure Kubernetes Service (AKS)');
+    expect(privateManager(manager).responseCache.size).toBe(0);
   });
 });
 
@@ -2507,6 +2562,119 @@ describe('userSend — cache hit via history reset', () => {
 // ---------------------------------------------------------------------------
 
 describe('handleDirectToolCallingRequest — error fallback', () => {
+  it('returns cancellation after an ordinary post-tool invocation aborts', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => 'observed',
+    });
+    let requests = 0;
+    const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+      if (++requests === 1)
+        return {
+          content: '',
+          tool_calls: [
+            {
+              id: 'read',
+              name: 'kubernetes_api_request',
+              args: { method: 'GET', url: '/api/v1/pods' },
+            },
+          ],
+        };
+      expect(requests).toBe(2);
+      manager.abort();
+      expect(options.signal.aborted).toBe(true);
+      return { content: 'late answer', tool_calls: [] };
+    });
+    privateManager(manager).model = { invoke };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
+  it('does not start a model after cancellation during approval initialization', async () => {
+    const manager = createIntegrationManager();
+    const invoke = vi.fn();
+    privateManager(manager).model = { invoke };
+    const initialize = vi
+      .spyOn(inlineToolApprovalManager, 'loadAndApplyAutoApproveSettings')
+      .mockImplementation(async () => {
+        manager.abort();
+      });
+    try {
+      await expect(manager.userSend('inspect pods')).rejects.toMatchObject({ name: 'AbortError' });
+      expect(invoke).not.toHaveBeenCalled();
+      expect(privateManager(manager).currentAbortController).toBeNull();
+    } finally {
+      initialize.mockRestore();
+    }
+  });
+
+  it('does not fall back after cancellation of direct planning', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+      manager.abort();
+      expect(options.signal.aborted).toBe(true);
+      throw new DOMException('aborted', 'AbortError');
+    });
+    const fallback = vi.fn();
+    privateManager(manager).boundModel = { invoke };
+    privateManager(manager).model = { invoke: fallback };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(fallback).not.toHaveBeenCalled();
+    expect(privateManager(manager).useDirectToolCalling).toBe(true);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
+  it('does not invoke the model after cancellation during skill preparation', async () => {
+    const manager = createIntegrationManager();
+    const invoke = vi.fn();
+    privateManager(manager).model = { invoke };
+    vi.spyOn(privateManager(manager), 'getSkillsPromptForQuery').mockImplementation(async () => {
+      manager.abort();
+      return '';
+    });
+    expect((await manager.userSend('inspect pods')).content).toBe('Request cancelled.');
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it('retains cancellation through tool execution and prevents later tools or synthesis', async () => {
+    const manager = createIntegrationManager();
+    privateManager(manager).useDirectToolCalling = true;
+    const laterTool = vi.fn();
+    privateManager(manager).extraTools.set('kubernetes_api_request', {
+      name: 'kubernetes_api_request',
+      invoke: async () => {
+        expect(privateManager(manager).currentAbortController).not.toBeNull();
+        manager.abort();
+        return 'observed';
+      },
+    });
+    privateManager(manager).extraTools.set('later_read', { name: 'later_read', invoke: laterTool });
+    const invoke = vi.fn().mockResolvedValue({
+      content: '',
+      tool_calls: [
+        {
+          id: 'first',
+          name: 'kubernetes_api_request',
+          args: { url: '/api/v1/pods', method: 'GET' },
+        },
+        { id: 'later', name: 'later_read', args: {} },
+      ],
+    });
+    privateManager(manager).model = { invoke };
+    const response = await manager.userSend('inspect pods');
+    expect(response.content).toBe('Request cancelled.');
+    expect(laterTool).not.toHaveBeenCalled();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(privateManager(manager).currentAbortController).toBeNull();
+  });
+
   it('falls back to handleChainBasedRequest and disables direct tool calling when invoke throws', async () => {
     const manager = createIntegrationManager();
     privateManager(manager).useDirectToolCalling = true;
@@ -3592,6 +3760,356 @@ describe('processToolResponsesStream', () => {
     const finalPrompt = result.value;
     expect(finalPrompt.role).toBe('assistant');
     expect(finalPrompt.error).toBe(true);
+  });
+});
+
+describe('optional structured final response', () => {
+  const schema = {
+    type: 'object',
+    properties: { fact_refs: { type: 'array', items: { type: 'string' } } },
+    required: ['fact_refs'],
+    additionalProperties: false,
+  };
+  function managerWithHistory(
+    observer?: (event: AssistantTelemetryEvent) => void,
+    finalResponseTimeoutMs?: number
+  ) {
+    const manager = new LangChainAssistantSession('mock-testing-model', {}, [], {
+      finalResponseSchema: { name: 'selection', schema },
+      telemetryObserver: observer,
+      finalResponseTimeoutMs,
+    });
+    privateManager(manager).history.push(
+      { role: 'user', content: 'Original diagnostic request' },
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [{ type: 'function', id: 'read1', function: { name: 'read', arguments: '{}' } }],
+      },
+      { role: 'tool', name: 'read', toolCallId: 'read1', content: '{"evidence":"observed"}' }
+    );
+    return manager;
+  }
+
+  it('bounds stalled structured synthesis and clears its timer without accepting a late result', async () => {
+    vi.useFakeTimers();
+    try {
+      const events: AssistantTelemetryEvent[] = [];
+      const manager = managerWithHistory(event => events.push(event), 50);
+      let signal: AbortSignal | undefined;
+      let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+      const stalled = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+        release = resolve;
+      });
+      const invoke = vi.fn(async (_messages, options: { signal: AbortSignal }) => {
+        signal = options.signal;
+        return stalled;
+      });
+      privateManager(manager).model = { withStructuredOutput: () => ({ invoke }) };
+      const response = manager.processToolResponses();
+      await vi.advanceTimersByTimeAsync(49);
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      const result = await response;
+      expect(result.error).toBe(true);
+      expect(result.content).toContain('Final response deadline exceeded');
+      expect(signal?.aborted).toBe(true);
+      expect(signal?.reason.name).toBe('TimeoutError');
+      release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(invoke).toHaveBeenCalledTimes(1);
+      expect(
+        events.filter(event => event.type === 'model_invocation').map(event => event.status)
+      ).toEqual(['started', 'cancelled']);
+      expect(privateManager(manager).currentAbortController).toBeNull();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects invalid final deadlines before model construction', () => {
+    for (const timeout of [0, -1, 0.5, NaN, Infinity, 2_147_483_648]) {
+      expect(() => managerWithHistory(undefined, timeout)).toThrow('positive 32-bit timeout');
+    }
+    expect(
+      () =>
+        new LangChainAssistantSession('mock-testing-model', {}, [], { finalResponseTimeoutMs: 50 })
+    ).toThrow('structured final response');
+  });
+
+  it('clears the final deadline after success without aborting the completed request', async () => {
+    vi.useFakeTimers();
+    try {
+      const manager = managerWithHistory(undefined, 50);
+      let signal: AbortSignal | undefined;
+      privateManager(manager).model = {
+        withStructuredOutput: () => ({
+          invoke: async (_messages, options) => {
+            signal = (options as { signal: AbortSignal }).signal;
+            return {
+              raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+              parsed: { fact_refs: [] },
+            };
+          },
+        }),
+      };
+      expect((await manager.processToolResponses()).error).toBeFalsy();
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(signal?.aborted).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('honors user cancellation before the final deadline and removes its timer', async () => {
+    vi.useFakeTimers();
+    try {
+      const events: AssistantTelemetryEvent[] = [];
+      const manager = managerWithHistory(event => events.push(event), 50);
+      let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+      const pending = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+        release = resolve;
+      });
+      privateManager(manager).model = {
+        withStructuredOutput: () => ({ invoke: async () => pending }),
+      };
+      const response = manager.processToolResponses();
+      await vi.advanceTimersByTimeAsync(1);
+      manager.abort();
+      expect((await response).error).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(
+        events.filter(event => event.type === 'model_invocation').map(event => event.status)
+      ).toEqual(['started', 'cancelled']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('starts the final deadline after planning and tool reads, not at the start of the turn', async () => {
+    vi.useFakeTimers();
+    try {
+      const manager = managerWithHistory(undefined, 50);
+      privateManager(manager).useDirectToolCalling = true;
+      privateManager(manager).extraTools.set('kubernetes_api_request', {
+        name: 'kubernetes_api_request',
+        invoke: async () => {
+          expect(vi.getTimerCount()).toBe(0);
+          await vi.advanceTimersByTimeAsync(100);
+          return 'observed';
+        },
+      });
+      privateManager(manager).model = {
+        invoke: async () => {
+          expect(vi.getTimerCount()).toBe(0);
+          await vi.advanceTimersByTimeAsync(100);
+          return {
+            content: '',
+            tool_calls: [
+              {
+                id: 'next',
+                name: 'kubernetes_api_request',
+                args: { url: '/api/v1/pods', method: 'GET' },
+              },
+            ],
+          };
+        },
+        withStructuredOutput: () => ({
+          invoke: async () => {
+            expect(vi.getTimerCount()).toBe(1);
+            return {
+              raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+              parsed: { fact_refs: [] },
+            };
+          },
+        }),
+      };
+      const response = await manager.userSend('inspect pods');
+      expect(response.content).toBe('{"fact_refs":[]}');
+      expect(response.error).toBeFalsy();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects unsupported final token limits before model construction', () => {
+    for (const value of [0, -1, 0.5, NaN, Infinity]) {
+      expect(
+        () =>
+          new LangChainAssistantSession('azure', {}, [], {
+            finalResponseSchema: { name: 'selection', schema },
+            finalResponseMaxOutputTokens: value,
+          })
+      ).toThrow('positive final output-token');
+    }
+    expect(
+      () => new LangChainAssistantSession('azure', {}, [], { finalResponseMaxOutputTokens: 512 })
+    ).toThrow('structured Azure/OpenAI');
+    expect(
+      () =>
+        new LangChainAssistantSession('mock-testing-model', {}, [], {
+          finalResponseSchema: { name: 'selection', schema },
+          finalResponseMaxOutputTokens: 512,
+        })
+    ).toThrow('structured Azure/OpenAI');
+  });
+
+  it('uses strict JSON only for final synthesis and retains raw content and usage', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    const content = '{ "fact_refs": ["kubectl"] }';
+    const invoke = vi.fn().mockResolvedValue({
+      raw: new AIMessage({
+        content,
+        usage_metadata: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+        response_metadata: { finish_reason: 'stop' },
+      }),
+      parsed: { fact_refs: ['kubectl'] },
+    });
+    const structured = vi.fn().mockReturnValue({ invoke });
+    const ordinary = vi.fn();
+    privateManager(manager).model = { invoke: ordinary, withStructuredOutput: structured };
+    const response = await manager.processToolResponses();
+    expect(response.content).toBe(content);
+    expect(structured).toHaveBeenCalledWith(schema, {
+      name: 'selection',
+      method: 'jsonSchema',
+      strict: true,
+      includeRaw: true,
+    });
+    expect(JSON.stringify(invoke.mock.calls[0][0])).toContain('Original diagnostic request');
+    expect(JSON.stringify(invoke.mock.calls[0][0])).toContain('observed');
+    expect(invoke.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    expect(ordinary).not.toHaveBeenCalled();
+    expect(events.some(event => event.type === 'model_usage')).toBe(true);
+    const invocations = events.filter(event => event.type === 'model_invocation');
+    expect(invocations).toEqual([
+      { type: 'model_invocation', invocation_id: 1, phase: 'synthesis', status: 'started' },
+      {
+        type: 'model_invocation',
+        invocation_id: 1,
+        phase: 'synthesis',
+        status: 'completed',
+        duration_ns: expect.any(String),
+      },
+    ]);
+  });
+
+  it('records sanitized structured invocation failure without retry or error contents', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    const invoke = vi.fn().mockRejectedValue(
+      Object.assign(new Error('private-provider-details'), {
+        status: 429,
+        headers: { authorization: 'private-header' },
+        body: 'private-body',
+      })
+    );
+    const ordinary = vi.fn();
+    privateManager(manager).model = { invoke: ordinary, withStructuredOutput: () => ({ invoke }) };
+    expect((await manager.processToolResponses()).error).toBe(true);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(ordinary).not.toHaveBeenCalled();
+    expect(events.filter(event => event.type === 'model_invocation')).toEqual([
+      { type: 'model_invocation', invocation_id: 1, phase: 'synthesis', status: 'started' },
+      {
+        type: 'model_invocation',
+        invocation_id: 1,
+        phase: 'synthesis',
+        status: 'failed',
+        http_status: 429,
+        duration_ns: expect.any(String),
+      },
+    ]);
+    expect(JSON.stringify(events)).not.toContain('private-');
+  });
+
+  it('records cancellation before a stalled invocation settles, without a late completion event', async () => {
+    const events: AssistantTelemetryEvent[] = [];
+    const manager = managerWithHistory(event => events.push(event));
+    let release: (value: { raw: AIMessage; parsed: unknown }) => void = () => {};
+    const pending = new Promise<{ raw: AIMessage; parsed: unknown }>(resolve => {
+      release = resolve;
+    });
+    privateManager(manager).model = {
+      withStructuredOutput: () => ({
+        invoke: async () => {
+          manager.abort();
+          expect(
+            events.filter(event => event.type === 'model_invocation').map(event => event.status)
+          ).toEqual(['started', 'cancelled']);
+          return pending;
+        },
+      }),
+    };
+    const response = manager.processToolResponses();
+    release({ raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } });
+    expect((await response).error).toBe(true);
+    expect(
+      events.filter(event => event.type === 'model_invocation').map(event => event.status)
+    ).toEqual(['started', 'cancelled']);
+  });
+
+  it.each(['refusal', 'length', 'malformed', 'unparsed'])(
+    'fails closed for %s without an unconstrained retry',
+    async kind => {
+      const manager = managerWithHistory();
+      const ordinary = vi.fn();
+      privateManager(manager).model = {
+        invoke: ordinary,
+        withStructuredOutput: () => ({
+          invoke: async () => ({
+            raw: new AIMessage({
+              content: kind === 'malformed' ? '{"fact_refs":[]}}' : '{"fact_refs":[]}',
+              additional_kwargs: kind === 'refusal' ? { refusal: 'refused' } : {},
+              response_metadata: { finish_reason: kind === 'length' ? 'length' : 'stop' },
+            }),
+            parsed: kind === 'unparsed' ? null : { fact_refs: [] },
+          }),
+        }),
+      };
+      expect((await manager.processToolResponses()).error).toBe(true);
+      expect(ordinary).not.toHaveBeenCalled();
+    }
+  );
+
+  it('buffers strict streaming until the complete structured response is available', async () => {
+    const manager = managerWithHistory();
+    const stream = vi.fn();
+    privateManager(manager).model = {
+      stream,
+      withStructuredOutput: () => ({
+        invoke: async () => ({
+          raw: new AIMessage({ content: '{"fact_refs":[]}' }),
+          parsed: { fact_refs: [] },
+        }),
+      }),
+    };
+    const chunks = [];
+    for await (const chunk of manager.processToolResponsesStream()) chunks.push(chunk);
+    expect(chunks).toEqual(['{"fact_refs":[]}']);
+    expect(stream).not.toHaveBeenCalled();
+  });
+
+  it('propagates cancellation to the structured invocation', async () => {
+    const manager = managerWithHistory();
+    let observedSignal: AbortSignal | undefined;
+    privateManager(manager).model = {
+      withStructuredOutput: () => ({
+        invoke: async (_, options) => {
+          observedSignal = (options as { signal: AbortSignal }).signal;
+          manager.abort();
+          return { raw: new AIMessage({ content: '{"fact_refs":[]}' }), parsed: { fact_refs: [] } };
+        },
+      }),
+    };
+    expect((await manager.processToolResponses()).error).toBe(true);
+    expect(observedSignal?.aborted).toBe(true);
   });
 });
 

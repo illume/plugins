@@ -1,0 +1,602 @@
+[
+  {
+    "candidateId": "AKS-C001",
+    "task": "A Flux resource appears to exist, but an operator's resource lookup returns NotFound. Investigate the discrepancy.",
+    "baseline": "Install the owned Flux workload and verify that its HelmRelease can be retrieved through its fully qualified API group before introducing the additional addon.",
+    "evidence": ["API discovery including resource names, short names and groups", "Qualified and unqualified lookup results", "Owned CRD and addon versions"]
+  },
+  {
+    "candidateId": "AKS-C002",
+    "task": "A Windows Pod remains Terminating after a replacement was requested. Determine what is preventing deletion.",
+    "baseline": "Create, read the mounted configuration from, and delete a Windows control Pod with one ConfigMap subPath mount; record bounded deletion completion.",
+    "evidence": ["Pod volume configuration and deletion timestamps", "Windows kubelet mount-cleanup events and logs", "Single-mount versus duplicate-mount lifecycle timings"]
+  },
+  {
+    "candidateId": "AKS-C003",
+    "task": "A workload cannot start because its NFS volume will not mount. Investigate the failed mount using the supplied node and storage observations.",
+    "baseline": "Mount the same owned encrypted NFS share on a supported Ubuntu control image and verify a sentinel file can be read and written without disabling encryption.",
+    "evidence": ["Pod mount events and CSI node logs", "Node OS image and installed mount-helper inventory", "PV encryption settings and storage share properties"]
+  },
+  {
+    "candidateId": "AKS-C004",
+    "task": "An attempt to enable automatic node provisioning was rejected. Identify the configuration constraint supported by the evidence.",
+    "baseline": "Confirm an owned manually provisioned cluster is healthy, then validate a supported automatic-provisioning control configuration in a separate disposable environment.",
+    "evidence": ["Sanitized ARM operation response and correlation ID", "Cluster encryption and node-provisioning properties", "Identity, network configuration and current feature support matrix"]
+  },
+  {
+    "candidateId": "AKS-C005",
+    "task": "The cost-analysis addon Pod remains ContainerCreating in a multi-zone cluster. Investigate why it cannot become ready.",
+    "baseline": "Demonstrate addon readiness and a successful volume attachment on a zone-compatible control placement; capture node and disk zones.",
+    "evidence": ["Addon Pod events and node placement", "PV topology and VolumeAttachment state", "Azure disk SKU and availability zone"]
+  },
+  {
+    "candidateId": "AKS-C006",
+    "task": "A workload using an identity-authenticated file share cannot mount its volume. Determine which part of the mount path is failing.",
+    "baseline": "Verify an identity-authenticated SMB mount with the same owned account and authorized identity on a supported driver/node image, and read a sentinel file.",
+    "evidence": ["CSI mount logs and Pod events", "Driver/node image versions and authentication-helper inventory", "Sanitized identity role assignments and PV mount options"]
+  },
+  {
+    "candidateId": "AKS-C007",
+    "task": "A bound NFS volume is inaccessible to its Pod. Investigate why binding succeeded but mounting did not.",
+    "baseline": "With secure transfer still required on the owned storage account, demonstrate a supported encrypted NFS mount and sentinel read/write.",
+    "evidence": ["PV/PVC binding and mount configuration", "Pod mount errors", "Storage secure-transfer properties and encrypted control results"]
+  },
+  {
+    "candidateId": "AKS-C008",
+    "task": "Some exported Kubernetes audit records cannot be parsed by the consumer. Investigate where the record integrity is lost.",
+    "baseline": "Export a small, non-sensitive test API update through the same diagnostic route and parse both the outer diagnostic record and its inner audit event.",
+    "evidence": ["Private raw diagnostic records and byte lengths", "Outer and inner JSON parser results", "API request timestamps, bounded object sizes and export settings"]
+  },
+  {
+    "candidateId": "AKS-C009",
+    "task": "A PVC clone operation remains Pending although the source volume exists. Investigate the provisioning failure.",
+    "baseline": "Create and mount an owned source disk, write sentinel data, and demonstrate a same-resource-group PVC clone with identical data before testing cross-group import.",
+    "evidence": ["Clone PVC events and CSI provisioning logs", "PV volume handles and generated sourceResourceId", "Source disk resource group and provider existence checks"]
+  },
+  {
+    "candidateId": "AKS-C010",
+    "task": "Private AKS creation fails in a hub-and-spoke network despite successful DNS queries. Determine the failing provisioning operation.",
+    "baseline": "Verify hub DNS resolution and create a disposable private-cluster control with documented zone-link permissions; record the authorized scopes.",
+    "evidence": ["ARM deployment operations and authorization errors", "Private DNS zone links and hub/spoke topology", "User-assigned identity role scopes and DNS query results"]
+  },
+  {
+    "candidateId": "AKS-C011",
+    "task": "A previously mountable file volume fails during a storage-driver migration. Investigate the authentication path without exposing token contents.",
+    "baseline": "Verify the owned volume mounts before the migration and that a supported CSI control mounts with the required projected-token configuration.",
+    "evidence": ["Pre/post-migration PV and Pod specifications", "Projected token audience metadata only", "CSI driver versions and sanitized authentication errors"]
+  },
+  {
+    "candidateId": "AKS-C012",
+    "task": "Flux cannot fetch an OCI Helm chart while the registry is reachable. Determine why source reconciliation fails.",
+    "baseline": "Reconcile the same owned OCI chart with a supported source-controller version and writable registry-configuration home directory.",
+    "evidence": ["HelmRepository/HelmChart reconciliation conditions", "Source-controller logs and non-secret environment paths", "Registry reachability and controller versions"]
+  },
+  {
+    "candidateId": "AKS-C013",
+    "task": "Requested control-plane metrics are absent after a monitoring configuration update. Investigate whether the targets are being collected.",
+    "baseline": "Verify an explicitly supported control-plane target is collected and queryable through the same managed workspace within a declared ingestion window.",
+    "evidence": ["Collector configuration, versions and restart state", "Supported target inventory and scrape status", "Timestamped workspace metric queries and ingestion delay"]
+  },
+  {
+    "candidateId": "AKS-C014",
+    "task": "The ALB controller fails to start after installation from a Helm chart. Investigate its image-pull failure.",
+    "baseline": "Pull the intended immutable controller image from the owned registry and start the control deployment using that exact image reference.",
+    "evidence": ["Helm values and rendered Pod image reference", "Image pull events", "Registry repository/digest existence and chart version"]
+  },
+  {
+    "candidateId": "AKS-C015",
+    "task": "AKS node bootstrap times out while installing packages through a proxy-configured environment. Determine the failing request path.",
+    "baseline": "On a disposable compatible image, verify the required package endpoints are reachable under the intended proxy-bypass configuration before testing the reported environment-variable variant.",
+    "evidence": ["Sanitized CSE and package-manager logs", "Uppercase/lowercase proxy exclusion configuration without credentials", "Package endpoint connectivity and proxy request observations"]
+  },
+  {
+    "candidateId": "AKS-C016",
+    "task": "The Calico API server remains unready after enabling it. Investigate the dependency preventing startup.",
+    "baseline": "Enable the API server in an isolated supported control where its operator can complete certificate creation, and verify Pod readiness and API discovery.",
+    "evidence": ["Calico API server Pod mount events", "Certificate Secret metadata without secret data", "Operator RBAC rules, authorization checks and reconciliation logs"]
+  },
+  {
+    "candidateId": "AKS-C017",
+    "task": "Network telemetry records arrive, but expected flow identity fields are absent. Investigate the evidence available for attributing the traffic.",
+    "baseline": "Generate a labelled source-to-destination flow between owned endpoints and capture their addresses independently alongside unaggregated supported telemetry.",
+    "evidence": ["Retina aggregation configuration and component versions", "Known test flow timestamps and endpoint inventory", "Raw emitted record schemas and field-presence comparisons"]
+  },
+  {
+    "candidateId": "AKS-C018",
+    "task": "An ingress that previously served requests stops working after its controller restarts. Investigate the reconciliation failure.",
+    "baseline": "Establish an owned AGC association, verify ingress requests succeed, and record subnet capacity and association state before restarting the controller.",
+    "evidence": ["ALB controller logs around restart", "AGC association and subnet address-capacity state", "Gateway/HTTPRoute conditions and timestamped request results"]
+  },
+  {
+    "candidateId": "AKS-C019",
+    "task": "An additional node pool reports DNS health failures while application DNS tests succeed. Explain the differing observations.",
+    "baseline": "Run DNS queries to the actual cluster DNS Service from control and additional pools, and confirm the control pool's health probe uses that address.",
+    "evidence": ["Cluster DNS Service IP and node-pool settings", "Node Problem Detector configuration and probe logs", "DNS queries to configured and observed resolver addresses"]
+  },
+  {
+    "candidateId": "AKS-C020",
+    "task": "Node-provisioning activity occurred, but the configured diagnostic stream has no corresponding records. Investigate collection and delivery.",
+    "baseline": "Verify scheduler diagnostics arrive at the owned destination and identify a supported NAP diagnostic event with a documented ingestion window.",
+    "evidence": ["Enabled diagnostic categories and destination configuration", "Independently timestamped NAP activity", "Scheduler and NAP log queries with bounded ingestion windows"]
+  },
+  {
+    "candidateId": "AKS-C021",
+    "task": "Infrastructure reconciliation reports networking drift after AKS creation. Determine whether requested and observed configuration agree.",
+    "baseline": "Round-trip a supported owned cluster network configuration through create/show and record expected persisted CIDR fields before testing the reported BYOCNI variant.",
+    "evidence": ["Sanitized desired configuration and ARM create/show responses", "Provider API version and infrastructure-tool plan diff", "Separate webhook-routing probes if workload impact is claimed"]
+  },
+  {
+    "candidateId": "AKS-C022",
+    "task": "A Calico Typha replica fails after being scheduled in a mixed-node cluster. Investigate its placement and startup requirements.",
+    "baseline": "Run the same Typha configuration on a supported physical AKS node and verify readiness before allowing the virtual-node placement variant.",
+    "evidence": ["Typha Pod scheduling constraints and assigned node", "Physical and virtual node labels/capabilities", "Pod events and container startup logs"]
+  },
+  {
+    "candidateId": "AKS-C023",
+    "task": "Port forwarding to a Windows workload fails, although its Service responds. Determine which access path is failing.",
+    "baseline": "Verify direct Service traffic and a supported Windows image's port-forward path to the same simple owned endpoint.",
+    "evidence": ["Port-forward client and node errors", "Windows image and helper executable inventory", "Direct Service and Pod connectivity results"]
+  },
+  {
+    "candidateId": "AKS-C024",
+    "task": "A container starts with unexpected or missing files in an image-backed volume. Investigate the mounted content.",
+    "baseline": "Use an immutable test image with known root and nested sentinel files; verify the supported full-volume mount and a compatible subtree control.",
+    "evidence": ["Pod image-volume and subPath configuration", "Immutable image content manifest", "Read-only directory listings and sentinel checks from the mounted volume"]
+  },
+  {
+    "candidateId": "AKS-C025",
+    "task": "Host-side automation can no longer invoke a Kubernetes command after a node-image update, although the node is Ready. Investigate the host environment.",
+    "baseline": "Record the tool path and successful invocation on the control node image, plus node readiness, without installing additional host tools.",
+    "evidence": ["Node image versions", "Host PATH and executable locations", "Bare versus absolute-path invocation results and node readiness"]
+  },
+  {
+    "candidateId": "AKS-C026",
+    "task": "The cost-analysis addon repeatedly crashes on a new node pool. Investigate the startup failure.",
+    "baseline": "Run the addon on a supported control architecture and verify readiness; inspect the immutable image's architecture manifest before placement changes.",
+    "evidence": ["Addon Pod events and startup error", "Node OS/architecture labels", "Resolved image digest and platform manifest"]
+  },
+  {
+    "candidateId": "AKS-C027",
+    "task": "A Pod using an image volume never reaches container startup. Investigate the runtime's volume preparation failure.",
+    "baseline": "Mount a known immutable image volume on a supported control image and verify its sentinel content before using the affected Azure Linux image.",
+    "evidence": ["Pod volume configuration and container creation events", "Container runtime and kubelet mount errors", "Node image/runtime versions and image-volume content"]
+  },
+  {
+    "candidateId": "AKS-C028",
+    "task": "Dapr initialization cannot complete in a managed namespace. Investigate which operation is being prevented.",
+    "baseline": "Initialize an owned Dapr control in an explicitly authorized namespace and verify its trust material and workload readiness without altering production policy.",
+    "evidence": ["Admission response and policy identifiers", "Dapr initialization logs and ServiceAccount metadata", "Namespace protection configuration and authorized control results"]
+  },
+  {
+    "candidateId": "AKS-C029",
+    "task": "Installing or upgrading the ArgoCD extension fails while existing resources remain present. Investigate the rejected change.",
+    "baseline": "Install the same extension into a clean owned namespace and verify its controllers before testing migration over existing resources.",
+    "evidence": ["Helm/extension operation errors", "Existing and rendered workload selectors and ownership metadata", "Extension versions and clean-namespace control outcome"]
+  },
+  {
+    "candidateId": "AKS-C030",
+    "task": "An ALB release cannot finish uninstalling because its cleanup Job is Pending. Determine why the Job cannot run.",
+    "baseline": "Demonstrate controller readiness and successful cleanup on an untainted owned control pool, then record the tainted pool's scheduling contract.",
+    "evidence": ["Pre-delete Job Pod events and tolerations", "Controller tolerations and node taints", "Helm hook status and chart version"]
+  },
+  {
+    "candidateId": "AKS-C031",
+    "task": "An ArgoCD extension workload cannot authenticate using its intended identity. Investigate the Pod's identity setup.",
+    "baseline": "Use an owned ServiceAccount and authorized test identity with a supported control Pod that completes a harmless authentication probe.",
+    "evidence": ["ServiceAccount annotation and Pod label metadata", "Mutated Pod environment and projected volume paths without tokens", "Sanitized authentication results and extension configuration"]
+  },
+  {
+    "candidateId": "AKS-C032",
+    "task": "An identity-enabled application cannot find its token after a configuration change. Investigate the application's expected and actual credential paths.",
+    "baseline": "Authenticate a supported control application using the injected token-file path and record the mounted file's metadata without reading its contents.",
+    "evidence": ["Identity Binding and Pod injection metadata", "Projected volume and environment file paths", "Application configuration and sanitized file-not-found/authentication errors"]
+  },
+  {
+    "candidateId": "AKS-C033",
+    "task": "An authorization review gives an unexpected result for an impersonated user. Investigate which identity context the review evaluated.",
+    "baseline": "Run the same review for a controlled Entra-authenticated principal with known entitlements and capture the required identity extras without credentials.",
+    "evidence": ["Sanitized authorization-review request and response", "Impersonated user/group/extra fields", "Expected test role assignments and control review result"]
+  },
+  {
+    "candidateId": "AKS-C034",
+    "task": "Nodes do not become Ready during private cluster provisioning. Investigate the relevant network configuration and failed operation.",
+    "baseline": "Provision a disposable API VNet Integration control with the supported network settings and verify node readiness before the encrypted-VNet variant.",
+    "evidence": ["ARM provisioning errors and node bootstrap logs", "VNet encryption and API-server integration properties", "Matched control network configuration and readiness timestamps"]
+  },
+  {
+    "candidateId": "AKS-C035",
+    "task": "A network-isolated automatic cluster creation request is rejected. Identify the unsupported combination shown in the evidence.",
+    "baseline": "Validate and provision a currently supported network-isolated control configuration with explicit outbound and artifact-source settings in an owned environment.",
+    "evidence": ["Sanitized create parameters and ARM validation error", "Network-isolation, outbound and artifact-source properties", "Current supported configuration matrix and CLI/API versions"]
+  },
+  {
+    "candidateId": "AKS-C036",
+    "task": "An internal ingress receives an address, but its intended hostname does not resolve. Investigate DNS reconciliation.",
+    "baseline": "Verify the owned private zone resolves a test record from the intended network and that a supported controller configuration can manage a test record.",
+    "evidence": ["Ingress address and app-routing configuration", "Private zone record inventory and scoped identity permissions", "Controller logs and timestamped DNS queries"]
+  },
+  {
+    "candidateId": "AKS-C037",
+    "task": "Flux cannot authenticate to its source in a cross-tenant setup. Investigate the identity context used by the controller.",
+    "baseline": "Reconcile the same harmless source in a supported same-tenant control and independently validate the intended cross-tenant test federation configuration.",
+    "evidence": ["Generated controller identity metadata", "Sanitized issuer, tenant, client and federation configuration", "Source-controller authentication errors and control results"]
+  },
+  {
+    "candidateId": "AKS-C038",
+    "task": "An identity replacement completed, but the owner is concerned about remaining Azure access. Investigate effective role assignments.",
+    "baseline": "Record the owned node resource group's role assignments and the original cluster principal before replacing it with another test identity.",
+    "evidence": ["Before/after cluster principal IDs", "Role assignments and scopes in the owned node resource group", "Identity update activity records and independent access checks"]
+  },
+  {
+    "candidateId": "AKS-C039",
+    "task": "A LoadBalancer Service does not converge to a stable external address. Investigate which controllers are updating it.",
+    "baseline": "Create an owned Service with one supported load-balancer address owner and verify stable status plus successful backend traffic.",
+    "evidence": ["Service status changes, events and managed fields", "Cilium LB-IPAM and cloud-controller configuration/logs", "Azure load-balancer frontend state and request results"]
+  },
+  {
+    "candidateId": "AKS-C040",
+    "task": "Calico reports dataplane initialization errors on a node pool. Determine the affected mechanism and whether workload policy is actually impaired.",
+    "baseline": "Verify Calico readiness and explicit allowed/denied traffic probes on a compatible control image; retain the same probes for the FIPS-image comparison.",
+    "evidence": ["Calico BPF/BTF/XDP logs", "Kernel, FIPS and node-image metadata", "Separate policy enforcement and workload connectivity probes"]
+  },
+  {
+    "candidateId": "AKS-C041",
+    "task": "A managed mesh Gateway never becomes ready. Investigate the generated workload and its startup failure.",
+    "baseline": "Deploy a supported owned Gateway control and verify its generated proxy image can be pulled and serves a test route.",
+    "evidence": ["Gateway conditions and generated Deployment image", "Pod image-pull events", "Mesh revision, image digest and controller logs"]
+  },
+  {
+    "candidateId": "AKS-C042",
+    "task": "Pending workloads do not lead to expected scale-out. Investigate node health, capacity and autoscaler decisions.",
+    "baseline": "With all owned pool instances running and Ready, create bounded pending demand and verify the pool scales within its declared limits.",
+    "evidence": ["Pending Pod requirements and scheduling events", "Node readiness versus Azure VM power state", "Autoscaler unready thresholds, backoff and decision logs"]
+  },
+  {
+    "candidateId": "AKS-C043",
+    "task": "A GPU workload causes more nodes to be requested than expected. Investigate how scaling capacity was estimated.",
+    "baseline": "On a running compatible GPU control node, verify advertised time-sliced capacity and the number of test Pods that can actually schedule.",
+    "evidence": ["GPU device-plugin configuration and advertised resources", "Pool scale-from-zero template and autoscaler decisions", "Timed node requests, Pod placement and subsequent consolidation"]
+  },
+  {
+    "candidateId": "AKS-C044",
+    "task": "Additional Typha replicas remain Pending even though CPU appears available. Determine the relevant scheduling constraints.",
+    "baseline": "Schedule the owned Typha control on nodes with available required host ports and matching tolerations, and verify readiness.",
+    "evidence": ["FailedScheduling events", "Typha hostPort and toleration configuration", "Node taints and existing host-port consumers"]
+  },
+  {
+    "candidateId": "AKS-C045",
+    "task": "An underused node is not removed by the autoscaler. Investigate why its workloads cannot be consolidated.",
+    "baseline": "Demonstrate scale-in for an otherwise matched owned workload with relaxed placement constraints and capture successful rescheduling.",
+    "evidence": ["Pod topology-spread constraints and node topology", "Autoscaler removal simulation and cannot-reschedule reasons", "Control placement, utilization and scale-in timelines"]
+  },
+  {
+    "candidateId": "AKS-C046",
+    "task": "A workload targeting an ARM64 pool remains Pending when that pool has no nodes. Investigate the scale-from-zero decision.",
+    "baseline": "Start one owned ARM64 node, verify its labels satisfy the workload, and demonstrate successful scheduling before returning the pool to zero.",
+    "evidence": ["Pod node selector and scheduling events", "Actual node labels versus autoscaler pool template", "Pool architecture, limits and autoscaler decisions"]
+  },
+  {
+    "candidateId": "AKS-C047",
+    "task": "An AKS node-count configuration is rejected even though current utilization is low. Identify the capacity constraint being validated.",
+    "baseline": "Validate an owned overlay network with a maximum node count that fits its declared pod CIDR capacity, without scaling to that maximum.",
+    "evidence": ["ARM validation response", "Requested pool maxima and overlay pod CIDR", "Documented per-node address allocation and current versus maximum capacity"]
+  },
+  {
+    "candidateId": "AKS-C048",
+    "task": "A node-pool creation command fails before the pool appears. Investigate the relationship between the submitted scaling parameters.",
+    "baseline": "Create an owned control pool with an explicitly specified initial count inside its minimum/maximum range and verify the observed scaling settings.",
+    "evidence": ["Sanitized CLI arguments and defaults", "CLI validation output and version", "Explicit-count control result and requested min/max bounds"]
+  },
+  {
+    "candidateId": "AKS-C049",
+    "task": "The platform reports vertical autoscaling enabled, but expected managed components are absent. Investigate installation and ownership state.",
+    "baseline": "Enable managed VPA in a clean disposable control and verify its CRDs, controllers and a harmless recommendation before introducing preexisting resources.",
+    "evidence": ["ARM addon state", "VPA CRD ownership metadata and controller inventory", "Addon reconciliation logs and clean-install comparison"]
+  },
+  {
+    "candidateId": "AKS-C050",
+    "task": "A workload using a RuntimeClass does not trigger its Windows pool to scale from zero. Investigate scheduling and pool eligibility.",
+    "baseline": "Use an equivalent control Pod with placement settings specified directly and demonstrate Windows scale-from-zero and successful scheduling.",
+    "evidence": ["RuntimeClass and effective Pod scheduling fields", "Windows pool templates and limits", "Scheduler events and autoscaler decision logs"]
+  },
+  {
+    "candidateId": "AKS-C051",
+    "task": "An AKS upgrade preflight refuses to proceed. Determine which recent activity is relevant to the block.",
+    "baseline": "Choose an available upgrade pair and verify preflight permits the owned control before issuing a bounded call to an API identified as deprecated for that pair.",
+    "evidence": ["Upgrade preflight response and target versions", "Timestamped API audit requests and deprecation inventory", "Declared validation lookback window and control preflight"]
+  },
+  {
+    "candidateId": "AKS-C052",
+    "task": "Windows workloads cannot reach storage while comparable Linux workloads can. Investigate the different outbound paths.",
+    "baseline": "Verify Linux access to the owned restricted storage account and a supported Windows control path, recording effective routes and source addresses.",
+    "evidence": ["Paired Linux/Windows connection results", "Subnet service endpoints, routes and NAT configuration", "Storage firewall logs with observed source addresses"]
+  },
+  {
+    "candidateId": "AKS-C053",
+    "task": "A long-running gRPC server stream resets through the gateway while a direct connection remains live. Investigate where the stream ends.",
+    "baseline": "Run a bounded direct server-streaming control and a short gateway stream, capturing client/server timestamps and normal completion.",
+    "evidence": ["Client and server HTTP/2 stream timelines", "Gateway route/timeout configuration and logs", "Direct versus gateway packet/reset observations"]
+  },
+  {
+    "candidateId": "AKS-C054",
+    "task": "A node drain associated with an upgrade cannot make progress. Identify which eviction is blocked and why.",
+    "baseline": "Demonstrate a bounded drain of an owned control pool when test workloads have adequate replicas and permissive disruption budgets.",
+    "evidence": ["Drain and eviction responses", "PodDisruptionBudget desired/current healthy and disruptionsAllowed", "Replica health and upgrade operation state"]
+  },
+  {
+    "candidateId": "AKS-C055",
+    "task": "A disk clone fails while its source is used by a Windows workload. Investigate the clone prerequisites and source state.",
+    "baseline": "Write sentinel data to an owned disk, quiesce and detach its consumer, and verify a supported clone preserves that data.",
+    "evidence": ["Source Pod and VolumeAttachment state", "CSI clone logs and Azure copy operation results", "Quiesced versus mounted-source clone outcomes and sentinel checks"]
+  },
+  {
+    "candidateId": "AKS-C056",
+    "task": "DNS counters are being exported, but expected query detail is missing. Investigate the metric schema and collection configuration.",
+    "baseline": "Generate known test DNS queries and verify the supported Hubble DNS counter and configured label set are scraped before testing the requested label variant.",
+    "evidence": ["Raw metric names/labels and counter changes", "Hubble DNS metric configuration and supported options", "Test query timestamps and scrape results"]
+  },
+  {
+    "candidateId": "AKS-C057",
+    "task": "An ingress-only network policy is rejected at admission. Investigate which validation rule and input fields caused rejection.",
+    "baseline": "Admit a supported control policy in an owned namespace and verify allowed/denied traffic before submitting the reported policy shape.",
+    "evidence": ["Submitted policy and admission response", "Managed validation expression and API schema", "Cilium/policy versions and supported-shape control"]
+  },
+  {
+    "candidateId": "AKS-C058",
+    "task": "Pod reverse-DNS answers change after a DNS component upgrade while Service names still resolve. Investigate the behavioral difference.",
+    "baseline": "Record forward and reverse queries for owned Pods and Services on the pinned earlier CoreDNS configuration, then repeat on the supported control version.",
+    "evidence": ["CoreDNS versions and Corefile configuration", "Timestamped Pod reverse and Service forward responses", "Pod addresses and relevant documented plugin behavior"]
+  },
+  {
+    "candidateId": "AKS-C059",
+    "task": "DNS Pods crash after loading a custom zone configuration. Determine which configuration element prevents startup.",
+    "baseline": "Load a valid owned custom zone on the same pinned CoreDNS image and verify readiness and a test query before applying the reported syntax variant.",
+    "evidence": ["CoreDNS startup errors and container exit state", "Custom Corefile zone configuration", "Pinned image version and valid-zone control queries"]
+  },
+  {
+    "candidateId": "AKS-C060",
+    "task": "Traffic to an external service is not restricted as the operator expected. Investigate where mesh authorization is attached and enforced.",
+    "baseline": "Use an owned external test endpoint and demonstrate an allow/deny control at a supported explicit enforcement point, without targeting third-party services.",
+    "evidence": ["AuthorizationPolicy selectors and ServiceEntry configuration", "Proxy listener/route/policy attachment", "Bounded allowed/denied requests at control and reported placements"]
+  },
+  {
+    "candidateId": "AKS-C061",
+    "task": "Network agents restart and connectivity changes after a policy update. Investigate the policy interaction and observed dataplane failure.",
+    "baseline": "Verify agent health and DNS/workload traffic in an owned ACNS-enabled control before applying the reported egress policy.",
+    "evidence": ["Policy specifications and apply timestamps", "Cilium crash/restart logs and component versions", "DNS and workload connectivity before/after policy application"]
+  },
+  {
+    "candidateId": "AKS-C062",
+    "task": "A browser session reaches inconsistent backends across application paths. Investigate gateway affinity behavior.",
+    "baseline": "Serve identifiable responses from owned backends and verify a supported root-scoped affinity-cookie control remains sticky across the test paths.",
+    "evidence": ["Sanitized Set-Cookie attributes and request cookie headers", "Backend identity responses across paths", "AGC affinity configuration and gateway request logs"]
+  },
+  {
+    "candidateId": "AKS-C063",
+    "task": "An app-routing operator repeatedly crashes although existing traffic may still work. Investigate its startup dependencies separately from the data plane.",
+    "baseline": "Run a supported app-routing/mesh control with its required API resources present, and verify both operator readiness and a test route.",
+    "evidence": ["Operator informer/startup logs", "Gateway API CRD discovery and component versions", "Separate controller readiness and existing-route traffic probes"]
+  },
+  {
+    "candidateId": "AKS-C064",
+    "task": "Specific authentication redirect requests reset at the ingress before access logging. Investigate the ingress worker failure.",
+    "baseline": "On an isolated ingress deployment, verify benign authentication redirects and a supported control image respond normally to the same owned test endpoint.",
+    "evidence": ["Sanitized redirect annotations and request URI shape", "Ingress worker crash/exit logs and pinned image digest", "Client reset timestamps versus access/error logs"]
+  },
+    {
+    "candidateId": "AKS-C065",
+    "task": "A reader can inspect common Kubernetes resources but cannot read HTTPRoutes. Investigate the effective authorization scope.",
+    "baseline": "Verify the test reader can read documented conventional resources and compare an explicitly authorized control identity for HTTPRoute reads.",
+    "evidence": ["HTTPRoute and conventional-resource authorization responses", "Azure role DataActions and scoped assignments", "Gateway API resource group/version and test principal metadata"]
+  },
+  {
+    "candidateId": "AKS-C066",
+    "task": "The gateway marks a backend unhealthy while Kubernetes reports its Pod Ready. Investigate the two health checks.",
+    "baseline": "Expose an owned backend whose declared readiness path responds successfully, and verify a supported gateway probe configured to that path.",
+    "evidence": ["Pod probe specification and readiness state", "Actual gateway probe path/status and backend request logs", "Service/Gateway health configuration and direct endpoint probes"]
+  },
+  {
+    "candidateId": "AKS-C067",
+    "task": "A LoadBalancer Service is unreachable despite Ready endpoints and direct backend access. Investigate the external health probe.",
+    "baseline": "Verify the owned backend and a supported Service/probe control serve traffic through the Azure load balancer before varying appProtocol.",
+    "evidence": ["Service ports/appProtocol and EndpointSlices", "Azure load-balancer probe protocol/path/status", "Direct backend responses and cloud-controller reconciliation"]
+  },
+  {
+    "candidateId": "AKS-C068",
+    "task": "Requests to certain hostnames do not reach an otherwise healthy Gateway backend. Investigate hostname matching.",
+    "baseline": "Route requests with explicit owned hostnames through the same Gateway to the test backend and verify response identity before the wildcard variant.",
+    "evidence": ["Gateway listener and HTTPRoute hostnames/conditions", "Request Host headers and matched route logs", "Explicit-host versus wildcard control results and controller version"]
+  },
+  {
+    "candidateId": "AKS-C069",
+    "task": "Windows clients lose connectivity through a Service while direct backend access remains healthy. Investigate Service routing behavior.",
+    "baseline": "Verify Windows and Linux clients reach the same owned Service with session affinity disabled and can connect directly to its endpoints.",
+    "evidence": ["Service sessionAffinity configuration and EndpointSlices", "Windows networking component state and connection errors", "Paired direct/Service and affinity-on/off traffic results"]
+  },
+  {
+    "candidateId": "AKS-C070",
+    "task": "A bidirectional gRPC request appears stalled through the gateway until the client closes its sending side. Investigate streaming delivery.",
+    "baseline": "Use an owned bidirectional echo stream and demonstrate the backend receives messages before half-close through a direct control connection.",
+    "evidence": ["Client send/half-close and backend receive timestamps", "Gateway HTTP/2 route configuration and logs", "Direct versus gateway stream traces with bounded duration"]
+  },
+  {
+    "candidateId": "AKS-C071",
+    "task": "Restoring a file-volume snapshot leaves the PVC Pending even though identity login succeeds. Investigate the failed copy operation.",
+    "baseline": "Restore an owned small snapshot through a supported network path with the same test identity and verify copied sentinel data.",
+    "evidence": ["PVC events and sanitized AzCopy/CSI errors", "Storage network rules and caller network path", "Identity scope, snapshot existence and control copy results"]
+  },
+  {
+    "candidateId": "AKS-C072",
+    "task": "An SMB mount is denied despite apparently valid credentials. Investigate protocol negotiation and storage requirements.",
+    "baseline": "Mount the owned AES-256-required share using a supported image and CIFS configuration that demonstrably negotiates the required cipher.",
+    "evidence": ["Sanitized mount/kernel negotiation errors", "CIFS module parameters and node/kernel versions", "Storage encryption requirements and negotiated cipher in the control"]
+  },
+  {
+    "candidateId": "AKS-C073",
+    "task": "An inline file volume stops mounting after a driver update. Investigate how its account configuration is resolved.",
+    "baseline": "Mount the same owned share using the supported explicit account attributes and referenced Secret on the affected driver, without exposing Secret data.",
+    "evidence": ["Inline CSI attributes and Secret reference metadata", "CSI driver version and account-resolution errors", "Pre-update or explicit-attribute control results"]
+  },
+  {
+    "candidateId": "AKS-C074",
+    "task": "An identity-authenticated SMB volume binds but fails to mount through a private endpoint. Investigate the authentication target.",
+    "baseline": "Resolve the canonical account hostname to the owned private endpoint and verify a supported identity-authenticated control mount uses the intended service principal name.",
+    "evidence": ["Canonical and privatelink DNS resolution", "Sanitized Kerberos service-principal request metadata without tickets", "PV server attributes, private endpoint state and mount errors"]
+  },
+  {
+    "candidateId": "AKS-C075",
+    "task": "A failed volume-restore operation may have left external storage behind. Investigate whether cleanup matches the Kubernetes outcome.",
+    "baseline": "Inventory owned shares, perform and delete a successful small control restore, and verify no destination remains after its normal lifecycle.",
+    "evidence": ["PVC/PV and CSI CreateVolume lifecycle events", "Destination share inventory before/after failed copy", "Provider operation IDs and ownership tags for cleanup verification"]
+  },
+  {
+    "candidateId": "AKS-C076",
+    "task": "Dynamic storage provisioning fails while the cluster otherwise appears healthy. Investigate the provider-side creation failure.",
+    "baseline": "Provision a small owned storage account and PVC using a configuration compliant with the assigned test policy, retaining policy unchanged.",
+    "evidence": ["PVC provisioning errors and requested account properties", "Azure Policy assignment/evaluation and deny details", "StorageClass parameters and compliant control result"]
+  },
+  {
+    "candidateId": "AKS-C077",
+    "task": "A Pod stalls during initialization when its file volume is configured more than once. Determine the relevant mount behavior.",
+    "baseline": "Start and delete an owned Pod with one reference to the same valid Azure Files PVC, confirming an IP and successful sentinel access.",
+    "evidence": ["Pod volumes and volumeMounts", "Pod initialization, sandbox and CSI node logs", "Single-reference versus duplicate-reference startup results"]
+  },
+  {
+    "candidateId": "AKS-C078",
+    "task": "A file share is reachable but a workload's requested mount fails. Investigate the requested location within the share.",
+    "baseline": "Mount the owned share root and an existing test subdirectory with the same credentials, then verify sentinel files before requesting an absent directory.",
+    "evidence": ["PV folderName and mount target configuration", "Share directory inventory without sensitive contents", "Mount errors and root/existing-subdirectory control outcomes"]
+  },
+  {
+    "candidateId": "AKS-C079",
+    "task": "A secretless inline CSI volume fails before accessing its storage account. Investigate volume identity resolution.",
+    "baseline": "Use a supported inline-volume control with unambiguous owned account attributes or the documented credential reference and verify mounting.",
+    "evidence": ["Inline CSI attributes and generated volume handle", "NodeStageVolume account-resolution errors", "Driver version and supported configuration control"]
+  },
+  {
+    "candidateId": "AKS-C080",
+    "task": "Storage provisioning is followed by an unexpected subnet configuration change or denied network update. Investigate which operation changed it.",
+    "baseline": "Record the owned subnet's network-policy settings and demonstrate a supported private-endpoint control without an unauthorized policy transition.",
+    "evidence": ["Before/after subnet network-policy properties", "Private-endpoint provisioning activity and policy-deny records", "CSI provisioning configuration and resource ownership inventory"]
+  },
+  {
+    "candidateId": "AKS-C081",
+    "task": "Deleting one snapshot fails or appears to affect the surrounding share. Investigate the deletion target and protect unrelated data.",
+    "baseline": "On disposable storage containing only test data, create two snapshots and sentinel files, delete one through a supported control, and verify the other snapshot and share remain intact.",
+    "evidence": ["VolumeSnapshotContent handles and deletion state", "Sanitized driver delete requests and provider target IDs", "Share/snapshot/lease inventory and sentinel integrity checks"]
+  },
+  {
+    "candidateId": "AKS-C082",
+    "task": "New file-volume mounts fail after a storage credential rotation. Investigate credential refresh without revealing keys.",
+    "baseline": "Verify an owned share mounts before rotation and a fresh, correctly refreshed control mount succeeds after rotation; never record key values.",
+    "evidence": ["Rotation and mount-attempt timestamps", "Secret resource versions and refresh metadata only", "Sanitized CSI authentication errors and unchanged identity role scopes"]
+  },
+  {
+    "candidateId": "AKS-C083",
+    "task": "An inline file volume cannot find its configured credential reference. Investigate the namespace used for lookup.",
+    "baseline": "Mount an owned inline-volume control with its Secret in the documented supported namespace and confirm only Secret metadata is observable.",
+    "evidence": ["Pod namespace and inline secretName/secretNamespace settings", "Secret existence metadata in intended and actual lookup namespaces", "CSI lookup errors and control configuration"]
+  },
+  {
+    "candidateId": "AKS-C084",
+    "task": "A newly created volume snapshot reports an implausible timestamp. Investigate the relationship between status and provider creation records.",
+    "baseline": "Create an owned control snapshot with a supported path, record wall-clock/provider creation times, and verify the exposed timestamp lies within the expected interval.",
+    "evidence": ["VolumeSnapshot and VolumeSnapshotContent status timestamps", "Provider snapshot creation metadata and activity", "Driver version, data-plane mode and synchronized test timestamps"]
+  },
+  {
+    "candidateId": "AKS-C085",
+    "task": "A cross-subscription file-volume mount receives an authorization failure. Investigate the resource scope actually used by the driver.",
+    "baseline": "Verify a fully qualified supported PV mounts the owned cross-subscription share using the authorized test principal.",
+    "evidence": ["PV account/resource/subscription attributes", "Sanitized driver-selected scope and authorization errors", "Identity assignments and storage existence in both test scopes"]
+  },
+  {
+    "candidateId": "AKS-C086",
+    "task": "Repeated volume expansion does not converge to the requested size. Investigate capacity across Kubernetes and the storage provider.",
+    "baseline": "Expand a small attached control disk once and verify PVC, PV, provider disk and filesystem capacity converge before testing repeated detached expansion.",
+    "evidence": ["PVC requested/status capacity, PV capacity and resize conditions", "Provider disk size and attachment state", "CSI expansion logs and timestamped attached/detached control results"]
+  },
+  {
+    "candidateId": "AKS-C087",
+    "task": "A static shared disk cannot attach for the requested access mode. Investigate its CSI configuration.",
+    "baseline": "Use disposable raw block storage with no shared filesystem writers; attach a correctly configured supported shared-block control and verify safe test access.",
+    "evidence": ["Static PV CSI attributes, accessModes and volumeMode", "Driver validation errors and VolumeAttachment state", "Provider disk sharing configuration and supported control settings"]
+  },
+  {
+    "candidateId": "AKS-C088",
+    "task": "A disk clone is rejected by Azure although its source exists. Investigate the source and destination placement constraints.",
+    "baseline": "Clone an owned disk into a supported matching zone and verify sentinel data before testing the reported placement configuration.",
+    "evidence": ["Clone PVC/StorageClass topology settings", "Source and destination provider zones and resource IDs", "CSI and ARM clone validation responses"]
+  },
+  {
+    "candidateId": "AKS-C089",
+    "task": "A filesystem PVC stays Pending with an unsupported access-mode error. Investigate the requested storage capability.",
+    "baseline": "Provision and mount an owned ordinary Azure Disk filesystem PVC using its supported single-writer mode, and verify sentinel access.",
+    "evidence": ["PVC accessModes and volumeMode", "StorageClass driver capabilities and provisioning errors", "Supported-mode control PVC/PV state"]
+  },
+  {
+    "candidateId": "AKS-C090",
+    "task": "A restore operation reports its snapshot missing even though Azure inventory shows it. Investigate the resource location used for lookup.",
+    "baseline": "Restore a small owned snapshot through a supported same-region control and record the fully qualified source ID and destination location.",
+    "evidence": ["Snapshot content handles and restore PVC configuration", "Provider snapshot existence by region/resource ID", "Sanitized driver lookup locations and NotFound response"]
+  },
+  {
+    "candidateId": "AKS-C091",
+    "task": "Disk workloads are scheduled or blocked inconsistently with the expected node attachment capacity. Investigate the advertised limit.",
+    "baseline": "On a small owned pool, confirm CSINode allocatable count agrees with the driver and VM limit, then schedule a bounded below-limit control workload.",
+    "evidence": ["CSINode allocatable limits and node VM SKU", "Driver max-volumes setting and registration logs", "Scheduler events, VolumeAttachments and bounded disk inventory"]
+  },
+  {
+    "candidateId": "AKS-C092",
+    "task": "A Premium SSD v2 volume fails during attachment or reattachment. Investigate the effective disk settings.",
+    "baseline": "Attach, detach and reattach an owned Premium SSD v2 control with supported host-caching settings, verifying data remains readable.",
+    "evidence": ["StorageClass/PV caching parameters", "Effective provider disk and VM attachment caching state", "CSI attach errors and first-versus-subsequent attachment timeline"]
+  },
+  {
+    "candidateId": "AKS-C093",
+    "task": "A workload's federated token exchange fails despite apparently matching identity configuration. Investigate the exchange metadata without exposing tokens.",
+    "baseline": "Exchange a token for an owned test identity with an exactly matching supported issuer/subject/audience tuple and perform a harmless authorized read.",
+    "evidence": ["Issuer URL, subject and audience metadata only", "Federated credential configuration", "Sanitized token-exchange errors and exact-match control outcome"]
+  },
+  {
+    "candidateId": "AKS-C094",
+    "task": "A workload receives extra identity containers despite the operator's injection setting. Investigate admission mutation.",
+    "baseline": "Capture the original Pod specification and verify a supported injection-disabled control remains free of the proxy/init containers.",
+    "evidence": ["Original versus admitted Pod container lists", "Injection annotations and webhook version/configuration", "Sanitized webhook mutation records"]
+  },
+  {
+    "candidateId": "AKS-C095",
+    "task": "An identity-enabled Pod fails container configuration validation. Determine which container and security setting conflict.",
+    "baseline": "Run an owned control Pod with supported non-root settings for both application and injected identity components, verifying startup and a harmless identity probe.",
+    "evidence": ["Original and mutated Pod security contexts", "Per-container CreateContainerConfigError details", "Injected proxy image metadata and webhook version"]
+  },
+  {
+    "candidateId": "AKS-C096",
+    "task": "A Job never completes even though its application exits successfully. Investigate the remaining container lifecycle.",
+    "baseline": "Run an owned short Job without the long-lived proxy arrangement and verify application exit, Job completion and cleanup within a fixed window.",
+    "evidence": ["Job conditions and per-container termination/running state", "Injected identity containers and lifecycle settings", "Application exit timestamps and control Job completion"]
+  },
+  {
+    "candidateId": "AKS-C097",
+    "task": "Pod admission fails under namespace quota after identity injection is enabled. Investigate the final resource requests submitted to admission.",
+    "baseline": "Admit an owned control Pod whose complete application/init/sidecar resource declarations satisfy the same namespace quota.",
+    "evidence": ["ResourceQuota requirements and admission error", "Original versus mutated container resource declarations", "Identity injection configuration and webhook logs"]
+  },
+  {
+    "candidateId": "AKS-C098",
+    "task": "A Pod's final ServiceAccount differs from its injected identity context. Investigate the admission mutation sequence.",
+    "baseline": "Use two owned, minimally privileged test identities and verify a single-ServiceAccount control receives matching identity metadata and passes only its intended harmless authorization probe.",
+    "evidence": ["Original/final ServiceAccount names and client-ID metadata", "Webhook ordering, reinvocation policy and sanitized mutation patches", "Controlled identity-specific authorization results without tokens"]
+  },
+  {
+    "candidateId": "AKS-C099",
+    "task": "A workload remains in initialization after admission mutation. Investigate how its long-running init container is represented.",
+    "baseline": "Run a supported native-sidecar control and verify the application starts while the intended long-running init sidecar remains active.",
+    "evidence": ["Original versus admitted initContainer restartPolicy fields", "Per-container startup state and events", "Webhook/Kubernetes versions and native-sidecar control behavior"]
+  },
+  {
+    "candidateId": "AKS-C100",
+    "task": "An identity-enabled application is missing its expected client-ID environment variable. Investigate the metadata used during injection.",
+    "baseline": "Create an owned supported ServiceAccount/Pod control that receives the intended client-ID metadata and performs a harmless authentication probe.",
+    "evidence": ["Service, ServiceAccount and Pod annotation/label metadata", "Injected environment names and non-secret client identifier", "Webhook mutation and sanitized authentication results"]
+  }
+]

@@ -143,6 +143,26 @@ describe('reconcileBuiltinServers', () => {
     expect(result.config.servers[0].command).toBe('/custom/aks-mcp');
   });
 
+  it('does not overwrite a same-named remote server', () => {
+    const remote: MCPSettings = {
+      enabled: true,
+      servers: [
+        {
+          name: AKS_MCP_SERVER_NAME,
+          transport: 'http',
+          url: 'https://example.com/mcp',
+          enabled: true,
+        },
+      ],
+    };
+    const state = { [AKS_MCP_SERVER_NAME]: { command: 'aks-mcp', args: [] } };
+
+    const result = reconcileBuiltinServers(remote, [createAksMcpServer()], state);
+
+    expect(result.changed).toBe(false);
+    expect(result.config).toBe(remote);
+  });
+
   it('upgrades servers seeded before definitions were recorded', () => {
     const stale = configWithArgs(['--transport', 'stdio']);
 

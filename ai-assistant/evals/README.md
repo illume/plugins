@@ -164,6 +164,19 @@ custodian access, and held-out evaluation evidence before private-case transfer 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module ownership, adapter boundaries,
 and the flow from scenario inputs to canonical and published results.
 
+### Provisioned Observability Scenarios
+
+The [observability suite](src/scenarios/README.md#provisioned-observability-scenarios)
+provisions real AKS network-policy and autoscaler-limit faults, plus local
+Prometheus scrape failures and Grafana datasource drift. Every case requires a
+healthy baseline, observed induced failure, recovery, and ownership-checked cleanup.
+The previous canned Datadog/Splunk and Azure responses are removed.
+`npm run eval:observability -- list` lists the cases; `verify` provisions billable
+Azure resources only with explicit subscription/region/cost consent, while
+`verify-local` starts Docker services. `eval:observability:check` is an offline
+unit-test command, not live verification. These cases remain separate from the
+qualified portfolio and locked Phase 2 comparison.
+
 ## Prerequisites
 
 - Node.js 20+ and npm.

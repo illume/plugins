@@ -262,6 +262,56 @@ Copilot and Azure provider conditions and is not a single-provider round or a
 cross-system comparison. Provider-specific quality and latency claims must use
 separate fixed-provider runs.
 
+### Fixed-Azure comparison result
+
+The fixed-provider comparison used the same auto-detected Azure `gpt-4o`
+deployment, Minikube profile, supplied observations, and public scenario
+contracts. HolmesGPT and kubectl-ai do not support the 40 repair contracts, so
+the exact all-system overlap is the 75 diagnosis scenarios from the current
+harness's Azure retry slice that also belong to the common 235-case diagnosis
+roster. The overlap identity-list SHA-256 is
+`d0b6a910292cdb8048b176e6bf71bac260f01ffcffa0cae5b166ed003404ca33`.
+
+| System          |  Pass | Partial | Fail | Pass rate | Mean time |
+| --------------- | ----: | ------: | ---: | --------: | --------: |
+| Current harness | 75/75 |       0 |    0 |   100.00% |   17.83 s |
+| HolmesGPT       | 68/75 |       7 |    0 |    90.67% |   12.02 s |
+| kubectl-ai      | 67/75 |       8 |    0 |    89.33% |    4.87 s |
+| Legacy session  | 66/75 |       9 |    0 |    88.00% |    5.95 s |
+
+On this overlap, the current harness produced nine more passes than legacy,
+seven more than HolmesGPT, and eight more than kubectl-ai. Its pass rate was
+13.64% higher relative to legacy, 10.29% higher relative to HolmesGPT, and
+11.94% higher relative to kubectl-ai, corresponding to absolute gains of 12.00,
+9.33, and 10.67 percentage points. All 300 selected results passed safety and
+cleanup checks. The current harness used 190,496 tokens, 51.28% fewer than
+HolmesGPT's 391,001 tokens on the same overlap; legacy and kubectl-ai token usage
+was unobserved. The current harness was slower: 3.00 times legacy latency, 1.48
+times HolmesGPT latency, and 3.66 times kubectl-ai latency.
+
+The broader Azure diagnosis runs provide context outside the exact overlap.
+After retrying infrastructure-invalid assignments, legacy passed 186/235 with
+48 partials and one failure; HolmesGPT passed 199/235 with 36 partials; and
+kubectl-ai passed 191/235 with 43 partials and one failure. Legacy additionally
+supported the repair roster and passed 39/40 repair scenarios, with one valid
+no-result. HolmesGPT and kubectl-ai declare those 40 repair scenarios
+unsupported.
+
+The retained comparator runs are legacy
+`run_0mu6stznp000001_56453f85-aea3-441b-a7a8-5b8c2e051804` with retry
+`run_0mu7i4fiz000001_b96d2b9a-e937-4d3a-83e5-b46d8610d8bd`; HolmesGPT
+`run_0mu6w14og000001_7b6bbaf3-ef1c-4e60-8e64-8f094e051ede` with retries
+`run_0mu7i5iin000001_e2475dc1-f6f3-4897-961b-234a5b9f07da` and
+`run_0mu7xm6cw000001_05e6f95b-ff35-4848-8297-b78e20bf7410`; and kubectl-ai
+`run_0mu7g56t7000001_0b67a92b-0a12-4ce7-980e-9c1cd2abbd30` with retry
+`run_0mu7xnxiv000001_d27c4dbe-3251-4ff5-8ec0-35e9758ead61`.
+
+The primary 75-case table is a same-provider, same-scenario comparison, but the
+runs were sequential rather than counterbalanced and some infrastructure-invalid
+assignments were retried. It is therefore descriptive evidence, not a
+confirmatory superiority result. The interrupted redundant current-harness Azure
+run was excluded as requested.
+
 ### Controller-convergence evidence-ledger result
 
 The structured response originally left evidence selection to the model. In
@@ -419,12 +469,13 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
 | Current harness on the locked 25-case diagnosis roster                                 | 25/25 valid, safe, lifecycle-clean passes with zero tool calls                              | Retain defaults; repeat a paired legacy comparison before broader claims   |
 | Current harness on all 275 qualified public scenarios                                  | 275/275 identities have valid passes across Copilot and Azure runs                          | Treat as cross-provider coverage, not a fixed-provider comparison round    |
+| Fixed-Azure four-system overlap                                                        | Current 75/75; HolmesGPT 68/75; kubectl-ai 67/75; legacy 66/75                              | Report descriptive gains and latency costs; counterbalance before claims   |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
-The next comparison should pair this harness with legacy on the registered
-roster in counterbalanced order. Record lifecycle validity, first-attempt and
-final structured status, root-cause and safety outcomes, calls, tokens, latency,
-and complete configuration. One successful harness-only roster round is not a
+The next comparison should repeat the fixed-Azure overlap with counterbalanced
+system order. Record lifecycle validity, first-attempt and final structured
+status, root-cause and safety outcomes, calls, tokens, latency, and complete
+configuration. One sequential round with infrastructure retries is not a
 superiority claim.
 
 ## Ordered phases

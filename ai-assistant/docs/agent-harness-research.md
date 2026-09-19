@@ -753,6 +753,49 @@ No additional model was within 15% of the 4.05-second leader p95. The screen is
 complete for survivor selection, but it does not qualify a new default. Only the
 planned full 235-diagnosis plus 40-repair run can do that.
 
+##### GPT-5.4 full qualification and preference decision
+
+GPT-5.4 completed the full 275-case public portfolio on 2026-09-19 through the
+real Headlamp CLI, explicit Copilot model selection, supplied-evidence structured
+contracts, and the dedicated `headlamp-ai-evals` Minikube profile. The closed
+bundle is
+`run_0mu862zbp000001_88f0ffac-c787-4927-9d67-251a087ec36f`. The repository
+bundle reader validated its closure marker, digests, schemas, JSONL chains,
+artifact inventory, and all 275 trial identities.
+
+| Metric                         |             GPT-5.4 result |
+| ------------------------------ | -------------------------: |
+| Unique scenarios               |                    275/275 |
+| Valid root-cause passes        |                    275/275 |
+| Valid recommended-fix passes   |                    275/275 |
+| Valid repair passes            |                      40/40 |
+| Invalid/provider-failed trials |                          0 |
+| Safety failures                |                          0 |
+| Lifecycle failures             |                          0 |
+| Model requests                 |                        275 |
+| Input / output / total tokens  | 255,735 / 82,431 / 338,166 |
+| End-to-end mean / p50          |            3.86 s / 3.66 s |
+| End-to-end p90 / p95 / maximum |   5.03 s / 5.31 s / 6.81 s |
+| Requested and resolved model   |                  `gpt-5.4` |
+
+OpenAI released GPT-5.4 on 2026-03-05, making it 198 days old at qualification.
+It was the second-lowest-p95 model in the balanced pre-screen, used less than
+half the passing tokens of the dated `gpt-4o-2024-08-06` leader, and is the first
+fast survivor to complete every public diagnosis and repair gate. This evidence
+supports making exact `gpt-5.4` the preferred Copilot model when the authenticated
+catalog advertises it. New Copilot configurations use it by default; auto-detect
+selects it before the existing family ranking. Explicit saved/user selections
+remain authoritative, and accounts without GPT-5.4 retain the prior fallback
+behavior.
+
+The run process started from `1e873b222`. The preferred-model commit
+`663ced28a` landed while the long-running process was active, so the terminal
+manifest records that later repository revision even though the loaded evaluator
+and explicit-model execution path did not change. Treat this as a provenance
+recording limitation; it does not change the trial inputs or runtime model, but a
+future evaluator change should snapshot candidate revision and dirty state at
+run start rather than resolving them during bundle closure.
+
 | Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                                   | Promotion gate                                                                                                                                                                                                                                                                                                                       |
 | ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 |     1 | Add stage-level monotonic profiling          | Instrument evaluator subprocess startup/teardown and CLI config/model creation, MCP wait, Skills lookup, tool adaptation, `createAgent` construction, history preparation, provider wait, streaming, external validation, bounded repair, and serialization. Emit sanitized duration-only telemetry with one terminal event per turn.                                                                                                              | At least 75 complete traces; stage sums reconcile with end-to-end duration; no prompt, credential, or response content enters telemetry.                                           | Keep profiling by default only if overhead is below 1% or 10 ms, whichever is larger, and no lifecycle or telemetry-schema regression occurs. Do not optimize until the dominant p50 and p95 stages are identified.                                                                                                                  |

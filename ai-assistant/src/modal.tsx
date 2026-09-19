@@ -19,6 +19,8 @@ import { MockHolmesAgent } from '@headlamp-k8s/ai-common/agents/holmes/MockHolme
 import AssistantSession from '@headlamp-k8s/ai-common/assistant/AssistantSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { ConversationMessage } from '@headlamp-k8s/ai-common/conversation/types';
+import { diagnosePackedBatch } from '@headlamp-k8s/ai-common/diagnosis/batch';
+import { createChatModel } from '@headlamp-k8s/ai-common/providers/createChatModel';
 import { getProviderById } from '@headlamp-k8s/ai-common/providers/catalog';
 import {
   BrowserSkillCache,
@@ -255,7 +257,7 @@ export default function AIPrompt(props: {
       if (!proactiveDiagnosisEnabledRef.current) return;
       if (allWarningEvents.length === 0) return;
 
-      const topEvents = ProactiveDiagnosisManager.extractTopEvents(allWarningEvents, 3);
+      const topEvents = ProactiveDiagnosisManager.extractTopEvents(allWarningEvents, 32);
       if (topEvents.length > 0) {
         await proactiveDiagnosisManager.diagnoseEvents(topEvents);
       }
@@ -651,54 +653,99 @@ export default function AIPrompt(props: {
   // When not in agent mode but an AI config is available, use a LangChain session as fallback.
   // In agent mode, the diagnoseFn is already set by handleToggleAgentMode above.
   useEffect(() => {
-    let diagnosisGeneration = 0;
+    let isCurrent = true;
     // Only set the LangChain fallback if agent mode is NOT active
     if (proactiveDiagnosisEnabled && !isAgentMode && activeConfig) {
-      const generation = ++diagnosisGeneration;
-      const diagnoseFn = async (
-        prompt: string,
-        onStep?: DiagnosisStepCallback
-      ): Promise<string> => {
+      diagnoseFnRef.current = null;
+      proactiveDiagnosisManager.setDiagnoseFn(null);
+      setDiagnoseFnReady(false);
+      void (async () => {
         try {
           const configWithModel = await resolveCliSentinels({
             ...activeConfig.config,
             model: selectedModel,
           });
-          if (generation !== diagnosisGeneration) {
-            throw new Error('Diagnosis provider configuration changed during credential refresh.');
-          }
-          // Create an isolated manager instance for this single diagnosis
-          const isolatedManager = new LangChainAssistantSession(
-            activeConfig.providerId,
-            configWithModel,
-            enabledTools,
-            pluginSettings?.devOptions?.enableMockTools
-              ? { toolManager: createMockKubernetesToolManager() }
-              : { mcpClient: electronMCPClient }
-          );
-          // LangChain doesn't stream intermediate events, so just report start/end
-          onStep?.({
-            id: `lc-start-${Date.now()}`,
-            content: t('Sending diagnosis request…'),
-            type: 'intermediate-text',
-            timestamp: Date.now(),
+          if (!isCurrent) return;
+          const sharedModel = createChatModel(activeConfig.providerId, configWithModel);
+          const diagnoseFn = async (
+            prompt: string,
+            onStep?: DiagnosisStepCallback,
+            signal?: AbortSignal
+          ): Promise<string> => {
+            try {
+              const isolatedManager = new LangChainAssistantSession(
+                activeConfig.providerId,
+                configWithModel,
+                enabledTools,
+                pluginSettings?.devOptions?.enableMockTools
+                  ? { toolManager: createMockKubernetesToolManager(), model: sharedModel }
+                  : { mcpClient: electronMCPClient, model: sharedModel }
+              );
+              onStep?.({
+                id: `lc-start-${Date.now()}`,
+                content: t('Sending diagnosis request…'),
+                type: 'intermediate-text',
+                timestamp: Date.now(),
+              });
+              const abort = () => isolatedManager.abort();
+              signal?.addEventListener('abort', abort, { once: true });
+              const response = await isolatedManager
+                .userSend(prompt)
+                .finally(() => signal?.removeEventListener('abort', abort));
+              onStep?.({
+                id: `lc-done-${Date.now()}`,
+                content: t('Diagnosis response received'),
+                type: 'tool-result',
+                timestamp: Date.now(),
+              });
+              return response.content || t('No diagnosis available.');
+            } catch (err: unknown) {
+              console.error('[ProactiveDiagnosis] diagnoseFn error:', err);
+              throw err;
+            }
+          };
+          diagnoseFnRef.current = diagnoseFn;
+          proactiveDiagnosisManager.setDiagnoseFn(diagnoseFn, {
+            maxConcurrency: 2,
+            batchDiagnoseFn: async (events, signal) => {
+              const packed = await diagnosePackedBatch(
+                {
+                  requestId: `proactive-packed-${Date.now()}`,
+                  signal,
+                  issues: events.map(event => ({
+                    issueId: event.uid,
+                    prompt: JSON.stringify({
+                      type: event.type,
+                      reason: event.reason,
+                      message: event.message,
+                      involved_object: {
+                        kind: event.objectKind,
+                        name: event.objectName,
+                        namespace: event.objectNamespace,
+                      },
+                      last_seen: event.lastTimestamp,
+                    }),
+                    allowedEvidenceIds: [event.uid],
+                    context: null,
+                  })),
+                },
+                sharedModel
+              );
+              return packed.results.flatMap(item =>
+                item.status === 'completed'
+                  ? [{ eventUid: item.issueId, diagnosis: item.output }]
+                  : []
+              );
+            },
           });
-          const response = await isolatedManager.userSend(prompt);
-          onStep?.({
-            id: `lc-done-${Date.now()}`,
-            content: t('Diagnosis response received'),
-            type: 'tool-result',
-            timestamp: Date.now(),
-          });
-          return response.content || t('No diagnosis available.');
+          setDiagnoseFnReady(true);
         } catch (err: unknown) {
-          console.error('[ProactiveDiagnosis] diagnoseFn error:', err);
-          throw err;
+          if (isCurrent) {
+            console.error('[ProactiveDiagnosis] provider setup error:', err);
+            setDiagnoseFnReady(false);
+          }
         }
-      };
-      diagnoseFnRef.current = diagnoseFn;
-      proactiveDiagnosisManager.setDiagnoseFn(diagnoseFn);
-      setDiagnoseFnReady(true);
+      })();
     } else if (!isAgentMode) {
       // No agent and no AI config — clear
       diagnoseFnRef.current = null;
@@ -707,7 +754,7 @@ export default function AIPrompt(props: {
     }
     // If isAgentMode is true, diagnoseFn is managed by handleToggleAgentMode — don't touch it.
     return () => {
-      diagnosisGeneration += 1;
+      isCurrent = false;
     };
   }, [
     proactiveDiagnosisEnabled,
@@ -1280,7 +1327,8 @@ export default function AIPrompt(props: {
 
         const agentDiagnoseFn = async (
           prompt: string,
-          onStep?: DiagnosisStepCallback
+          onStep?: DiagnosisStepCallback,
+          signal?: AbortSignal
         ): Promise<string> => {
           // Reset thread for a fresh conversation — no leftover history
           diagAgent.resetThread();
@@ -1344,7 +1392,9 @@ export default function AIPrompt(props: {
             },
           });
 
+          const abort = () => diagAgent.abortRun();
           try {
+            signal?.addEventListener('abort', abort, { once: true });
             const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
             diagAgent.addMessage({
@@ -1366,6 +1416,7 @@ export default function AIPrompt(props: {
             console.error('[ProactiveDiagnosis] runAgent error:', err);
             throw err;
           } finally {
+            signal?.removeEventListener('abort', abort);
             sub.unsubscribe();
           }
         };

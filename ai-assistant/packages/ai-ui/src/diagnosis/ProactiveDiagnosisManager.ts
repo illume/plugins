@@ -8,6 +8,7 @@
  * - Runs diagnoses sequentially (server aborts concurrent SSE streams).
  */
 
+import { diagnoseBatch } from '@headlamp-k8s/ai-common/diagnosis/batch';
 import { basePrompt } from '@headlamp-k8s/ai-common/prompts/baseAssistantPrompt';
 import { EventEmitter } from 'events';
 
@@ -68,7 +69,21 @@ export interface DiagnosisResult {
 /** Callback to report intermediate thinking steps during diagnosis */
 export type DiagnosisStepCallback = (step: DiagnosisThinkingStep) => void;
 
-type DiagnoseFn = (prompt: string, onStep?: DiagnosisStepCallback) => Promise<string>;
+type DiagnoseFn = (
+  prompt: string,
+  onStep?: DiagnosisStepCallback,
+  signal?: AbortSignal
+) => Promise<string>;
+
+type BatchDiagnoseFn = (
+  events: EventDigest[],
+  signal?: AbortSignal
+) => Promise<Array<{ eventUid: string; diagnosis: string }>>;
+
+export interface ProactiveDiagnosisOptions {
+  maxConcurrency?: number;
+  batchDiagnoseFn?: BatchDiagnoseFn;
+}
 
 export const SINGLE_EVENT_QUEUE_TIMEOUT_MS = 30_000;
 
@@ -86,6 +101,12 @@ export class ProactiveDiagnosisManager extends EventEmitter {
   }> = [];
   /** The function to call to get a diagnosis from the AI */
   private diagnoseFn: DiagnoseFn | null = null;
+  /** Optional one-call packed diagnosis path; failures fall back to diagnoseFn. */
+  private batchDiagnoseFn: BatchDiagnoseFn | null = null;
+  /** Maximum independent issue calls allowed during one proactive cycle. */
+  private maxConcurrency = 1;
+  /** Cancels active issue calls and prevents queued batch work from starting. */
+  private cycleAbortController: AbortController | null = null;
   /** Whether proactive diagnosis is enabled */
   private enabled = false;
   /** The event UID the user wants to scroll to */
@@ -112,8 +133,10 @@ export class ProactiveDiagnosisManager extends EventEmitter {
    * Set the diagnosis function. This is called by the modal/AI manager
    * when the AI infrastructure is ready.
    */
-  setDiagnoseFn(fn: DiagnoseFn | null): void {
+  setDiagnoseFn(fn: DiagnoseFn | null, options: ProactiveDiagnosisOptions = {}): void {
     this.diagnoseFn = fn;
+    this.maxConcurrency = options.maxConcurrency ?? 1;
+    this.batchDiagnoseFn = fn ? options.batchDiagnoseFn ?? null : null;
     if (fn) {
       if (!this.enabled) {
         this._rejectSingleEventQueue('Proactive diagnosis is disabled');
@@ -156,6 +179,7 @@ export class ProactiveDiagnosisManager extends EventEmitter {
    */
   stop(): void {
     this.enabled = false;
+    this.cycleAbortController?.abort();
     this._rejectSingleEventQueue('Proactive diagnosis was stopped');
     this.emit('status-change', { enabled: false });
   }
@@ -245,6 +269,8 @@ export class ProactiveDiagnosisManager extends EventEmitter {
     if (!this.diagnoseFn) return;
 
     this.running = true;
+    const abortController = new AbortController();
+    this.cycleAbortController = abortController;
     this.emit('cycle-start');
 
     try {
@@ -272,71 +298,128 @@ export class ProactiveDiagnosisManager extends EventEmitter {
         this.emit('diagnosis-update', pendingResult);
       }
 
-      // Process sequentially — the Holmes server can only handle one
-      // SSE stream at a time (concurrent requests cause AbortError).
       const diagnoseFn = this.diagnoseFn;
-
-      for (const event of toDiagnose) {
-        // Mark the current event as loading (actively processing)
-        const loadingResult: DiagnosisResult = {
-          eventUid: event.uid,
-          event,
-          diagnosis: '',
-          diagnosedAt: Date.now(),
-          loading: true,
-          pending: false,
-          thinkingSteps: [],
-        };
-        this.cache.set(event.uid, loadingResult);
-        this.emit('diagnosis-update', loadingResult);
-
-        try {
-          const prompt = this.buildPrompt(event);
-
-          // onStep callback: accumulates thinking steps and emits updates
-          const onStep: DiagnosisStepCallback = step => {
-            const current = this.cache.get(event.uid);
-            if (current) {
-              const updated: DiagnosisResult = {
-                ...current,
-                thinkingSteps: [...(current.thinkingSteps || []), step],
-              };
-              this.cache.set(event.uid, updated);
-              this.emit('diagnosis-update', updated);
+      const isolatedEvents: EventDigest[] = [];
+      if (this.batchDiagnoseFn && toDiagnose.length > 1) {
+        for (let offset = 0; offset < toDiagnose.length; offset += 32) {
+          const group = toDiagnose.slice(offset, offset + 32);
+          for (const event of group) {
+            const loadingResult: DiagnosisResult = {
+              eventUid: event.uid,
+              event,
+              diagnosis: '',
+              diagnosedAt: Date.now(),
+              loading: true,
+              pending: false,
+              thinkingSteps: [],
+            };
+            this.cache.set(event.uid, loadingResult);
+            this.emit('diagnosis-update', loadingResult);
+          }
+          try {
+            const packed = await this.batchDiagnoseFn(group, abortController.signal);
+            const byEventUid = new Map(packed.map(item => [item.eventUid, item.diagnosis]));
+            if (
+              byEventUid.size !== group.length ||
+              packed.length !== group.length ||
+              group.some(event => !byEventUid.has(event.uid))
+            ) {
+              throw new Error('Packed proactive diagnosis returned incomplete event identities');
             }
-          };
+            for (const event of group) {
+              const result: DiagnosisResult = {
+                eventUid: event.uid,
+                event,
+                diagnosis: byEventUid.get(event.uid)!,
+                diagnosedAt: Date.now(),
+                loading: false,
+                pending: false,
+                thinkingSteps: [],
+              };
+              this.cache.set(event.uid, result);
+              this.diagnosedResourceKeys.add(ProactiveDiagnosisManager.resourceKey(event));
+              this.emit('diagnosis-update', result);
+            }
+          } catch (error) {
+            if (abortController.signal.aborted) throw error;
+            isolatedEvents.push(...group);
+          }
+        }
+      } else {
+        isolatedEvents.push(...toDiagnose);
+      }
 
-          const diagnosis = await diagnoseFn(prompt, onStep);
-
-          const result: DiagnosisResult = {
-            eventUid: event.uid,
-            event,
-            diagnosis,
-            diagnosedAt: Date.now(),
-            loading: false,
-            pending: false,
-            thinkingSteps: this.cache.get(event.uid)?.thinkingSteps || [],
-          };
-          this.cache.set(event.uid, result);
-          // Mark resource as permanently diagnosed so future events for the
-          // same resource (under new UIDs) are skipped.
-          this.diagnosedResourceKeys.add(ProactiveDiagnosisManager.resourceKey(event));
-          this.emit('diagnosis-update', result);
-        } catch (err: unknown) {
-          const errorResult: DiagnosisResult = {
+      if (isolatedEvents.length === 0) return;
+      await diagnoseBatch(
+        {
+          requestId: `proactive-${Date.now()}`,
+          maxConcurrency: this.maxConcurrency,
+          signal: abortController.signal,
+          issues: isolatedEvents.map(event => ({
+            issueId: event.uid,
+            prompt: this.buildPrompt(event),
+            allowedEvidenceIds: [event.uid],
+            context: event,
+          })),
+        },
+        async issue => {
+          const event = issue.context;
+          const loadingResult: DiagnosisResult = {
             eventUid: event.uid,
             event,
             diagnosis: '',
             diagnosedAt: Date.now(),
-            loading: false,
+            loading: true,
             pending: false,
-            error: err instanceof Error ? err.message : 'Diagnosis failed',
+            thinkingSteps: [],
           };
-          this.cache.set(event.uid, errorResult);
-          this.emit('diagnosis-update', errorResult);
+          this.cache.set(event.uid, loadingResult);
+          this.emit('diagnosis-update', loadingResult);
+
+          try {
+            const onStep: DiagnosisStepCallback = step => {
+              const current = this.cache.get(event.uid);
+              if (current) {
+                const updated: DiagnosisResult = {
+                  ...current,
+                  thinkingSteps: [...(current.thinkingSteps || []), step],
+                };
+                this.cache.set(event.uid, updated);
+                this.emit('diagnosis-update', updated);
+              }
+            };
+            const diagnosis = await diagnoseFn(issue.prompt, onStep, abortController.signal);
+            const result: DiagnosisResult = {
+              eventUid: event.uid,
+              event,
+              diagnosis,
+              diagnosedAt: Date.now(),
+              loading: false,
+              pending: false,
+              thinkingSteps: this.cache.get(event.uid)?.thinkingSteps || [],
+            };
+            this.cache.set(event.uid, result);
+            this.diagnosedResourceKeys.add(ProactiveDiagnosisManager.resourceKey(event));
+            this.emit('diagnosis-update', result);
+            return { status: 'completed', output: diagnosis };
+          } catch (err: unknown) {
+            const errorResult: DiagnosisResult = {
+              eventUid: event.uid,
+              event,
+              diagnosis: '',
+              diagnosedAt: Date.now(),
+              loading: false,
+              pending: false,
+              error: err instanceof Error ? err.message : 'Diagnosis failed',
+            };
+            this.cache.set(event.uid, errorResult);
+            this.emit('diagnosis-update', errorResult);
+            throw err;
+          }
         }
-      }
+      );
     } finally {
+      if (this.cycleAbortController === abortController) this.cycleAbortController = null;
       this.running = false;
       this.emit('cycle-end');
       // Process any queued single-event requests

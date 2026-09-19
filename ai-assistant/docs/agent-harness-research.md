@@ -539,13 +539,54 @@ Run baseline and treatment in alternating order with fresh namespaces and the
 same provider deployment. Do not pool provider-invalid trials into latency or
 task-quality estimates.
 
-| Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                          | Promotion gate                                                                                                                                                                                                                                                                                                                          |
-| ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|     1 | Add stage-level monotonic profiling          | Instrument evaluator subprocess startup/teardown and CLI config/model creation, MCP wait, Skills lookup, tool adaptation, `createAgent` construction, history preparation, provider wait, streaming, external validation, bounded repair, and serialization. Emit sanitized duration-only telemetry with one terminal event per turn.                                                                                                              | At least 75 complete traces; stage sums reconcile with end-to-end duration; no prompt, credential, or response content enters telemetry.                                  | Keep profiling by default only if overhead is below 1% or 10 ms, whichever is larger, and no lifecycle or telemetry-schema regression occurs. Do not optimize until the dominant p50 and p95 stages are identified.                                                                                                                     |
-|     2 | Add a direct structured no-tool lane         | When supplied-evidence-only mode exposes zero tools and requests a diagnosis or repair schema, invoke the structured model directly instead of constructing and streaming a ReAct agent. Preserve the same system prompt, cancellation, model-usage telemetry, history semantics, external validator, and exactly-once bounded repair. Keep `createAgent` for any tool, approval, general-chat, or multi-turn trajectory.                          | A/B direct versus agent execution on the 75-case overlap and five repair gates; compare stage profiles and first-attempt/final outcomes.                                  | Require 75/75 diagnosis passes, 5/5 repair root-cause and recommended-fix passes, unchanged safety/lifecycle, zero contract divergence, and at least 25% lower median and p95 latency. Initial mean target: no worse than HolmesGPT's 12.02 seconds; stretch target: at most 7 seconds.                                                 |
-|     3 | Reduce model-generated structured payload    | The validator already derives `cause_facts`, `resource_refs`, and `evidence_refs` from candidate-visible observations. Test a smaller provider schema that asks the model only for semantic uncertainty, alternatives, action descriptions, and a bounded repair-option selection, then constructs the full persisted sidecar deterministically. Never derive semantic conclusions from protected evaluator truth.                                 | Compare full versus compact schema on exact output tokens, provider latency, unsupported claims, validator repairs, and byte-identical canonical ledgers.                 | Require identical persisted contract validity and task/safety outcomes, no increase in external-validation repairs, and at least 20% fewer output tokens or 10% lower provider-stage p50 latency. Reject if the compact contract weakens uncertainty or repair authority.                                                               |
-|     4 | Reuse initialized runtime state              | The evaluator currently starts `tsx`, loads modules, creates the model/session, and compiles the graph for every trial. Prototype a private JSON-lines worker that reuses modules, provider clients, and immutable prompt/schema artifacts while creating a fresh conversation history, abort controller, telemetry scope, data directory, and scenario contract for each request. Product CLI behavior remains unchanged in the first experiment. | Measure cold start, warm request, RSS growth, cross-trial state leakage, credential isolation, cancellation, and deterministic cleanup over ordered and shuffled rosters. | Promote only to the eval adapter after zero cross-trial history/evidence leakage, bounded RSS growth, exact candidate identity per trial, and at least 15% lower non-provider overhead. Consider product reuse separately because legacy and current eval arms both pay process startup and it does not explain their full latency gap. |
-|     5 | Reuse provider transport and stable prefixes | Measure connection establishment, Azure client creation, and provider wait separately. Reuse HTTP keep-alive/client state in the warm worker and keep the system prompt plus schema prefix byte-stable so provider prompt caching can apply where supported. Record cache-read tokens rather than assuming a cache hit.                                                                                                                            | Compare cold and warm transport timing, cache-read accounting, rate-limit incidence, and provider-stage p50/p95.                                                          | Enable only with observable cache/connection evidence, unchanged answers, no credential persistence outside the worker lifetime, and at least 10% lower provider-stage p50 latency without higher provider-invalid frequency.                                                                                                           |
+#### Initial JavaScript profile checkpoint
+
+The first profiling step was completed on 2026-09-19 with Node 22's V8 CPU
+profiler and `/usr/bin/time -l`. Profiles were written to an owner-only temporary
+directory outside the checkout and were not committed. The real-provider samples
+used the same Azure deployment. The unstructured current and legacy requests used
+the same prompt; the strict current request necessarily used its structured
+schema and observation arguments. These are single cold-process diagnostic
+samples with profiler overhead, so use them to choose the next experiment, not
+as replacement benchmark scores.
+
+| Mode                       | Wall time | User + system CPU | Peak RSS | V8 idle | Active sampled time |
+| -------------------------- | --------: | ----------------: | -------: | ------: | ------------------: |
+| Current, strict structured |   13.17 s |            2.84 s |   346 MB |   89.5% |              1.38 s |
+| Current, unstructured      |    8.09 s |            2.26 s |   345 MB |   89.0% |              0.88 s |
+| Legacy, unstructured       |    7.96 s |            2.20 s |   343 MB |   88.7% |              0.89 s |
+| Current, offline mock      |    1.08 s |            1.82 s |   328 MB |   11.9% |              0.91 s |
+| Legacy, offline mock       |    1.03 s |            1.75 s |   322 MB |   10.3% |              0.88 s |
+
+The initial profile changes the optimization order:
+
+- Strict structured current took 5.08 seconds longer than unstructured current,
+  while adding about 0.50 seconds of active sampled JavaScript. Most additional
+  time was idle, pointing first to provider structured-response generation,
+  response size, or transport wait rather than local CPU saturation.
+- Unstructured current was only 0.13 seconds slower than legacy and their active
+  sampled times were effectively equal. Bypassing `createAgent` may simplify the
+  zero-tool path, but this sample does not support it as the main latency fix.
+- Offline current and legacy differed by about 50 ms. Fresh `tsx` startup and
+  graph/session setup contribute roughly one second of absolute cold latency but
+  do not explain the multi-second current-versus-legacy gap.
+- Peak RSS differed by only a few megabytes and garbage collection consumed
+  roughly 19-31 ms in the sampled runs. Heap and GC work are not initial latency
+  priorities; revisit them when testing a long-lived worker for growth/leaks.
+
+The immediate next experiment is therefore stage-level provider timing plus a
+full-schema versus compact-schema A/B test. Keep the direct no-tool lane as an
+architectural simplification experiment after structured-output cost is
+isolated, and keep warm-process reuse primarily as an absolute cold-start and
+evaluation-throughput experiment.
+
+| Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                          | Promotion gate                                                                                                                                                                                                                                                                                                                       |
+| ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|     1 | Add stage-level monotonic profiling          | Instrument evaluator subprocess startup/teardown and CLI config/model creation, MCP wait, Skills lookup, tool adaptation, `createAgent` construction, history preparation, provider wait, streaming, external validation, bounded repair, and serialization. Emit sanitized duration-only telemetry with one terminal event per turn.                                                                                                              | At least 75 complete traces; stage sums reconcile with end-to-end duration; no prompt, credential, or response content enters telemetry.                                  | Keep profiling by default only if overhead is below 1% or 10 ms, whichever is larger, and no lifecycle or telemetry-schema regression occurs. Do not optimize until the dominant p50 and p95 stages are identified.                                                                                                                  |
+|     2 | Isolate and reduce structured-output cost    | Profile the full strict schema against the same agent with unstructured output, then test a smaller provider schema that asks only for semantic uncertainty, alternatives, action descriptions, and a bounded repair-option selection. Construct `cause_facts`, `resource_refs`, and `evidence_refs` deterministically from candidate-visible observations; never derive semantics from evaluator truth.                                           | Compare provider time-to-first-token/completion, exact output tokens, validator repairs, unsupported claims, and byte-identical canonical ledgers.                        | Require identical persisted contract validity and task/safety outcomes, no increase in external-validation repairs, and at least 20% fewer output tokens or 20% lower provider-stage p50 latency. Reject if the compact contract weakens uncertainty or repair authority.                                                            |
+|     3 | Reuse provider transport and stable prefixes | Measure connection establishment, Azure client creation, schema processing, and provider wait separately. Reuse HTTP keep-alive/client state where isolation permits and keep the system prompt plus schema prefix byte-stable so provider prompt caching can apply. Record cache-read tokens rather than assuming a hit.                                                                                                                          | Compare cold and warm transport timing, cache-read accounting, rate-limit incidence, and provider-stage p50/p95.                                                          | Enable only with observable cache/connection evidence, unchanged answers, no credential persistence outside the worker lifetime, and at least 10% lower provider-stage p50 latency without higher provider-invalid frequency.                                                                                                        |
+|     4 | Add a direct structured no-tool lane         | When supplied-evidence-only mode exposes zero tools and requests a diagnosis or repair schema, invoke the structured model directly instead of constructing and streaming a ReAct agent. Preserve the same system prompt, cancellation, model-usage telemetry, history semantics, external validator, and exactly-once bounded repair. Keep `createAgent` for any tool, approval, general-chat, or multi-turn trajectory.                          | A/B direct versus agent execution after compact-schema work on the 75-case overlap and five repair gates; compare stage profiles and first-attempt/final outcomes.        | Require 75/75 diagnosis passes, 5/5 repair root-cause and recommended-fix passes, unchanged safety/lifecycle, zero contract divergence, and a measured latency reduction above profiling noise. Do not promote solely for architectural simplicity.                                                                                  |
+|     5 | Reuse initialized runtime state              | The evaluator currently starts `tsx`, loads modules, creates the model/session, and compiles the graph for every trial. Prototype a private JSON-lines worker that reuses modules, provider clients, and immutable prompt/schema artifacts while creating a fresh conversation history, abort controller, telemetry scope, data directory, and scenario contract for each request. Product CLI behavior remains unchanged in the first experiment. | Measure cold start, warm request, RSS growth, cross-trial state leakage, credential isolation, cancellation, and deterministic cleanup over ordered and shuffled rosters. | Promote only to the eval adapter after zero cross-trial history/evidence leakage, bounded RSS growth, exact candidate identity per trial, and at least 15% lower non-provider overhead. Treat it primarily as an absolute startup/throughput improvement because the profile found only a 50-130 ms current-versus-legacy local gap. |
 
 #### Initial profiling contract
 
@@ -588,6 +629,72 @@ The inequalities allow scheduler and event-loop gaps. Flag, rather than hide,
 unexplained time above a predeclared tolerance such as 5% or 100 ms. Never infer
 time to first token from total model duration when chunk timing is unavailable.
 
+#### JavaScript profiling tools
+
+Use the built-in Node.js and V8 profilers before adding profiler packages to the
+repository. The current Node 22 runtime supports `--cpu-prof`, `--heap-prof`,
+`--trace-event-categories`, `--inspect`, `performance.eventLoopUtilization()`,
+and `monitorEventLoopDelay()`. Clinic.js, 0x, and speedscope are not current
+project dependencies; use them only as local follow-up tools if built-in output
+cannot distinguish the bottleneck, and do not add them to production
+dependencies for a research-only profile.
+
+| Tool                        | Question                                                                                                                 | Collection plan                                                                                                                                                                                                                                                                                | Interpretation limit                                                                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V8 `--cpu-prof`             | Where does JavaScript CPU time go during cold CLI startup, graph construction, validation, and serialization?            | Launch the TypeScript CLI through `node --import tsx --cpu-prof`, write one uniquely named `.cpuprofile` per representative case, and inspect it in Chrome DevTools. Profile one cold diagnosis, one uncertainty diagnosis, and one repair, then repeat the dominant case at least five times. | CPU profiles do not explain time waiting on Azure, child processes, network I/O, or timers. Sampling changes timing; never use profiled durations as the scored latency result. |
+| V8 `--heap-prof`            | Which allocations dominate startup, graph compilation, schemas, messages, and repeated warm requests?                    | Collect allocation profiles for one cold request and after 1, 10, 50, and 100 requests in the warm-worker prototype. Compare retained size by constructor/module and force identical workload order.                                                                                           | Allocation profiles are not full leak proof. Heap content can contain prompts, credentials, or evidence strings and must be treated as sensitive.                               |
+| Node trace events           | Are module loading, garbage collection, async-resource lifetime, timers, or event-loop gaps causing unexplained latency? | Capture narrowly scoped `node`, `node.async_hooks`, and `v8` categories with a unique trace-event file pattern. Correlate trace timestamps with the generated turn identifier and application spans.                                                                                           | `node.async_hooks` can add substantial overhead and large files. Run it only on targeted local reproductions, never across the scored 75-case baseline.                         |
+| `node:perf_hooks`           | Is the process CPU-bound, blocked, or mostly waiting on the provider?                                                    | Add local diagnostic sampling for event-loop utilization and `monitorEventLoopDelay()` around bootstrap, agent construction, provider wait, validation, and teardown. Record histogram summaries rather than raw callbacks.                                                                    | Event-loop delay cannot identify a function by itself; combine it with CPU profiles and stage spans. Reset histograms between turns in a warm worker.                           |
+| Node Inspector              | What is the call tree or heap state for a single reproducible slow request?                                              | Use `--inspect` or `--inspect-brk` only for an interactive local reproduction with mock or disposable credentials. Capture a CPU profile, allocation profile, or heap snapshot from DevTools when built-in file profiles are insufficient.                                                     | Inspector changes startup and permits process introspection. Never bind beyond loopback, use it in CI, or treat its timing as representative.                                   |
+| `/usr/bin/time -l` on macOS | How much wall time, CPU time, and peak RSS does each fresh CLI process consume?                                          | Wrap the evaluator's child command for cold-start experiments and record user/system time plus maximum resident set size beside, not inside, candidate output.                                                                                                                                 | This measures the whole process, not JavaScript ownership. Use it to validate V8 allocation findings and warm-worker RSS, not as a replacement for them.                        |
+
+Keep profiler artifacts outside the checkout in an owner-only temporary
+directory, with a run manifest containing revision, Node version, command digest,
+case identity, profiler flags, and artifact hashes. Never commit `.cpuprofile`,
+`.heapprofile`, heap snapshots, Inspector captures, or trace-event JSON. Treat
+heap and trace artifacts as secrets because they may retain API keys, prompts,
+evidence values, endpoints, or file paths. Delete raw artifacts after extracting
+sanitized aggregate findings unless an explicitly access-controlled research
+record requires retention.
+
+Use two separate profile modes:
+
+1. **Offline ownership profile:** run deterministic mock-provider cases to expose
+   module loading, model/session construction, graph compilation, validation,
+   serialization, and teardown without network variance.
+2. **Real-provider wait profile:** run a small fixed Azure slice with application
+   spans, event-loop utilization, and CPU sampling to distinguish active local
+   work from provider wait. Keep credentials out of filenames, profiler metadata,
+   shell history, and published artifacts.
+
+Do not profile all 75 cases initially. Start with one representative diagnosis,
+one Pending-Pod uncertainty case, and one repair case. Expand only when profiles
+show materially different call trees or allocation behavior. Compare at least
+five cold repetitions and five warm repetitions for each selected case, report
+profile-to-profile variance, and retain an unprofiled control beside every
+profiled treatment.
+
+Map profiler findings to the optimization sequence:
+
+- High samples in module loading, provider construction, or `createAgent`
+  compilation support the warm-worker or direct-lane experiments.
+- High samples or allocations in provider-schema/Zod construction support
+  immutable schema reuse and compact structured output.
+- Low CPU utilization with long `model_request` spans indicates provider or
+  transport wait; local graph rewrites will not fix the dominant time.
+- High event-loop delay outside provider wait requires inspection for synchronous
+  filesystem/process work, large JSON serialization, garbage collection, or
+  accidentally retained async resources.
+- Monotonic heap growth across reset turns blocks warm-worker promotion until a
+  retained-history, callback, abort-listener, tool, or model-client leak is
+  identified and covered by a regression test.
+
+Profiler overhead is itself a required control. Measure unprofiled,
+application-spans-only, CPU-profiled, heap-profiled, and trace-event runs
+separately. Keep application spans only if their overhead satisfies the normal
+promotion gate. Never enable V8 profiles, Inspector, async-hooks traces, heap
+snapshots, or event-loop histograms in production by default.
+
 #### Experiment protocol
 
 1. Freeze the exact scenario identity list, revision, provider deployment,
@@ -607,7 +714,9 @@ time to first token from total model duration when chunk timing is unavailable.
    cross-trial evidence/history leak, malformed persisted contract, changed
    repair authority, or repeated provider-capacity invalidation.
 
-The first profiling result should end in a decision, not just a trace dump:
+The initial CPU profiles already point toward structured-provider wait. The
+stage-level profile must confirm and quantify that result rather than reopening
+the optimization order without contrary evidence:
 
 - If provider wait dominates both p50 and p95, prioritize compact output and
   stable-prefix/transport experiments before runtime reuse.
@@ -634,12 +743,15 @@ shows they matter:
   latency worsen. Preserve per-trial isolation and deterministic output order in
   the bundle.
 
-The optimization sequence is intentionally conservative. First add profiling
-without changing behavior. Next remove orchestration that is provably redundant
-for the explicit zero-tool structured path. Then reduce generated bytes, reuse
-runtime state, and optimize transport. Make one change per measured run so gains
-remain attributable, and retain the existing agent path as the fallback until
-the direct path meets every quality, safety, cancellation, and repair gate.
+The revised optimization sequence is intentionally conservative. First add the
+low-overhead stage spans needed to split provider time from local work. Next
+reduce and stabilize the strict structured request/response and measure provider
+transport/cache behavior. Test direct no-tool invocation only after those costs
+are isolated, because the unstructured current and legacy profiles differed by
+only 0.13 seconds. Test warm runtime reuse last for absolute cold-start and batch
+throughput gains. Make one change per measured run so gains remain attributable,
+and retain the existing agent path as the fallback until every alternative meets
+the quality, safety, cancellation, isolation, and repair gates.
 
 | Priority | Hypothesis                                                         | Minimal experiment                                                                                                                | Promotion rule                                                                                              |
 | -------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |

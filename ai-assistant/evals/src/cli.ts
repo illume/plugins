@@ -53,12 +53,13 @@ import {
   comparisonRegistrationStatus,
   loadComparisonRegistration,
 } from './comparisons/registration.js';
-import { assertCopilotModelAvailable } from './candidates/copilotCatalog.js';
+import { listCopilotChatModels, selectPreferredCopilotModel } from './candidates/copilotCatalog.js';
 import { verifyPrivateHoldoutAccess } from './operations/privateHoldoutAccess.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..');
 const aiCliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'src', 'cli.ts');
+const aiCliRoot = path.resolve(evalsRoot, '..', 'packages', 'ai-cli');
 const tsxBin = path.resolve(evalsRoot, 'node_modules', '.bin', 'tsx');
 const datasetSplits: DatasetSplit[] = [
   'development',
@@ -76,6 +77,19 @@ const behavioralStrata: BehavioralStratum[] = [
   'security_prompt_injection',
   'multi_turn_tool_failure',
 ];
+
+/** Builds the production-like Node CLI once before a Headlamp evaluation run. */
+function buildHeadlampCli(): void {
+  const result = createRealCommandRunner()(process.platform === 'win32' ? 'npm.cmd' : 'npm', [
+    '--prefix',
+    aiCliRoot,
+    'run',
+    'build',
+  ]);
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || 'could not compile the Headlamp AI CLI');
+  }
+}
 
 /** Parses and validates the Phase 2 portfolio selectors shared by run/list commands. */
 function selectionFromFlags(flags: Flags): ScenarioSelection {
@@ -264,16 +278,20 @@ function requireCandidateSpec(
 }
 
 /**
- * Builds Headlamp CLI provider arguments, resolving requested credentials when needed.
+ * Resolves one provider configuration reused by all Headlamp CLI trials.
  *
  * @param flags - Parsed provider, model, and credential flags.
- * @returns Provider CLI arguments, or `undefined` when no provider was selected.
+ * @returns Safe CLI arguments and secret child environment values.
  */
-async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
-  if (flags.provider === undefined) return undefined;
-  if (typeof flags.provider !== 'string') throw new Error('--provider <id> requires a value');
+async function resolveProviderInvocation(
+  flags: Flags,
+  autoDetectCopilot: boolean
+): Promise<{ cliArgs: string[]; extraEnv: Record<string, string> }> {
+  const provider = flags.provider ?? (autoDetectCopilot ? 'copilot' : undefined);
+  if (provider === undefined) return { cliArgs: [], extraEnv: {} };
+  if (typeof provider !== 'string') throw new Error('--provider <id> requires a value');
 
-  if (flags.provider === 'azure-auto') {
+  if (provider === 'azure-auto') {
     const runner = createRealCommandRunner();
     const account = runner('az', ['account', 'show', '--query', 'id', '-o', 'tsv']);
     const subscriptionId = account.stdout.trim();
@@ -318,22 +336,30 @@ async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
     if (!apiKey || !config.endpoint || !config.deploymentName) {
       throw new Error('auto-detected Azure model configuration is incomplete');
     }
-    return [
-      '--provider',
-      'azure',
-      '--api-key',
-      String(apiKey),
-      '--endpoint',
-      String(config.endpoint),
-      '--deployment-name',
-      String(config.deploymentName),
-      '--model',
-      String(config.model ?? config.deploymentName),
-    ];
+    const model = String(config.model ?? config.deploymentName);
+    return {
+      cliArgs: [
+        '--provider',
+        'azure',
+        '--endpoint',
+        String(config.endpoint),
+        '--deployment-name',
+        String(config.deploymentName),
+        '--model',
+        model,
+      ],
+      extraEnv: {
+        HEADLAMP_AI_PROVIDER: 'azure',
+        HEADLAMP_AI_API_KEY: String(apiKey),
+        HEADLAMP_AI_ENDPOINT: String(config.endpoint),
+        HEADLAMP_AI_DEPLOYMENT_NAME: String(config.deploymentName),
+        HEADLAMP_AI_MODEL: model,
+      },
+    };
   }
 
   let apiKey = flags['api-key'];
-  if (apiKey === undefined && flags.provider === 'copilot') {
+  if (apiKey === undefined && provider === 'copilot') {
     const result = createRealCommandRunner()('gh', ['auth', 'token']);
     if (result.status !== 0 || !result.stdout.trim()) {
       throw new Error('could not get a GitHub token; install gh and run `gh auth login`');
@@ -341,22 +367,36 @@ async function providerCliArgs(flags: Flags): Promise<string[] | undefined> {
     apiKey = result.stdout.trim();
   }
   if (typeof apiKey !== 'string') {
-    throw new Error(`--api-key <key> is required for provider ${flags.provider}`);
+    throw new Error(`--api-key <key> is required for provider ${provider}`);
   }
 
-  if (flags.provider === 'copilot' && typeof flags.model === 'string') {
-    await assertCopilotModelAvailable(apiKey, flags.model);
+  let model = typeof flags.model === 'string' ? flags.model : undefined;
+  if (provider === 'copilot') {
+    const enabledModels = await listCopilotChatModels(apiKey);
+    if (model && !enabledModels.includes(model)) {
+      const hint =
+        enabledModels.length > 0 ? ` Enabled chat models: ${enabledModels.join(', ')}.` : '';
+      throw new Error(`Copilot model ${model} is not enabled for this account.${hint}`);
+    }
+    model ??= selectPreferredCopilotModel(enabledModels);
   }
 
-  const args = ['--provider', flags.provider, '--api-key', apiKey];
-  if (typeof flags.model === 'string') args.push('--model', flags.model);
-  if (flags.provider === 'azure') {
+  const args = ['--provider', provider];
+  if (model) args.push('--model', model);
+  const extraEnv: Record<string, string> = {
+    HEADLAMP_AI_PROVIDER: provider,
+    HEADLAMP_AI_API_KEY: apiKey,
+    ...(model ? { HEADLAMP_AI_MODEL: model } : {}),
+  };
+  if (provider === 'azure') {
     if (typeof flags.endpoint !== 'string' || typeof flags['deployment-name'] !== 'string') {
       throw new Error('--endpoint and --deployment-name are required for provider azure');
     }
     args.push('--endpoint', flags.endpoint, '--deployment-name', flags['deployment-name']);
+    extraEnv.HEADLAMP_AI_ENDPOINT = flags.endpoint;
+    extraEnv.HEADLAMP_AI_DEPLOYMENT_NAME = flags['deployment-name'];
   }
-  return args;
+  return { cliArgs: args, extraEnv };
 }
 
 /**
@@ -378,10 +418,23 @@ async function commandRun(flags: Flags): Promise<void> {
   const contractStoreRoot =
     typeof flags['contracts-dir'] === 'string' ? flags['contracts-dir'] : undefined;
   const runId = generateRunId();
-  const providerArgs = await providerCliArgs(flags);
+  const headlampCandidateSelected =
+    candidate === 'headlamp-cli' ||
+    candidate === 'headlamp-cli-legacy' ||
+    baseline === 'headlamp-cli' ||
+    baseline === 'headlamp-cli-legacy';
+  if (headlampCandidateSelected) buildHeadlampCli();
+  const providerInvocation = await resolveProviderInvocation(
+    flags,
+    mode === 'real' && headlampCandidateSelected
+  );
   const candidateCliArgs = [
-    ...(providerArgs ?? []),
-    ...(flags['compact-structured-output'] === true ? ['--compact-structured-output'] : []),
+    ...providerInvocation.cliArgs,
+    ...(flags['full-structured-output'] === true
+      ? ['--full-structured-output']
+      : flags['compact-structured-output'] === true
+      ? ['--compact-structured-output']
+      : []),
   ];
   const pricing = pricingFromFlags(flags);
 
@@ -401,6 +454,7 @@ async function commandRun(flags: Flags): Promise<void> {
     candidate,
     baseline,
     candidateCliArgs: candidateCliArgs.length > 0 ? candidateCliArgs : undefined,
+    candidateExtraEnv: providerInvocation.extraEnv,
     pricing,
     holmesModel: typeof flags['holmes-model'] === 'string' ? flags['holmes-model'] : undefined,
     k8sGptModel: typeof flags['k8sgpt-model'] === 'string' ? flags['k8sgpt-model'] : undefined,
@@ -537,6 +591,19 @@ async function commandRerun(flags: Flags): Promise<void> {
     isCandidateSpec(source.candidate_id.replace('scripted-', ''))
       ? (source.candidate_id.replace('scripted-', '') as CandidateSpec)
       : 'headlamp-cli';
+  const providerInvocation = await resolveProviderInvocation(
+    flags,
+    source.execution_mode === 'real' &&
+      (candidate === 'headlamp-cli' || candidate === 'headlamp-cli-legacy')
+  );
+  const candidateCliArgs = [
+    ...providerInvocation.cliArgs,
+    ...(flags['full-structured-output'] === true
+      ? ['--full-structured-output']
+      : flags['compact-structured-output'] === true
+      ? ['--compact-structured-output']
+      : []),
+  ];
   const outcome = await runEvaluation({
     runId,
     runsRoot,
@@ -554,7 +621,8 @@ async function commandRerun(flags: Flags): Promise<void> {
       flags['kubectl-ai-timeout-ms'] === undefined
         ? undefined
         : Number(flags['kubectl-ai-timeout-ms']),
-    candidateCliArgs: await providerCliArgs(flags),
+    candidateCliArgs: candidateCliArgs.length > 0 ? candidateCliArgs : undefined,
+    candidateExtraEnv: providerInvocation.extraEnv,
     pricing: pricingFromFlags(flags),
   });
   console.log(

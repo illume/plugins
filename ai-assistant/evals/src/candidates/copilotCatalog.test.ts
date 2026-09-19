@@ -16,7 +16,11 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assertCopilotModelAvailable } from './copilotCatalog.js';
+import {
+  assertCopilotModelAvailable,
+  listCopilotChatModels,
+  selectPreferredCopilotModel,
+} from './copilotCatalog.js';
 
 function catalogFetch(models: unknown[], status = 200): typeof fetch {
   return async () =>
@@ -55,4 +59,20 @@ test('Copilot model preflight fails closed when the catalog is unavailable', asy
     assertCopilotModelAvailable('token', 'claude-opus-4.7', catalogFetch([], 503)),
     /catalog returned HTTP 503/
   );
+});
+
+test('Copilot catalog listing excludes non-chat entries', async () => {
+  const models = await listCopilotChatModels(
+    'token',
+    catalogFetch([
+      { id: 'gpt-5.4', capabilities: { type: 'chat' } },
+      { id: 'embedding-model', capabilities: { type: 'embeddings' } },
+    ])
+  );
+  assert.deepEqual(models, ['gpt-5.4']);
+});
+
+test('preferred Copilot selection uses exact gpt-5.4 then existing family fallback', () => {
+  assert.equal(selectPreferredCopilotModel(['claude-opus-5', 'gpt-5.4']), 'gpt-5.4');
+  assert.equal(selectPreferredCopilotModel(['gpt-5.3-codex', 'claude-opus-5']), 'claude-opus-5');
 });

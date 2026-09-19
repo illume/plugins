@@ -407,6 +407,7 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
   };
   const candidate = createHeadlampCliCandidate({
     useMockProvider: false,
+    compactStructuredOutput: false,
     processRunner: async (command, args, env, timeoutMs) => {
       capturedArgs = args;
       capturedTimeoutMs = timeoutMs;
@@ -425,6 +426,7 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
   assert.ok(capturedArgs.some(arg => arg.includes(scenario.candidatePacket.task_prompt)));
   assert.ok(capturedArgs.includes('--supplied-evidence-only'));
   assert.ok(capturedArgs.includes('--structured-diagnosis'));
+  assert.ok(capturedArgs.includes('--full-structured-output'));
   const evidenceIdsIndex = capturedArgs.indexOf('--structured-diagnosis-evidence-ids');
   assert.deepEqual(JSON.parse(capturedArgs[evidenceIdsIndex + 1]!), ['ev1']);
   const observationsIndex = capturedArgs.indexOf('--structured-diagnosis-observations');
@@ -458,17 +460,45 @@ test('createHeadlampCliCandidate: forwards provider configuration as CLI argumen
     observations: [],
     evidence_digest: evidenceDigest,
   });
-  assert.deepEqual(capturedArgs.slice(1, 5), ['--provider', 'copilot', '--api-key', 'test-token']);
+  const providerIndex = capturedArgs.indexOf('--provider');
+  assert.deepEqual(capturedArgs.slice(providerIndex, providerIndex + 4), [
+    '--provider',
+    'copilot',
+    '--api-key',
+    'test-token',
+  ]);
   assert.equal(candidate.identity?.provider, 'copilot');
   assert.equal(candidate.identity?.credential_configured, true);
   assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
 });
 
-test('createHeadlampCliCandidate: forwards compact diagnosis mode and prompt', async () => {
+test('createHeadlampCliCandidate: records environment credentials without exposing them', async () => {
+  let capturedEnv: NodeJS.ProcessEnv = {};
+  const candidate = createHeadlampCliCandidate({
+    cliArgs: ['--provider', 'copilot', '--model', 'gpt-5.4'],
+    extraEnv: { HEADLAMP_AI_API_KEY: 'test-token' },
+    processRunner: async (_command, _args, env) => {
+      capturedEnv = env;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.equal(capturedEnv.HEADLAMP_AI_API_KEY, 'test-token');
+  assert.equal(candidate.identity?.credential_configured, true);
+  assert.equal(candidate.identity?.model, 'gpt-5.4');
+  assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
+});
+
+test('createHeadlampCliCandidate: defaults structured diagnosis to compact mode', async () => {
   let capturedArgs: string[] = [];
   const candidate = createHeadlampCliCandidate({
     useMockProvider: false,
-    cliArgs: ['--compact-structured-output'],
     processRunner: async (_command, args) => {
       capturedArgs = args;
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
@@ -483,7 +513,8 @@ test('createHeadlampCliCandidate: forwards compact diagnosis mode and prompt', a
     evidence_digest: evidenceDigest,
   });
 
-  assert.ok(capturedArgs.includes('--compact-structured-output'));
+  assert.ok(!capturedArgs.includes('--compact-structured-output'));
+  assert.ok(!capturedArgs.includes('--full-structured-output'));
   assert.match(capturedArgs.at(-1) ?? '', /return only the semantic diagnosis fields/);
   assert.doesNotMatch(capturedArgs.at(-1) ?? '', /return only a fenced ```json code block/);
   assert.equal(candidate.identity?.structured_output_mode, 'compact');
@@ -667,6 +698,7 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
   const repair = loadScenario('core-service-selector-repair-v1');
   const candidate = createHeadlampCliCandidate({
     useMockProvider: false,
+    compactStructuredOutput: false,
     processRunner: async (_command, args) => {
       capturedArgs = args;
       prompt = args.at(-1) ?? '';
@@ -698,6 +730,7 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
   assert.match(prompt, /Do not rename or add properties/);
   assert.match(prompt, /omit it rather than using null/);
   assert.ok(capturedArgs.includes('--structured-repair'));
+  assert.ok(capturedArgs.includes('--full-structured-output'));
   assert.ok(!capturedArgs.includes('--structured-diagnosis'));
   const contractIndex = capturedArgs.indexOf('--structured-repair-contract');
   assert.deepEqual(JSON.parse(capturedArgs[contractIndex + 1]!), {

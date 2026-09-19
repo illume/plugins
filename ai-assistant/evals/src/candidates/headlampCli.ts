@@ -16,7 +16,8 @@
 
 /**
  * The real candidate adapter: invokes the existing `@headlamp-k8s/ai-cli`
- * boundary (`packages/ai-cli/src/cli.ts`) as a subprocess through `tsx`,
+ * boundary (`packages/ai-cli/src/cli.ts`) directly through Node's TypeScript
+ * transformation,
  * exactly the same product code path the Headlamp AI Assistant UI uses.
  *
  * Credential handling: the child process receives only an explicitly
@@ -68,7 +69,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const evalsRoot = path.resolve(here, '..', '..');
 const aiAssistantRoot = path.resolve(evalsRoot, '..');
 const cliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'src', 'cli.ts');
-const tsxBin = path.resolve(evalsRoot, 'node_modules', '.bin', 'tsx');
+const compiledCliEntry = path.resolve(evalsRoot, '..', 'packages', 'ai-cli', 'dist', 'cli.mjs');
 const dependencyLock = path.join(aiAssistantRoot, 'package-lock.json');
 
 /** Captured completion state of one candidate subprocess. */
@@ -615,18 +616,34 @@ export function createHeadlampCliCandidate(
   const structuredDiagnosis =
     options.structuredDiagnosis ??
     (sessionMode === 'agent-harness' && options.useMockProvider === false);
+  const cliArgs = options.cliArgs ?? [];
   const compactStructuredOutput =
     options.compactStructuredOutput ??
-    (options.cliArgs ?? []).includes('--compact-structured-output');
+    (structuredDiagnosis && !cliArgs.includes('--full-structured-output'));
+  const structuredOutputModeArgs =
+    cliArgs.includes('--compact-structured-output') || cliArgs.includes('--full-structured-output')
+      ? []
+      : options.compactStructuredOutput === true
+      ? ['--compact-structured-output']
+      : options.compactStructuredOutput === false
+      ? ['--full-structured-output']
+      : [];
   const candidateId = sessionMode === 'legacy' ? 'headlamp-cli-legacy' : 'headlamp-cli';
+  const runtimeEntry = existsSync(compiledCliEntry) ? compiledCliEntry : cliEntry;
+  const runtimeArgs = existsSync(compiledCliEntry)
+    ? [compiledCliEntry]
+    : ['--experimental-transform-types', cliEntry];
   const identity = headlampCandidateIdentity(
     candidateId,
-    options.cliArgs ?? [],
+    cliArgs,
     options.useMockProvider !== false,
     sessionMode,
     suppliedEvidenceOnly,
     structuredDiagnosis,
     compactStructuredOutput,
+    cliArgs.includes('--api-key') || options.extraEnv?.HEADLAMP_AI_API_KEY !== undefined,
+    existsSync(compiledCliEntry) ? 'compiled' : 'native-typescript',
+    existsSync(runtimeEntry) ? sha256OfText(readFileSync(runtimeEntry, 'utf8')) : '',
     options.pricing
   );
 
@@ -635,7 +652,7 @@ export function createHeadlampCliCandidate(
     kind: 'headlamp-cli',
     identity,
     async invoke(input: CandidateInvocationInput): Promise<CandidateInvocationResult> {
-      if (!existsSync(cliEntry) || !existsSync(tsxBin)) {
+      if (!existsSync(runtimeEntry)) {
         return {
           raw_text: '',
           submission_text: null,
@@ -728,14 +745,14 @@ export function createHeadlampCliCandidate(
       let telemetryText = '';
       try {
         result = await runProcess(
-          tsxBin,
+          process.execPath,
           [
-            cliEntry,
-            ...(options.cliArgs ?? []),
+            ...runtimeArgs,
+            ...cliArgs,
             ...(sessionMode === 'legacy' ? ['--legacy-session'] : []),
             ...(suppliedEvidenceOnly ? ['--supplied-evidence-only'] : []),
             ...(structuredDiagnosis && !repair ? ['--structured-diagnosis'] : []),
-            ...(compactStructuredOutput ? ['--compact-structured-output'] : []),
+            ...structuredOutputModeArgs,
             ...(structuredDiagnosis && repair
               ? [
                   '--structured-repair',
@@ -826,6 +843,9 @@ function headlampCandidateIdentity(
   suppliedEvidenceOnly: boolean,
   structuredDiagnosis: boolean,
   compactStructuredOutput: boolean,
+  credentialConfigured: boolean,
+  runtimeMode: 'compiled' | 'native-typescript',
+  candidateEntryDigest: string,
   pricing?: TokenPricingSnapshot
 ): CandidateAdapter['identity'] {
   const argument = (name: string): string | null => {
@@ -838,12 +858,13 @@ function headlampCandidateIdentity(
     model: argument('--model'),
     deployment_name: argument('--deployment-name'),
     endpoint_digest: endpoint ? sha256OfText(endpoint) : null,
-    credential_configured: argument('--api-key') !== null,
+    credential_configured: credentialConfigured,
     mock_provider: useMockProvider,
     session_mode: sessionMode,
     retrieval_mode: suppliedEvidenceOnly ? 'supplied-evidence-only' : 'live',
     structured_output: structuredDiagnosis,
     structured_output_mode: compactStructuredOutput ? 'compact' : 'full',
+    runtime_mode: runtimeMode,
   };
   return {
     candidate_id: candidateId,
@@ -863,9 +884,7 @@ function headlampCandidateIdentity(
         'package.json',
         'package-lock.json',
       ]) !== '',
-    candidate_entry_digest: existsSync(cliEntry)
-      ? sha256OfText(readFileSync(cliEntry, 'utf8'))
-      : null,
+    candidate_entry_digest: candidateEntryDigest || null,
     dependency_lock_digest: existsSync(dependencyLock)
       ? sha256OfText(readFileSync(dependencyLock, 'utf8'))
       : null,

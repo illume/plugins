@@ -19,12 +19,22 @@ interface CopilotCatalogEntry {
   capabilities?: { type?: unknown };
 }
 
-/** Verifies that an explicit model is enabled for the authenticated Copilot account. */
-export async function assertCopilotModelAvailable(
+const COPILOT_MODEL_PRIORITY = [
+  'gpt-5.4',
+  'claude-opus',
+  'gpt-5',
+  'claude-sonnet',
+  'gpt-4',
+  'o4',
+  'o3',
+  'o1',
+] as const;
+
+/** Returns enabled chat model IDs from one authenticated Copilot catalog lookup. */
+export async function listCopilotChatModels(
   token: string,
-  model: string,
   fetchCatalog: typeof fetch = fetch
-): Promise<void> {
+): Promise<string[]> {
   let response: Response;
   try {
     response = await fetchCatalog('https://api.githubcopilot.com/models', {
@@ -46,10 +56,33 @@ export async function assertCopilotModelAvailable(
     : Array.isArray(body.models)
     ? body.models
     : [];
-  const enabled = (entries as CopilotCatalogEntry[])
+  return (entries as CopilotCatalogEntry[])
     .filter(entry => !entry.capabilities?.type || entry.capabilities.type === 'chat')
     .map(entry => entry.id)
     .filter((id): id is string => typeof id === 'string');
+}
+
+/** Selects the product-preferred model from a frozen enabled-model list. */
+export function selectPreferredCopilotModel(models: string[]): string {
+  for (const priority of COPILOT_MODEL_PRIORITY) {
+    const match = models.find(model =>
+      priority === 'gpt-5.4'
+        ? model.toLowerCase() === priority
+        : model.toLowerCase().includes(priority)
+    );
+    if (match) return match;
+  }
+  if (models[0]) return models[0];
+  throw new Error('Copilot model catalog contains no enabled chat models');
+}
+
+/** Verifies that an explicit model is enabled for the authenticated Copilot account. */
+export async function assertCopilotModelAvailable(
+  token: string,
+  model: string,
+  fetchCatalog: typeof fetch = fetch
+): Promise<void> {
+  const enabled = await listCopilotChatModels(token, fetchCatalog);
   if (!enabled.includes(model)) {
     const hint = enabled.length > 0 ? ` Enabled chat models: ${enabled.join(', ')}.` : '';
     throw new Error(`Copilot model ${model} is not enabled for this account.${hint}`);

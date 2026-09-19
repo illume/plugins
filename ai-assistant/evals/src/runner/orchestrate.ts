@@ -119,6 +119,8 @@ export interface RunOptions {
   supersedesTrialId?: string;
   /** Additional arguments passed to Headlamp CLI candidate invocations. */
   candidateCliArgs?: string[];
+  /** Secret provider values passed only through the Headlamp CLI child environment. */
+  candidateExtraEnv?: Record<string, string>;
   /** Explicit token-price snapshot used for reproducible cost estimates. */
   pricing?: TokenPricingSnapshot;
   /** Holmes model identifier, such as azure/gpt-4o. */
@@ -195,6 +197,7 @@ function buildCandidate(
   mode: ExecutionMode,
   profile: ClusterProfileName,
   candidateCliArgs?: string[],
+  candidateExtraEnv?: Record<string, string>,
   pricing?: TokenPricingSnapshot,
   holmesModel?: string,
   k8sGptModel?: string,
@@ -210,6 +213,7 @@ function buildCandidate(
           ? loadClusterProfile(profile === 'aks' ? 'aks-azure' : profile).model.credential_env_vars
           : [],
       cliArgs: candidateCliArgs,
+      extraEnv: candidateExtraEnv,
       pricing,
     });
   }
@@ -387,6 +391,7 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
         options.mode,
         options.profile,
         options.candidateCliArgs,
+        options.candidateExtraEnv,
         options.pricing,
         options.holmesModel,
         options.k8sGptModel,
@@ -411,6 +416,7 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
           options.mode,
           options.profile,
           options.candidateCliArgs,
+          options.candidateExtraEnv,
           options.pricing,
           options.holmesModel,
           options.k8sGptModel,

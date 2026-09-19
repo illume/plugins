@@ -3,11 +3,12 @@
 Date: 2026-09-19. Implementation follow-up to the
 [150-candidate research expansion](../../docs/aks-candidate-expansion.md).
 
-Nine additional candidates have authored handlers: C133 deleted-policy state,
+Ten additional candidates have authored handlers: C119 controller platform compatibility,
+C133 deleted-policy state,
 C159 kubenet hairpin, C186 CIDR exception overlap, C190 endpoint-less Services,
 C192 named ports, C193 additive allow policies and C194 completed-Job ipset
 membership, plus C244 removed chart API and C249 exporter Content-Type.
-The other 141 expansion candidates have no handler; C243 requires re-triage
+The other 140 expansion candidates have no handler; C243 requires re-triage
 after the reporter withdrew the original explanation. No case is a qualified historical reproduction or admitted
 scored scenario. The original 100-plan catalogue and research registers remain
 unchanged. No model evaluation, diagnostic accuracy or energy savings are claimed.
@@ -174,6 +175,22 @@ It also records C243's source correction: the reporter closed the issue because
 the example was wrong. No PID-range implementation was added. The original JSON
 research snapshot and earlier live attempts remain unchanged.
 
+### Offline C119 Follow-Up
+
+After publishing the network/energy compatibility batch as `57c5c5ae1`, work
+continued on C119. Its handler compares ALB Controller 1.8.9 on AMD64 and ARM64
+with a 1.11.1 ARM64 control. It executes only the binary's help command, not a
+Helm installation or a functioning cloud controller. It requires an explicit
+two-node ceiling and exact image/config/node identity checks. No new Azure
+resources were created and this case has no live result.
+
+The [platform guide](aks-end-to-end-authoring.md#c119-controller-platform-compatibility)
+records source/control versions, manifest/config hashes, bounded lifecycle and
+scope limits. Actual public registry metadata passed the hash/platform checks;
+no image layers or executable were run. Five injected tests cover the lifecycle,
+discovery and rejection of architecture, image, control and unrelated-error
+mismatches. Scored eligibility remains false.
+
 ### Remaining Cases
 
 C192 has local implementation tests and the setup-blocked attempt above. Its
@@ -191,7 +208,7 @@ Their oracles cover policy union rather than ordered deny-rule semantics, both
 policy insertion orders, backend egress, and completion-before-deletion state.
 They do not run large-scale stress, force IP reuse, restart NPM or flush rules.
 
-Offline verification: **444 eval tests pass**, including 34 focused expansion
+Offline verification: **449 eval tests pass**, including 39 focused expansion
 tests; `npm run tsc` passes. Typechecking also exposed one missing brace in a
 previously authored Windows container spec, repaired to permit registry imports.
 That repair and a green test suite do not validate the original 89 live paths.
@@ -204,6 +221,8 @@ Remaining gates: recover an available affected C159 image before claiming
 historical reproduction; establish a new explicitly bounded run window before
 attempting C133/C186/C190/C192/C193/C194 with reviewed managed NPM images and
 case-specific prerequisites. C244 needs a pinned Helm server-admission attempt;
-C249 additionally needs supported and readable host energy counters. Then assess source fidelity,
-negative controls and diagnostic evidence before scored admission. No commits or
-pushes are part of this implementation/validation batch.
+C249 additionally needs supported and readable host energy counters. C119 needs
+a separately authorized two-node architecture experiment. Then assess source
+fidelity, negative controls and diagnostic evidence before scored admission.
+The nine-handler publication checkpoint is `57c5c5ae1`; the C119 follow-up is
+recorded separately and does not change any historical live outcome.

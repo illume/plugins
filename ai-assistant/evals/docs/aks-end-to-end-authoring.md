@@ -61,7 +61,7 @@ claimed. A failed first setup attempt is retained: the admin kubeconfig context
 did not match the requested name. The runner now checks a single context and the
 owned cluster endpoint before locally renaming it. No credentials are published.
 
-Local checks: 34 focused tests, 444 eval tests and the eval typecheck pass. This also exposed
+Local checks: 39 focused tests, 449 eval tests and the eval typecheck pass. This also exposed
 and repaired one missing brace in the previously unverified Windows handler
 import; it does not validate Windows behavior. The
 [live attempt report](aks-expansion-live-results.md) records the preserved setup
@@ -300,6 +300,68 @@ C243 remains without a handler pending corrected CLI semantics and independent
 evidence. The earlier excerpt-based research register is retained as a historical
 snapshot, with this correction recorded separately rather than silently rewriting
 the provenance or inventing a reproduced defect.
+
+## C119 Controller Platform Compatibility
+
+The [architecture handler](../src/scenarios/aksArchitectureEndToEndCases.ts)
+implements a bounded binary-level adaptation of the
+[ARM64 ALB Controller report](https://github.com/Azure/AKS/issues/5390). The source
+describes Helm installation on an ARM64-only AKS 1.32 cluster with Controller
+1.8.9; the June 2026 reply states ARM64 support is available in 1.11.1.
+The handler does not install Helm charts, configure workload identity, reconcile
+a controller or provision an Application Gateway for Containers.
+
+Inputs: `affectedControllerImage`, `affectedManifest`, `affectedConfig`,
+`fixedControllerImage`, `fixedManifest`, `fixedConfig`, `armNodeVmSize`,
+`amdNodeImageVersion`, `armNodeImageVersion`, and `nodeCeiling: "2"`.
+Manifest/config paths refer to reviewed local JSON bytes, not reformatted copies.
+The manifest hash must equal the requested image digest and its config digest
+and size must match the config bytes. Config OS/architecture must be Linux/AMD64
+for source version 1.8.9 and Linux/ARM64 for control version 1.11.1. Inputs use
+platform manifests, not an unreviewed multi-platform index. These content checks
+bind the supplied artifacts; operators must still review registry provenance and
+release identity before execution.
+
+The fresh AKS runner begins with one AMD64 node. The baseline runs the affected
+binary with `/alb-controller --help` there, then creates one non-autoscaling
+ARM64 user node and runs the ARM64-capable binary with the same command. Exact
+node images, actual node architecture and runtime image IDs must match; each
+control must exit zero with recognizable help output and zero restarts. A Pod
+has a 90-second deadline, capped CPU/memory, no service-account token and no extra
+capabilities. The requested node SKU is verified through actual architecture;
+SKU names alone are not accepted as evidence.
+
+The fault requests the same AMD64-only platform digest on the ARM64 test pool.
+Only `exec format error` in the controller state or UID-scoped Pod events can
+satisfy its oracle, while the AMD64 control remains valid. Generic pull errors,
+credentials, DNS, rate limits, successful execution, foreign events and changed
+runtime images are not accepted. A runtime that rejects the platform earlier
+with a different message produces an unconfirmed attempt, not a silently revised
+oracle. Recovery replaces only the owned subject Pod with the fixed ARM64
+manifest and requires a new UID and successful help output. The shared lifecycle
+removes both pools through the owned cluster/resource-group cleanup.
+
+This is a mixed-architecture, two-node mechanism adaptation, unlike the source's
+ARM64-only installation. It tests executable compatibility, not a configured
+controller. Help-mode behavior, live provisioning, failure and cleanup are not
+yet validated. A renewed Azure window, appropriate ARM64 quota and a budget for
+two nodes are required; the prior one-node live authorization was not reused.
+
+### Registry Metadata Check
+
+Public MCR manifest/config bytes were fetched and hashed without pulling image
+layers or starting containers. The observed platform digests on 2026-09-19 were:
+
+- 1.8.9 AMD64 manifest: `sha256:dc51c52633bdfdc0d12b5db0ee92084a07fc5e8b3c1abe06db5a99d288e510ff`
+- 1.8.9 AMD64 config: `sha256:4a43234b4d67f2f78c24c41f9d5825ff4f4066429290f33804b1473a1c433c30`
+- 1.11.1 ARM64 manifest: `sha256:fa475fbb5f6357fbb1453ebac4fc3ca3f36746e091e0c11bfdca0959dd6c70df`
+- 1.11.1 ARM64 config: `sha256:25f25ee15dba2fd02324c7b7f8823145f4263e673122f6cd23fa4bd2404cffaf`
+
+The 1.8.9 tag returned a single AMD64 manifest; 1.11.1 had AMD64/ARM64 entries
+plus non-runtime attestation entries. Config histories reference `/alb-controller`.
+The metadata audit is retained privately under `.tmp/aks-c119-image-review-20260919`.
+It is evidence of image content/platform declaration, not evidence that the
+handler ran or that either binary's help command completed successfully.
 
 ## Original Scope
 

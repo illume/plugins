@@ -8,7 +8,7 @@ These are research designs, not new executable scenarios.
 
 ## Implementation Follow-Up: 2026-09-19
 
-Nine candidates, C133, C159, C186, C190, C192, C193, C194, C244 and C249, now have authored handlers in the
+Ten candidates, C119, C133, C159, C186, C190, C192, C193, C194, C244 and C249, now have authored handlers in the
 [full-AKS runner](../evals/docs/aks-end-to-end-authoring.md#c159-expansion-follow-up)
 with pinned inputs, explicit evidence controls and owned cleanup. The network
 cases distinguish affected-image from healthy-image modes. C159 checks kubenet hairpin
@@ -20,8 +20,10 @@ compares deleted policy objects with retained target DROP rules and traffic.
 C244 checks the energy-exporter chart's removed PodSecurityPolicy API using
 Helm server dry-runs, not a running collector. C249 compares strict Prometheus 3
 scrapes with a scoped fallback protocol and requires readable host RAPL counters.
-C133, C190, C244 and C249 have offline lifecycle tests only, not live AKS results.
-The other 141 expansion entries have no authored handler. Of these, C243 now
+C119 checks the ALB controller binary on AMD64 and ARM64 against pinned image
+manifests, not a complete Helm/controller deployment. C119, C133, C190, C244 and
+C249 have offline lifecycle tests only, not live AKS results.
+The other 140 expansion entries have no authored handler. Of these, C243 now
 requires re-triage: its reporter closed the issue after finding the example was
 wrong, so the original PID-range defect hypothesis must not be treated as confirmed.
 The original research snapshot below and its JSON are

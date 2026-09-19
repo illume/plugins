@@ -179,9 +179,12 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
           }
         );
         for await (const state of stream) {
-          latestMessages = state.messages as BaseMessage[];
-          structuredResponse = (state as { structuredResponse?: Record<string, unknown> })
-            .structuredResponse;
+          const agentState = state as unknown as {
+            messages?: BaseMessage[];
+            structuredResponse?: Record<string, unknown>;
+          };
+          latestMessages = agentState.messages ?? latestMessages;
+          structuredResponse = agentState.structuredResponse;
         }
       } catch (error) {
         streamOutcome = 'error';
@@ -402,7 +405,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     onRepairAttempt: () => void
   ): Promise<Record<string, unknown>> {
     const validation = this.runStructuredValidation(response);
-    if (!validation || validation.success) return validation?.data ?? response;
+    if (!validation) return response;
+    if (validation.success === true) return validation.data;
     onRepairAttempt();
     const repaired = await this.runStructuredRepair(() =>
       this.repairStructuredResponse(
@@ -420,7 +424,8 @@ export default class AgentHarnessSession extends LangChainAssistantSession {
     response: Record<string, unknown>
   ): Record<string, unknown> {
     const validation = this.runStructuredValidation(response);
-    if (!validation || validation.success) return validation?.data ?? response;
+    if (!validation) return response;
+    if (validation.success === true) return validation.data;
     throw new Error(validation.error);
   }
 

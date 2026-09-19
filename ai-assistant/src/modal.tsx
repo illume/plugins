@@ -16,12 +16,13 @@
 
 import { getHolmesProxyBaseUrl, HolmesAgent } from '@headlamp-k8s/ai-common/agents/holmes/client';
 import { MockHolmesAgent } from '@headlamp-k8s/ai-common/agents/holmes/MockHolmesAgent';
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import AssistantSession from '@headlamp-k8s/ai-common/assistant/AssistantSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
 import type { ConversationMessage } from '@headlamp-k8s/ai-common/conversation/types';
 import { diagnosePackedBatch } from '@headlamp-k8s/ai-common/diagnosis/batch';
-import { createChatModel } from '@headlamp-k8s/ai-common/providers/createChatModel';
 import { getProviderById } from '@headlamp-k8s/ai-common/providers/catalog';
+import { createChatModel } from '@headlamp-k8s/ai-common/providers/createChatModel';
 import {
   BrowserSkillCache,
   createFetchHttpClient,
@@ -586,7 +587,7 @@ export default function AIPrompt(props: {
 
         if (!isCurrent) return;
 
-        const newManager = new LangChainAssistantSession(
+        const newManager = new AgentHarnessSession(
           activeConfig!.providerId,
           configWithModel,
           enabledTools,
@@ -673,7 +674,7 @@ export default function AIPrompt(props: {
             signal?: AbortSignal
           ): Promise<string> => {
             try {
-              const isolatedManager = new LangChainAssistantSession(
+              const isolatedManager = new AgentHarnessSession(
                 activeConfig.providerId,
                 configWithModel,
                 enabledTools,

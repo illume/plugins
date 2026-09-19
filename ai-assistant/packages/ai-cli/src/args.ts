@@ -15,7 +15,7 @@
  */
 
 import * as path from 'path';
-import { getHeadlampDataDir } from './config.js';
+import { getHeadlampDataDir } from './config.ts';
 
 export interface ParsedArgs {
   configPath?: string;
@@ -50,8 +50,8 @@ export interface ParsedArgs {
   structuredDiagnosis: boolean;
   /** When true, require the structured repair response contract. */
   structuredRepair: boolean;
-  /** When true, request only semantic fields and reconstruct the full contract locally. */
-  compactStructuredOutput: boolean;
+  /** Select compact or full structured output; undefined uses the compact default. */
+  compactStructuredOutput?: boolean;
   /** Exact repair options and evidence digest permitted by the repair contract. */
   structuredRepairContract?: {
     evidence_digest: string;
@@ -101,7 +101,6 @@ export function parseArgs(argv: string[]): ParsedArgs {
     suppliedEvidenceOnly: process.env.HEADLAMP_AI_SUPPLIED_EVIDENCE_ONLY === '1',
     structuredDiagnosis: process.env.HEADLAMP_AI_STRUCTURED_DIAGNOSIS === '1',
     structuredRepair: false,
-    compactStructuredOutput: false,
     structuredDiagnosisEvidenceIds: [],
     structuredDiagnosisObservations: [],
   };
@@ -160,6 +159,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
         break;
       case '--compact-structured-output':
         result.compactStructuredOutput = true;
+        break;
+      case '--full-structured-output':
+        result.compactStructuredOutput = false;
         break;
       case '--structured-repair-contract': {
         const value: unknown = JSON.parse(args[++i] ?? 'null');
@@ -257,6 +259,8 @@ Options:
                         Require a schema-valid structured diagnosis (harness only)
   --compact-structured-output
                         Reconstruct deterministic evidence and repair fields locally
+  --full-structured-output
+                        Include the complete evidence and repair fields in provider output
   --allow-mutations     Allow mutating kubectl operations (POST, PUT, DELETE, PATCH). Default: read-only
   --auto-approve        Auto-approve all tool calls without prompting. Env: HEADLAMP_AI_AUTO_APPROVE=1
   --auto-detect         Detect available AI providers (Copilot, Azure, Ollama)

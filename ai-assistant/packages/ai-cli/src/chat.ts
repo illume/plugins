@@ -24,20 +24,20 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { execFileSync } from 'child_process';
 import { providerStrategy } from 'langchain';
 import * as readline from 'readline';
-import { createKubectlTool } from './kubectl.js';
-import { loadSkillsFromUrls } from './skills.js';
+import { createKubectlTool } from './kubectl.ts';
+import { loadSkillsFromUrls } from './skills.ts';
 import {
   createCompactDiagnosisProviderSchema,
   createCompactRepairProviderSchema,
   createDiagnosisProviderSchema,
-  validateCompactDiagnosisSubmission,
-  validateCompactRepairSubmission,
   createRepairProviderSchema,
   type StructuredDiagnosisObservation,
   type StructuredRepairContract,
+  validateCompactDiagnosisSubmission,
+  validateCompactRepairSubmission,
   validateDiagnosisSubmission,
   validateRepairSubmission,
-} from './structuredDiagnosis.js';
+} from './structuredDiagnosis.ts';
 
 interface KubectlContext {
   cluster: string;
@@ -104,11 +104,10 @@ export async function createManager(
   if (options.structuredDiagnosis && options.structuredRepair) {
     throw new Error('Structured diagnosis and structured repair are mutually exclusive');
   }
-  if (
-    options.compactStructuredOutput &&
-    !options.structuredDiagnosis &&
-    !options.structuredRepair
-  ) {
+  const compactStructuredOutput =
+    options.compactStructuredOutput ??
+    Boolean(options.structuredDiagnosis || options.structuredRepair);
+  if (compactStructuredOutput && !options.structuredDiagnosis && !options.structuredRepair) {
     throw new Error('Compact structured output requires structured diagnosis or repair');
   }
   if (
@@ -135,13 +134,13 @@ export async function createManager(
         ...commonOptions,
         responseFormat: options.structuredDiagnosis
           ? providerStrategy(
-              options.compactStructuredOutput
+              compactStructuredOutput
                 ? createCompactDiagnosisProviderSchema()
                 : createDiagnosisProviderSchema(structuredDiagnosisEvidenceIds)
             )
           : options.structuredRepair
           ? providerStrategy(
-              options.compactStructuredOutput
+              compactStructuredOutput
                 ? createCompactRepairProviderSchema(options.structuredRepairContract!)
                 : createRepairProviderSchema(
                     structuredDiagnosisEvidenceIds,
@@ -151,7 +150,7 @@ export async function createManager(
           : undefined,
         validateStructuredResponse: options.structuredDiagnosis
           ? response =>
-              options.compactStructuredOutput
+              compactStructuredOutput
                 ? validateCompactDiagnosisSubmission(
                     response,
                     options.structuredDiagnosisObservations ?? [],
@@ -164,7 +163,7 @@ export async function createManager(
                   )
           : options.structuredRepair
           ? response =>
-              options.compactStructuredOutput
+              compactStructuredOutput
                 ? validateCompactRepairSubmission(
                     response,
                     options.structuredDiagnosisObservations ?? [],

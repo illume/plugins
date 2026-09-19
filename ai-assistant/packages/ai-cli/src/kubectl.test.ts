@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { buildKubectlArgs, createKubectlTool } from './kubectl.js';
+import { describe, expect, it } from '@rstest/core';
+import { buildKubectlArgs, createKubectlTool } from './kubectl.ts';
 
 describe('createKubectlTool', () => {
   it('returns a tool with the correct name and schema', () => {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it, vi } from 'vitest';
-import { parseArgs, printUsage } from './args.js';
+import { describe, expect, it, rs } from '@rstest/core';
+import { parseArgs, printUsage } from './args.ts';
 
 const base = ['node', 'headlamp-ai'];
 
@@ -30,7 +30,7 @@ describe('parseArgs', () => {
     expect(result.suppliedEvidenceOnly).toBe(false);
     expect(result.structuredDiagnosis).toBe(false);
     expect(result.structuredRepair).toBe(false);
-    expect(result.compactStructuredOutput).toBe(false);
+    expect(result.compactStructuredOutput).toBeUndefined();
     expect(result.structuredRepairContract).toBeUndefined();
     expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
     expect(result.structuredDiagnosisObservations).toEqual([]);
@@ -88,6 +88,10 @@ describe('parseArgs', () => {
     expect(parseArgs([...base, '--compact-structured-output']).compactStructuredOutput).toBe(true);
   });
 
+  it('parses --full-structured-output', () => {
+    expect(parseArgs([...base, '--full-structured-output']).compactStructuredOutput).toBe(false);
+  });
+
   it('parses exact structured diagnosis evidence IDs', () => {
     expect(
       parseArgs([...base, '--structured-diagnosis-evidence-ids', '["evidence-1","evidence-2"]'])
@@ -124,7 +128,7 @@ describe('parseArgs', () => {
   });
 
   it('documents the legacy-session environment variable', () => {
-    const output = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const output = rs.spyOn(console, 'log').mockImplementation(() => undefined);
     printUsage();
     const text = output.mock.calls.flat().join('\n');
     expect(text).toContain('HEADLAMP_AI_LEGACY_SESSION');

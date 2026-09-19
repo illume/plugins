@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@rstest/core';
 import {
   createCompactDiagnosisProviderSchema,
   createCompactRepairProviderSchema,
   createDiagnosisProviderSchema,
-  validateCompactDiagnosisSubmission,
-  validateCompactRepairSubmission,
   createDiagnosisSubmissionSchema,
   createRepairProviderSchema,
+  validateCompactDiagnosisSubmission,
+  validateCompactRepairSubmission,
   validateDiagnosisSubmission,
   validateRepairSubmission,
-} from './structuredDiagnosis.js';
+} from './structuredDiagnosis.ts';
 
 const submission = {
   schema_version: '1.0.0' as const,

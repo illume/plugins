@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, rs } from '@rstest/core';
 
 /**
  * Fake `execFile` that never settles on its own — it only completes when its
@@ -22,12 +22,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * genuinely killed on abort rather than merely abandoned once the LangChain
  * tool promise settles.
  */
-const killMock = vi.fn();
-const stdinEndMock = vi.fn();
+const killMock = rs.fn();
+const stdinEndMock = rs.fn();
 let capturedSignal: AbortSignal | undefined;
 
-vi.mock('child_process', () => ({
-  execFile: vi.fn(
+rs.mock('child_process', () => ({
+  execFile: rs.fn(
     (
       _file: string,
       _args: string[],
@@ -60,7 +60,7 @@ vi.mock('child_process', () => ({
 }));
 
 // Imported after the mock so kubectl.ts picks up the mocked child_process.
-import { createKubectlTool } from './kubectl.js';
+import { createKubectlTool } from './kubectl.ts';
 
 describe('kubectl tool cancellation', () => {
   beforeEach(() => {

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { describe, expect, it } from '@rstest/core';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { createJsonlTelemetryObserver } from './telemetry.js';
+import { createJsonlTelemetryObserver } from './telemetry.ts';
 
 describe('createJsonlTelemetryObserver', () => {
   it('writes sanitized events to a private JSONL file', () => {

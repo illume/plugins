@@ -16,19 +16,19 @@
 
 import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
 import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import { describe, expect, it, rs } from '@rstest/core';
 import { execFile } from 'child_process';
 import { FakeToolCallingModel } from 'langchain';
-import { describe, expect, it, vi } from 'vitest';
-import { createManager, detectKubectlContext, query } from './chat.js';
+import { createManager, detectKubectlContext, query } from './chat.ts';
 
-vi.mock('child_process', () => ({
+rs.mock('child_process', () => ({
   // kubectl.ts no longer uses execFileSync (see kubectl.ts), but other
   // callers such as model.ts's provider detection still do, so this guards
   // against any of them unexpectedly shelling out during these tests.
-  execFileSync: vi.fn(() => {
+  execFileSync: rs.fn(() => {
     throw new Error('real kubectl must not be invoked when --mock-tools is set');
   }),
-  execFile: vi.fn(() => {
+  execFile: rs.fn(() => {
     throw new Error('real kubectl must not be invoked when --mock-tools is set');
   }),
 }));
@@ -39,7 +39,7 @@ describe('chat', () => {
   });
 
   it('reads the active cluster and namespace from structured kubeconfig output', () => {
-    const run = vi.fn().mockReturnValue(
+    const run = rs.fn().mockReturnValue(
       JSON.stringify({
         contexts: [{ context: { cluster: 'trial', namespace: 'eval-selector-fault' } }],
       })
@@ -54,14 +54,14 @@ describe('chat', () => {
   });
 
   it('uses the Kubernetes default namespace only when the context omits one', () => {
-    const run = vi
+    const run = rs
       .fn()
       .mockReturnValue(JSON.stringify({ contexts: [{ context: { cluster: 'local' } }] }));
     expect(detectKubectlContext(run)).toEqual({ cluster: 'local', namespace: 'default' });
   });
 
   it('returns undefined when kubectl context detection fails', () => {
-    const run = vi.fn().mockImplementation(() => {
+    const run = rs.fn().mockImplementation(() => {
       throw new Error('kubectl unavailable');
     });
     expect(detectKubectlContext(run)).toBeUndefined();

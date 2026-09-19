@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { initMCPTools } from './mcp.js';
+import { describe, expect, it } from '@rstest/core';
+import { initMCPTools } from './mcp.ts';
 
 describe('initMCPTools', () => {
   it('returns the original model unchanged when settings is undefined', async () => {

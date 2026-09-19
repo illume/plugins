@@ -28,8 +28,8 @@
  */
 
 import * as path from 'path';
-import { parseArgs, printUsage, readStdin } from './args.js';
-import { createManager, interactiveMode, query } from './chat.js';
+import { parseArgs, printUsage, readStdin } from './args.ts';
+import { createManager, interactiveMode, query } from './chat.ts';
 import {
   type CLIConfig,
   configFromEnv,
@@ -37,9 +37,9 @@ import {
   loadAppConfig,
   loadConfigFile,
   saveHeadlampAIConfig,
-} from './config.js';
-import { makeNodeCommandRunner, runAutoDetect, tryAutoDetectCopilot } from './model.js';
-import { createJsonlTelemetryObserver } from './telemetry.js';
+} from './config.ts';
+import { makeNodeCommandRunner, runAutoDetect, tryAutoDetectCopilot } from './model.ts';
+import { createJsonlTelemetryObserver } from './telemetry.ts';
 
 async function main() {
   const parsed = parseArgs(process.argv);

@@ -187,6 +187,104 @@ export interface RootCauseGradingInput {
   graderResultId: string;
 }
 
+/** Inputs for independently grading every issue in a combined scenario. */
+export interface MultiIssueRootCauseGradingInput {
+  submissions: Array<{ issue_id: string; submission: DiagnosisSubmission }>;
+  evaluatorPacket: EvaluatorPacket;
+  retrievedObservations: Array<{
+    evidence_id: string;
+    resource_ref: string;
+    field_path: string;
+    value: string;
+    issue_ids: string[];
+  }>;
+  graderResultId: string;
+}
+
+/** Scoped and aggregate root-cause outcomes for one combined scenario. */
+export interface MultiIssueRootCauseGradingResult {
+  aggregate: DimensionResult;
+  issues: Array<{ issue_id: string; root_cause: DimensionResult }>;
+}
+
+/** Grades combined-scenario submissions without allowing evidence to cross issue scopes. */
+export function gradeMultiIssueRootCause(
+  input: MultiIssueRootCauseGradingInput
+): MultiIssueRootCauseGradingResult {
+  const issues = input.evaluatorPacket.issues;
+  if (!issues || issues.length < 2) {
+    throw new Error('Multi-issue grading requires at least two evaluator issues');
+  }
+  const knownIssueIds = new Set(issues.map(issue => issue.issue_id));
+  const submissionByIssue = new Map<string, DiagnosisSubmission>();
+  for (const entry of input.submissions) {
+    if (!knownIssueIds.has(entry.issue_id)) {
+      throw new Error(`Candidate returned unknown issue_id: ${entry.issue_id}`);
+    }
+    if (submissionByIssue.has(entry.issue_id)) {
+      throw new Error(`Candidate returned duplicate issue_id: ${entry.issue_id}`);
+    }
+    submissionByIssue.set(entry.issue_id, entry.submission);
+  }
+  const results = issues.map(issue => {
+    const graderResultId = `${input.graderResultId}:${issue.issue_id}`;
+    const submission = submissionByIssue.get(issue.issue_id);
+    if (!submission) {
+      return {
+        issue_id: issue.issue_id,
+        root_cause: {
+          applicable: true,
+          outcome: 'no_result' as const,
+          grader_result_ids: [graderResultId],
+          invalidity_reason: 'candidate returned no diagnosis for this issue',
+        },
+      };
+    }
+    return {
+      issue_id: issue.issue_id,
+      root_cause: gradeRootCause({
+        submission,
+        evaluatorPacket: {
+          ...input.evaluatorPacket,
+          accepted_fact_sets: issue.accepted_fact_sets,
+          required_evidence_relations: issue.required_evidence_relations,
+          contradiction_facts: issue.contradiction_facts,
+          expects_uncertainty: issue.expects_uncertainty,
+          min_hypotheses_if_uncertain: issue.min_hypotheses_if_uncertain,
+          accepted_hypotheses_if_uncertain: issue.accepted_hypotheses_if_uncertain,
+          accepted_hypothesis_aliases_if_uncertain: issue.accepted_hypothesis_aliases_if_uncertain,
+          issues: undefined,
+        },
+        retrievedObservations: input.retrievedObservations.filter(observation =>
+          observation.issue_ids.includes(issue.issue_id)
+        ),
+        graderResultId,
+      }),
+    };
+  });
+  const outcomes = results.map(result => result.root_cause.outcome);
+  const outcome = outcomes.every(value => value === 'pass')
+    ? 'pass'
+    : outcomes.some(value => value === 'fail')
+    ? 'fail'
+    : outcomes.some(value => value === 'no_result')
+    ? 'no_result'
+    : 'partial';
+  return {
+    aggregate: {
+      applicable: true,
+      outcome,
+      accepted_fact_ids: results.flatMap(result => result.root_cause.accepted_fact_ids ?? []),
+      evidence_ids: results.flatMap(result => result.root_cause.evidence_ids ?? []),
+      grader_result_ids: results.flatMap(result => result.root_cause.grader_result_ids),
+      ...(outcome === 'pass'
+        ? {}
+        : { invalidity_reason: 'not every combined-scenario issue passed' }),
+    },
+    issues: results,
+  };
+}
+
 /**
  * Grades the root-cause dimension of a valid submission. Grounding failures
  * and known contradictions take precedence over semantic matching. A

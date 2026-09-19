@@ -106,6 +106,8 @@ export interface RetrievedObservation {
   field_path: string;
   /** String representation exposed to the candidate. */
   value: string;
+  /** Caller-defined combined-scenario issues permitted to consume this observation. */
+  issue_ids?: string[];
 }
 
 /**
@@ -166,6 +168,8 @@ export interface CandidateInvocationResult {
   raw_text: string;
   /** Raw text the candidate emitted for its structured sidecar, or null if none was produced. */
   submission_text: string | null;
+  /** Independently scoped sidecars emitted by a batch-capable candidate. */
+  issue_submissions?: Array<{ issue_id: string; submission_text: string | null }>;
   /** Harness-level completion status for the candidate process. */
   status: 'ok' | 'unavailable' | 'timeout';
   /** End-to-end candidate latency in nanoseconds. */

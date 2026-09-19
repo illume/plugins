@@ -461,6 +461,12 @@ are rejected rather than reported as a meaningful regression comparison.
   lifecycle), `setup.yaml` (Kubernetes fixture), `candidate-packet.json`
   (candidate-visible task), `evaluator-packet.json` (protected grader truth
   — never sent to any candidate process).
+- `test-fixtures/combined-scenarios/` — additive multi-fault contract fixtures.
+  Candidate packets declare caller-owned issue IDs and observation categories;
+  evaluator packets retain protected truth per issue. Observations are tagged
+  with issue scopes, candidates return independent sidecars, and the grader
+  rejects cross-issue evidence before aggregating results. Combined repair
+  authority is intentionally unsupported until read-only batching qualifies.
 - `schema/` — versioned JSON Schemas used by `contracts/validate.ts`.
 - `profiles/` — committed cluster/model profile configs
   (`local-kwok.yaml`, `local-minikube.yaml`, `aks-azure.yaml`); credentials are

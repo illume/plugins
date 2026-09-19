@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "combined-selector-rbac-v1",
+  "scenario_version": "1.0.0",
+  "task_prompt": "Diagnose issue selector and issue rbac independently. Return one scoped diagnosis for each issue.",
+  "visible_resource_refs": [
+    "service/web",
+    "pod/web-1",
+    "serviceaccount/reporter",
+    "role/reporter-reader"
+  ],
+  "allowed_observation_kinds": ["service.selector", "pod.labels", "authorization", "role.rules"],
+  "allow_additional_retrieval": false,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0",
+  "issues": [
+    {
+      "issue_id": "selector",
+      "task_prompt": "Diagnose why service/web has no endpoints.",
+      "allowed_observation_kinds": ["service.selector", "pod.labels"]
+    },
+    {
+      "issue_id": "rbac",
+      "task_prompt": "Diagnose why serviceaccount/reporter cannot list Deployments.",
+      "allowed_observation_kinds": ["authorization", "role.rules"]
+    }
+  ]
+}

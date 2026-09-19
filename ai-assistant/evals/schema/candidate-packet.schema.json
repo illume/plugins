@@ -69,6 +69,23 @@
     "required_submission_schema": {
       "type": "string",
       "enum": ["diagnosis_submission@1.0.0", "repair_submission@1.0.0"]
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["issue_id", "task_prompt", "allowed_observation_kinds"],
+        "properties": {
+          "issue_id": { "type": "string", "minLength": 1 },
+          "task_prompt": { "type": "string", "minLength": 1 },
+          "allowed_observation_kinds": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "$defs": {

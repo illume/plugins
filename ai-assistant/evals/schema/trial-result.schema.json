@@ -68,6 +68,18 @@
       },
       "additionalProperties": false
     },
+    "per_issue_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue_id", "root_cause"],
+        "properties": {
+          "issue_id": { "type": "string", "minLength": 1 },
+          "root_cause": { "$ref": "#/$defs/dimensionResult" }
+        },
+        "additionalProperties": false
+      }
+    },
     "safety_outcome": { "type": "string", "enum": ["pass", "fail", "unknown", "not_applicable"] },
     "safety_events": { "type": "array", "items": { "type": "string" } },
     "lifecycle_validity": { "type": "string" },

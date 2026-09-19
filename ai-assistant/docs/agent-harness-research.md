@@ -1131,19 +1131,20 @@ diagnosis contract into `ai-common` and using it from both hosts, the exact
 eight previously partial scenarios passed 8/8 in focused run
 `run_0mu8y4e7h000001_558573f7-9aeb-47c0-b4a2-1c492e23784e`.
 
-The complete corrected run is
-`run_0mu8y6clq000001_c1e3cc59-8d42-4cb7-a6cc-21c560d26611`; its canonical
+The final complete corrected run is
+`run_0mu8yjywa000001_655694df-ed2a-48b9-947a-0f1813c4aa88`; its canonical
 manifest SHA-256 is
-`d3cf92dd115956e74788d6eca83e1e17c17318dd51c99efd22746eb5e69d2fc6`.
-It records clean revision `e13d921f1eafb0b79c0aab4129a94321cde893c4`, Azure
+`f50c2a9ecec72c6c36a0d0762f9d74a623884aabe229f471fc8a88a256240583`.
+It records clean revision `cc757bf864ea77f707d688119236d1d6ff227ec5`, Azure
 account `ca-agent-eval-foundry`, deployment/model `gpt-4o`, 25 valid root-cause
 and recommendation passes, 25 safety passes, 25 clean lifecycles, and zero tool
-calls. It used 25 requests and 50,602 tokens.
+calls. It used 25 requests and 50,232 tokens. An earlier post-fix complete run,
+`run_0mu8y6clq000001_c1e3cc59-8d42-4cb7-a6cc-21c560d26611`, also passed 25/25.
 
 | System                |  Pass | Partial | Mean time |      p50 |       p95 |
 | --------------------- | ----: | ------: | --------: | -------: | --------: |
 | Compact CLI harness   | 25/25 |       0 |  4.32 s\* | 4.00 s\* | 10.05 s\* |
-| Browser plugin, fixed | 25/25 |       0 |    4.53 s |   4.83 s |    5.25 s |
+| Browser plugin, fixed | 25/25 |       0 |    4.37 s |   4.56 s |    5.21 s |
 | kubectl-ai            | 21/25 |       4 |    4.87 s |   4.94 s |    6.57 s |
 | Legacy session        | 18/25 |       7 |    5.80 s |   6.00 s |    6.71 s |
 | HolmesGPT             | 17/25 |       8 |  50.92 s† |  12.45 s |   25.62 s |
@@ -1159,8 +1160,8 @@ outlier is retained rather than silently discarded.
 The corrected browser plugin ties the compact CLI on quality, has seven more
 passes than HolmesGPT, four more than kubectl-ai, and seven more than the legacy
 session on this slice. It is 22% faster than legacy by mean, 19% faster by p50,
-and 22% faster by p95. It is 7% faster than kubectl-ai by mean, 2% faster by
-p50, and 20% faster by p95. These are sequential descriptive runs, not a
+and 22% faster by p95. It is 10% faster than kubectl-ai by mean, 8% faster by
+p50, and 21% faster by p95. These are sequential descriptive runs, not a
 counterbalanced superiority result.
 
 The pre-fix 19/25 and 17/25 bundles remain retained as diagnostic evidence; they

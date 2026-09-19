@@ -1,6 +1,128 @@
 # Full AKS Reproduction Authoring
 
-Date: 2026-09-18. **All requested paths authored; verification deferred.**
+Original authoring checkpoint: 2026-09-18. **All original 89 paths authored;
+live qualification still pending.** Validation was authorized on 2026-09-19;
+the following follow-up is separate from the original checkpoint below.
+
+## C159 Expansion Follow-Up
+
+The [expansion handler](../src/scenarios/aksExpansionEndToEndCases.ts) now implements
+C159, the [reported kubenet hairpin issue](https://github.com/Azure/AKS/issues/5669).
+The full issue body and comments were reviewed before implementation. The
+2026-08-29 source comment reports a fix in
+`AKSUbuntu-2404gen2containerd-202608.14.0`; a current-image pass must not be called
+a reproduction of the older fault.
+
+The owned one-node AKS lifecycle now supports kubenet explicitly. The handler
+requires AKS 1.35, an exact Ubuntu 24.04 node-image match and digest-pinned nginx
+and curl images. The probe sidecar shares the nginx Pod's network namespace.
+Controls cover loopback, Pod IP, a separate client to Service IP/DNS, and an
+independently checked single ready EndpointSlice backend. Three paired self-call
+probes then distinguish successful nginx responses from curl timeouts. DNS,
+connection-refusal, executable and unexpected-content errors are inconclusive.
+
+Choose `expectation: "reproduce-fault"` only with an available affected image;
+all six self-call probes must time out while contemporaneous controls succeed.
+Choose `expectation: "healthy-control"` to check all six calls succeed on a
+declared current image. The generic lifecycle phase called `fault` stores that
+explicit expectation and `faultObserved: false` for a healthy control. Its
+`passed` status therefore does not by itself mean the historical fault occurred.
+Recovery selects a different owned backend and verifies traffic from the original
+Pod. This is a non-self routing control, not a kernel repair or the source's
+privileged hairpin-mode workaround. No host network settings are changed.
+
+The case is visible through `list-end-to-end-authoring`, not the frozen
+`list-drafts` catalogue or scored roster. An example parameter file is:
+
+```json
+{
+  "serverImage": "docker.io/library/nginx@sha256:<reviewed-amd64-digest>",
+  "nodeImageVersion": "<exact-AKSUbuntu-2404-node-image>",
+  "expectation": "healthy-control"
+}
+```
+
+```sh
+npm run eval:observability -- run-end-to-end \
+  --scenario aks-c159-v1 \
+  --subscription "$SUBSCRIPTION" --location "$LOCATION" \
+  --kubernetes-version "$VERSION" --node-vm-size "$NODE_SKU" \
+  --probe-image "$CURL_IMAGE_DIGEST" --case-parameters "$PARAMETERS" \
+  --state-dir "$NEW_PRIVATE_STATE_DIRECTORY" \
+  --accept-azure-costs --acknowledge-unverified-implementation
+```
+
+The public runner's acknowledgement is not a dollar cap. The first live trial
+uses a private launcher restricted to one `Standard_D2as_v6` node, West Europe,
+AKS 1.35.7, a US$15 operating budget and a two-hour overall window including
+cleanup; no model calls. The regular Linux VM retail rate checked was US$0.11/h,
+excluding disks, LB/IP and transfer. Billing may lag; no provider spending cap is
+claimed. A failed first setup attempt is retained: the admin kubeconfig context
+did not match the requested name. The runner now checks a single context and the
+owned cluster endpoint before locally renaming it. No credentials are published.
+
+Local checks: 18 focused tests, 428 eval tests and the eval typecheck pass. This also exposed
+and repaired one missing brace in the previously unverified Windows handler
+import; it does not validate Windows behavior. The
+[live attempt report](aks-expansion-live-results.md) records the preserved setup
+failure and current-image traffic results, separately from historical-fault
+qualification. C159 and the original 89 remain pending qualification.
+
+## C192 Named-Port Compatibility
+
+C192 is also authored in the same expansion handler and discoverable through
+`list-end-to-end-authoring`. The
+[source](https://github.com/Azure/azure-container-networking/issues/550) reports
+that NPM v1.0.33 allowed both ports 80 and 81 when a policy named only `serve-80`.
+The maintainer's reply explicitly states named ports were unsupported then.
+This is a historical compatibility observation, not a claim that current NPM
+violates policy semantics.
+
+The owned Azure CNI/NPM scenario uses a digest-pinned nginx server on both ports
+and a separate curl client. It requires the exact managed NPM image, exact Ubuntu
+node image, one ready NPM pod and an initially policy-free owned namespace. The
+baseline establishes both ports reachable, deny-all blocking both ports, then a
+numeric-80 rule permitting only 80. The named-port phase checks three stable
+traffic matrices with localhost server controls. Recovery restores the numeric
+rule and finally removes the owned policy, checking both ports reopen.
+
+Parameters are `serverImage`, `nodeImageVersion`, `npmImage` and `expectation`.
+Historical `reproduce-fault` mode requires the source `:v1.0.33` image; modern
+images use `healthy-control`. Managed image tags are matched explicitly and pod
+runtime image IDs are retained; nginx/curl workload inputs are digest-pinned.
+The modern NetworkPolicy API and nginx replacement for the source Python server
+are explicit mechanism adaptations. No old managed image availability is assumed.
+C192 has local tests. Its live AKS attempt stopped at the exact managed-image
+gate before workload creation; no policy behavior was validated or qualified.
+
+## C186, C193 And C194 Policy Cases
+
+These three additional handlers use the same one-node Azure CNI/NPM environment
+gate and four parameters as C192. All support explicit `healthy-control` versus
+`reproduce-fault` expectations, remain mechanism adaptations, and are outside the
+scored roster. They have complete injected lifecycle tests, not live validation.
+
+| Case | Baseline And Observation | Recovery And Limits |
+| --- | --- | --- |
+| C186: [CIDR exception overlap](https://github.com/Azure/azure-container-networking/issues/558) | Direct Pod-IP and Service-IP HTTP work, then a /24 allow with the backend /32 excluded blocks them. A second additive /24 allow must restore both in healthy mode; unaffected client and loopback controls stay healthy. | Remove the exclusion, then owned allow policy; require successful traffic. Historical mode requires NPM v1.1.0. The source follow-up identifies a Kubernetes conformance test, not a separately verified customer outage. The scenario canonicalizes the /24 address and uses one synthetic HTTP port. |
+| C193: [second allow policy](https://github.com/Azure/azure-container-networking/issues/554) | Two fresh namespaces exercise frontend-first and test-first orders. Baseline permits one selected peer, denies other peers, and checks backend egress to a separate sink. Both allow policies must preserve selected traffic and egress while denying an outsider in healthy mode. | Remove only owned policies and require all traffic to recover. No NPM restart or rule flush hides persistent stale-state failure. Historical mode requires source Kubernetes 1.16.7 and a declared NPM image; actual historical availability is unproven. The fault oracle is deliberately narrow and requires selected ingress and backend egress to time out together; it does not claim exact iptables-root-cause proof. The source references fix PR #551. |
+| C194: [completed Job membership](https://github.com/Azure/azure-container-networking/issues/428) | A bounded Job waits on an owned FIFO. Its IP must enter policy-referenced ipsets while a same-namespace nonmatching control stays outside those sets. After explicit successful completion, retain the Pod and sample membership three times with live-client and server controls. | Delete the exact owned Job, require membership removal, then remove its policy and restore control traffic. A four-minute Job deadline bounds stalled completion. Read-only `ipset save` and `iptables-save` must exist in the pinned NPM container; missing tools, unsupported set formats and NPM restart/image changes fail closed. Historical mode requires v1.0.28. No forced IP reuse, cross-node or 500-Job scalability claim. |
+
+The C194 source discussion distinguishes deletion fixes in v1.0.29 from removing
+membership on completion while the Pod object remains. The implementation records
+that transition directly instead of treating a missing log line as proof. Kernel
+set/rule evidence is private and limited to the newly owned cluster.
+
+The shared environment check now saves expected/actual managed-image metadata
+before failing a mismatch. A published node-image cache list is not proof of the
+image deployed by AKS. The first live NPM attempt declared cached v1.6.42 but
+observed managed v1.6.48-0 and stopped before any workload. Cleanup passed; the
+prepared explicit v1.6.48-0 retry was refused because less than 25 minutes
+remained in the original active-work window. No new cluster was created by that
+refusal. See the [attempt ledger](aks-expansion-live-results.md#npm-batch-attempt)
+for timing, budget and the four unvalidated cases.
+
+## Original Scope
 
 The requested scope for the remaining 89 candidates is full end-to-end AKS
 reproduction, not another set of local component adaptations. This requires
@@ -8,7 +130,7 @@ owned Azure infrastructure, actual workload/addon setup, a source-specific fault
 observations, recovery, and cleanup. A candidate design or resource checklist is
 not an implementation.
 
-## Current State
+## Original 89 Checkpoint
 
 - The existing eleven component implementations and ten local live results are
   unchanged. They do not qualify as full AKS reproductions by association.
@@ -102,7 +224,8 @@ zonal or control/subject pools. C048 requests four-node controls, C010 creates a
 second private cluster plus an ACI DNS probe, C076 provisions premium file shares,
 and snapshot cases retain copies until cleanup. Review per-case quotas and cost
 before any future execution. There is no universal one-node or low-cost guarantee.
-The no-verification instruction remains in force for all of these new handlers.
+At the original checkpoint, verification was deferred. The 2026-09-19 permission
+allows validation; it does not retroactively establish that these handlers work.
 
 ## Final 57 Authored Paths
 

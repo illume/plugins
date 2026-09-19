@@ -47,7 +47,8 @@ export interface AksEndToEndCase {
   enableOidc?: boolean;
   windows?: boolean;
   standardTier?: boolean;
-  networkPolicy?: 'calico';
+  networkPolicy?: 'calico' | 'azure';
+  networkPlugin?: 'kubenet';
   networkDataplane?: 'cilium';
   customNetwork?: boolean;
   serviceEndpoints?: string[];
@@ -62,6 +63,19 @@ export interface AksEndToEndCase {
   natGateway?: boolean;
   validate(parameters: Record<string, string>): void;
   run(context: AksCaseContext): Promise<void>;
+}
+
+export function aksNetworkArguments(definition?: AksEndToEndCase): string[] {
+  if (definition?.networkPlugin === 'kubenet') {
+    assert.ok(!definition.bringYourOwnCni && !definition.nodeSubnetNetworking &&
+      !definition.dynamicPodSubnet && !definition.networkDataplane && !definition.enableAcns,
+    'Kubenet cannot use Azure CNI, Cilium or ACNS options');
+    assert.notEqual(definition.networkPolicy, 'azure', 'Azure NPM requires Azure CNI');
+    return ['--network-plugin', 'kubenet'];
+  }
+  if (definition?.bringYourOwnCni) return ['--network-plugin', 'none', '--no-wait'];
+  if (definition?.nodeSubnetNetworking) return ['--network-plugin', 'azure'];
+  return ['--network-plugin', 'azure', '--network-plugin-mode', 'overlay'];
 }
 
 export function requiredParameter(parameters: Record<string, string>, name: string, pattern: RegExp) {

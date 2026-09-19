@@ -5,7 +5,7 @@ import path from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { boundedAzureRunner } from './aksObservability.js';
 import type { CommandRunner } from '../commandRunner.js';
-import type { AksCaseContext } from '../../scenarios/aksEndToEndCases.js';
+import { aksNetworkArguments, type AksCaseContext } from '../../scenarios/aksEndToEndCases.js';
 import { aksEndToEndCases, hasAksEndToEndImplementation } from '../../scenarios/aksEndToEndRegistry.js';
 import { cleanupOwnedDevOpsProject, type OwnedDevOpsProject } from './aksDevOpsOwnership.js';
 
@@ -45,6 +45,22 @@ function azure(runner: CommandRunner, subscription: string, args: string[]) {
   const result = runner('az', [...args, '--subscription', subscription, '--only-show-errors', '-o', 'json']);
   assert.equal(result.status, 0, `Azure ${args.slice(0, 2).join(' ')} failed; retain state for cleanup`);
   return result.stdout.trim() ? JSON.parse(result.stdout) : null;
+}
+
+export function normalizeOwnedAksContext(kubeconfig: string, owner: string, hostnames: string[], runner: CommandRunner) {
+  const invoke = (args: string[]) => {
+    const result = runner('kubectl', ['--kubeconfig', kubeconfig, 'config', ...args]);
+    assert.equal(result.status, 0, 'Could not inspect the owned kubeconfig');
+    return result.stdout.trim();
+  };
+  const contexts = invoke(['get-contexts', '-o', 'name']).split(/\s+/).filter(Boolean);
+  assert.equal(contexts.length, 1, 'Expected exactly one context in the fresh private kubeconfig');
+  const current = contexts[0]!;
+  const server = invoke(['view', '--minify', '--context', current, '-o', 'jsonpath={.clusters[0].cluster.server}']);
+  const endpoint = new URL(server);
+  assert.equal(endpoint.protocol, 'https:');
+  assert.ok(hostnames.some(hostname => hostname.toLowerCase() === endpoint.hostname.toLowerCase()), 'Downloaded kubeconfig points at another cluster');
+  if (current !== owner) invoke(['rename-context', current, owner]);
 }
 
 export async function cleanupAksEndToEnd(
@@ -154,6 +170,7 @@ export async function runAksDiskAccessModeReproduction(options: {
   const parameters = options.caseParameters ?? {};
   assert.ok(parameters && typeof parameters === 'object' && !Array.isArray(parameters) && Object.values(parameters).every(value => typeof value === 'string'), 'Case parameters must be a string-valued object');
   definition?.validate(parameters);
+  const networkArguments = aksNetworkArguments(definition);
   assert.match(options.subscription, /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i);
   assert.match(options.location, /^[a-z0-9]+$/);
   assert.match(options.kubernetesVersion, /^1\.[0-9]+\.[0-9]+$/);
@@ -271,7 +288,7 @@ export async function runAksDiskAccessModeReproduction(options: {
       ...(definition?.windows ? ['--windows-admin-username', 'researchadmin', '--windows-admin-password', `R!${randomBytes(24).toString('base64url')}9a`] : []),
       ...(definition?.enableOidc ? ['--enable-oidc-issuer', '--enable-workload-identity'] : []),
       ...(definition?.azureRbac ? ['--enable-aad', '--enable-azure-rbac'] : []),
-      ...(definition?.bringYourOwnCni ? ['--network-plugin', 'none', '--no-wait'] : definition?.nodeSubnetNetworking ? ['--network-plugin', 'azure'] : ['--network-plugin', 'azure', '--network-plugin-mode', 'overlay']),
+      ...networkArguments,
       ...(subnetId ? ['--vnet-subnet-id', subnetId] : []),
       ...(podSubnetId ? ['--pod-subnet-id', podSubnetId] : []),
       ...(definition?.natGateway ? ['--outbound-type', 'userAssignedNATGateway'] : []),
@@ -292,6 +309,7 @@ export async function runAksDiskAccessModeReproduction(options: {
     save(directory, 'cluster-evidence', cluster);
     az(['aks', 'get-credentials', '--resource-group', resourceGroup, '--name', 'research', '--file', state.kubeconfig, '--context', owner, '--admin']);
     chmodSync(state.kubeconfig, 0o600);
+    normalizeOwnedAksContext(state.kubeconfig, owner, [cluster.fqdn, cluster.privateFqdn].filter((value): value is string => typeof value === 'string'), runner);
     if (options.expectedDiskDriverImage) {
       const drivers = JSON.parse(run(['--namespace', 'kube-system', 'get', 'daemonset', 'csi-azuredisk-node', '-o', 'json']));
       const diskContainer = drivers.spec?.template?.spec?.containers?.find((container: any) => container.name === 'azuredisk');

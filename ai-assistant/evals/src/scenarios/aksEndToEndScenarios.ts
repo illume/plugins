@@ -95,7 +95,7 @@ const remaining = {
 
 export function listAksEndToEndAuthoring() {
   const register = JSON.parse(readFileSync(new URL('../../../docs/aks-candidate-register.json', import.meta.url), 'utf8'));
-  return Object.entries(remaining).map(([number, [resources, remainingWork]]) => {
+  const original = Object.entries(remaining).map(([number, [resources, remainingWork]]) => {
     const candidate = register.candidates.find((item: { id: string }) => item.id === `AKS-C${number}`);
     return {
       scenario_id: `aks-c${number}-v1`, candidate_id: `AKS-C${number}`,
@@ -109,4 +109,17 @@ export function listAksEndToEndAuthoring() {
         : remainingWork,
     };
   });
+  const expansion = JSON.parse(readFileSync(new URL('../../../docs/aks-candidate-expansion.json', import.meta.url), 'utf8'));
+  const authoredExpansion = expansion.candidates.filter((candidate: { id: string }) =>
+    hasAksEndToEndImplementation(`aks-c${candidate.id.slice(5)}-v1`)
+  ).map((candidate: { id: string; scenario: string; source: string; requirements: string; feasibility: string }) => ({
+    scenario_id: `aks-c${candidate.id.slice(5)}-v1`, candidate_id: candidate.id,
+    title: candidate.scenario, source: candidate.source, fidelity: 'mechanism-adaptation',
+    research_feasibility: candidate.feasibility,
+    requested_scope: 'full-end-to-end-aks', authoring_status: 'authored',
+    verification_status: 'see-attempt-reports', qualification: 'pending', execution_eligible: false,
+    resource_requirements: candidate.requirements,
+    remaining_work: 'Source-image reproduction and independent qualification remain required; a healthy-image control is not a reproduced historical fault.',
+  }));
+  return [...original, ...authoredExpansion];
 }

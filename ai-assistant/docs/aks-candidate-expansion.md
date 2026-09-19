@@ -6,6 +6,26 @@ adds **150 source-bound candidate designs, AKS-C101 through AKS-C250**, to the
 generated 100-plan catalogue, reproduction code and scored roster are unchanged.
 These are research designs, not new executable scenarios.
 
+## Implementation Follow-Up: 2026-09-19
+
+Five candidates, C159, C186, C192, C193 and C194, now have authored handlers in the
+[full-AKS runner](../evals/docs/aks-end-to-end-authoring.md#c159-expansion-follow-up)
+with digest-pinned workloads, explicit affected-image versus healthy-image modes,
+independent traffic controls and owned cleanup. C159 checks kubenet hairpin
+traffic; C192 checks Azure NPM named-port compatibility, including deny-all and
+numeric-port controls. C186 checks overlapping CIDR exceptions, C193 additive
+allow-policy ordering and backend egress, and C194 completed-Job ipset membership.
+The other 145 expansion entries
+remain research-only. The original research snapshot below and its JSON are
+unchanged; runtime results are separate, not retroactive changes to research data.
+Live validation is now authorized within an explicitly bounded disposable scope.
+No new case is admitted to scored evaluation or qualified as a historical fault.
+The [live attempt report](../evals/docs/aks-expansion-live-results.md) retains the
+failed setups and the C159 healthy-image control outcome. The NPM batch stopped
+before workloads because its declared image differed from the managed deployment;
+a retry was refused by the original time-budget guard. All trial resources are
+deleted. None of this rewrites the historical research classifications below.
+
 ## Results And Limits
 
 - **99 sources report AKS context; 51 are upstream transfer candidates.** AKS

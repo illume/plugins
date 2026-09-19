@@ -33,7 +33,7 @@ export function windowsPod(context: AksCaseContext, name: string) {
     spec: { nodeSelector: { 'kubernetes.io/os': 'windows', agentpool: 'windows' }, automountServiceAccountToken: false, restartPolicy: 'Never',
       containers: [{ name: 'probe', image: context.parameters.windowsProbeImage,
         command: ['powershell.exe', '-NoLogo', '-NonInteractive', '-Command', 'Start-Sleep -Seconds 3600'],
-        resources: { requests: { cpu: '100m', memory: '128Mi' }, limits: { cpu: '500m', memory: '256Mi' } }],
+        resources: { requests: { cpu: '100m', memory: '128Mi' }, limits: { cpu: '500m', memory: '256Mi' } } }],
     },
   };
 }

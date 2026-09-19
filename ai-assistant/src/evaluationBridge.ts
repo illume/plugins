@@ -18,8 +18,8 @@ import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessS
 import type { AssistantTelemetryEvent } from '@headlamp-k8s/ai-common/assistant/telemetry';
 import {
   createCompactDiagnosisProviderSchema,
-  SUPPLIED_EVIDENCE_CONTEXT,
   type StructuredDiagnosisObservation,
+  SUPPLIED_EVIDENCE_CONTEXT,
   validateCompactDiagnosisSubmission,
 } from '@headlamp-k8s/ai-common/diagnosis/structured';
 import type { ProviderSettings } from '@headlamp-k8s/ai-common/providers/savedConfigs';

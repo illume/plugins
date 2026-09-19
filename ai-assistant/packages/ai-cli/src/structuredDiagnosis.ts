@@ -15,16 +15,20 @@
  */
 
 import { z } from 'zod';
+import {
+  compactDiagnosisResponseSchema,
+  createCompactDiagnosisProviderSchema,
+  type StructuredDiagnosisObservation,
+  validateCompactDiagnosisSubmission,
+} from '@headlamp-k8s/ai-common/diagnosis/structured';
+
+export {
+  createCompactDiagnosisProviderSchema,
+  type StructuredDiagnosisObservation,
+  validateCompactDiagnosisSubmission,
+} from '@headlamp-k8s/ai-common/diagnosis/structured';
 
 type ProviderJsonSchema = Record<string, unknown> & { type: 'object' };
-
-/** Candidate-visible observation used to validate diagnosis references. */
-export interface StructuredDiagnosisObservation {
-  evidence_id: string;
-  resource_ref: string;
-  field_path: string;
-  observed_value: string;
-}
 
 export interface StructuredRepairTarget {
   api_version: string;
@@ -97,19 +101,6 @@ const proposedActionSchema = z
   })
   .strict();
 
-const compactDiagnosisSchema = z
-  .object({
-    alternative_dispositions: z.array(z.string()),
-    uncertainty: z
-      .object({
-        is_uncertain: z.boolean(),
-        reason: z.string(),
-      })
-      .strict(),
-    proposed_actions: z.array(proposedActionSchema),
-  })
-  .strict();
-
 /** Builds the strict response contract for one evidence-grounded diagnosis. */
 export function createDiagnosisSubmissionSchema(
   evidenceIds: string[],
@@ -142,31 +133,6 @@ export function createDiagnosisSubmissionSchema(
       proposed_actions: z.array(proposedActionSchema),
     })
     .strict();
-}
-
-/** Expands a compact semantic diagnosis into the existing evidence-bound submission. */
-export function validateCompactDiagnosisSubmission(
-  response: Record<string, unknown>,
-  observations: StructuredDiagnosisObservation[],
-  evidenceIds = observations.map(observation => observation.evidence_id)
-): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
-  const parsed = compactDiagnosisSchema.safeParse(response);
-  if (!parsed.success) return { success: false, error: parsed.error.message };
-  return validateDiagnosisSubmission(
-    {
-      schema_version: '1.0.0',
-      cause_facts: observations.map(observation => ({
-        resource_ref: observation.resource_ref,
-        field_path: observation.field_path,
-        observed_value: observation.observed_value,
-      })),
-      resource_refs: [...new Set(observations.map(observation => observation.resource_ref))],
-      evidence_refs: evidenceIds,
-      ...parsed.data,
-    },
-    observations,
-    evidenceIds
-  );
 }
 
 /** Validates a diagnosis and canonicalizes its evidence ledger from supplied observations. */
@@ -296,7 +262,7 @@ export function validateCompactRepairSubmission(
 ): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
   const parsed = z
     .object({
-      diagnosis: compactDiagnosisSchema,
+      diagnosis: compactDiagnosisResponseSchema,
       proposed_action: z.object({ option_index: z.number().int().nonnegative() }).strict(),
     })
     .strict()
@@ -378,39 +344,6 @@ export function createDiagnosisProviderSchema(evidenceIds: string[]): ProviderJs
               type: 'string',
               enum: ['no_action', 'unscored_novel_strategy'],
             },
-            description: { type: 'string' },
-          },
-        },
-      },
-    },
-  };
-}
-
-/** Builds the minimal provider schema whose evidence ledger is reconstructed locally. */
-export function createCompactDiagnosisProviderSchema(): ProviderJsonSchema {
-  return {
-    type: 'object',
-    additionalProperties: false,
-    required: ['alternative_dispositions', 'uncertainty', 'proposed_actions'],
-    properties: {
-      alternative_dispositions: { type: 'array', items: { type: 'string' } },
-      uncertainty: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['is_uncertain', 'reason'],
-        properties: {
-          is_uncertain: { type: 'boolean' },
-          reason: { type: 'string' },
-        },
-      },
-      proposed_actions: {
-        type: 'array',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['operation', 'description'],
-          properties: {
-            operation: { type: 'string', enum: ['no_action', 'unscored_novel_strategy'] },
             description: { type: 'string' },
           },
         },

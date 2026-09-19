@@ -506,6 +506,141 @@ superiority claim.
 
 ## Research backlog
 
+### Latency optimization plan
+
+The fixed-Azure overlap establishes the initial latency baseline. The current
+harness passed 75/75 cases with exactly 75 model requests, zero tool calls, and
+190,496 tokens, but averaged 17.83 seconds. It was 1.48 times slower than
+HolmesGPT, 3.00 times slower than legacy, and 3.66 times slower than kubectl-ai.
+Because every current-harness case completed in one model request, tool loops and
+bounded repair are not the primary cause of this gap.
+
+The current measurement is too coarse to identify the bottleneck. It starts
+before the evaluator launches a fresh CLI subprocess and ends after the process
+returns. Inside that interval the CLI loads configuration, creates a model and
+session, waits for MCP initialization, resolves Skills, adapts tools, compiles a
+new `createAgent` graph, prepares history, streams the provider response,
+validates structured output, serializes the answer, and tears down the process.
+Only the combined duration and model token usage are retained.
+
+Optimize interactive latency and evaluation throughput separately. Interactive
+latency is the time for one user request and must not be improved by hiding work
+in another process. Evaluation throughput may use bounded concurrency, but its
+results must not be described as a faster user response, and concurrency must
+not trigger the provider-capacity failures already observed in broad runs.
+
+Use the fixed 75-case Azure overlap as the primary performance slice because all
+four systems have valid results on the same scenario identities. Keep the locked
+25-case diagnosis roster and all five locked repair gates as fast quality and
+safety controls. For each experiment retain mean, median, p90, and p95 latency;
+input/output/cache tokens; model requests; structured-repair frequency; process
+RSS where available; safety; lifecycle; and root-cause/recommended-fix outcomes.
+Run baseline and treatment in alternating order with fresh namespaces and the
+same provider deployment. Do not pool provider-invalid trials into latency or
+task-quality estimates.
+
+| Order | Experiment                                   | Local hypothesis and implementation boundary                                                                                                                                                                                                                                                                                                                                                                                                       | Primary evidence                                                                                                                                                          | Promotion gate                                                                                                                                                                                                                                                                                                                          |
+| ----: | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|     1 | Add stage-level monotonic profiling          | Instrument evaluator subprocess startup/teardown and CLI config/model creation, MCP wait, Skills lookup, tool adaptation, `createAgent` construction, history preparation, provider wait, streaming, external validation, bounded repair, and serialization. Emit sanitized duration-only telemetry with one terminal event per turn.                                                                                                              | At least 75 complete traces; stage sums reconcile with end-to-end duration; no prompt, credential, or response content enters telemetry.                                  | Keep profiling by default only if overhead is below 1% or 10 ms, whichever is larger, and no lifecycle or telemetry-schema regression occurs. Do not optimize until the dominant p50 and p95 stages are identified.                                                                                                                     |
+|     2 | Add a direct structured no-tool lane         | When supplied-evidence-only mode exposes zero tools and requests a diagnosis or repair schema, invoke the structured model directly instead of constructing and streaming a ReAct agent. Preserve the same system prompt, cancellation, model-usage telemetry, history semantics, external validator, and exactly-once bounded repair. Keep `createAgent` for any tool, approval, general-chat, or multi-turn trajectory.                          | A/B direct versus agent execution on the 75-case overlap and five repair gates; compare stage profiles and first-attempt/final outcomes.                                  | Require 75/75 diagnosis passes, 5/5 repair root-cause and recommended-fix passes, unchanged safety/lifecycle, zero contract divergence, and at least 25% lower median and p95 latency. Initial mean target: no worse than HolmesGPT's 12.02 seconds; stretch target: at most 7 seconds.                                                 |
+|     3 | Reduce model-generated structured payload    | The validator already derives `cause_facts`, `resource_refs`, and `evidence_refs` from candidate-visible observations. Test a smaller provider schema that asks the model only for semantic uncertainty, alternatives, action descriptions, and a bounded repair-option selection, then constructs the full persisted sidecar deterministically. Never derive semantic conclusions from protected evaluator truth.                                 | Compare full versus compact schema on exact output tokens, provider latency, unsupported claims, validator repairs, and byte-identical canonical ledgers.                 | Require identical persisted contract validity and task/safety outcomes, no increase in external-validation repairs, and at least 20% fewer output tokens or 10% lower provider-stage p50 latency. Reject if the compact contract weakens uncertainty or repair authority.                                                               |
+|     4 | Reuse initialized runtime state              | The evaluator currently starts `tsx`, loads modules, creates the model/session, and compiles the graph for every trial. Prototype a private JSON-lines worker that reuses modules, provider clients, and immutable prompt/schema artifacts while creating a fresh conversation history, abort controller, telemetry scope, data directory, and scenario contract for each request. Product CLI behavior remains unchanged in the first experiment. | Measure cold start, warm request, RSS growth, cross-trial state leakage, credential isolation, cancellation, and deterministic cleanup over ordered and shuffled rosters. | Promote only to the eval adapter after zero cross-trial history/evidence leakage, bounded RSS growth, exact candidate identity per trial, and at least 15% lower non-provider overhead. Consider product reuse separately because legacy and current eval arms both pay process startup and it does not explain their full latency gap. |
+|     5 | Reuse provider transport and stable prefixes | Measure connection establishment, Azure client creation, and provider wait separately. Reuse HTTP keep-alive/client state in the warm worker and keep the system prompt plus schema prefix byte-stable so provider prompt caching can apply where supported. Record cache-read tokens rather than assuming a cache hit.                                                                                                                            | Compare cold and warm transport timing, cache-read accounting, rate-limit incidence, and provider-stage p50/p95.                                                          | Enable only with observable cache/connection evidence, unchanged answers, no credential persistence outside the worker lifetime, and at least 10% lower provider-stage p50 latency without higher provider-invalid frequency.                                                                                                           |
+
+#### Initial profiling contract
+
+Use one generated turn identifier to correlate evaluator, CLI, session, and
+model callbacks without retaining prompt or response content. Record monotonic
+start/end timestamps internally and persist only duration, phase, outcome, and
+bounded counters. The first implementation should add these spans:
+
+| Layer      | Span                      | Boundary                                                                                                        |
+| ---------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Evaluator  | `candidate_process`       | Immediately before subprocess spawn through close/error, including startup and teardown                         |
+| CLI        | `cli_bootstrap`           | CLI entry through configuration load, provider resolution, model creation, and session construction             |
+| Session    | `turn_preparation`        | Approval settings, MCP readiness, Skills lookup, system prompt creation, and history preparation                |
+| Session    | `tool_adaptation`         | Tool inventory acquisition and `AgentToolAdapter.createTools()`; record authorized/adapted tool counts          |
+| Harness    | `agent_construction`      | Entry to `createAgentHarness` through compiled agent return                                                     |
+| Provider   | `model_request`           | Model callback start through completion/error; record time to first token separately where streaming exposes it |
+| Harness    | `agent_stream_processing` | Agent stream creation and state consumption excluding provider callback duration where subtraction is reliable  |
+| Validation | `structured_validation`   | External validation and deterministic canonicalization; record success/error only                               |
+| Validation | `structured_repair`       | Optional repair request plus post-repair validation; record zero or one attempts                                |
+| CLI        | `answer_serialization`    | Final conversation message through stdout completion and telemetry terminal event                               |
+
+Version the telemetry schema before adding phase events. Update the parser so an
+unknown future event does not silently convert observed usage to unknown, while
+still failing closed for malformed known events, events after terminal
+completion, duplicate terminal events, negative durations, and secret-bearing
+fields. Add a reconciliation assertion:
+
+$$
+T_{candidate} \approx T_{bootstrap} + T_{turn} + T_{serialize} + T_{teardown}
+$$
+
+and a nested assertion for the turn:
+
+$$
+T_{turn} \ge T_{prepare} + T_{adapt} + T_{construct} + T_{provider} +
+T_{validate}
+$$
+
+The inequalities allow scheduler and event-loop gaps. Flag, rather than hide,
+unexplained time above a predeclared tolerance such as 5% or 100 ms. Never infer
+time to first token from total model duration when chunk timing is unavailable.
+
+#### Experiment protocol
+
+1. Freeze the exact scenario identity list, revision, provider deployment,
+   response schemas, retry policy, and process timeout before each A/B run.
+2. Run one unscored warm-up per treatment, then alternate baseline/treatment by
+   case and reverse order in a second round. Retain invalid rows as reliability
+   evidence but exclude them from task and latency denominators.
+3. Report per-case paired deltas and summaries clustered by inherited lineage;
+   generated variants are useful load cases but are not independent incidents.
+4. Require the treatment to pass deterministic unit/contract tests, the locked
+   25-case diagnosis roster, five repair gates, injection controls, and at least
+   one cancellation/timeout control before a broad performance run.
+5. Keep first-attempt and final outcomes separate. A faster result produced by
+   skipping validation, repair, safety scanning, cleanup, or telemetry is a
+   regression, not an optimization.
+6. Stop an experiment early for any safety failure, lifecycle contamination,
+   cross-trial evidence/history leak, malformed persisted contract, changed
+   repair authority, or repeated provider-capacity invalidation.
+
+The first profiling result should end in a decision, not just a trace dump:
+
+- If provider wait dominates both p50 and p95, prioritize compact output and
+  stable-prefix/transport experiments before runtime reuse.
+- If `agent_construction` plus stream processing dominates, build the direct
+  structured no-tool lane next.
+- If CLI bootstrap and teardown dominate absolute latency, prototype the warm
+  eval worker; do not claim that this explains the harness-versus-legacy delta
+  until both sessions are decomposed.
+- If validation or repair dominates only p95, improve first-attempt structured
+  reliability while preserving external validation and exactly-once repair.
+- If no stage explains the gap, investigate event-loop stalls, subprocess pipe
+  closure, cluster contention, and machine sleep separately from model quality.
+
+After those five experiments, address two secondary sources only if profiling
+shows they matter:
+
+- **First-attempt structured reliability:** bounded repair was not used on the
+  fixed 75-case current-harness overlap, so it cannot explain that baseline.
+  Continue tracking it on broader and repair-heavy slices; improve prompts or
+  deterministic normalization only when repair contributes materially to p95.
+- **Batch concurrency:** add a small concurrency sweep such as 1, 2, and 4 only
+  for evaluation throughput after single-request latency work. Stop increasing
+  concurrency when rate limits, invalid trials, cluster contention, or p95
+  latency worsen. Preserve per-trial isolation and deterministic output order in
+  the bundle.
+
+The optimization sequence is intentionally conservative. First add profiling
+without changing behavior. Next remove orchestration that is provably redundant
+for the explicit zero-tool structured path. Then reduce generated bytes, reuse
+runtime state, and optimize transport. Make one change per measured run so gains
+remain attributable, and retain the existing agent path as the fallback until
+the direct path meets every quality, safety, cancellation, and repair gate.
+
 | Priority | Hypothesis                                                         | Minimal experiment                                                                                                                | Promotion rule                                                                                              |
 | -------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | P0       | Harness preserves or improves diagnosis versus legacy              | Repeat the registered 25-case roster after provider cooldown with counterbalanced order, fixed provider/model/evidence and budget | Keep harness default only with no safety/lifecycle regression; require repeated evidence for quality claims |

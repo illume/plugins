@@ -16,7 +16,11 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createHeadlampPluginCandidate, type BrowserPluginRunRequest } from './headlampPlugin.js';
+import {
+  createHeadlampPluginCandidate,
+  isDirtyGitStatus,
+  type BrowserPluginRunRequest,
+} from './headlampPlugin.js';
 import { loadScenario } from '../scenarios/loader.js';
 
 const scenario = loadScenario('core-service-selector-fault-v1');
@@ -32,6 +36,12 @@ const input = {
   ],
   evidence_digest: 'a'.repeat(64),
 };
+
+test('browser candidate provenance distinguishes a clean tree from git failure', () => {
+  assert.equal(isDirtyGitStatus(''), false);
+  assert.equal(isDirtyGitStatus(' M src/index.tsx'), true);
+  assert.equal(isDirtyGitStatus(null), true);
+});
 
 test('headlamp-plugin reconstructs a scoreable diagnosis from browser structured output', async () => {
   let request: BrowserPluginRunRequest | undefined;

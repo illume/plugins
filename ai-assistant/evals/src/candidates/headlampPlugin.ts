@@ -202,10 +202,15 @@ export function createRealBrowserPluginRunner(): BrowserPluginRunner {
 
 function gitOutput(args: string[]): string | null {
   try {
-    return execFileSync('git', args, { cwd: aiAssistantRoot, encoding: 'utf8' }).trim() || null;
+    return execFileSync('git', args, { cwd: aiAssistantRoot, encoding: 'utf8' }).trim();
   } catch {
     return null;
   }
+}
+
+/** Treats an unavailable Git status as dirty while preserving a successful empty status. */
+export function isDirtyGitStatus(status: string | null): boolean {
+  return status !== '';
 }
 
 function buildPrompt(input: CandidateInvocationInput): string {
@@ -310,7 +315,7 @@ export function createHeadlampPluginCandidate(
       configuration_digest: sha256OfJson(safeConfiguration),
       ...safeConfiguration,
       product_revision: gitOutput(['rev-parse', 'HEAD']),
-      product_tree_dirty:
+      product_tree_dirty: isDirtyGitStatus(
         gitOutput([
           'status',
           '--porcelain',
@@ -318,7 +323,8 @@ export function createHeadlampPluginCandidate(
           '--',
           'src',
           'packages/ai-common',
-        ]) !== '',
+        ])
+      ),
       candidate_entry_digest: existsSync(bridgeEntry)
         ? sha256OfText(readFileSync(bridgeEntry, 'utf8'))
         : null,

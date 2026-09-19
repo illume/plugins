@@ -1037,6 +1037,63 @@ place for warm model-client reuse, connection pooling, stable schema/prompt
 prefixes, compiled-validator reuse, token budgeting, backpressure, retries, and
 telemetry. Measure those gains before changing model-call cardinality.
 
+The initial isolated implementation landed on 2026-09-19. `diagnoseBatch()`
+preserves caller order, bounds concurrency, isolates sibling failures, and stops
+scheduling queued work after cancellation. Proactive diagnosis uses concurrency
+two with one shared provider model and fresh per-issue sessions; the Holmes SSE
+path remains serialized. `headlamp-ai diagnose-events` discovers recent Warning
+events, deduplicates root workloads, and exposes the same bounded execution in
+Markdown or JSON. The evaluator has an additive two-fault selector/RBAC fixture
+that proves per-issue evidence isolation and aggregate grading.
+
+Packed diagnosis now groups at most 32 same-scope events into one strict model
+request. Issue IDs are required object property names rather than enum-valued
+array fields, so the provider schema structurally prevents omissions and
+duplicates. External validation still checks exact identity coverage. Any pack
+failure falls back to the isolated coordinator for that group. Holmes remains
+serialized, and combined repair remains a gated follow-up experiment.
+
+##### Packed event capacity probe
+
+A synthetic Azure `gpt-4o` probe on 2026-09-19 placed increasing numbers of
+realistic Kubernetes Warning events into one strict JSON-schema request. Each
+event required an exact ID plus concise root-cause, impact, remediation, and
+uncertainty fields. An external validator rejected omissions, duplicate IDs,
+unknown IDs, and reason-inconsistent diagnoses.
+
+| Events | Exact ID coverage |  Elapsed | Input tokens | Output tokens |
+| -----: | ----------------: | -------: | -----------: | ------------: |
+|      4 |               4/4 |  14.35 s |          419 |           320 |
+|      8 |               8/8 |   6.95 s |          684 |           504 |
+|     16 |             16/16 |  12.47 s |        1,214 |           780 |
+|     24 |             24/24 |  12.34 s |        1,734 |         1,250 |
+|     32 |             32/32 |  13.26 s |        2,264 |         1,847 |
+|     48 |             48/48 |  13-18 s |  2,991-3,215 |   2,069-2,318 |
+|     64 |  64/64 then 52/64 |  21-36 s |  3,942-4,235 |   3,029-4,012 |
+|     72 |             37/72 | 121.50 s |        4,505 |        11,633 |
+|     96 |             55/96 | 109.23 s |        6,275 |         9,820 |
+
+The schema's fixed array length did not guarantee identity coverage: failed
+runs filled the array with duplicate allowed IDs. Forty-eight events achieved
+exact coverage repeatedly and the manually reviewed `FailedBinding` outputs
+were semantically supported. Sixty-four was stochastic, while 72 and 96
+degenerated sharply. This establishes a rough technical boundary, not a product
+limit. Start packed qualification at 16 issues, cap experiments at 32, validate
+exact issue IDs externally, and bisect any invalid group into isolated retries.
+Do not expose 48 as a default until repeated real multi-fault cases demonstrate
+the same quality and tail behavior.
+
+A follow-up used the product keyed schema with 32 qualified determinate fault
+scenarios and their retained candidate-visible observations from the sealed
+275-case run. One Azure `gpt-4o` request returned all 32 required scenario IDs.
+Every diagnosis matched the mechanism derived from that scenario's protected
+accepted facts across nine families. The request took 60.0 seconds. This proves
+one-call coverage for that slice, but not full packed qualification: the output
+was concise prose checked against accepted mechanisms rather than the complete
+structured diagnosis contract. It also shows that fewer provider requests do
+not necessarily reduce completion latency. Keep 32 as a hard experimental cap,
+start user-facing tuning below it, and retain automatic isolated fallback.
+
 Then compare three execution strategies behind the same API:
 
 1. **Isolated:** one call per issue with adaptive bounded concurrency. This is

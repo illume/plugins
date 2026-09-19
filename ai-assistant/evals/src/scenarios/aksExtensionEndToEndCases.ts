@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { chartInput } from './aksChartCaseSupport.js';
-import { metadata, requiredParameter, type AksCaseContext, type AksEndToEndCase } from './aksEndToEndCases.js';
+import { metadata, namespaced, objectEvents, probePod, readyPod, requiredParameter, type AksCaseContext, type AksEndToEndCase } from './aksEndToEndCases.js';
+import type { CommandResult } from '../cluster/commandRunner.js';
 
 function extension(context: AksCaseContext, name: string, type: string, version: string, settings: string[] = []) {
   const operation = context.attemptAz(['k8s-extension', 'create', '--resource-group', context.resourceGroup, '--cluster-name', 'research', '--cluster-type', 'managedClusters',
@@ -91,7 +92,163 @@ const automaticDapr: AksEndToEndCase = {
   },
 };
 
+export function commitServerInventory(result: CommandResult) {
+  assert.equal(result.status, 0, 'Image file inspection failed');
+  const inventory = JSON.parse(result.stdout);
+  assert.equal(inventory?.baseExecutable, true, 'ArgoCD base executable is not a healthy control');
+  assert.ok(['absent', 'executable', 'dangling-symlink', 'not-executable'].includes(inventory.commitPath), 'Unknown image file state');
+  return { baseExecutable: true, commitPath: inventory.commitPath as string };
+}
+
+export function assertMissingCommitServer(pod: any, events: any, logs: CommandResult, image: string) {
+  assert.ok(pod.metadata?.uid && pod.spec?.nodeName, 'Actual scheduled Pod identity required');
+  assert.equal(pod.spec.containers.length, 1);
+  assert.equal(pod.spec.containers[0].image, image);
+  const container = pod.status?.containerStatuses?.find((item: any) => item.name === 'controller');
+  assert.equal(pod.status?.phase, 'Failed');
+  assert.equal(container?.state?.terminated?.exitCode, 127, 'Expected tini missing-executable exit');
+  assert.equal(container.restartCount, 0);
+  assert.equal(container.imageID?.split('@').at(-1), image.split('@')[1], 'Fault image identity mismatch');
+  assert.ok(Array.isArray(events?.items));
+  for (const event of events.items) {
+    assert.equal(event.involvedObject?.uid, pod.metadata.uid, 'Foreign Pod event');
+    assert.ok(!/unauthorized|ImagePullBackOff|ErrImagePull|FailedScheduling|no such host|exec format error/i.test(`${event.reason ?? ''} ${event.message ?? ''}`), 'Unrelated startup failure cannot reproduce C158');
+  }
+  assert.equal(logs.status, 0, 'Controller startup logs unavailable');
+  assert.match(logs.stdout, /\[FATAL tini \(\d+\)\] exec \/usr\/local\/bin\/argocd-commit-server failed: No such file or directory/);
+  assert.ok(!/Permission denied|exec format error/i.test(logs.stdout), 'Wrong executable failure');
+}
+
+const missingCommitServer: AksEndToEndCase = {
+  validate(parameters) {
+    requiredParameter(parameters, 'affectedImage', /^mcr\.microsoft\.com\/oss\/v2\/argoproj\/argocd:v3\.2\.5@sha256:[a-f0-9]{64}$/);
+    requiredParameter(parameters, 'controlImage', /^quay\.io\/argoproj\/argocd:v3\.2\.5@sha256:[a-f0-9]{64}$/);
+    requiredParameter(parameters, 'nodeImageVersion', /^AKSUbuntu-[a-zA-Z0-9._-]+$/);
+  },
+  async run(context) {
+    const affectedImage = context.parameters.affectedImage!;
+    const controlImage = context.parameters.controlImage!;
+    const nodes = JSON.parse(context.run(['get', 'nodes', '-o', 'json']));
+    assert.equal(nodes.items.length, 1, 'C158 requires one owned node');
+    const node = nodes.items[0];
+    assert.equal(node.status.nodeInfo.architecture, 'amd64');
+    assert.equal(node.metadata.labels['kubernetes.azure.com/node-image-version'], context.parameters.nodeImageVersion);
+    assert.ok(node.metadata.uid);
+    const pod = (name: string, image: string, inspect: boolean) => {
+      const resource: any = probePod(context, name);
+      resource.spec.nodeSelector = { 'kubernetes.io/os': 'linux', 'kubernetes.io/arch': 'amd64' };
+      resource.spec.activeDeadlineSeconds = inspect ? 900 : 90;
+      resource.spec.securityContext = { runAsUser: 999, runAsGroup: 999 };
+      resource.spec.containers[0].name = 'controller';
+      resource.spec.containers[0].image = image;
+      resource.spec.containers[0].resources = { requests: { cpu: '25m', memory: '64Mi' }, limits: { cpu: '250m', memory: '256Mi' } };
+      resource.spec.containers[0].command = inspect ? ['/bin/sh', '-c', 'exec tail -f /dev/null']
+        : ['/usr/bin/tini', '--', '/usr/local/bin/argocd-commit-server'];
+      if (!inspect) resource.spec.containers[0].args = ['--help'];
+      return resource;
+    };
+    const identities = new Map<string, { uid: string; image: string }>();
+    const current = (name: string) => {
+      const identity = identities.get(name); assert.ok(identity);
+      const object = context.read('pod', name);
+      assert.equal(object.metadata.uid, identity.uid, 'Pod changed during image comparison');
+      assert.equal(object.spec.nodeName, node.metadata.name);
+      assert.equal(object.spec.containers[0].image, identity.image);
+      const actualNode = JSON.parse(context.run(['get', 'node', node.metadata.name, '-o', 'json']));
+      assert.equal(actualNode.metadata.uid, node.metadata.uid, 'Node changed during image comparison');
+      assert.equal(actualNode.metadata.labels['kubernetes.azure.com/node-image-version'], context.parameters.nodeImageVersion);
+      const status = object.status?.containerStatuses?.find((item: any) => item.name === 'controller');
+      assert.equal(status?.restartCount, 0);
+      assert.equal(status?.imageID?.split('@').at(-1), identity.image.split('@')[1], 'Image content changed');
+      return object;
+    };
+    let sequence = 0;
+    const inspect = (name: string) => {
+      current(name);
+      const result = context.kube(namespaced(context, ['exec', name, '-c', 'controller', '--', '/bin/sh', '-c',
+        'test -x /usr/local/bin/argocd || exit 11; ' +
+        'if test -L /usr/local/bin/argocd-commit-server && ! test -e /usr/local/bin/argocd-commit-server; then state=dangling-symlink; ' +
+        'elif test -x /usr/local/bin/argocd-commit-server; then state=executable; ' +
+        'elif test -e /usr/local/bin/argocd-commit-server; then state=not-executable; else state=absent; fi; ' +
+        'printf \'{"baseExecutable":true,"commitPath":"%s"}\\n\' "$state"']));
+      context.save(`commit-server-inspection-${++sequence}`, { name, result });
+      return commitServerInventory(result);
+    };
+    const help = (name: string) => {
+      current(name);
+      const result = context.kube(namespaced(context, ['exec', name, '-c', 'controller', '--', '/usr/local/bin/argocd', '--help']));
+      context.save(`argocd-base-help-${++sequence}`, { name, result });
+      assert.equal(result.status, 0, 'ArgoCD base command does not run');
+      assert.match(result.stdout, /Usage:/); assert.match(result.stdout, /argocd/);
+    };
+    const completed = async (name: string, image: string) => {
+      const uid = context.read('pod', name).metadata.uid; assert.ok(uid);
+      const existing = identities.get(name);
+      if (existing) { assert.equal(uid, existing.uid, 'Control Pod was replaced'); assert.equal(image, existing.image); }
+      identities.set(name, { uid, image });
+      await context.poll(() => {
+        const object = context.read('pod', name);
+        assert.equal(object.metadata.uid, uid);
+        assert.notEqual(object.status?.phase, 'Failed', 'Commit-server help is not a working control');
+        return object.status?.phase === 'Succeeded';
+      }, 'Commit-server help completes');
+      const object = current(name);
+      assert.equal(object.status.containerStatuses[0].state?.terminated?.exitCode, 0);
+      const logs = context.kube(namespaced(context, ['logs', name, '-c', 'controller', '--tail=100']));
+      assert.equal(logs.status, 0); assert.match(logs.stdout, /Usage:/); assert.match(logs.stdout, /argocd-commit-server/);
+      context.save(`commit-server-help-${++sequence}`, { object, logs });
+      return { pod: object, help: logs.stdout };
+    };
+    await context.phase('baseline', async () => {
+      const inventories: Record<string, unknown> = {};
+      for (const [name, image] of [['affected-inspect', affectedImage], ['control-inspect', controlImage]]) {
+        context.create(name!, pod(name!, image!, true));
+        const ready = await readyPod(context, name!);
+        identities.set(name!, { uid: ready.metadata.uid, image: image! });
+        help(name!); inventories[name!] = inspect(name!);
+      }
+      assert.equal(inspect('control-inspect').commitPath, 'executable');
+      context.create('commit-control', pod('commit-control', controlImage, false));
+      return { node, inventories, control: await completed('commit-control', controlImage), scope: 'binary-content-adaptation-not-extension-install' };
+    });
+    await context.phase('fault', async () => {
+      const inventory = inspect('affected-inspect');
+      assert.equal(inventory.commitPath, 'absent', 'Missing-path source symptom not present; dangling symlink or permissions are different faults');
+      context.create('commit-subject', pod('commit-subject', affectedImage, false));
+      const uid = context.read('pod', 'commit-subject').metadata.uid; assert.ok(uid);
+      identities.set('commit-subject', { uid, image: affectedImage });
+      await context.poll(() => {
+        const object = context.read('pod', 'commit-subject'); assert.equal(object.metadata.uid, uid);
+        const events = objectEvents(context, object); context.save('commit-subject-startup', { object, events });
+        assert.notEqual(object.status?.phase, 'Succeeded', 'Affected commit-server ran; fault not reproduced');
+        return object.status?.phase === 'Failed';
+      }, 'Affected tini startup fails');
+      const object = current('commit-subject');
+      const events = objectEvents(context, object);
+      const logs = context.kube(namespaced(context, ['logs', 'commit-subject', '-c', 'controller', '--tail=100']));
+      context.save('commit-subject-failure', { object, events, logs });
+      assertMissingCommitServer(object, events, logs, affectedImage);
+      assert.equal(inspect('affected-inspect').commitPath, 'absent');
+      help('affected-inspect'); await completed('commit-control', controlImage);
+      return { inventory, object, events, logs, faultObserved: true, extensionInstalled: false };
+    });
+    await context.phase('recovery', async () => {
+      const object = current('commit-subject');
+      assert.equal(object.metadata.labels['headlamp-e2e-owner'], context.owner);
+      context.run(namespaced(context, ['delete', 'pod', 'commit-subject', '--wait=true', '--timeout=60s']));
+      assert.equal(context.run(namespaced(context, ['get', 'pod', 'commit-subject', '--ignore-not-found', '-o', 'name'])).trim(), '');
+      identities.delete('commit-subject');
+      context.create('commit-recovery', pod('commit-subject', controlImage, false));
+      const recovered = await completed('commit-subject', controlImage);
+      assert.notEqual(recovered.pod.metadata.uid, object.metadata.uid);
+      assert.equal(inspect('affected-inspect').commitPath, 'absent');
+      return { ...recovered, kind: 'official-image-binary-control-not-managed-extension-repair', extensionInstalled: false, repositoryAccessed: false };
+    });
+  },
+};
+
 export const aksExtensionEndToEndCases: Record<string, AksEndToEndCase> = {
   'aks-c012-v1': fluxHome,
   'aks-c028-v1': automaticDapr,
+  'aks-c158-v1': missingCommitServer,
 };

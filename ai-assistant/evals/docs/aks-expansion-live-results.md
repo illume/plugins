@@ -3,12 +3,12 @@
 Date: 2026-09-19. Implementation follow-up to the
 [150-candidate research expansion](../../docs/aks-candidate-expansion.md).
 
-Ten additional candidates have authored handlers: C119 controller platform compatibility,
+Eleven additional candidates have authored handlers: C119 controller platform compatibility,
 C133 deleted-policy state,
-C159 kubenet hairpin, C186 CIDR exception overlap, C190 endpoint-less Services,
+C158 commit-server image content, C159 kubenet hairpin, C186 CIDR exception overlap, C190 endpoint-less Services,
 C192 named ports, C193 additive allow policies and C194 completed-Job ipset
 membership, plus C244 removed chart API and C249 exporter Content-Type.
-The other 140 expansion candidates have no handler; C243 requires re-triage
+The other 139 expansion candidates have no handler; C243 requires re-triage
 after the reporter withdrew the original explanation. No case is a qualified historical reproduction or admitted
 scored scenario. The original 100-plan catalogue and research registers remain
 unchanged. No model evaluation, diagnostic accuracy or energy savings are claimed.
@@ -191,6 +191,22 @@ no image layers or executable were run. Five injected tests cover the lifecycle,
 discovery and rejection of architecture, image, control and unrelated-error
 mismatches. Scored eligibility remains false.
 
+### Offline C158 Follow-Up
+
+C119 was published as `d123daeb5`, then work continued on C158. The new handler
+checks actual image file state and `tini` startup against a same-version official
+image control. It distinguishes an absent commit-server path from a dangling
+symlink, permissions, runtime identity changes and registry errors. Recovery is
+an explicit replacement Pod, not a repaired managed extension or Source Hydrator.
+
+The [C158 guide](aks-end-to-end-authoring.md#c158-commit-server-image-content)
+records exact image references and bounded prerequisites. Public metadata confirms
+the selected AMD64 image manifests, user and entrypoint, but file contents and
+binary execution were not examined. Five injected tests cover the authored
+lifecycle, seventeen failure variants, evidence classification and discovery.
+No Azure resources, images or models were executed in this follow-up; no new
+live qualification or energy result is claimed.
+
 ### Remaining Cases
 
 C192 has local implementation tests and the setup-blocked attempt above. Its
@@ -208,7 +224,7 @@ Their oracles cover policy union rather than ordered deny-rule semantics, both
 policy insertion orders, backend egress, and completion-before-deletion state.
 They do not run large-scale stress, force IP reuse, restart NPM or flush rules.
 
-Offline verification: **449 eval tests pass**, including 39 focused expansion
+Offline verification: **454 eval tests pass**, including 44 focused expansion
 tests; `npm run tsc` passes. Typechecking also exposed one missing brace in a
 previously authored Windows container spec, repaired to permit registry imports.
 That repair and a green test suite do not validate the original 89 live paths.
@@ -222,7 +238,8 @@ historical reproduction; establish a new explicitly bounded run window before
 attempting C133/C186/C190/C192/C193/C194 with reviewed managed NPM images and
 case-specific prerequisites. C244 needs a pinned Helm server-admission attempt;
 C249 additionally needs supported and readable host energy counters. C119 needs
-a separately authorized two-node architecture experiment. Then assess source
+a separately authorized two-node architecture experiment. C158 needs live
+image-content and execution controls on one owned AMD64 node. Then assess source
 fidelity, negative controls and diagnostic evidence before scored admission.
-The nine-handler publication checkpoint is `57c5c5ae1`; the C119 follow-up is
+The ten-handler publication checkpoint is `d123daeb5`; the C158 follow-up is
 recorded separately and does not change any historical live outcome.

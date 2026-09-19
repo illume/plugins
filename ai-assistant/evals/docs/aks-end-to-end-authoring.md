@@ -61,7 +61,7 @@ claimed. A failed first setup attempt is retained: the admin kubeconfig context
 did not match the requested name. The runner now checks a single context and the
 owned cluster endpoint before locally renaming it. No credentials are published.
 
-Local checks: 39 focused tests, 449 eval tests and the eval typecheck pass. This also exposed
+Local checks: 44 focused tests, 454 eval tests and the eval typecheck pass. This also exposed
 and repaired one missing brace in the previously unverified Windows handler
 import; it does not validate Windows behavior. The
 [live attempt report](aks-expansion-live-results.md) records the preserved setup
@@ -362,6 +362,65 @@ plus non-runtime attestation entries. Config histories reference `/alb-controlle
 The metadata audit is retained privately under `.tmp/aks-c119-image-review-20260919`.
 It is evidence of image content/platform declaration, not evidence that the
 handler ran or that either binary's help command completed successfully.
+
+## C158 Commit-Server Image Content
+
+The [extension case handler](../src/scenarios/aksExtensionEndToEndCases.ts)
+adds a binary-content adaptation of the
+[ArgoCD Source Hydrator report](https://github.com/Azure/AKS/issues/5850).
+The reporter enabled `commitServer.enabled` in the 1.0.0-preview managed ArgoCD
+extension on AKS 1.35.5, observed `tini` failing to find
+`/usr/local/bin/argocd-commit-server` in the MCR v3.2.5 image, and reported an
+official-image repository override as a workaround. The issue was closed by
+inactivity automation, not a demonstrated fix. The upstream v3.2.5 Dockerfile
+installs commit-server as a symlink to the ArgoCD executable.
+
+Inputs are `affectedImage`, `controlImage` and `nodeImageVersion`. The first two
+must be platform-digest references to
+`mcr.microsoft.com/oss/v2/argoproj/argocd:v3.2.5` and
+`quay.io/argoproj/argocd:v3.2.5`, respectively. The handler requires exactly one
+AMD64 node with the declared Ubuntu image. Actual Pod/node identities, runtime
+image IDs and zero restart counts must remain consistent throughout the attempt.
+
+Baseline runs bounded inspection Pods from each image as UID/GID 999, with no
+service-account tokens, host mounts, added capabilities or privilege escalation.
+Both must run `/usr/local/bin/argocd --help`. A read-only shell check classifies
+the commit-server path as absent, executable, dangling symlink or non-executable;
+only the first is the declared fault. The official image must expose an
+executable path and complete `/usr/bin/tini -- /usr/local/bin/argocd-commit-server
+--help` with exit zero and recognizable commit-server help output.
+
+The subject runs the same `tini` command in the affected image. The fault requires
+the inspected path to remain absent, a Failed Pod with exit 127, and the precise
+`[FATAL tini (...)] exec /usr/local/bin/argocd-commit-server failed: No such file
+or directory` message. Its UID-scoped events must not indicate unrelated registry,
+scheduling or architecture failures. The base ArgoCD command and official-image
+control are checked again; replaced controls cannot silently become a new baseline.
+
+Recovery deletes only the owner-tagged subject Pod and creates a new Pod with
+the official image, requiring a new UID and successful commit-server help output.
+The affected inspection Pod remains unchanged and must still show an absent path.
+The original image is not patched. The shared owned-cluster teardown cleans all
+remaining test Pods. Inspection Pods have a 15-minute deadline and binary probes
+90 seconds; each is capped at 250m CPU and 256 MiB memory.
+
+This does not install the managed extension, configure Source Hydrator, use
+workload identity, contact repositories or prove controller readiness. A missing
+shell, alternate packaging path, permission issue, dangling symlink, platform
+mismatch, repaired image or failed help control makes the attempt inconclusive.
+It must not be relabelled as the original deployment failure. No new cluster or
+container was run during this follow-up; a renewed live window and independent
+source-fidelity qualification are still required.
+
+Public registry metadata was inspected without downloading image layers. Both
+selected manifests declare Linux/AMD64, user 999 and `/usr/bin/tini --`:
+
+- MCR v3.2.5 platform manifest: `sha256:252f83268c29106b39483379d6d00d7058a8acd561861664613fa4384e1f2a41`
+- Official v3.2.5 platform manifest: `sha256:377ce92c1ac80487f98184f518b80700af59214eebba5a5e18093f663bc494a5`
+
+The private metadata record is `.tmp/aks-c158-image-review-20260919/review.json`.
+It does not prove file presence or absence, or successful execution. Those are
+future runtime checks, not results inferred from an image label or source report.
 
 ## Original Scope
 

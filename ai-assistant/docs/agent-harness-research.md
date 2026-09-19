@@ -1122,48 +1122,51 @@ The browser candidate then ran the fixed 25 non-repair cases from
 retained comparator runs. The newline-delimited roster ID SHA-256 is
 `06b39fa3e25d2d4abfa37e5d4d13d8f2ec4ee96e035685e9bcaa06b916af9c64`.
 
-The primary clean-revision run is
-`run_0mu8w8b3s000001_b42ec76e-07c5-4e51-91f3-9df9094bb99f`; its canonical
+The first two browser rounds exposed a contract mismatch rather than a browser
+model limitation. The browser path shared `AgentHarnessSession` and the compact
+JSON shape with the CLI, but omitted the CLI's semantic validator,
+supplied-evidence system context, and deterministic pending-Pod hypothesis
+taxonomy. Those rounds produced 19/25 and 17/25. After moving the qualified
+diagnosis contract into `ai-common` and using it from both hosts, the exact
+eight previously partial scenarios passed 8/8 in focused run
+`run_0mu8y4e7h000001_558573f7-9aeb-47c0-b4a2-1c492e23784e`.
+
+The complete corrected run is
+`run_0mu8y6clq000001_c1e3cc59-8d42-4cb7-a6cc-21c560d26611`; its canonical
 manifest SHA-256 is
-`56ddda941689ef28e5c8e32f0ceaa61687c5b9fdab571cd4f2ce2a457bae72aa`.
-It records revision `40a6406b8da78863bb00c56c3b0ecef635500af1` with a clean
-product tree, the `ca-agent-eval-foundry` `gpt-4o` deployment, 25 valid trials,
-25 safety passes, 25 clean lifecycles, 25 recommendation passes, and no tool
-calls. It used 25 requests and 48,482 tokens.
+`d3cf92dd115956e74788d6eca83e1e17c17318dd51c99efd22746eb5e69d2fc6`.
+It records clean revision `e13d921f1eafb0b79c0aab4129a94321cde893c4`, Azure
+account `ca-agent-eval-foundry`, deployment/model `gpt-4o`, 25 valid root-cause
+and recommendation passes, 25 safety passes, 25 clean lifecycles, and zero tool
+calls. It used 25 requests and 50,602 tokens.
 
-| System                      |  Pass | Partial | Mean time |      p50 |       p95 |
-| --------------------------- | ----: | ------: | --------: | -------: | --------: |
-| Compact CLI harness         | 25/25 |       0 |  4.32 s\* | 4.00 s\* | 10.05 s\* |
-| Browser plugin, clean round | 17/25 |       8 |    4.50 s |   4.85 s |    5.54 s |
-| kubectl-ai                  | 21/25 |       4 |    4.87 s |   4.94 s |    6.57 s |
-| Legacy session              | 18/25 |       7 |    5.80 s |   6.00 s |    6.71 s |
-| HolmesGPT                   | 17/25 |       8 |  50.92 s† |  12.45 s |   25.62 s |
+| System                |  Pass | Partial | Mean time |      p50 |       p95 |
+| --------------------- | ----: | ------: | --------: | -------: | --------: |
+| Compact CLI harness   | 25/25 |       0 |  4.32 s\* | 4.00 s\* | 10.05 s\* |
+| Browser plugin, fixed | 25/25 |       0 |    4.53 s |   4.83 s |    5.25 s |
+| kubectl-ai            | 21/25 |       4 |    4.87 s |   4.94 s |    6.57 s |
+| Legacy session        | 18/25 |       7 |    5.80 s |   6.00 s |    6.71 s |
+| HolmesGPT             | 17/25 |       8 |  50.92 s† |  12.45 s |   25.62 s |
 
-`*` The compact CLI quality covers these same 25 cases because all 75 cases in
-its retained overlap passed. Its timing values are the retained 75-case
-aggregate; the raw bundle is not available locally for a 25-case timing slice.
+`*` Compact CLI quality covers these same 25 cases because all 75 cases in its
+retained overlap passed. Its timing values are the retained 75-case aggregate;
+the raw bundle is not available locally for a 25-case timing slice.
 
 `†` Holmes' raw mean includes one valid 939.60-second retained trial with no
 superseding retry. Its median and p95 better describe the other 24 cases; the
 outlier is retained rather than silently discarded.
 
-Matched against the clean browser round, legacy had 17 both-pass cases, zero
-browser-only passes, one legacy-only pass, and seven neither-pass cases. Holmes
-had 17 both-pass and eight neither-pass cases. kubectl-ai had 17 both-pass,
-zero browser-only, four kubectl-ai-only, and four neither-pass cases. These are
-descriptive sequential comparisons, not counterbalanced superiority evidence.
+The corrected browser plugin ties the compact CLI on quality, has seven more
+passes than HolmesGPT, four more than kubectl-ai, and seven more than the legacy
+session on this slice. It is 22% faster than legacy by mean, 19% faster by p50,
+and 22% faster by p95. It is 7% faster than kubectl-ai by mean, 2% faster by
+p50, and 20% faster by p95. These are sequential descriptive runs, not a
+counterbalanced superiority result.
 
-An immediately preceding browser round from the same production plugin bytes
-produced 19 passes and six partials with all trials valid, safe, and clean. Its
-run ID is `run_0mu8v16x3000001_68d82673-780c-4c2d-a4ec-42651c3a1d78` and its
-manifest SHA-256 is
-`5f6b92c1aa7237dccda0e7ad7547804dfdefe1315db8a101ca599f31045922af`.
-The rounds differed only on `phase2-malformed-tool-result-02-v1` and
-`phase2-transient-tool-recovery-01-v1`, which passed first and were partial in
-the clean-revision round. The first manifest incorrectly marked the clean tree
-dirty because of a provenance bug fixed before the primary run. The 17/25 and
-19/25 results demonstrate model variance and do not justify selecting the
-better round.
+The pre-fix 19/25 and 17/25 bundles remain retained as diagnostic evidence; they
+must not be pooled with or substituted for the corrected run. Their divergence
+demonstrates why equal session classes alone do not establish host parity when
+prompt, validation, and canonicalization contracts differ.
 
 Then compare three execution strategies behind the same API:
 

@@ -34,8 +34,8 @@ default.
 | Required/optional tool waiting                                           | Implemented in the legacy orchestrated path                           | Yes there                                  | Success/failure races, deadlines, timer cleanup, immutable snapshots, and optional abort tests |
 | Harness-native optional tool dispatch                                    | Not implemented                                                       | No                                         | Current LangGraph `ToolNode` still waits for its parallel batch                                |
 | CLI harness default and legacy fallback                                  | Implemented                                                           | Harness default; `--legacy-session` opt-in | CLI selection and mock-tool execution tests                                                    |
-| Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | 25/25 final harness trials completed with zero tool calls                                      |
-| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID, canonical evidence and hypothesis ledgers, repair, telemetry, and CLI regressions    |
+| Explicit supplied-evidence mode                                          | Implemented for the evaluation CLI boundary                           | Yes in registered diagnosis runs           | Fair browser round completed 18/25 with zero tool calls                                        |
+| Provider structured output plus external evidence validation             | Implemented for registered diagnoses                                  | Yes in registered diagnosis runs           | Exact-ID and mechanical evidence canonicalization only; semantic synthesis prohibited          |
 | Repair-specific structured output                                        | Implemented for registered repairs                                    | Yes in registered repair runs              | Exact target, patch, digest, nested diagnosis, and fail-closed operation tests                 |
 | Plugin UI harness default                                                | Implemented                                                           | Yes                                        | Full plugin E2E plus scored browser-plugin candidate run                                       |
 | Browser plugin evaluator candidate                                       | Implemented for diagnosis contracts                                   | Explicit `headlamp-plugin` candidate       | Production bundle, fresh browser context, structured output, telemetry, and canonical bundle   |
@@ -76,11 +76,11 @@ default.
   not improved diagnosis quality. The intended legacy half was invalidated by
   a provider rate limit after five valid trials and cannot support a paired
   comparison.
-- After canonical evidence and Pending-Pod hypothesis ledgers were added, a
-  fresh harness-only round on the same locked roster passed 25/25 diagnoses.
-  Every trial was valid, safe, lifecycle-clean, and tool-free. This establishes
-  full-roster harness success for one round, but it is not a fresh paired legacy
-  comparison or a superiority claim.
+- The later 25/25 harness rounds added a deterministic Pending-Pod hypothesis
+  taxonomy after inspecting benchmark failures and protected scorer aliases.
+  Those quality outcomes are contaminated and withdrawn from cross-system and
+  model-quality claims. Their safety, lifecycle, request, token, and timing
+  records remain valid operational evidence.
 
 ### Registered 25-case Minikube result
 
@@ -171,7 +171,7 @@ retry window and were invalidated before grading. No outcome is inferred from
 that probe; the later current-harness full-roster run provides real-provider
 coverage of the final repair revision.
 
-### Current 25-case harness result
+### Taxonomy-assisted 25-case harness result (quality withdrawn)
 
 Run `run_0mu61zl7y000001_a30692c6-9c7b-462f-b2ec-49a74afb86e7` executed the 25
 eligible non-repair assignments from the locked `phase2-comparison-v2` roster on
@@ -182,9 +182,14 @@ structured output, and Copilot `gpt-4o-2024-11-20`. The canonical bundle
 manifest SHA-256 is
 `3c8b5b1b55720e9a14ba41e3a752dc84d9e4b3ac886be39acb98bd148a0087c2`.
 
-|  Pass | Partial | No result |     Safety | Lifecycle | Model requests | Total tokens | Tool calls | Mean diagnosis time |
-| ----: | ------: | --------: | ---------: | --------: | -------------: | -----------: | ---------: | ------------------: |
-| 25/25 |    0/25 |      0/25 | 25/25 pass |  25 clean |             28 |       68,506 |          0 |              6.61 s |
+|   Pass | Partial | No result |     Safety | Lifecycle | Model requests | Total tokens | Tool calls | Mean diagnosis time |
+| -----: | ------: | --------: | ---------: | --------: | -------------: | -----------: | ---------: | ------------------: |
+| 25/25† |    0/25 |      0/25 | 25/25 pass |  25 clean |             28 |       68,506 |          0 |              6.61 s |
+
+`†` Root-cause quality is withdrawn: the candidate appended a deterministic
+Pending-Pod hypothesis taxonomy designed after inspecting benchmark failures
+and protected scorer aliases. Safety, lifecycle, usage, and timing remain valid
+operational observations.
 
 All 25 submissions and candidate stages were valid. Twenty-two trials completed
 in one model request; controller convergence, storage binding health, and the
@@ -192,15 +197,15 @@ healthy PVC control used the single bounded repair. Every registered non-repair
 stratum passed: fault diagnosis 7/7, healthy control 5/5, insufficient evidence
 4/4, multi-turn tool failure 4/4, and security prompt injection 5/5.
 
-Relative to the earlier supplied-evidence harness round, task passes increased
-from 15 to 25 with the same 28 requests, 294 fewer tokens, and mean diagnosis
-time reduced from 7.64 to 6.61 seconds. Relative to the original matched harness
-half, passes increased from 17 to 25 while requests fell from 41 to 28, tokens
-from 110,479 to 68,506, and failed tool calls from 29 to zero. These are
-descriptive cross-round comparisons. A fresh counterbalanced harness-versus-
-legacy round is still required for a paired parity or superiority claim.
+The increase from 15 or 17 passes to 25 measured semantic post-processing, not
+generalized model improvement. It must not support parity or superiority claims.
 
 ### Current 275-case portfolio result
+
+This portfolio used the same taxonomy-assisted semantic post-processing. Its
+Headlamp root-cause quality counts are withdrawn. Provider reliability, safety,
+lifecycle, usage, repair authorization, and timing records remain operationally
+valid.
 
 Run `run_0mu6khvt9000001_27d1c4a9-74bb-4cfd-9ff5-d8540cd50bc0` executed all
 275 active, qualified public scenarios on Minikube from clean revision
@@ -272,22 +277,16 @@ harness's Azure retry slice that also belong to the common 235-case diagnosis
 roster. The overlap identity-list SHA-256 is
 `d0b6a910292cdb8048b176e6bf71bac260f01ffcffa0cae5b166ed003404ca33`.
 
-| System          |  Pass | Partial | Fail | Pass rate | Mean time |
-| --------------- | ----: | ------: | ---: | --------: | --------: |
-| Current harness | 75/75 |       0 |    0 |   100.00% |   17.83 s |
-| HolmesGPT       | 68/75 |       7 |    0 |    90.67% |   12.02 s |
-| kubectl-ai      | 67/75 |       8 |    0 |    89.33% |    4.87 s |
-| Legacy session  | 66/75 |       9 |    0 |    88.00% |    5.95 s |
+| System           |  Pass | Partial | Fail | Pass rate | Mean time |
+| ---------------- | ----: | ------: | ---: | --------: | --------: |
+| Current harness† | 75/75 |       0 |    0 | withdrawn |   17.83 s |
+| HolmesGPT        | 68/75 |       7 |    0 |    90.67% |   12.02 s |
+| kubectl-ai       | 67/75 |       8 |    0 |    89.33% |    4.87 s |
+| Legacy session   | 66/75 |       9 |    0 |    88.00% |    5.95 s |
 
-On this overlap, the current harness produced nine more passes than legacy,
-seven more than HolmesGPT, and eight more than kubectl-ai. Its pass rate was
-13.64% higher relative to legacy, 10.29% higher relative to HolmesGPT, and
-11.94% higher relative to kubectl-ai, corresponding to absolute gains of 12.00,
-9.33, and 10.67 percentage points. All 300 selected results passed safety and
-cleanup checks. The current harness used 190,496 tokens, 51.28% fewer than
-HolmesGPT's 391,001 tokens on the same overlap; legacy and kubectl-ai token usage
-was unobserved. The current harness was slower: 3.00 times legacy latency, 1.48
-times HolmesGPT latency, and 3.66 times kubectl-ai latency.
+`†` Headlamp quality is withdrawn because semantic taxonomy injection was not
+available to the comparators. All 300 selected results passed safety and cleanup
+checks. Token and latency comparisons remain descriptive operational evidence.
 
 The broader Azure diagnosis runs provide context outside the exact overlap.
 After retrying infrastructure-invalid assignments, legacy passed 186/235 with
@@ -322,27 +321,29 @@ end-to-end adapter duration. The closed run is
 `run_0mu8cnulr000001_0b3d7ea4-4308-41f5-9f8c-0e1f878f8337`; its bundle manifest
 SHA-256 is `653b124ef67da232981a61e637b521eaec9355502582910f093298c490157d62`.
 
-| System                 |  Pass | Partial | Mean time |     p50 |     p95 |
-| ---------------------- | ----: | ------: | --------: | ------: | ------: |
-| Latest compact harness | 75/75 |       0 |    4.32 s |  4.00 s | 10.05 s |
-| kubectl-ai             | 67/75 |       8 |    4.87 s |  5.01 s |  5.94 s |
-| Legacy session         | 66/75 |       9 |    5.95 s |  5.92 s |  7.75 s |
-| HolmesGPT              | 68/75 |       7 |   12.02 s | 12.06 s | 12.82 s |
-| Earlier full harness   | 75/75 |       0 |   17.83 s | 17.27 s | 24.35 s |
+| System                  |  Pass | Partial | Mean time |     p50 |     p95 |
+| ----------------------- | ----: | ------: | --------: | ------: | ------: |
+| Latest compact harness† | 75/75 |       0 |    4.32 s |  4.00 s | 10.05 s |
+| kubectl-ai              | 67/75 |       8 |    4.87 s |  5.01 s |  5.94 s |
+| Legacy session          | 66/75 |       9 |    5.95 s |  5.92 s |  7.75 s |
+| HolmesGPT               | 68/75 |       7 |   12.02 s | 12.06 s | 12.82 s |
+| Earlier full harness    | 75/75 |       0 |   17.83 s | 17.27 s | 24.35 s |
 
-The latest harness was fastest by mean and median while preserving the only
-75/75 pass result. Its p95 remained slower than kubectl-ai and legacy. Internal
+`†` The compact harness quality result is withdrawn because it includes
+taxonomy-assisted semantic output. Its timing and telemetry remain valid.
+
+The latest harness was fastest by mean and median. Its p95 remained slower than
+kubectl-ai and legacy. Internal
 telemetry attributes nearly all of that tail to Azure: turn mean/p50/p95 were
 4.19/3.88/9.92 seconds and provider-request mean/p50/p95 were
 4.16/3.85/9.89 seconds. The remaining adapter overhead averaged about 134 ms.
 
-This remains a descriptive update, not a counterbalanced speed trial. It ran
+This remains a descriptive timing update, not a counterbalanced speed trial. It ran
 later, from a different network, and provider load or internet routing can move
 tail latency even though the measured Wi-Fi link had a healthy 37 dB SNR. A
 confirmatory comparison should alternate latest-harness and kubectl-ai requests
-on the same network and deployment. The quality result is independently useful:
-all 75 latest-harness trials were valid, passing, safety-clean, and
-lifecycle-clean.
+on the same network and deployment. The quality result is not usable for
+cross-system claims.
 
 ### Controller-convergence evidence-ledger result
 
@@ -498,10 +499,10 @@ to an intentionally unavailable transport as Kubernetes investigation quality.
 | Provider schema alone versus external evidence validation                              | Shape enforcement missed duplicate evidence IDs; external validation repaired them          | Validate semantics outside the provider schema with one bounded repair     |
 | Model-selected evidence ledger versus canonical supplied observations                  | Controller convergence moved from stochastic partial/no-result to 10/10 valid passes        | Canonicalize the ledger in explicit supplied-evidence diagnosis mode       |
 | More concrete alternative-hypothesis prompt                                            | One initial evidence-freshness pass followed by 0/10 passes                                 | Revert; review aliases blindly or predeclare a typed hypothesis taxonomy   |
-| Repair-enforced versus deterministic Pending-Pod taxonomy                              | Repair gave 4/10 passes; canonical output gave 10/10 valid passes                           | Canonicalize only when Pending phase is the complete supplied evidence     |
-| Current harness on the locked 25-case diagnosis roster                                 | 25/25 valid, safe, lifecycle-clean passes with zero tool calls                              | Retain defaults; repeat a paired legacy comparison before broader claims   |
-| Current harness on all 275 qualified public scenarios                                  | 275/275 identities have valid passes across Copilot and Azure runs                          | Treat as cross-provider coverage, not a fixed-provider comparison round    |
-| Fixed-Azure four-system overlap                                                        | Current 75/75; HolmesGPT 68/75; kubectl-ai 67/75; legacy 66/75                              | Report descriptive gains and latency costs; counterbalance before claims   |
+| Repair-enforced versus deterministic Pending-Pod taxonomy                              | Taxonomy converted benchmark partials to passes by injecting protected-answer equivalents   | Removed; affected quality runs are contaminated                            |
+| Fair browser harness on the locked 25-case diagnosis roster                            | 18 pass/7 partial; all valid, safe, clean, and tool-free                                    | Use as current fair result; require fresh cases for semantic improvements  |
+| Taxonomy-assisted harness on all 275 qualified public scenarios                        | Quality withdrawn; operational safety/lifecycle/provider records retained                   | Do not use for model or cross-system quality claims                        |
+| Fixed-Azure four-system overlap                                                        | Headlamp quality withdrawn; comparator quality and operational timings retained             | Rerun Headlamp fairly before quality claims                                |
 | Custom outer graph, specialists, memory, context editing, retries, selector middleware | Not isolated yet                                                                            | Do not enable by default                                                   |
 
 The next comparison should repeat the fixed-Azure overlap with counterbalanced
@@ -538,6 +539,12 @@ superiority claim.
 
 ## Research backlog
 
+Product-level deterministic diagnosis research is tracked separately in
+[Kubernetes diagnosis rules research](kubernetes-diagnosis-rules-research.md).
+That document owns the current Headlamp baseline, rules-engine sizing,
+Kubernetes-source construction, wider tool survey, and rules-only/model-only/
+hybrid evaluation plan.
+
 ### Latency optimization plan
 
 The overall performance objective is to make the harness the fastest qualified
@@ -548,9 +555,10 @@ telemetry gate. Report time to first valid result and full completion separately
 never win by weakening the contract, omitting work, or moving it outside the
 measured boundary.
 
-The fixed-Azure overlap establishes the initial latency baseline. The current
-harness passed 75/75 cases with exactly 75 model requests, zero tool calls, and
-190,496 tokens, but averaged 17.83 seconds. It was 1.48 times slower than
+The fixed-Azure overlap establishes an operational latency baseline, but its
+taxonomy-assisted Headlamp quality gate is withdrawn. The run used exactly 75
+model requests, zero tool calls, and 190,496 tokens, and averaged 17.83 seconds.
+It was 1.48 times slower than
 HolmesGPT, 3.00 times slower than legacy, and 3.66 times slower than kubectl-ai.
 Because every current-harness case completed in one model request, tool loops and
 bounded repair are not the primary cause of this gap.
@@ -1122,52 +1130,45 @@ The browser candidate then ran the fixed 25 non-repair cases from
 retained comparator runs. The newline-delimited roster ID SHA-256 is
 `06b39fa3e25d2d4abfa37e5d4d13d8f2ec4ee96e035685e9bcaa06b916af9c64`.
 
-The first two browser rounds exposed a contract mismatch rather than a browser
-model limitation. The browser path shared `AgentHarnessSession` and the compact
-JSON shape with the CLI, but omitted the CLI's semantic validator,
-supplied-evidence system context, and deterministic pending-Pod hypothesis
-taxonomy. Those rounds produced 19/25 and 17/25. After moving the qualified
-diagnosis contract into `ai-common` and using it from both hosts, the exact
-eight previously partial scenarios passed 8/8 in focused run
-`run_0mu8y4e7h000001_558573f7-9aeb-47c0-b4a2-1c492e23784e`.
+The browser and compact CLI paths were aligned by sharing their schema,
+candidate-visible evidence handling, and validation contract. That alignment
+initially included a deterministic Pending-Pod taxonomy that appended three
+hypotheses after model inference. The taxonomy had been designed after
+inspecting benchmark failures and mapped directly to protected accepted
+hypotheses. It therefore gave Headlamp an unfair semantic post-processing
+advantage. The taxonomy-assisted 25/25 browser and CLI quality results are
+withdrawn. They remain useful only for operational timing and safety evidence.
 
-The final complete corrected run is
-`run_0mu8yjywa000001_655694df-ed2a-48b9-947a-0f1813c4aa88`; its canonical
+After removing semantic hypothesis injection, all eight taxonomy-sensitive
+cases became partial in focused run
+`run_0mu9e7m9g000001_2f540a18-2bfa-4599-a8e6-99ab42a8565d`. The complete fair
+browser run is `run_0mu9e9o3s000001_dee6fa58-4f36-4760-a455-68bc89e5683a`; its
 manifest SHA-256 is
-`f50c2a9ecec72c6c36a0d0762f9d74a623884aabe229f471fc8a88a256240583`.
-It records clean revision `cc757bf864ea77f707d688119236d1d6ff227ec5`, Azure
-account `ca-agent-eval-foundry`, deployment/model `gpt-4o`, 25 valid root-cause
-and recommendation passes, 25 safety passes, 25 clean lifecycles, and zero tool
-calls. It used 25 requests and 50,232 tokens. An earlier post-fix complete run,
-`run_0mu8y6clq000001_c1e3cc59-8d42-4cb7-a6cc-21c560d26611`, also passed 25/25.
+`46bc8822d923229f2c4afc5a3ebe9b2cd7b29594a949db8356019baaea9ab036`.
+It records clean revision `0b9d8d41a8366d16a4ba679b118780d999af396a`, Azure
+`gpt-4o`, 25 valid trials, 18 root-cause passes, seven partials, 25 safety
+passes, 25 clean lifecycles, and 50,441 tokens.
 
-| System                |  Pass | Partial | Mean time |      p50 |       p95 |
-| --------------------- | ----: | ------: | --------: | -------: | --------: |
-| Compact CLI harness   | 25/25 |       0 |  4.32 s\* | 4.00 s\* | 10.05 s\* |
-| Browser plugin, fixed | 25/25 |       0 |    4.37 s |   4.56 s |    5.21 s |
-| kubectl-ai            | 21/25 |       4 |    4.87 s |   4.94 s |    6.57 s |
-| Legacy session        | 18/25 |       7 |    5.80 s |   6.00 s |    6.71 s |
-| HolmesGPT             | 17/25 |       8 |  50.92 s† |  12.45 s |   25.62 s |
+| System                                |      Pass |   Partial | Mean time |     p50 |      p95 |
+| ------------------------------------- | --------: | --------: | --------: | ------: | -------: |
+| Browser plugin, no semantic injection |     18/25 |         7 |    4.95 s |  4.87 s |   8.19 s |
+| kubectl-ai                            |     21/25 |         4 |    4.87 s |  4.94 s |   6.57 s |
+| Legacy session                        |     18/25 |         7 |    5.80 s |  6.00 s |   6.71 s |
+| HolmesGPT                             |     17/25 |         8 |  50.92 s† | 12.45 s |  25.62 s |
+| Compact CLI, taxonomy-assisted        | withdrawn | withdrawn |   4.32 s‡ | 4.00 s‡ | 10.05 s‡ |
 
-`*` Compact CLI quality covers these same 25 cases because all 75 cases in its
-retained overlap passed. Its timing values are the retained 75-case aggregate;
-the raw bundle is not available locally for a 25-case timing slice.
+`‡` Compact CLI timing is the retained 75-case aggregate. Its quality result is
+withdrawn because semantic taxonomy injection affected the scored submission.
 
 `†` Holmes' raw mean includes one valid 939.60-second retained trial with no
 superseding retry. Its median and p95 better describe the other 24 cases; the
 outlier is retained rather than silently discarded.
 
-The corrected browser plugin ties the compact CLI on quality, has seven more
-passes than HolmesGPT, four more than kubectl-ai, and seven more than the legacy
-session on this slice. It is 22% faster than legacy by mean, 19% faster by p50,
-and 22% faster by p95. It is 10% faster than kubectl-ai by mean, 8% faster by
-p50, and 21% faster by p95. These are sequential descriptive runs, not a
-counterbalanced superiority result.
-
-The pre-fix 19/25 and 17/25 bundles remain retained as diagnostic evidence; they
-must not be pooled with or substituted for the corrected run. Their divergence
-demonstrates why equal session classes alone do not establish host parity when
-prompt, validation, and canonicalization contracts differ.
+The fair browser plugin ties legacy, has one more pass than HolmesGPT, and three
+fewer than kubectl-ai. Its timing remains competitive, but these are sequential
+descriptive runs, not a counterbalanced superiority result. All
+taxonomy-assisted runs are retained as contaminated diagnostic evidence and
+must not support model or cross-system quality claims.
 
 Then compare three execution strategies behind the same API:
 

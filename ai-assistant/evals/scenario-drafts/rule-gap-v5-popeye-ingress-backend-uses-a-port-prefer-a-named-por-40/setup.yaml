@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: object-finding-40
+spec:
+  rules:
+    - host: fixture.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fixture-backend
+                port:
+                  number: 8080

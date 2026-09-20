@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v5.json",
+  "scenario_id": "rule-gap-v5-pluto-certmanager-k8s-io-v1alpha1-challenge-removed--55",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:cert-manager-challenge-certmanager-k8s-io-v1alpha1-removed-v0-11-0:08725adaeaea"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:cert-manager-certmanager-k8s-io-v1alpha1-challenge-removed-in-v0-11-0:4222fcd9afc2"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

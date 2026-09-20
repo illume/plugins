@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-kubevious-validate-containerspec-environment-variable-co-5",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/missing-reference-5",
+        "field_path": "spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name",
+        "observed_value": "reference names an absent object",
+        "description": "The object reference cannot resolve within its required scope."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/missing-reference-5",
+      "field_path": "spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name",
+      "observed_value": "reference resolves to one object of the required kind",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].env[0].valueFrom.configMapKeyRef.name."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b30f5ebe08d39763"
+}

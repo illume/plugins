@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-available-volume-detected-18",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "persistentvolume/object-finding-18",
+        "field_path": "status.phase",
+        "observed_value": "Available",
+        "description": "The controlled object satisfies the exact 1000 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "persistentvolume/object-finding-18",
+      "field_path": "status.phase",
+      "observed_value": "Bound",
+      "description": "The healthy control differs only at status.phase."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e12910539e08d1f1"
+}

@@ -1,0 +1,5 @@
+apiVersion: audit.k8s.io/v1beta1
+kind: PolicyList
+metadata:
+  name: deprecated-api-68
+items: []

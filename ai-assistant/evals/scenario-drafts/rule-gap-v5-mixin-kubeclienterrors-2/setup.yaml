@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Event
+metadata:
+  name: telemetry-state-2
+type: Warning
+reason: ClientRequestErrors
+action: ListPods
+regarding:
+  apiVersion: v1
+  kind: ServiceAccount
+  name: fixture-client
+note: rest_client_requests_total code=500 rate is 0.03 over five minutes

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-no-target-ports-match-service-port-s-28",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "service/object-finding-28",
+        "field_path": "spec.ports[0].targetPort + selected container ports",
+        "observed_value": "targetPort 8080 with no selected container port 8080",
+        "description": "The controlled object satisfies the exact 1106 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/object-finding-28",
+      "field_path": "spec.ports[0].targetPort + selected container ports",
+      "observed_value": "web resolving to selected container port 9090",
+      "description": "The healthy control differs only at spec.ports[0].targetPort + selected container ports."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-82db5d9b37024f08"
+}

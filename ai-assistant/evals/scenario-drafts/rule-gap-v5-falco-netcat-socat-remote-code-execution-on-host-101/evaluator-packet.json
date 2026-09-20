@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-netcat-socat-remote-code-execution-on-host-101",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-101",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "printf bounded-command > /fixture/input; /bin/busybox nc -l -p 2323 < /fixture/input & listener=$!; /bin/busybox nc 127.0.0.1 2323 > /fixture/output; wait \"$listener\"; cat /fixture/output; netcat transfers a fixed string over Pod loopback",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Netcat/Socat Remote Code Execution on Host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-101",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-6fe50856af8efc22"
+}

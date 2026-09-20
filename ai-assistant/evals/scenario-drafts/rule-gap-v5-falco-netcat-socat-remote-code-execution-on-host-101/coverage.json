@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v5.json",
+  "scenario_id": "rule-gap-v5-falco-netcat-socat-remote-code-execution-on-host-101",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["falco:rule:netcat-socat-remote-code-execution-on-host:3fa7002640b7"],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-netcat-socat-remote-code-execution-on-host-3fa7002640b7:cf896b62c81e"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml"
+  ]
+}

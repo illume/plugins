@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-rbac-authorization-k8s-io-v1alpha1-role-remove-78",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "role/deprecated-api-78",
+        "field_path": "apiVersion",
+        "observed_value": "rbac.authorization.k8s.io/v1alpha1",
+        "description": "Role uses rbac.authorization.k8s.io/v1alpha1, which was removed in v1.22.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "role/deprecated-api-78",
+      "field_path": "apiVersion",
+      "observed_value": "rbac.authorization.k8s.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0df9b37bdedc0f5c"
+}

@@ -1,0 +1,5 @@
+apiVersion: resource.k8s.io/v1alpha3
+kind: ResourceSlice
+metadata:
+  name: deprecated-api-85
+spec: {}

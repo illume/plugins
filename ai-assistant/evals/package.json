@@ -20,6 +20,7 @@
     "eval:generate:rule-gaps:v2": "tsx src/scenarios/generateRuleGapScenariosV2.ts",
     "eval:generate:rule-gaps:v3": "tsx src/scenarios/generateRuleGapScenariosV3.ts",
     "eval:generate:rule-gaps:v4": "tsx src/scenarios/generateRuleGapScenariosV4.ts",
+    "eval:generate:rule-gaps:v5": "tsx src/scenarios/generateRuleGapScenariosV5.ts",
     "eval:generate:scenario-drafts": "tsx src/scenarios/generateScenarioDraftBundles.ts",
     "eval:map:tools": "tsx src/scenarios/generateToolScenarioMapping.ts",
     "eval:qualify:minikube": "tsx src/scenarios/qualifyMinikubePortfolio.ts",

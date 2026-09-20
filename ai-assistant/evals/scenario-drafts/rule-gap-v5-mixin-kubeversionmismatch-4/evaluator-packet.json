@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-mixin-kubeversionmismatch-4",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "node/telemetry-state-4",
+        "field_path": "status.nodeInfo.kubeletVersion + controlPlaneVersion",
+        "observed_value": "v1.31.0 vs v1.34.0",
+        "description": "KubeVersionMismatch is sustained by the controlled native status or event evidence."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "node/telemetry-state-4",
+      "field_path": "status.nodeInfo.kubeletVersion + controlPlaneVersion",
+      "observed_value": "same minor version",
+      "description": "The healthy control differs only at status.nodeInfo.kubeletVersion + controlPlaneVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-543ffb502060745c"
+}

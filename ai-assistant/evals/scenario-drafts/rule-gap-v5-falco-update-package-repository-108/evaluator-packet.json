@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-update-package-repository-108",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-108",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "printf \"#!/bin/sh\nprintf repository-update-fixture\n\" > /fixture/apt-get; chmod 700 /fixture/apt-get; /fixture/apt-get update; package-manager-named fixture receives update",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Update Package Repository."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-108",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-01ed8d3b020c598b"
+}

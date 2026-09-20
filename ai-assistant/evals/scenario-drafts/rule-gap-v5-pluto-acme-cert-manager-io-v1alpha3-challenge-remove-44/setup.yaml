@@ -1,0 +1,5 @@
+apiVersion: acme.cert-manager.io/v1alpha3
+kind: Challenge
+metadata:
+  name: deprecated-api-44
+spec: {}

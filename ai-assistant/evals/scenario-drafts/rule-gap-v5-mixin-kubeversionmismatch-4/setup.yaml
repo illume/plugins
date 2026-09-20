@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: telemetry-state-4
+status:
+  nodeInfo:
+    kubeletVersion: v1.31.0
+    kubeProxyVersion: v1.31.0
+controlPlaneVersion: v1.34.0

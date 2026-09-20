@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-certmanager-k8s-io-v1alpha1-certificaterequest-54",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "certificaterequest/deprecated-api-54",
+        "field_path": "apiVersion",
+        "observed_value": "certmanager.k8s.io/v1alpha1",
+        "description": "CertificateRequest uses certmanager.k8s.io/v1alpha1, which was removed in v0.11.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "certificaterequest/deprecated-api-54",
+      "field_path": "apiVersion",
+      "observed_value": "cert-manager.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-cabbd815f47cf433"
+}

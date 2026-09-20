@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-nodeport-detected-but-service-sets-externaltra-30",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "service/object-finding-30",
+        "field_path": "spec.type + spec.externalTrafficPolicy",
+        "observed_value": "NodePort; Local",
+        "description": "The controlled object satisfies the exact 1108 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/object-finding-30",
+      "field_path": "spec.type + spec.externalTrafficPolicy",
+      "observed_value": "NodePort; Cluster",
+      "description": "The healthy control differs only at spec.type + spec.externalTrafficPolicy."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-5ff7b27a0a2c6779"
+}

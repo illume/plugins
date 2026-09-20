@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-cpu-current-request-s-s-reached-user-d-thresho-23",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "podmetrics/object-finding-23-pod",
+        "field_path": "containers[0].usage.cpu / workload request",
+        "observed_value": "95%",
+        "description": "The controlled object satisfies the exact 109 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "podmetrics/object-finding-23-pod",
+      "field_path": "containers[0].usage.cpu / workload request",
+      "observed_value": "below 80%",
+      "description": "The healthy control differs only at containers[0].usage.cpu / workload request."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fcac353c1463265a"
+}

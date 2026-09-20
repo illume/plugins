@@ -19,6 +19,8 @@ non-overlapping specifications without changing active coverage.
 The [undercovered-tool v4 catalogue](kubernetes-rule-gap-scenarios-v4.md) adds
 105 more non-overlapping specifications while preserving the 275-scenario active
 roster.
+The [remaining direct-predicate v5 catalogue](kubernetes-rule-gap-scenarios-v5.md)
+adds 110 more non-overlapping specifications while preserving that active roster.
 
 The governing objective is full qualified coverage of product-scoped canonical
 diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,

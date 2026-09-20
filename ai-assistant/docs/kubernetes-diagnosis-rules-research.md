@@ -139,6 +139,9 @@ excluding every active, v1, and v2 target.
 The [fourth rule-gap catalogue](kubernetes-rule-gap-scenarios-v4.md) adds 105
 non-overlapping specifications for the remaining direct-predicate frontier while
 excluding every active, v1, v2, and v3 target.
+The [fifth rule-gap catalogue](kubernetes-rule-gap-scenarios-v5.md) adds 110
+non-overlapping specifications across five still-undercovered tools while excluding
+every active and v1-v4 target occurrence and semantic group.
 
 Assign `no_applicable_rule` only after reviewing every directly mappable group
 and every decomposed branch relevant to the scenario's resources and mechanisms.

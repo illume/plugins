@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v5.json",
+  "scenario_id": "rule-gap-v5-pluto-rbac-authorization-k8s-io-v1alpha1-clusterrole-75",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-clusterrolebinding-rbac-authorization-k8s-io-v1alpha1-removed-v1-22-:e107d81c4709"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1alpha1-clusterrolebinding-removed-in-v1-22-0:776967e74a17"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

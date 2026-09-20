@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-resource-k8s-io-v1alpha3-resourceclaim-removed-83",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "resourceclaim/deprecated-api-83",
+        "field_path": "apiVersion",
+        "observed_value": "resource.k8s.io/v1alpha3",
+        "description": "ResourceClaim uses resource.k8s.io/v1alpha3, which was removed in v1.34.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "resourceclaim/deprecated-api-83",
+      "field_path": "apiVersion",
+      "observed_value": "resource.k8s.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-cdc086472d6e9b6f"
+}

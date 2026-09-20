@@ -1,0 +1,5 @@
+apiVersion: admissionregistration.k8s.io/v1alpha1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: deprecated-api-59
+spec: {}

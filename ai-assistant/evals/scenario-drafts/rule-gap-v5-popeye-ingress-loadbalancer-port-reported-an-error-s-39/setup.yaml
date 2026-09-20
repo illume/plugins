@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: object-finding-39
+spec:
+  rules:
+    - host: fixture.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fixture-backend
+                port:
+                  name: http
+status:
+  loadBalancer:
+    ingress:
+      - ip: 192.0.2.10
+        ports:
+          - port: 443
+            protocol: TCP
+            error: fixture port unavailable

@@ -110,10 +110,10 @@ The source inventory contains 7,427 occurrences in 2,654 tool-local groups,
 including 1,496 direct-predicate groups. The active roster has 275 scenarios but
 only 12 normalized evaluator contracts.
 
-The two draft batches add 142 specifications. Existing predicate coverage plus
-both batches targets 1,593 occurrences and 343 tool-local groups across 14 tools:
-21.4% of all occurrences, 12.9% of all tool-local groups, and 22.9% of direct
-predicate groups. These are progress figures, not Scenarios Goal completion.
+The five draft catalogues add 415 specifications. Existing predicate coverage plus
+the authored bundles targets 2,005 direct-predicate occurrences and 661 tool-local
+direct-predicate groups across 14 tools: 32.9% of direct occurrences and 44.2% of
+direct-predicate groups. These are progress figures, not Scenarios Goal completion.
 Canonical qualified coverage is not measurable until the canonical registry and
 risk review are complete.
 
@@ -122,8 +122,8 @@ risk review are complete.
 | Product evidence boundary     | Defined for v1 | Source-grounded scope-agent verification                                        |
 | Canonical capability registry | Not complete   | Multi-agent mapping for every direct predicate and decomposed branch            |
 | Tail risk weights             | Not frozen     | Reproducible scorer-agent outputs and critic resolution                         |
-| Draft scenario targeting      | 142 drafts     | Canonical reconciliation after registry review                                  |
-| Fixture implementation        | 305 authored   | Observation execution and cleanup evidence for generated bundles                |
+| Draft scenario targeting      | 415 drafts     | Canonical reconciliation after registry review                                  |
+| Fixture implementation        | 415 authored   | Observation execution and cleanup evidence for generated bundles                |
 | Qualification                 | Not complete   | Positive, healthy, temporal, uncertainty, and confounder evidence as applicable |
 | Generated challenge batches   | Not complete   | Post-freeze generation, execution, and published provenance                     |
 
@@ -209,4 +209,5 @@ not retroactively become qualification evidence for that frozen engine version.
 - [Marginal rule-gap draft batch](kubernetes-rule-gap-scenarios-v2.md)
 - [Cross-tool rule-gap draft batch](kubernetes-rule-gap-scenarios-v3.md)
 - [Undercovered-tool rule-gap draft batch](kubernetes-rule-gap-scenarios-v4.md)
+- [Remaining direct-predicate rule-gap draft batch](kubernetes-rule-gap-scenarios-v5.md)
 - [Scenario implementation progress](kubernetes-scenario-implementation-progress.md)

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-write-below-rpm-database-110",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-110",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "mkdir -p /fixture/var/lib/rpm; printf controlled > /fixture/var/lib/rpm/Packages; sha256sum /fixture/var/lib/rpm/Packages; write occurs below the Pod-local rpm database fixture",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Write below rpm database."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-110",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-de6393eed7fc88e1"
+}

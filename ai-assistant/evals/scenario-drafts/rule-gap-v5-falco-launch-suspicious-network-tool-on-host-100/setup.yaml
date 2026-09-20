@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bounded-action-100
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: bounded-action-100
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - /bin/busybox nc -z -w 1 127.0.0.1 1 || printf closed-loopback-port
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 8Mi

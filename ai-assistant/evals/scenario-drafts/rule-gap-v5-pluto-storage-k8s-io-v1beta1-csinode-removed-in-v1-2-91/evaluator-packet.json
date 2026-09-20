@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-storage-k8s-io-v1beta1-csinode-removed-in-v1-2-91",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "csinode/deprecated-api-91",
+        "field_path": "apiVersion",
+        "observed_value": "storage.k8s.io/v1beta1",
+        "description": "CSINode uses storage.k8s.io/v1beta1, which was removed in v1.22.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "csinode/deprecated-api-91",
+      "field_path": "apiVersion",
+      "observed_value": "storage.k8s.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ea0d2c33f5eba7a0"
+}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Event
+metadata:
+  name: telemetry-state-1
+type: Warning
+reason: RequestTerminated
+action: WatchRequest
+regarding:
+  apiVersion: v1
+  kind: Pod
+  name: fixture
+note: apiserver_request_terminations_total increased by 6 in five minutes

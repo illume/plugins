@@ -1,0 +1,5 @@
+apiVersion: acme.cert-manager.io/v1alpha2
+kind: Order
+metadata:
+  name: deprecated-api-43
+spec: {}

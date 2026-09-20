@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-kubevious-validate-podspec-volume-mount-secret-reference-16",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/missing-reference-16",
+        "field_path": "spec.template.spec.volumes[0].secret.secretName",
+        "observed_value": "reference names an absent object",
+        "description": "The object reference cannot resolve within its required scope."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/missing-reference-16",
+      "field_path": "spec.template.spec.volumes[0].secret.secretName",
+      "observed_value": "reference resolves to one object of the required kind",
+      "description": "The healthy control differs only at spec.template.spec.volumes[0].secret.secretName."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-624a3ab5b2e14b64"
+}

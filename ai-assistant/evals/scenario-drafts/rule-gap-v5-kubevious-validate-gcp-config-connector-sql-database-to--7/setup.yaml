@@ -1,0 +1,7 @@
+apiVersion: sql.cnrm.cloud.google.com/v1beta1
+kind: SQLDatabase
+metadata:
+  name: missing-reference-7
+spec:
+  instanceRef:
+    name: absent-sql-instance

@@ -1,0 +1,5 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Order
+metadata:
+  name: deprecated-api-58
+spec: {}

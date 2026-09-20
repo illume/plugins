@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-references-a-s-s-which-does-not-exist-38",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/object-finding-38",
+        "field_path": "spec.template.spec.serviceAccountName + ServiceAccount inventory",
+        "observed_value": "absent-account; 0 matches",
+        "description": "The controlled object satisfies the exact 1300 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/object-finding-38",
+      "field_path": "spec.template.spec.serviceAccountName + ServiceAccount inventory",
+      "observed_value": "fixture-account; 1 match",
+      "description": "The healthy control differs only at spec.template.spec.serviceAccountName + ServiceAccount inventory."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f542f3790c913cd2"
+}

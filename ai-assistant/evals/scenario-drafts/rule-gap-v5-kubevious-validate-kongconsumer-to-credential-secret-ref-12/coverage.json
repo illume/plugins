@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v5.json",
+  "scenario_id": "rule-gap-v5-kubevious-validate-kongconsumer-to-credential-secret-ref-12",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubevious:rule:kong-consumer-to-credential-secret-ref"],
+  "target_semantic_group_ids": [
+    "kubevious:semantic:kubevious-rule-kong-consumer-to-credential-secret-ref:2b9b09bc2e31"
+  ],
+  "target_tool_ids": ["kubevious"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/kong/consumer-to-credential-secret-ref.yaml"
+  ]
+}

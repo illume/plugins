@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-invalid-ingress-backend-spec-must-use-port-nam-41",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingress/object-finding-41",
+        "field_path": "spec.rules[0].http.paths[0].backend.service.port",
+        "observed_value": "{}",
+        "description": "The controlled object satisfies the exact 1404 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "ingress/object-finding-41",
+      "field_path": "spec.rules[0].http.paths[0].backend.service.port",
+      "observed_value": "{name: http}",
+      "description": "The healthy control differs only at spec.rules[0].http.paths[0].backend.service.port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4166c75b1ba43800"
+}

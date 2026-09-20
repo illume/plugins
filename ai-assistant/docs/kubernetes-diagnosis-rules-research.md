@@ -47,13 +47,25 @@ and is validated by
 [`tool-rule-inventory.schema.json`](../evals/schema/tool-rule-inventory.schema.json).
 
 The provisional snapshot contains 7,427 source occurrences in 2,654 tool-local
-semantic groups from 23 tools. Of those occurrences, 5,736 are shaped like
-direct predicates, 1,392 require decomposition before mapping, and 299 are
+semantic groups from 23 tools. At row level, 6,088 occurrences are shaped like
+direct predicates, 1,040 require decomposition before mapping, and 299 are
 reference-only artifacts. Occurrences preserve profile, platform, source, and
 version variants; semantic groups prevent those variants from being mistaken
 for independent scenario requirements. At the group level, the review workload
-is 1,144 direct-predicate groups, 1,211 groups requiring decomposition, and 299
+is 1,496 direct-predicate groups, 859 groups requiring decomposition, and 299
 reference-only groups. Cross-tool groups have not yet been merged.
+
+Popeye and Kubescape have received a deeper implementation pass. Popeye has 110
+codes linked to production `AddCode`, `AddSubCode`, `AddErr`, or computed
+companion emitters; seven glossary entries (`402`, `403`, `404`, `703`, `712`,
+`901`, and `1205`) have no production emitter at the pinned revision and remain
+`not_found`. All 303 Kubescape rule names resolve by metadata identity to a
+`rule.metadata.json` and `raw.rego`; five initially missed rules lived in
+directories whose names differed from their metadata names. Of those rules, 242
+have concise extracted predicate summaries and 61 remain marked for predicate
+decomposition. Resolved implementation status means the source can be reviewed,
+not that its predicate is already normalized or that a current scenario covers
+the rule.
 
 The inventory does not assign scenario coverage. That separation ensures the
 next mapping step can mark each unit `covered`, `unsure`, or `uncovered` without

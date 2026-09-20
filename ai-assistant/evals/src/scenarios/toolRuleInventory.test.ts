@@ -28,6 +28,10 @@ interface RuleInventoryItem {
   summary_origin: 'native' | 'derived';
   info_url: string;
   id_origin: 'native' | 'derived';
+  mapping_readiness?: 'direct_predicate' | 'requires_decomposition' | 'reference_only';
+  implementation_status?: 'resolved' | 'partial' | 'not_found';
+  implementation_refs?: Array<{ source_path: string; info_url: string; symbol?: string }>;
+  predicate_summary?: string;
   [key: string]: unknown;
 }
 
@@ -130,6 +134,9 @@ test('tool rule inventory is complete, unique, and separate from coverage', () =
       assert.ok(rule.semantic_group_id.startsWith(`${tool.tool_id}:semantic:`));
       assert.ok(rule.summary.trim().length >= 3, `${rule.rule_id} needs a summary`);
       assert.ok(rule.summary.length <= 320, `${rule.rule_id} summary is too long`);
+      if (rule.implementation_status === 'resolved') {
+        assert.ok(rule.implementation_refs?.length, `${rule.rule_id} needs implementation refs`);
+      }
       semanticGroupIds.add(rule.semantic_group_id);
       assert.ok(
         rule.info_url.startsWith(`${tool.repository}/blob/${tool.revision}/`),
@@ -146,6 +153,30 @@ test('tool rule inventory is complete, unique, and separate from coverage', () =
 
   assert.equal(ruleIds.size, inventory.total_rules);
   assert.equal(semanticGroupIds.size, inventory.total_semantic_groups);
+  for (const toolId of ['popeye', 'kubescape']) {
+    const tool = inventory.tools.find(candidate => candidate.tool_id === toolId);
+    assert.ok(tool, `missing ${toolId} inventory`);
+    for (const rule of tool.rules) {
+      assert.ok(rule.implementation_status, `${rule.rule_id} needs implementation status`);
+      if (rule.implementation_status === 'resolved') {
+        assert.ok(rule.implementation_refs?.length, `${rule.rule_id} needs implementation refs`);
+      }
+      if (rule.mapping_readiness === 'direct_predicate') {
+        assert.ok(rule.predicate_summary, `${rule.rule_id} needs a predicate summary`);
+      }
+      if (rule.implementation_status === 'not_found') {
+        assert.equal(rule.mapping_readiness, 'requires_decomposition');
+      }
+    }
+  }
+  const popeye = inventory.tools.find(tool => tool.tool_id === 'popeye');
+  assert.equal(popeye?.rules.filter(rule => rule.implementation_status === 'resolved').length, 110);
+  assert.equal(popeye?.rules.filter(rule => rule.implementation_status === 'not_found').length, 7);
+  const kubescape = inventory.tools.find(tool => tool.tool_id === 'kubescape');
+  assert.equal(
+    kubescape?.rules.filter(rule => rule.implementation_status === 'resolved').length,
+    303
+  );
   assert.deepEqual(
     readdirSync(listRoot)
       .filter(file => file.endsWith('.md'))

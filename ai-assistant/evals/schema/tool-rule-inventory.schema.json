@@ -97,7 +97,31 @@
                 "source_path": { "type": "string", "minLength": 1 },
                 "info_url": { "type": "string", "format": "uri" },
                 "upstream_url": { "type": "string", "format": "uri" },
-                "id_origin": { "enum": ["native", "derived"] }
+                "id_origin": { "enum": ["native", "derived"] },
+                "mapping_readiness": {
+                  "enum": ["direct_predicate", "requires_decomposition", "reference_only"]
+                },
+                "implementation_status": { "enum": ["resolved", "partial", "not_found"] },
+                "implementation_refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["source_path", "info_url"],
+                    "properties": {
+                      "source_path": { "type": "string", "minLength": 1 },
+                      "info_url": { "type": "string", "format": "uri" },
+                      "symbol": { "type": "string", "minLength": 1 }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "input_resources": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "predicate_summary": { "type": "string", "minLength": 3, "maxLength": 500 },
+                "remediation": { "type": "string", "minLength": 3, "maxLength": 1000 }
               },
               "additionalProperties": true
             }

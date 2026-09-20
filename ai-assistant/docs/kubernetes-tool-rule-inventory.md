@@ -1,6 +1,6 @@
 # Kubernetes tool rule inventories
 
-Provisional inventory of 7427 source occurrences in 2654 tool-local semantic groups from 23 pinned tools. These are inventory handles, not scenario coverage or cross-tool equivalence claims.
+Provisional inventory of 7,427 source occurrences in 2,654 tool-local semantic groups from 23 pinned tools. At row level, 6,088 occurrences are direct predicates, 1,040 require decomposition, and 299 are reference-only. These are inventory handles, not scenario coverage or cross-tool equivalence claims.
 
 | Tool                            | Native unit           | Source identity | Mapping readiness        | Occurrences | Semantic groups | List                                                | Pinned source                                                                                                   |
 | ------------------------------- | --------------------- | --------------- | ------------------------ | ----------: | --------------: | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -34,24 +34,10 @@ Review status: `provisional`. Source revisions and extraction methods are record
 
 ## Mapping readiness
 
-- `direct_predicate`: review the predicate against scenario setup, observations,
-  and oracle before assigning `covered`, `unsure`, or `uncovered`.
-- `requires_decomposition`: the listed analyzer, adapter, policy, check, or
-  workflow contains multiple branches; decompose those branches before claiming
-  complete coverage.
-- `reference_only`: the item is a runbook, report kind, helper symbol, or module
-  that can inform scenario design but is not itself an executable predicate.
+- `direct_predicate`: review the predicate against scenario setup, observations, and oracle before assigning `covered`, `unsure`, or `uncovered`.
+- `requires_decomposition`: the listed analyzer, adapter, policy, check, or workflow contains multiple branches; decompose those branches before claiming complete coverage.
+- `reference_only`: the item is a runbook, report kind, helper symbol, or module that can inform scenario design but is not itself an executable predicate.
 
-Coverage mapping may use `semantic_group_id` values to batch review, but the
-final status remains occurrence-specific. Copy a status across a group only
-after verifying equivalent predicates, inputs, applicability, and expected
-outcomes. NPD patterns, kube-bench profiles, and policy-engine variants can
-share a semantic label while requiring different fixtures. Tool-local groups
-are provisional; cross-tool equivalence is a separate reviewed step.
+Coverage mapping may use `semantic_group_id` values to batch review, but the final status remains occurrence-specific. Copy a status across a group only after verifying equivalent predicates, inputs, applicability, and expected outcomes. NPD patterns, kube-bench profiles, and policy-engine variants can share a semantic label while requiring different fixtures. Tool-local groups are provisional; cross-tool equivalence is a separate reviewed step.
 
-Summaries support triage and search, not scenario generation by themselves.
-Before generating a case, the mapping phase must record the subject resource or
-component, required observations and mechanisms, trigger predicate, expected
-finding, healthy/negative condition, temporal behavior, platform/version scope,
-and whether the unit is executable in the available cluster profile. Missing or
-ambiguous fields require an `unsure` mapping rather than inference from wording.
+Summaries support triage and search, not scenario generation by themselves. Before generating a case, the mapping phase must record the subject resource or component, required observations and mechanisms, trigger predicate, expected finding, healthy/negative condition, temporal behavior, platform/version scope, and whether the unit is executable in the available cluster profile. Missing or ambiguous fields require an `unsure` mapping rather than inference from wording.

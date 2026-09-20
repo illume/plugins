@@ -84,6 +84,13 @@ The mapping must provide two projections:
    unavailable, lacked permission, lacked telemetry, failed to run, or produced
    no finding; those are separate execution dispositions.
 
+The first provisional mapping is available in the
+[tool-to-scenario coverage report](kubernetes-tool-scenario-coverage.md) and its
+[machine-readable registration](../evals/registrations/tool-scenario-rule-mapping-v1.json).
+It maps all 7,427 source occurrences and expands the 12 reviewed contracts to
+all 275 scenario IDs. No surveyed tool covers the full roster at predicate
+level; the highest result is kstatus at 47/275 (17.1%).
+
 Assign `no_applicable_rule` only after reviewing every directly mappable group
 and every decomposed branch relevant to the scenario's resources and mechanisms.
 An analyzer, adapter, module, report kind, or runbook that could contain a

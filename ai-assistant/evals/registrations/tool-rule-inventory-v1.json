@@ -9436,7 +9436,7 @@
               "symbol": "checkPorts"
             }
           ],
-          "input_resources": ["Service", "Endpoints"],
+          "input_resources": ["Service", "Pod"],
           "predicate_summary": "A non-ExternalName Service selector matches no Pod labels."
         },
         {

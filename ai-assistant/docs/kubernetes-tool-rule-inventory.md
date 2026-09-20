@@ -41,3 +41,7 @@ Review status: `provisional`. Source revisions and extraction methods are record
 Coverage mapping may use `semantic_group_id` values to batch review, but the final status remains occurrence-specific. Copy a status across a group only after verifying equivalent predicates, inputs, applicability, and expected outcomes. NPD patterns, kube-bench profiles, and policy-engine variants can share a semantic label while requiring different fixtures. Tool-local groups are provisional; cross-tool equivalence is a separate reviewed step.
 
 Summaries support triage and search, not scenario generation by themselves. Before generating a case, the mapping phase must record the subject resource or component, required observations and mechanisms, trigger predicate, expected finding, healthy/negative condition, temporal behavior, platform/version scope, and whether the unit is executable in the available cluster profile. Missing or ambiguous fields require an `unsure` mapping rather than inference from wording.
+
+The provisional [tool-to-scenario coverage report](kubernetes-tool-scenario-coverage.md)
+maps this inventory to all 275 current scenario IDs through 12 normalized
+evaluator contracts.

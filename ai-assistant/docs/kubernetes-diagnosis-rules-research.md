@@ -35,6 +35,69 @@ hand-authored rules on hidden healthy, broken, stale-evidence, and confounded
 cases. If source derivation does not reduce authoring effort or preserve
 precision, it should remain a discovery aid rather than a construction system.
 
+## Pinned rule inventories
+
+Coverage mapping starts from the complete pinned lists in
+[Kubernetes tool rule inventories](kubernetes-tool-rule-inventory.md). The
+human-readable index links to one list per tool and every listed unit links to
+the exact source or data file at the inspected revision. The normalized
+machine-readable snapshot is
+[`tool-rule-inventory-v1.json`](../evals/registrations/tool-rule-inventory-v1.json)
+and is validated by
+[`tool-rule-inventory.schema.json`](../evals/schema/tool-rule-inventory.schema.json).
+
+The provisional snapshot contains 7,427 source occurrences in 2,654 tool-local
+semantic groups from 23 tools. Of those occurrences, 5,736 are shaped like
+direct predicates, 1,392 require decomposition before mapping, and 299 are
+reference-only artifacts. Occurrences preserve profile, platform, source, and
+version variants; semantic groups prevent those variants from being mistaken
+for independent scenario requirements. At the group level, the review workload
+is 1,144 direct-predicate groups, 1,211 groups requiring decomposition, and 299
+reference-only groups. Cross-tool groups have not yet been merged.
+
+The inventory does not assign scenario coverage. That separation ensures the
+next mapping step can mark each unit `covered`, `unsure`, or `uncovered` without
+changing the source inventory or hiding gaps. `direct_predicate` is eligibility
+for mapping review, not evidence that a current scenario covers the item.
+
+The mapping must provide two projections:
+
+1. **Rule-centric:** every semantic group is `covered`, `unsure`, or
+   `uncovered`, with the exact existing scenario IDs and a short evidence-based
+   rationale.
+2. **Scenario-centric:** every tool × scenario cell reports `covered`, `unsure`,
+   `uncovered`, or `no_applicable_rule`. `no_applicable_rule` means the complete
+   inspected inventory for that tool has no rule whose declared subject,
+   evidence, and predicate apply to the scenario. It does not mean the tool was
+   unavailable, lacked permission, lacked telemetry, failed to run, or produced
+   no finding; those are separate execution dispositions.
+
+Assign `no_applicable_rule` only after reviewing every directly mappable group
+and every decomposed branch relevant to the scenario's resources and mechanisms.
+An analyzer, adapter, module, report kind, or runbook that could contain a
+relevant branch remains `unsure` until decomposed; it must not be converted to
+`no_applicable_rule` from its title alone.
+
+Semantic groups are review batches, not automatic equivalence classes. Final
+coverage remains occurrence-specific unless the mapper verifies that grouped
+entries have equivalent predicates, inputs, applicability, and outcomes. Before
+a rule can generate a scenario, enrich its mapping with subject resources,
+required observations and mechanisms, trigger predicate, expected finding,
+healthy or negative condition, temporal behavior, platform/version scope, and
+cluster-profile feasibility. A title and summary alone are insufficient.
+
+Use upstream IDs when they exist. For libraries without a stable rule registry,
+derived IDs include a human-readable semantic element plus a short content or
+source hash, for example
+`node-problem-detector:source:kernel-monitor-oomkilling:<hash>` or
+`coroot:source:check-memoryoom:<hash>`. Each such row records
+`id_origin: derived`, its native granularity, a pinned source path, and a direct
+source link. A derived ID is an inventory handle; it does not claim that the
+upstream project considers the referenced adapter, symbol, module, or runbook an
+independent diagnosis rule. The extraction method and caveat are recorded per
+tool. The snapshot remains `provisional` because the cross-repository extractor
+is not yet repository-owned or independently reproduced.
+
 ## Could rules pass the current 275 scenarios?
 
 Yes, a closed-world deterministic product could probably pass all 275 current
@@ -307,7 +370,7 @@ was silently excluded because of a parser error.
 
 | Project                                                                                                                     | Pinned revision                            |                                                                                                           Native inventory | Diagnosis boundary                                                                                                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Kyverno policies](https://github.com/kyverno/policies/tree/2716f4a26a3c27590a1d6d960dee4ce043e4fa4a)                       | `2716f4a26a3c27590a1d6d960dee4ce043e4fa4a` |               1,276 policy documents; 548 unique API-version/kind/name identities; 683 exact-distinct API/kind/spec bodies | Includes legacy, CEL, validation, mutation, generation, cleanup, image-policy, example, and repeated publication forms. Identity or body counts still overcount independent intent.          |
+| [Kyverno policies](https://github.com/kyverno/policies/tree/2716f4a26a3c27590a1d6d960dee4ce043e4fa4a)                       | `2716f4a26a3c27590a1d6d960dee4ce043e4fa4a` |                           646 canonical policy documents; 513 unique API-version/kind/name identities; 337 semantic groups | Excludes hidden Chainsaw/Kyverno test fixtures. Includes legacy, CEL, validation, mutation, generation, cleanup, image-policy, and repeated engine forms.                                    |
 | [Gatekeeper library](https://github.com/open-policy-agent/gatekeeper-library/tree/22a40962f83268769bcec5dfe55e44b5a85c392a) | `22a40962f83268769bcec5dfe55e44b5a85c392a` |                                                                49 unique `ConstraintTemplate` objects and 49 suite objects | Parameterized admission/audit policy. A violation can explain rejection or non-compliance, not arbitrary runtime failure.                                                                    |
 | [Kubescape Regolibrary](https://github.com/kubescape/regolibrary/tree/28642707ea4eeea42cf031f0933d0d9fd451d610)             | `28642707ea4eeea42cf031f0933d0d9fd451d610` |                                                                    289 control records referencing 303 distinct rule names | Controls group rules into security/compliance findings; many require host, cloud, vulnerability, or policy evidence outside ordinary Headlamp API access.                                    |
 | [Trivy Operator](https://github.com/aquasecurity/trivy-operator/tree/7107830178ae50e96e9f09d98976e51e6152759f)              | `7107830178ae50e96e9f09d98976e51e6152759f` |                                                                                                        12 report CRD kinds | The operator federates vulnerability, configuration, secret, RBAC, infrastructure, compliance, and SBOM results. Rule/database counts belong to upstream scanners and change independently.  |
@@ -315,12 +378,11 @@ was silently excluded because of a parser error.
 | [Pluto](https://github.com/FairwindsOps/pluto/tree/9495152d614581a988e31414fa64e8b82474d956)                                | `9495152d614581a988e31414fa64e8b82474d956` |                                                  112 deprecation entries; 111 unique component/version/kind/removal tuples | Preventive upgrade evidence: 86 Kubernetes, 24 cert-manager, and 2 Istio entries. One Kubernetes audit-policy tuple is duplicated. Live API conversion means submission provenance matters.  |
 | [Falco rules](https://github.com/falcosecurity/rules/tree/e822409d8a2a28c9719f56ace66e8cadebfd2bc3)                         | `e822409d8a2a28c9719f56ace66e8cadebfd2bc3` |                                                              95 unique runtime rules: 25 stable, 31 incubating, 39 sandbox | Runtime threat detections over system/plugin events. Maturity, exceptions, engine/plugin versions, and deployment context are part of applicability; an alert is not an incident root cause. |
 
-The Kyverno counts include repeated publication/example material, and one
-identity can have several distinct specs across engines or generations. The
-kube-bench count demonstrates the opposite ambiguity: 429 IDs expand into 1,007
-normalized texts because vendors and benchmark versions reuse or modify
-identifiers. Neither total should be compared directly with 75-120 causal
-trigger families.
+The Kyverno counts exclude hidden test resources but retain canonical alternate
+engines or generations of related policy intent. The kube-bench count
+demonstrates the opposite ambiguity: 429 IDs expand into 1,007 normalized texts
+because vendors and benchmark versions reuse or modify identifiers. Neither
+total should be compared directly with 75-120 causal trigger families.
 
 The practical integration opportunity is typed federation. Headlamp can consume
 Gatekeeper/Kyverno policy reports, Trivy CRDs, Kubescape controls, Falco Events,

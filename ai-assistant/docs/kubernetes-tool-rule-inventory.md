@@ -1,0 +1,57 @@
+# Kubernetes tool rule inventories
+
+Provisional inventory of 7427 source occurrences in 2654 tool-local semantic groups from 23 pinned tools. These are inventory handles, not scenario coverage or cross-tool equivalence claims.
+
+| Tool                            | Native unit           | Source identity | Mapping readiness        | Occurrences | Semantic groups | List                                                | Pinned source                                                                                                   |
+| ------------------------------- | --------------------- | --------------- | ------------------------ | ----------: | --------------: | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Headlamp diagnostics            | `diagnosis_reason`    | `derived`       | `direct_predicate`       |           8 |               8 | [rules](rule-inventories/headlamp.md)               | [source](https://github.com/illume/headlamp/tree/10bfb15261a7cfe0660e66fe2375c1bb98f89432)                      |
+| K8sGPT                          | `analyzer`            | `native`        | `requires_decomposition` |          31 |              31 | [rules](rule-inventories/k8sgpt.md)                 | [source](https://github.com/k8sgpt-ai/k8sgpt/tree/8cb270e0800e9195d0ba4540fab1f458cac15117)                     |
+| kube-linter                     | `check`               | `native`        | `direct_predicate`       |          63 |              63 | [rules](rule-inventories/kube-linter.md)            | [source](https://github.com/stackrox/kube-linter/tree/3b485c42f4b3445634bd8fe5f76f4aace15d42b5)                 |
+| kube-score                      | `check`               | `native`        | `direct_predicate`       |          39 |              39 | [rules](rule-inventories/kube-score.md)             | [source](https://github.com/zegl/kube-score/tree/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa)                      |
+| Polaris                         | `check`               | `native`        | `direct_predicate`       |          44 |              44 | [rules](rule-inventories/polaris.md)                | [source](https://github.com/FairwindsOps/polaris/tree/1038b3c1e51fd92a8b12f25d193e842a92dc3d25)                 |
+| Node Problem Detector           | `detector_rule`       | `derived`       | `direct_predicate`       |          55 |              40 | [rules](rule-inventories/node-problem-detector.md)  | [source](https://github.com/kubernetes/node-problem-detector/tree/5f40c13970d90844b439b1532b3f97fd69fee58a)     |
+| Argo CD resource health         | `health_adapter`      | `derived`       | `requires_decomposition` |         293 |             293 | [rules](rule-inventories/argo-health.md)            | [source](https://github.com/argoproj/argo-cd/tree/7fe2ec7cf937dd839fb9ec8618dcc4642f90c2da)                     |
+| Kubernetes mixin                | `alert`               | `native`        | `direct_predicate`       |          48 |              48 | [rules](rule-inventories/kubernetes-mixin.md)       | [source](https://github.com/kubernetes-sigs/kubernetes-mixin/tree/7f47ec17cfb9be7ff4bd4e830648f50124459ebb)     |
+| cli-utils kstatus               | `health_adapter`      | `derived`       | `requires_decomposition` |          16 |              11 | [rules](rule-inventories/kstatus.md)                | [source](https://github.com/kubernetes-sigs/cli-utils/tree/5895ad6c17dd06b99c1e5c8af17e2b12a3504fad)            |
+| Cluster API condition utilities | `source_symbol`       | `derived`       | `reference_only`         |         124 |             124 | [rules](rule-inventories/cluster-api-conditions.md) | [source](https://github.com/kubernetes-sigs/cluster-api/tree/3d12cb64549b869e753f6f9abf7e683e404733cb)          |
+| Prometheus Operator runbooks    | `runbook`             | `derived`       | `reference_only`         |         108 |             108 | [rules](rule-inventories/prometheus-runbooks.md)    | [source](https://github.com/prometheus-operator/runbooks/tree/a685d14cf5128bb30e2bf935c3983decd772d885)         |
+| Kubevious rules library         | `rule`                | `native`        | `direct_predicate`       |          36 |              36 | [rules](rule-inventories/kubevious.md)              | [source](https://github.com/kubevious/rules-library/tree/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9)              |
+| Popeye                          | `issue_code`          | `native`        | `requires_decomposition` |         117 |             117 | [rules](rule-inventories/popeye.md)                 | [source](https://github.com/derailed/popeye/tree/5d07838165bb64fa70c594f2b46ef14a9080782f)                      |
+| Robusta playbooks               | `playbook_module`     | `derived`       | `reference_only`         |          55 |              55 | [rules](rule-inventories/robusta.md)                | [source](https://github.com/robusta-dev/robusta/tree/96c8a3fcaf2e82e367445ce3d8dc6e242b0c45de)                  |
+| Coroot auditor                  | `audit_symbol`        | `derived`       | `requires_decomposition` |          57 |              57 | [rules](rule-inventories/coroot.md)                 | [source](https://github.com/coroot/coroot/tree/ce49b11fa079683eddfba318c71089c3449bc93b)                        |
+| Kuberhealthy checks             | `synthetic_check`     | `native`        | `requires_decomposition` |          13 |              13 | [rules](rule-inventories/kuberhealthy.md)           | [source](https://github.com/kuberhealthy/kuberhealthy/tree/243a71b7d9ab7b2079535f810d3af1d8272a0bc0)            |
+| Kyverno policies                | `policy_identity`     | `native`        | `requires_decomposition` |         513 |             337 | [rules](rule-inventories/kyverno.md)                | [source](https://github.com/kyverno/policies/tree/2716f4a26a3c27590a1d6d960dee4ce043e4fa4a)                     |
+| Gatekeeper library              | `constraint_template` | `native`        | `requires_decomposition` |          49 |              49 | [rules](rule-inventories/gatekeeper.md)             | [source](https://github.com/open-policy-agent/gatekeeper-library/tree/22a40962f83268769bcec5dfe55e44b5a85c392a) |
+| Kubescape Regolibrary           | `rule_name`           | `native`        | `requires_decomposition` |         303 |             303 | [rules](rule-inventories/kubescape.md)              | [source](https://github.com/kubescape/regolibrary/tree/28642707ea4eeea42cf031f0933d0d9fd451d610)                |
+| Trivy Operator                  | `report_kind`         | `native`        | `reference_only`         |          12 |              12 | [rules](rule-inventories/trivy-operator.md)         | [source](https://github.com/aquasecurity/trivy-operator/tree/7107830178ae50e96e9f09d98976e51e6152759f)          |
+| kube-bench                      | `profile_check`       | `derived`       | `direct_predicate`       |        5236 |             660 | [rules](rule-inventories/kube-bench.md)             | [source](https://github.com/aquasecurity/kube-bench/tree/9f133cb7509ce1dbedfc860e94474588000e25ac)              |
+| Pluto                           | `deprecation_entry`   | `derived`       | `direct_predicate`       |         112 |             111 | [rules](rule-inventories/pluto.md)                  | [source](https://github.com/FairwindsOps/pluto/tree/9495152d614581a988e31414fa64e8b82474d956)                   |
+| Falco rules                     | `runtime_rule`        | `native`        | `direct_predicate`       |          95 |              95 | [rules](rule-inventories/falco.md)                  | [source](https://github.com/falcosecurity/rules/tree/e822409d8a2a28c9719f56ace66e8cadebfd2bc3)                  |
+
+Derived IDs include a human-readable semantic segment plus a short SHA-256 suffix. `native` means the semantic identity originates upstream; every row ID is still namespaced by this inventory. `derived` IDs identify pinned artifacts without a stable upstream rule ID.
+
+Review status: `provisional`. Source revisions and extraction methods are recorded, but the cross-repository extractor is not yet repository-owned; treat this snapshot as provisional.
+
+## Mapping readiness
+
+- `direct_predicate`: review the predicate against scenario setup, observations,
+  and oracle before assigning `covered`, `unsure`, or `uncovered`.
+- `requires_decomposition`: the listed analyzer, adapter, policy, check, or
+  workflow contains multiple branches; decompose those branches before claiming
+  complete coverage.
+- `reference_only`: the item is a runbook, report kind, helper symbol, or module
+  that can inform scenario design but is not itself an executable predicate.
+
+Coverage mapping may use `semantic_group_id` values to batch review, but the
+final status remains occurrence-specific. Copy a status across a group only
+after verifying equivalent predicates, inputs, applicability, and expected
+outcomes. NPD patterns, kube-bench profiles, and policy-engine variants can
+share a semantic label while requiring different fixtures. Tool-local groups
+are provisional; cross-tool equivalence is a separate reviewed step.
+
+Summaries support triage and search, not scenario generation by themselves.
+Before generating a case, the mapping phase must record the subject resource or
+component, required observations and mechanisms, trigger predicate, expected
+finding, healthy/negative condition, temporal behavior, platform/version scope,
+and whether the unit is executable in the available cluster profile. Missing or
+ambiguous fields require an `unsure` mapping rather than inference from wording.

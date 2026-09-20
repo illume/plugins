@@ -5,7 +5,7 @@ import {
 } from './structured.ts';
 
 describe('shared structured diagnosis', () => {
-  it('expands compact output and adds the qualified pending-Pod taxonomy', () => {
+  it('expands compact output without adding semantic hypotheses', () => {
     const result = validateCompactDiagnosisSubmission(
       {
         alternative_dispositions: ['A taint may exclude the Pod'],
@@ -25,12 +25,7 @@ describe('shared structured diagnosis', () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data.evidence_refs).toEqual(['pod-phase']);
-    expect(result.data.alternative_dispositions).toEqual([
-      'Insufficient CPU or memory resources on available Nodes may prevent Pod scheduling',
-      'Node affinity or nodeSelector constraints may exclude available Nodes',
-      'An unbound PVC may prevent Pod scheduling',
-      'A taint may exclude the Pod',
-    ]);
+    expect(result.data.alternative_dispositions).toEqual(['A taint may exclude the Pod']);
     expect(createCompactDiagnosisProviderSchema().required).toEqual([
       'alternative_dispositions',
       'uncertainty',

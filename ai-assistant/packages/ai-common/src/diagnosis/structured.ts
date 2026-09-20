@@ -20,12 +20,6 @@ export const COMPACT_DIAGNOSIS_INSTRUCTION =
   'proposed action with operation "no_action". If the evidence cannot determine one cause, set is_uncertain ' +
   'true and list distinct, independently testable mechanisms as separate concise alternatives.';
 
-const pendingPodHypothesisFamilies = [
-  'Insufficient CPU or memory resources on available Nodes may prevent Pod scheduling',
-  'Node affinity or nodeSelector constraints may exclude available Nodes',
-  'An unbound PVC may prevent Pod scheduling',
-] as const;
-
 const proposedActionSchema = z
   .object({
     operation: z.enum(['no_action', 'unscored_novel_strategy']),
@@ -87,14 +81,6 @@ export function validateCompactDiagnosisSubmission(
 ): { success: true; data: Record<string, unknown> } | { success: false; error: string } {
   const parsed = compactDiagnosisResponseSchema.safeParse(response);
   if (!parsed.success) return { success: false, error: parsed.error.message };
-  const hasOnlyPendingPodPhase =
-    observations.length > 0 &&
-    observations.every(
-      observation =>
-        observation.resource_ref.startsWith('pod/') &&
-        observation.field_path === 'status.phase' &&
-        observation.observed_value === 'Pending'
-    );
   return {
     success: true,
     data: {
@@ -107,10 +93,6 @@ export function validateCompactDiagnosisSubmission(
       resource_refs: [...new Set(observations.map(observation => observation.resource_ref))],
       evidence_refs: [...new Set(evidenceIds)],
       ...parsed.data,
-      alternative_dispositions:
-        hasOnlyPendingPodPhase && parsed.data.uncertainty.is_uncertain
-          ? [...new Set([...pendingPodHypothesisFamilies, ...parsed.data.alternative_dispositions])]
-          : parsed.data.alternative_dispositions,
     },
   };
 }

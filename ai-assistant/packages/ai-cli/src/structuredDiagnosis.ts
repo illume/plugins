@@ -52,22 +52,6 @@ export interface StructuredRepairContract {
   }>;
 }
 
-const pendingPodHypothesisFamilies = [
-  {
-    id: 'insufficient_node_capacity',
-    disposition:
-      'Insufficient CPU or memory resources on available Nodes may prevent Pod scheduling',
-  },
-  {
-    id: 'scheduling_constraints',
-    disposition: 'Node affinity or nodeSelector constraints may exclude available Nodes',
-  },
-  {
-    id: 'unbound_storage_claim',
-    disposition: 'An unbound PVC may prevent Pod scheduling',
-  },
-] as const;
-
 const causeFactSchema = z
   .object({
     resource_ref: z.string(),
@@ -147,13 +131,6 @@ export function validateDiagnosisSubmission(
   if (!parsed.success) return { success: false, error: parsed.error.message };
   if (observations.length === 0) return { success: true, data: parsed.data };
 
-  const hasOnlyPendingPodPhase = observations.every(
-    observation =>
-      observation.resource_ref.startsWith('pod/') &&
-      observation.field_path === 'status.phase' &&
-      observation.observed_value === 'Pending'
-  );
-
   const observationKey = (resourceRef: string, fieldPath: string, observedValue: string) =>
     JSON.stringify([resourceRef, fieldPath, observedValue]);
   const observationsByFact = new Map<string, StructuredDiagnosisObservation[]>();
@@ -188,15 +165,6 @@ export function validateDiagnosisSubmission(
       cause_facts: canonicalFacts,
       resource_refs: [...new Set(observations.map(observation => observation.resource_ref))],
       evidence_refs: [...new Set(observations.map(observation => observation.evidence_id))],
-      alternative_dispositions:
-        hasOnlyPendingPodPhase && parsed.data.uncertainty.is_uncertain
-          ? [
-              ...new Set([
-                ...pendingPodHypothesisFamilies.map(family => family.disposition),
-                ...parsed.data.alternative_dispositions,
-              ]),
-            ]
-          : parsed.data.alternative_dispositions,
     },
   };
 }

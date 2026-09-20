@@ -248,7 +248,7 @@ describe('createDiagnosisSubmissionSchema', () => {
     expect(result).toEqual({ success: true, data: submission });
   });
 
-  it('canonicalizes hypothesis families for an uncertain Pending Pod phase', () => {
+  it('does not add hypothesis families for an uncertain Pending Pod phase', () => {
     const observations = [
       {
         evidence_id: 'pod-evidence',
@@ -275,8 +275,6 @@ describe('createDiagnosisSubmissionSchema', () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data.alternative_dispositions).toEqual([
-      'Insufficient CPU or memory resources on available Nodes may prevent Pod scheduling',
-      'Node affinity or nodeSelector constraints may exclude available Nodes',
       'An unbound PVC may prevent Pod scheduling',
       'Resource constraints may block scheduling',
     ]);

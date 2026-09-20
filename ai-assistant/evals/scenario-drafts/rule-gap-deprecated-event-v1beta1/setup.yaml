@@ -1,0 +1,13 @@
+apiVersion: events.k8s.io/v1beta1
+kind: Event
+metadata:
+  name: event-v1beta1
+eventTime: '2026-09-20T00:00:00Z'
+action: ControlledCheck
+reason: Fixture
+regarding:
+  apiVersion: v1
+  kind: Pod
+  name: fixture-pod
+reportingController: evals.headlamp-k8s.io
+reportingInstance: v4

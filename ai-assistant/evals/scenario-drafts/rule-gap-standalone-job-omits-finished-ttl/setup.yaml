@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retained-completed-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532

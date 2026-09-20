@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-exposes-privileged-port",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/privileged-port",
+        "field_path": "spec.template.spec.containers[0].ports[0].containerPort",
+        "observed_value": "80",
+        "description": "The container declares a port below 1024."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/privileged-port",
+      "field_path": "spec.template.spec.containers[0].ports[0].containerPort",
+      "observed_value": "8080",
+      "description": "The healthy container listens on an unprivileged port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-582834c8fb7e78f7"
+}

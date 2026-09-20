@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-certificaterequest-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/certificaterequest/certificaterequest-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "cert-manager.io/v1beta1",
+        "description": "The concrete CertificateRequest manifest uses removed API version cert-manager.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/certificaterequest/certificaterequest-v1beta1",
+      "field_path": "apiVersion",
+      "observed_value": "cert-manager.io/v1",
+      "description": "The current CertificateRequest API version is cert-manager.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-45cc709f1e5dd003"
+}

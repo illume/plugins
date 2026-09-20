@@ -22,7 +22,8 @@
       "enum": [
         "registrations/rule-gap-scenarios-v1.json",
         "registrations/rule-gap-scenarios-v2.json",
-        "registrations/rule-gap-scenarios-v3.json"
+        "registrations/rule-gap-scenarios-v3.json",
+        "registrations/rule-gap-scenarios-v4.json"
       ]
     },
     "scenario_id": { "type": "string", "pattern": "^rule-gap-[a-z0-9-]+$" },

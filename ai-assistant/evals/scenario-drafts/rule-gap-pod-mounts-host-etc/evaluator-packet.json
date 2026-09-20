@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-mounts-host-etc",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/host-etc-reader",
+        "field_path": "spec.volumes[0].hostPath.path",
+        "observed_value": "/etc",
+        "description": "The Pod exposes the node etc directory through a hostPath volume."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/host-etc-reader",
+      "field_path": "spec.volumes[0].hostPath.path",
+      "observed_value": "hostPath field absent",
+      "description": "The healthy Pod uses only namespaced or ephemeral storage."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a88e3edf2006e546"
+}

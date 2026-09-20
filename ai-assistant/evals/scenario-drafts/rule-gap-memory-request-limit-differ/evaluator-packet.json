@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-memory-request-limit-differ",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/memory-request-limit-differ",
+        "field_path": "resources.requests.memory + resources.limits.memory",
+        "observed_value": "32Mi; 64Mi",
+        "description": "Container memory request differs from its limit."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/memory-request-limit-differ",
+      "field_path": "resources.requests.memory + resources.limits.memory",
+      "observed_value": "64Mi; 64Mi",
+      "description": "The healthy container has the exact reviewed resource request and limit values."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d7beaa826c6e2c0c"
+}

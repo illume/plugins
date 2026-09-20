@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-certificate-references-missing-issuer",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/certificate/orphan-certificate",
+        "field_path": "spec.issuerRef + Issuer inventory",
+        "observed_value": "Issuer/missing-issuer; 0 matches",
+        "description": "The Certificate names an Issuer that does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/certificate/orphan-certificate",
+      "field_path": "spec.issuerRef + Issuer inventory",
+      "observed_value": "Issuer/team-issuer; 1 match",
+      "description": "The healthy Certificate resolves its issuer."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b15f5140afd57079"
+}

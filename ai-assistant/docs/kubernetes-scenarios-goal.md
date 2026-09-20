@@ -123,7 +123,7 @@ risk review are complete.
 | Canonical capability registry | Not complete   | Multi-agent mapping for every direct predicate and decomposed branch            |
 | Tail risk weights             | Not frozen     | Reproducible scorer-agent outputs and critic resolution                         |
 | Draft scenario targeting      | 142 drafts     | Canonical reconciliation after registry review                                  |
-| Fixture implementation        | 200 authored   | Observation execution and cleanup evidence for generated bundles                |
+| Fixture implementation        | 305 authored   | Observation execution and cleanup evidence for generated bundles                |
 | Qualification                 | Not complete   | Positive, healthy, temporal, uncertainty, and confounder evidence as applicable |
 | Generated challenge batches   | Not complete   | Post-freeze generation, execution, and published provenance                     |
 
@@ -208,4 +208,5 @@ not retroactively become qualification evidence for that frozen engine version.
 - [First rule-gap draft batch](kubernetes-rule-gap-scenarios.md)
 - [Marginal rule-gap draft batch](kubernetes-rule-gap-scenarios-v2.md)
 - [Cross-tool rule-gap draft batch](kubernetes-rule-gap-scenarios-v3.md)
+- [Undercovered-tool rule-gap draft batch](kubernetes-rule-gap-scenarios-v4.md)
 - [Scenario implementation progress](kubernetes-scenario-implementation-progress.md)

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sys-admin-capability
+  labels:
+    app: sys-admin-capability
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          add:
+            - SYS_ADMIN
+          drop:
+            - ALL
+        runAsUser: 1000

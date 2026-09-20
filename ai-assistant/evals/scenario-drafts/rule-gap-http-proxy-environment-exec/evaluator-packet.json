@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-http-proxy-environment-exec",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=http-proxy-environment-exec]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "HTTP_PROXY=http://127.0.0.1:9 /bin/sh -c \"printf proxy-env-exec\"; proxy-env-exec with HTTP_PROXY=http://127.0.0.1:9",
+        "description": "Program executes with an HTTP proxy environment variable inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=http-proxy-environment-exec]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b910949228ac24ad"
+}

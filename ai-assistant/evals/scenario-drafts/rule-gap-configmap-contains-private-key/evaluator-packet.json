@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-configmap-contains-private-key",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/misplaced-key",
+        "field_path": "data[tls.key]",
+        "observed_value": "PEM private-key header and footer present",
+        "description": "Private key material is stored in a non-secret ConfigMap."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/misplaced-key",
+      "field_path": "data[tls.key]",
+      "observed_value": "data contains only non-sensitive configuration",
+      "description": "The healthy ConfigMap contains no credential or key patterns."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d90848406ee6210c"
+}

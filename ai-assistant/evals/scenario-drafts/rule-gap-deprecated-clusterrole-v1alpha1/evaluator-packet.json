@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-clusterrole-v1alpha1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/clusterrole/clusterrole-v1alpha1",
+        "field_path": "apiVersion",
+        "observed_value": "rbac.authorization.k8s.io/v1alpha1",
+        "description": "The concrete ClusterRole manifest uses removed API version rbac.authorization.k8s.io/v1alpha1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/clusterrole/clusterrole-v1alpha1",
+      "field_path": "apiVersion",
+      "observed_value": "rbac.authorization.k8s.io/v1",
+      "description": "The current ClusterRole API version is rbac.authorization.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c6147445f0ab66e5"
+}

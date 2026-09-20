@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-service-has-single-endpoint",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "endpointslice/single-backend",
+        "field_path": "endpoints[?conditions.ready=true]",
+        "observed_value": "exactly 1 endpoint",
+        "description": "The Service backend has no redundancy because only one endpoint is ready."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "endpointslice/single-backend",
+      "field_path": "endpoints[?conditions.ready=true]",
+      "observed_value": "at least 2 endpoints",
+      "description": "The healthy Service has at least two ready endpoints."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ec22e0a8ffe7f5cb"
+}

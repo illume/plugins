@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-manifest-fails-schema-validation",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/pod/schema-invalid-pod",
+        "field_path": "spec.restartPolice",
+        "observed_value": "Never",
+        "description": "The manifest contains the unknown restartPolice field."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/pod/schema-invalid-pod",
+      "field_path": "spec.restartPolice",
+      "observed_value": "field absent; spec.restartPolicy=Never",
+      "description": "The healthy manifest uses the recognized restartPolicy field."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-594d79bb8eb13d88"
+}

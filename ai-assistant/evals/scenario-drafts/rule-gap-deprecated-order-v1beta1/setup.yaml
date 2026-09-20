@@ -1,0 +1,11 @@
+apiVersion: acme.cert-manager.io/v1beta1
+kind: Order
+metadata:
+  name: order-v1beta1
+spec:
+  dnsNames:
+    - order.example.test
+  issuerRef:
+    name: issuer
+    kind: Issuer
+  request: Y29udHJvbGxlZC1vcmRlcg==

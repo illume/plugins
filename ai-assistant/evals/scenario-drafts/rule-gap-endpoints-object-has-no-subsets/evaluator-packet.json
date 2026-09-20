@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-endpoints-object-has-no-subsets",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "endpoints/empty-subsets",
+        "field_path": "subsets",
+        "observed_value": "[]",
+        "description": "The Endpoints object contains no address and port subsets."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "endpoints/empty-subsets",
+      "field_path": "subsets",
+      "observed_value": "[{addresses:[{ip:192.0.2.10}],ports:[{port:8080}]}]",
+      "description": "The healthy object contains one address and port subset."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a3f5c456e0064333"
+}

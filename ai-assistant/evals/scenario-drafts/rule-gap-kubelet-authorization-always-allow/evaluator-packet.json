@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-authorization-always-allow",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/kubelet-authorization-config",
+        "field_path": "data.component-config.yaml + data.predicate.json",
+        "observed_value": "apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nauthorization:\n  mode: AlwaysAllow; {\"path\":\"authorization.mode\",\"operator\":\"equals\",\"value\":\"AlwaysAllow\"}",
+        "description": "Kubelet authorization mode is AlwaysAllow is present in the inert component configuration fixture."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/kubelet-authorization-config",
+      "field_path": "data.component-config.yaml + data.predicate.json",
+      "observed_value": "apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nauthorization:\n  mode: Webhook",
+      "description": "The healthy component configuration satisfies the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4dead2150c20b8c3"
+}

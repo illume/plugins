@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-standalone-job-omits-finished-ttl",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/retained-completed-job",
+        "field_path": "spec.ttlSecondsAfterFinished",
+        "observed_value": "field absent",
+        "description": "The standalone Job has no bounded cleanup TTL."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/retained-completed-job",
+      "field_path": "spec.ttlSecondsAfterFinished",
+      "observed_value": "300",
+      "description": "The healthy Job is deleted 300 seconds after completion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-85c4108cd7ecd88b"
+}

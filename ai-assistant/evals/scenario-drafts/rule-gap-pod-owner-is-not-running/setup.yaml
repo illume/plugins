@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: failed-owner
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: failed-owner
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: app
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+          command:
+            - /bin/sh
+            - '-c'
+            - exit 1

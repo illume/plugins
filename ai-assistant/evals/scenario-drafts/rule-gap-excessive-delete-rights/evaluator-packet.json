@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-excessive-delete-rights",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "clusterrole/broad-deleter",
+        "field_path": "rules[0]",
+        "observed_value": "resources=[deployments,statefulsets,daemonsets]; verbs=[delete,deletecollection]",
+        "description": "ClusterRole grants broad delete rights."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "clusterrole/broad-deleter",
+      "field_path": "rules[0]",
+      "observed_value": "resources=[deployments]; verbs=[get,list]",
+      "description": "The healthy role is limited to read-only access to the named ordinary resource."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-adc258ca1746dc2a"
+}

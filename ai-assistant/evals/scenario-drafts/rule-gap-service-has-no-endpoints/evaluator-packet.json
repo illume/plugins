@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-service-has-no-endpoints",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "service/empty-service",
+        "field_path": "spec.selector + EndpointSlice inventory",
+        "observed_value": "{app:missing-backend}; 0 ready endpoints",
+        "description": "The Service selector produces no ready endpoints."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/empty-service",
+      "field_path": "spec.selector + EndpointSlice inventory",
+      "observed_value": "{app:web}; 2 ready endpoints",
+      "description": "The healthy Service has two ready endpoints."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-56b41d72d4b2f252"
+}

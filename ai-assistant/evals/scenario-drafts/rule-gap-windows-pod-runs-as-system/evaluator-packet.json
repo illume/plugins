@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-windows-pod-runs-as-system",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/windows-pod-runs-as-system",
+        "field_path": "spec.securityContext.windowsOptions.runAsUserName",
+        "observed_value": "NT AUTHORITY\\SYSTEM",
+        "description": "Windows Pod runs as the SYSTEM account."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/windows-pod-runs-as-system",
+      "field_path": "spec.securityContext.windowsOptions.runAsUserName",
+      "observed_value": "ContainerUser",
+      "description": "The healthy Pod uses the reviewed non-root security setting."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4b7719a1d45d9b93"
+}

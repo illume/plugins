@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-rolebinding-grants-cluster-pod-exec",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "rolebinding/rolebinding-grants-cluster-pod-exec",
+        "field_path": "roleRef + referenced ClusterRole.rules[0]",
+        "observed_value": "apiGroups=[\"\"]; resources=[\"pods/exec\",\"pods/attach\"]; verbs=[\"create\"]",
+        "description": "RoleBinding grants cluster-scoped Pod exec and attach."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "rolebinding/rolebinding-grants-cluster-pod-exec",
+      "field_path": "roleRef + referenced ClusterRole.rules[0]",
+      "observed_value": "resources=[\"pods\"]; verbs=[\"get\",\"list\"]",
+      "description": "The healthy role cannot create exec or attach subresources."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fcbdd9333966614c"
+}

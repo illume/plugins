@@ -28,7 +28,8 @@ interface Coverage {
   source_catalog:
     | 'registrations/rule-gap-scenarios-v1.json'
     | 'registrations/rule-gap-scenarios-v2.json'
-    | 'registrations/rule-gap-scenarios-v3.json';
+    | 'registrations/rule-gap-scenarios-v3.json'
+    | 'registrations/rule-gap-scenarios-v4.json';
   scenario_id: string;
   implementation_status: 'authored';
   qualification_status: 'pending';
@@ -70,9 +71,9 @@ function resource(
   return match;
 }
 
-test('Scenarios Goal implementation batches contain two hundred valid pending bundles', () => {
+test('Scenarios Goal implementation batches contain 305 valid pending bundles', () => {
   const scenarios = loadAllScenarios(draftRoot);
-  assert.equal(scenarios.length, 200);
+  assert.equal(scenarios.length, 305);
   assert.ok(scenarios.every(scenario => scenario.manifest.provenance.lifecycle_state === 'draft'));
   assert.ok(
     scenarios.every(scenario => scenario.manifest.portfolio.qualification_status === 'pending')
@@ -88,7 +89,7 @@ test('Scenarios Goal implementation batches contain two hundred valid pending bu
   assert.equal(loadAllScenarios(scenariosRoot).length, 275);
 });
 
-test('draft coverage metadata exactly matches its v1, v2, or v3 source targets', () => {
+test('draft coverage metadata exactly matches its v1 through v4 source targets', () => {
   const schema = readJson<AnySchema>(
     path.join(evalRoot, 'schema', 'draft-scenario-coverage.schema.json')
   );
@@ -100,13 +101,14 @@ test('draft coverage metadata exactly matches its v1, v2, or v3 source targets',
       'registrations/rule-gap-scenarios-v1.json',
       'registrations/rule-gap-scenarios-v2.json',
       'registrations/rule-gap-scenarios-v3.json',
+      'registrations/rule-gap-scenarios-v4.json',
     ].map(relativePath => [relativePath, readJson<GapCatalogue>(path.join(evalRoot, relativePath))])
   );
   const coverageRows = readdirSync(draftRoot)
     .filter(directory => existsSync(path.join(draftRoot, directory, 'coverage.json')))
     .map(directory => readJson<Coverage>(path.join(draftRoot, directory, 'coverage.json')));
 
-  assert.equal(coverageRows.length, 200);
+  assert.equal(coverageRows.length, 305);
   const targetRuleIds = new Set<string>();
   const targetGroupIds = new Set<string>();
   const targetToolIds = new Set<string>();
@@ -131,8 +133,8 @@ test('draft coverage metadata exactly matches its v1, v2, or v3 source targets',
     coverage.target_semantic_group_ids.forEach(groupId => targetGroupIds.add(groupId));
     coverage.target_tool_ids.forEach(toolId => targetToolIds.add(toolId));
   }
-  assert.equal(targetRuleIds.size, 1780);
-  assert.equal(targetGroupIds.size, 440);
+  assert.equal(targetRuleIds.size, 1886);
+  assert.equal(targetGroupIds.size, 546);
   assert.equal(targetToolIds.size, 12);
 });
 

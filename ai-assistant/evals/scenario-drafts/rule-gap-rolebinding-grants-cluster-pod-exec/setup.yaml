@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rolebinding-grants-cluster-pod-exec-role
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods/exec
+      - pods/attach
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rolebinding-grants-cluster-pod-exec
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rolebinding-grants-cluster-pod-exec-role
+subjects:
+  - kind: ServiceAccount
+    name: operator

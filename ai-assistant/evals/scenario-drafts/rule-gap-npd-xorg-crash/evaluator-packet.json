@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-xorg-crash",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/xorgcrash-node-evidence",
+        "field_path": "data.source-evidence.json + data.predicate.json",
+        "observed_value": "{\"type\":\"XorgCrash\",\"count\":1,\"executable\":\"/usr/libexec/Xorg\",\"signal\":6}; recordType=XorgCrash; minimumCount=1",
+        "description": "Node adaptor records an Xorg crash appears once in the inert adaptor stream."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/xorgcrash-node-evidence",
+      "field_path": "data.source-evidence.json + data.predicate.json",
+      "observed_value": "type=Health; no XorgCrash records",
+      "description": "The healthy adaptor stream contains no XorgCrash record."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d2ca93e34538b96f"
+}

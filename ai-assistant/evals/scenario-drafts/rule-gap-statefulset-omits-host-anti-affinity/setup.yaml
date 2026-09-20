@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: co-locatable-stateful
+spec:
+  serviceName: co-locatable-stateful
+  replicas: 3
+  selector:
+    matchLabels:
+      app: co-locatable-stateful
+  template:
+    metadata:
+      labels:
+        app: co-locatable-stateful
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-database-process-spawns-shell",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=database-process-spawns-shell]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "cp /bin/sh /fixture/mysqld; /fixture/mysqld -c \"echo database-child-shell\"; database-child-shell",
+        "description": "Database-named process spawns a shell inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=database-process-spawns-shell]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-263ff4050a1f3a1a"
+}

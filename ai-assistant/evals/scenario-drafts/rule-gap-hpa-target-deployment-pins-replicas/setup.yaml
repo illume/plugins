@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaled-pinned
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: autoscaled-pinned
+  template:
+    metadata:
+      labels:
+        app: autoscaled-pinned
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: autoscaled-pinned
+spec:
+  minReplicas: 2
+  maxReplicas: 6
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: autoscaled-pinned
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

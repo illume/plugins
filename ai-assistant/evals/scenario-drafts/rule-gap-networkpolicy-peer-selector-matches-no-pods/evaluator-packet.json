@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-networkpolicy-peer-selector-matches-no-pods",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "networkpolicy/orphan-peer-policy",
+        "field_path": "spec.egress[0].to[0].podSelector + matching Pod inventory",
+        "observed_value": "{app: missing-peer}; 0 matches",
+        "description": "The egress peer selector resolves to no Pods in the policy namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/orphan-peer-policy",
+      "field_path": "spec.egress[0].to[0].podSelector + matching Pod inventory",
+      "observed_value": "{app: peer}; 1 match",
+      "description": "The healthy peer selector resolves to one intended Pod."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f324cd33feb55ee3"
+}

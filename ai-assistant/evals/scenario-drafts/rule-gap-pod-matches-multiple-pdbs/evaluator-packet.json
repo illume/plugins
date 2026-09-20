@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-matches-multiple-pdbs",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/multiply-protected",
+        "field_path": "metadata.labels + PodDisruptionBudget selector inventory",
+        "observed_value": "{app:multiply-protected}; matches pdb-a and pdb-b",
+        "description": "Two disruption budgets select the same Pod."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/multiply-protected",
+      "field_path": "metadata.labels + PodDisruptionBudget selector inventory",
+      "observed_value": "{app:multiply-protected}; matches only pdb-a",
+      "description": "The healthy Pod is governed by one disruption budget."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fe345bf40f0abac3"
+}

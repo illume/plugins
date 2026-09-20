@@ -136,6 +136,9 @@ changing the active roster.
 The [third rule-gap catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58
 non-overlapping specifications optimized for reproducible cross-tool states while
 excluding every active, v1, and v2 target.
+The [fourth rule-gap catalogue](kubernetes-rule-gap-scenarios-v4.md) adds 105
+non-overlapping specifications for the remaining direct-predicate frontier while
+excluding every active, v1, v2, and v3 target.
 
 Assign `no_applicable_rule` only after reviewing every directly mappable group
 and every decomposed branch relevant to the scenario's resources and mechanisms.

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-readiness-and-liveness-probes-identical",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/identical-probes",
+        "field_path": "spec.containers[0].readinessProbe + spec.containers[0].livenessProbe",
+        "observed_value": "both GET /healthz:8080 every 10s",
+        "description": "Readiness and liveness use the same endpoint and timing."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/identical-probes",
+      "field_path": "spec.containers[0].readinessProbe + spec.containers[0].livenessProbe",
+      "observed_value": "readiness GET /readyz; liveness GET /healthz",
+      "description": "The healthy container distinguishes traffic readiness from process liveness."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b1f5cb295b01d581"
+}

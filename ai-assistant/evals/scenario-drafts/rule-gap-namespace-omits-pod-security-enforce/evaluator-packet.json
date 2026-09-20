@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-namespace-omits-pod-security-enforce",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "namespace/unenforced-namespace",
+        "field_path": "metadata.labels[pod-security.kubernetes.io/enforce]",
+        "observed_value": "field absent",
+        "description": "The namespace audits and warns but does not enforce a Pod Security level."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "namespace/unenforced-namespace",
+      "field_path": "metadata.labels[pod-security.kubernetes.io/enforce]",
+      "observed_value": "restricted",
+      "description": "The healthy namespace enforces the restricted level."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ba878388f7534032"
+}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ephemeral-storage-request-limit-differ
+  labels:
+    app: ephemeral-storage-request-limit-differ
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532
+      resources:
+        requests:
+          ephemeral-storage: 32Mi
+        limits:
+          ephemeral-storage: 64Mi

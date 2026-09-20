@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-omits-linux-hardening-controls",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/linux-hardening-missing",
+        "field_path": "spec.containers[0].securityContext",
+        "observed_value": "{}; seccompProfile field absent; capabilities field absent",
+        "description": "The Linux container declares neither RuntimeDefault seccomp nor a drop-all capability policy."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/linux-hardening-missing",
+      "field_path": "spec.containers[0].securityContext",
+      "observed_value": "{seccompProfile:{type:RuntimeDefault},capabilities:{drop:[ALL]}}",
+      "description": "The healthy container combines RuntimeDefault seccomp with drop-all capabilities."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0d79faa45ba3e175"
+}

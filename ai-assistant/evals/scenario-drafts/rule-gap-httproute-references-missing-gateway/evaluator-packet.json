@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-httproute-references-missing-gateway",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/httproute/orphan-route",
+        "field_path": "spec.parentRefs[0].name + Gateway inventory",
+        "observed_value": "missing-gateway; 0 matches",
+        "description": "The route parent Gateway is absent."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/httproute/orphan-route",
+      "field_path": "spec.parentRefs[0].name + Gateway inventory",
+      "observed_value": "public-gateway; 1 match",
+      "description": "The healthy route resolves its parent Gateway."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-84912a85676bd765"
+}

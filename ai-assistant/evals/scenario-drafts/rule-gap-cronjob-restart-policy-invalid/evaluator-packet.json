@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cronjob-restart-policy-invalid",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/cronjob/invalid-restart-cronjob",
+        "field_path": "spec.jobTemplate.spec.template.spec.restartPolicy",
+        "observed_value": "Always",
+        "description": "The CronJob Pod template uses a restart policy disallowed for Jobs."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/cronjob/invalid-restart-cronjob",
+      "field_path": "spec.jobTemplate.spec.template.spec.restartPolicy",
+      "observed_value": "Never",
+      "description": "The healthy CronJob uses Never."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-278514311d143225"
+}

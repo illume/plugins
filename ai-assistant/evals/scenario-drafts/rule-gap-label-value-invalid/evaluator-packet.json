@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-label-value-invalid",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/configmap/invalid-label",
+        "field_path": "metadata.labels.owner",
+        "observed_value": "UPPER_VALUE!",
+        "description": "The owner label contains a disallowed exclamation mark."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/configmap/invalid-label",
+      "field_path": "metadata.labels.owner",
+      "observed_value": "platform-team",
+      "description": "The healthy label value conforms to Kubernetes label syntax."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-6f0bd3759f0bc64e"
+}

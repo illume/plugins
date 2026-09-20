@@ -1,0 +1,9 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: networkpolicy-extensions-v1beta1
+spec:
+  podSelector:
+    matchLabels:
+      app: legacy-network
+  ingress: []

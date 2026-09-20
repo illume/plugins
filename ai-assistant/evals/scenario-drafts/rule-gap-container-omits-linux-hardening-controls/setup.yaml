@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linux-hardening-missing
+  labels:
+    app: linux-hardening-missing
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext: {}

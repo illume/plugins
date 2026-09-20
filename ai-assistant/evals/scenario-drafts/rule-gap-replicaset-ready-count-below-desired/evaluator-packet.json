@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-replicaset-ready-count-below-desired",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "replicaset/underready-replicaset",
+        "field_path": "spec.replicas + status.readyReplicas",
+        "observed_value": "3; 0 after the bounded readiness window",
+        "description": "None of the three desired replicas becomes ready."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "replicaset/underready-replicaset",
+      "field_path": "spec.replicas + status.readyReplicas",
+      "observed_value": "3; 3",
+      "description": "The healthy ReplicaSet has all desired replicas ready."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f59c5304a68e0a07"
+}

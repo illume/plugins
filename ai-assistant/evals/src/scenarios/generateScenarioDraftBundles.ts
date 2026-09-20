@@ -32,6 +32,7 @@ import { remainingScenarioDraftDefinitions } from './scenarioDraftDefinitionsRem
 import { runtimeScenarioDraftDefinitions } from './scenarioDraftDefinitionsRuntime.js';
 import { telemetryScenarioDraftDefinitions } from './scenarioDraftDefinitionsTelemetry.js';
 import { v3ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV3.js';
+import { v4ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV4.js';
 import type { ScenarioDraftDefinition } from './scenarioDraftDefinition.js';
 import { SCENARIOS_GOAL } from './scenariosGoal.js';
 
@@ -59,6 +60,7 @@ const draftRoot = path.join(evalRoot, 'scenario-drafts');
 const v1Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v1.json');
 const v2Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v2.json');
 const v3Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v3.json');
+const v4Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v4.json');
 const progressPath = path.resolve(
   evalRoot,
   '..',
@@ -745,6 +747,7 @@ const definitions: ScenarioDraftDefinition[] = [
   ...advancedScenarioDraftDefinitions,
   ...remainingScenarioDraftDefinitions,
   ...v3ScenarioDraftDefinitions,
+  ...v4ScenarioDraftDefinitions,
 ];
 
 const catalogs = [
@@ -760,14 +763,18 @@ const catalogs = [
     path: 'registrations/rule-gap-scenarios-v3.json',
     scenarios: (JSON.parse(readFileSync(v3Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
   },
+  {
+    path: 'registrations/rule-gap-scenarios-v4.json',
+    scenarios: (JSON.parse(readFileSync(v4Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
+  },
 ];
 const gapById = new Map(
   catalogs.flatMap(catalog =>
     catalog.scenarios.map(scenario => [scenario.scenario_id, { ...scenario, catalog }] as const)
   )
 );
-assert.equal(definitions.length, 200);
-assert.equal(new Set(definitions.map(definition => definition.scenarioId)).size, 200);
+assert.equal(definitions.length, 305);
+assert.equal(new Set(definitions.map(definition => definition.scenarioId)).size, 305);
 
 mkdirSync(draftRoot, { recursive: true });
 for (const entry of readdirSync(draftRoot, { withFileTypes: true })) {

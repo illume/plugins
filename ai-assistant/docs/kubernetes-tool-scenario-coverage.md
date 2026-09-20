@@ -16,6 +16,9 @@ The [marginal-coverage v2 catalogue](kubernetes-rule-gap-scenarios-v2.md) adds
 42 more non-overlapping, unqualified drafts under the same constraint.
 The [cross-tool v3 catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58 more
 non-overlapping specifications without changing active coverage.
+The [undercovered-tool v4 catalogue](kubernetes-rule-gap-scenarios-v4.md) adds
+105 more non-overlapping specifications while preserving the 275-scenario active
+roster.
 
 The governing objective is full qualified coverage of product-scoped canonical
 diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,

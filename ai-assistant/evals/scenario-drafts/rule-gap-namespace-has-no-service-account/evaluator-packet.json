@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-namespace-has-no-service-account",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "namespace/accountless-namespace",
+        "field_path": "ServiceAccount inventory for metadata.name=accountless-namespace",
+        "observed_value": "0 ServiceAccounts",
+        "description": "The namespace contains no ServiceAccount object."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "namespace/accountless-namespace",
+      "field_path": "ServiceAccount inventory for metadata.name=accountless-namespace",
+      "observed_value": "1 ServiceAccount named default",
+      "description": "The healthy namespace contains its default ServiceAccount."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d55ba3f7a9f4afa0"
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-ephemeral-storage-request-limit-differ",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-score:check:container-ephemeral-storage-request-equals-limit"],
+  "target_semantic_group_ids": [
+    "kube-score:semantic:kube-score-check-container-ephemeral-storage-request-equals-limit:ea47e11ced15"
+  ],
+  "target_tool_ids": ["kube-score"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

@@ -1,0 +1,13 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: duplicate-listeners
+spec:
+  gatewayClassName: fixture-class
+  listeners:
+    - name: web-a
+      protocol: HTTP
+      port: 80
+    - name: web-b
+      protocol: HTTP
+      port: 80

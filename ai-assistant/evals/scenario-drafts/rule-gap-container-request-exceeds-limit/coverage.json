@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-container-request-exceeds-limit",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubevious:rule:container-resource-request-limit-check"],
+  "target_semantic_group_ids": [
+    "kubevious:semantic:kubevious-rule-container-resource-request-limit-check:b83ed12a4b79"
+  ],
+  "target_tool_ids": ["kubevious"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/container/resource-request-limit-check.yaml"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-hardlink-sensitive-file",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["falco:rule:create-hardlink-over-sensitive-files:5587275ce68c"],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-create-hardlink-over-sensitive-files-5587275ce68c:1899ab553046"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

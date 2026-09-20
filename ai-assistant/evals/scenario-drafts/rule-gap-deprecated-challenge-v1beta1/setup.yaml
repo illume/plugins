@@ -1,0 +1,17 @@
+apiVersion: acme.cert-manager.io/v1beta1
+kind: Challenge
+metadata:
+  name: challenge-v1beta1
+spec:
+  dnsName: challenge.example.test
+  issuerRef:
+    name: issuer
+    kind: Issuer
+  solver:
+    dns01:
+      webhook:
+        groupName: fixture.example
+        solverName: fixture
+        config: {}
+  token: controlled-token
+  key: controlled-key

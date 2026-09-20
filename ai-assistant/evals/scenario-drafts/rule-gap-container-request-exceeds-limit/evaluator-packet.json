@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-request-exceeds-limit",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/pod/request-above-limit",
+        "field_path": "spec.containers[0].resources.requests.cpu + limits.cpu",
+        "observed_value": "1; 500m",
+        "description": "The CPU request is greater than the CPU limit."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/pod/request-above-limit",
+      "field_path": "spec.containers[0].resources.requests.cpu + limits.cpu",
+      "observed_value": "500m; 500m",
+      "description": "The healthy request does not exceed the limit."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-20747e33d23995d1"
+}

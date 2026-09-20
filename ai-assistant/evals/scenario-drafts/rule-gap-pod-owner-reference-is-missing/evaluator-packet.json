@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-owner-reference-is-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/orphan-owner-pod",
+        "field_path": "metadata.ownerReferences[0] + ReplicaSet inventory",
+        "observed_value": "ReplicaSet/missing-owner; 0 UID matches",
+        "description": "The controlling owner reference cannot be resolved by name and UID."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/orphan-owner-pod",
+      "field_path": "metadata.ownerReferences[0] + ReplicaSet inventory",
+      "observed_value": "ReplicaSet/present-owner; 1 UID match",
+      "description": "The healthy owner reference resolves to its controller."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-08db997a774834c2"
+}

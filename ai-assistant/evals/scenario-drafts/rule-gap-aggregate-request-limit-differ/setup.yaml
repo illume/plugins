@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aggregate-request-limit-differ
+  labels:
+    app: aggregate-request-limit-differ
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532
+      resources:
+        requests:
+          cpu: 100m
+          memory: 32Mi
+        limits:
+          cpu: 500m
+          memory: 64Mi

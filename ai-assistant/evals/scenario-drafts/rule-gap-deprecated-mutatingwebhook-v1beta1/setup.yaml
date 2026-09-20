@@ -1,0 +1,24 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutatingwebhook-v1beta1
+webhooks:
+  - name: mutate.fixture.example
+    clientConfig:
+      service:
+        namespace: default
+        name: fixture-webhook
+        path: /mutate
+    rules:
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+        resources:
+          - pods
+    failurePolicy: Ignore
+    sideEffects: None
+    admissionReviewVersions:
+      - v1beta1

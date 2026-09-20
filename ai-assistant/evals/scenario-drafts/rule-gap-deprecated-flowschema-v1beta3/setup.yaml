@@ -1,0 +1,25 @@
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta3
+kind: FlowSchema
+metadata:
+  name: flowschema-v1beta3
+spec:
+  matchingPrecedence: 1000
+  priorityLevelConfiguration:
+    name: global-default
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: Group
+          group:
+            name: system:authenticated
+      resourceRules:
+        - verbs:
+            - get
+          apiGroups:
+            - ''
+          resources:
+            - pods
+          namespaces:
+            - '*'
+          clusterScope: false

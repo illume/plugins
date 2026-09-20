@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deployment-omits-dns-options",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/dns-options-missing",
+        "field_path": "spec.template.spec.dnsConfig.options",
+        "observed_value": "field absent",
+        "description": "The Pod template omits the required resolver option set."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/dns-options-missing",
+      "field_path": "spec.template.spec.dnsConfig.options",
+      "observed_value": "[{name: ndots, value: \"2\"}]",
+      "description": "The healthy Pod template declares the reviewed ndots option."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-65d4b4421dad58e7"
+}

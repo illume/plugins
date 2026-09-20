@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-rolebinding-grants-cluster-pod-exec",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["polaris:check:rolebindingClusterRolePodExecAttach"],
+  "target_semantic_group_ids": [
+    "polaris:semantic:polaris-check-rolebindingclusterrolepodexecattach:7e8113186a5d"
+  ],
+  "target_tool_ids": ["polaris"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolebindingClusterRolePodExecAttach.yaml"
+  ]
+}

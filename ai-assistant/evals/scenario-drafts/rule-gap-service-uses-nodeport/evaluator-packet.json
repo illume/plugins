@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-service-uses-nodeport",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "service/node-port-service",
+        "field_path": "spec.type + spec.ports[0].nodePort",
+        "observed_value": "NodePort; 30080",
+        "description": "The Service exposes port 30080 on every node."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "service/node-port-service",
+      "field_path": "spec.type + spec.ports[0].nodePort",
+      "observed_value": "ClusterIP; nodePort absent",
+      "description": "A healthy internal Service allocates no node-level port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a152581aef916789"
+}

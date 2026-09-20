@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-non-rolling-deployment",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "service-selects-workload",
+        "resource_ref": "service/web",
+        "field_path": "spec.selector",
+        "observed_value": "{\"app\":\"web\"}",
+        "description": "The Service selects the web Deployment pods."
+      },
+      {
+        "fact_id": "recreate-strategy",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.strategy.type",
+        "observed_value": "Recreate",
+        "description": "The Deployment replaces all old pods rather than rolling the update."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-rolling-update",
+      "resource_ref": "deployment/web",
+      "field_path": "spec.strategy.type",
+      "observed_value": "RollingUpdate",
+      "description": "The fixture explicitly selects the Recreate strategy."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ba29d72e718bee07"
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-writable-container-root-filesystem",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:no-read-only-root-fs",
+    "kube-score:check:container-security-context-readonlyrootfilesystem",
+    "kubescape:rule:immutable-container-filesystem",
+    "polaris:check:notReadOnlyRootFilesystem"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-no-read-only-root-fs:f3e7e1fc94da",
+    "kube-score:semantic:kube-score-check-container-security-context-readonlyrootfilesystem:974fbd1f5516",
+    "kubescape:semantic:kubescape-rule-immutable-container-filesystem:c85c177e8d80",
+    "polaris:semantic:polaris-check-notreadonlyrootfilesystem:924142be04f7"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubescape", "polaris"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/notReadOnlyRootFilesystem.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0017-immutablecontainerfilesystem.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/read-only-root-fs.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

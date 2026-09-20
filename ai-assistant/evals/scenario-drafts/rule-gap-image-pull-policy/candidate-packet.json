@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-image-pull-policy",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review how the `app` Deployment obtains its tagged container image and identify any freshness risk. Cite the exact image fields and do not mutate resources.",
+  "visible_resource_refs": ["deployment/app"],
+  "allowed_observation_kinds": ["deployment.pod-template", "container.image"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

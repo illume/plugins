@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-daemonset-rollout-failure",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "daemonset-rollout-unavailable",
+        "resource_ref": "daemonset/unschedulable-agent",
+        "field_path": "status.numberUnavailable",
+        "observed_value": "> 0",
+        "description": "At least one desired DaemonSet Pod remains unavailable."
+      },
+      {
+        "fact_id": "daemonset-pods-unschedulable",
+        "resource_ref": "pod/*?app=unschedulable-agent",
+        "field_path": "status.conditions[?(@.type==\"PodScheduled\")].reason",
+        "observed_value": "Unschedulable",
+        "description": "Scheduler status establishes that the rollout Pods cannot be placed."
+      },
+      {
+        "fact_id": "daemonset-unavailable-sustained",
+        "resource_ref": "metric/kube_daemonset_status_number_unavailable{daemonset=\"unschedulable-agent\"}",
+        "field_path": "min_over_time[15m]",
+        "observed_value": "> 0",
+        "description": "Native DaemonSet telemetry remains unavailable for the bounded window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-daemonset-converged",
+      "resource_ref": "daemonset/unschedulable-agent",
+      "field_path": "status.numberReady",
+      "observed_value": "= status.desiredNumberScheduled",
+      "description": "Ready Pods do not converge to the desired count."
+    },
+    {
+      "fact_id": "invented-image-pull-failure",
+      "resource_ref": "pod/*?app=unschedulable-agent",
+      "field_path": "status.containerStatuses[0].state.waiting.reason",
+      "observed_value": "ImagePullBackOff",
+      "description": "The Pods cannot schedule; image pulling is not reached."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fc7f9bfbab0d17b5"
+}

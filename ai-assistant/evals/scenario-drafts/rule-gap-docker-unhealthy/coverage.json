@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-docker-unhealthy",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:health-checker-docker-dockerunhealthy:f6f8a1d02b99",
+    "node-problem-detector:source:windows-health-checker-docker-dockerunhealthy:4a06ed451501"
+  ],
+  "target_semantic_group_ids": ["node-problem-detector:semantic:dockerunhealthy:6837d6adb871"],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/health-checker-docker.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/windows-health-checker-docker.json"
+  ]
+}

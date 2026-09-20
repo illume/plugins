@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-net-raw-capability",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the `app` Deployment Linux capability configuration and identify any material privilege risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["deployment/app"],
+  "allowed_observation_kinds": ["deployment.pod-template", "container.security-context"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

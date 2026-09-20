@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-api-error-budget-burn",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "aggregated-api-unavailable",
+        "resource_ref": "apiservice/v1alpha1.burn.telemetry.example",
+        "field_path": "status.conditions[?(@.type==\"Available\")].status",
+        "observed_value": "False",
+        "description": "The aggregated API backend is unavailable."
+      },
+      {
+        "fact_id": "aggregated-api-has-no-endpoints",
+        "resource_ref": "endpointslice/*?kubernetes.io/service-name=burn-api-backend",
+        "field_path": "endpoints[*].conditions.ready",
+        "observed_value": "<no ready endpoints>",
+        "description": "The APIService backend Service has no ready endpoint."
+      },
+      {
+        "fact_id": "api-fast-burn",
+        "resource_ref": "metric/apiserver_request_total{group=\"burn.telemetry.example\"}",
+        "field_path": "5xx_ratio[5m] and 5xx_ratio[1h]",
+        "observed_value": "> fast-burn thresholds",
+        "description": "Native API server request metrics exceed both fast-burn windows for the isolated group."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-aggregated-api-available",
+      "resource_ref": "apiservice/v1alpha1.burn.telemetry.example",
+      "field_path": "status.conditions[?(@.type==\"Available\")].status",
+      "observed_value": "True",
+      "description": "The APIService has no serving backend."
+    },
+    {
+      "fact_id": "invented-api-errors-below-budget",
+      "resource_ref": "metric/apiserver_request_total{group=\"burn.telemetry.example\"}",
+      "field_path": "5xx_ratio[5m] and 5xx_ratio[1h]",
+      "observed_value": "< fast-burn thresholds",
+      "description": "The bounded request stream produces sustained 503 responses."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b179610597c6c793"
+}

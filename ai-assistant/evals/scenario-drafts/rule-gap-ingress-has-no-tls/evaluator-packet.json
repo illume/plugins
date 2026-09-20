@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-ingress-has-no-tls",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingress/plain-http",
+        "field_path": "spec.rules[0].host + spec.tls",
+        "observed_value": "app.example.test; <tls absent>",
+        "description": "The routed host has no TLS host entry or certificate Secret."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "ingress/plain-http",
+      "field_path": "spec.rules[0].host + spec.tls",
+      "observed_value": "app.example.test; secretName present",
+      "description": "A healthy Ingress covers every routed host with TLS."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-440934afd4ac64bf"
+}

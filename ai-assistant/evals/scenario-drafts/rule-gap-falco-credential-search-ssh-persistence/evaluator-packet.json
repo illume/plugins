@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-credential-search-ssh-persistence",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "credential-search-read-write-chain",
+        "resource_ref": "job/credential-search-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "find; grep CONTROLLED_SECRET; cat id_ed25519; append authorized_keys",
+        "description": "The action searches credentials, reads a private-key fixture, and writes authorized_keys."
+      },
+      {
+        "fact_id": "synthetic-credential-seed",
+        "resource_ref": "job/credential-search-action",
+        "field_path": "spec.template.spec.initContainers[0].command[2]",
+        "observed_value": "CONTROLLED_SECRET",
+        "description": "All searched credential material is synthetic and seeded by the Job."
+      },
+      {
+        "fact_id": "credential-storage-is-emptydir",
+        "resource_ref": "job/credential-search-action",
+        "field_path": "spec.template.spec.volumes[0].emptyDir",
+        "observed_value": "{}",
+        "description": "The SSH and credential tree is disposable Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-real-secret",
+      "resource_ref": "job/credential-search-action",
+      "field_path": "spec.template.spec.volumes[0].secret",
+      "observed_value": "present",
+      "description": "No Kubernetes Secret or host credential directory is mounted."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-71195ec7ecde2a3c"
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-filling-up",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "bytes-claim-bound",
+        "resource_ref": "persistentvolumeclaim/bytes-filling",
+        "field_path": "status.phase",
+        "observed_value": "Bound",
+        "description": "The measured claim is attached and available to the writer."
+      },
+      {
+        "fact_id": "volume-free-bytes-low",
+        "resource_ref": "metric/kubelet_volume_stats_available_bytes{persistentvolumeclaim=\"bytes-filling\"}",
+        "field_path": "latest / kubelet_volume_stats_capacity_bytes",
+        "observed_value": "< 0.10",
+        "description": "Less than ten percent of measured volume capacity remains available."
+      },
+      {
+        "fact_id": "volume-free-bytes-exhaustion-predicted",
+        "resource_ref": "metric/kubelet_volume_stats_available_bytes{persistentvolumeclaim=\"bytes-filling\"}",
+        "field_path": "predict_linear[6h,4d]",
+        "observed_value": "< 0",
+        "description": "The native available-byte trend predicts exhaustion within four days."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-volume-capacity-healthy",
+      "resource_ref": "metric/kubelet_volume_stats_available_bytes{persistentvolumeclaim=\"bytes-filling\"}",
+      "field_path": "latest / kubelet_volume_stats_capacity_bytes",
+      "observed_value": "> 0.20",
+      "description": "The measured free-capacity ratio is not healthy."
+    },
+    {
+      "fact_id": "invented-claim-pending",
+      "resource_ref": "persistentvolumeclaim/bytes-filling",
+      "field_path": "status.phase",
+      "observed_value": "Pending",
+      "description": "The capacity signal comes from a Bound mounted claim."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-16f59e9ef18a9803"
+}

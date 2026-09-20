@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubelet-restart-probe
+  labels:
+    app: kubelet-restart-probe
+spec:
+  activeDeadlineSeconds: 120
+  restartPolicy: Always
+  containers:
+    - name: kubelet-probe
+      image: busybox:1.36.1
+      command:
+        - /bin/sh
+        - '-c'
+        - echo 'kubelet start event'; sleep 1; exit 43
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000

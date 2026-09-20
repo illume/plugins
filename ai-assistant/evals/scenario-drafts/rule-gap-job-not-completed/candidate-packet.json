@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-job-not-completed",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Determine why Job `stalled-job` has not completed within ten minutes. Correlate its start time, active and succeeded counts, Pod state and logs, and job-status telemetry. Distinguish a still-running deadline miss from a failed Job and do not mutate resources.",
+  "visible_resource_refs": [
+    "job/stalled-job",
+    "pod/*?job-name=stalled-job",
+    "metric/kube_job_status_start_time{job_name=\"stalled-job\"}",
+    "metric/kube_job_status_active{job_name=\"stalled-job\"}",
+    "metric/kube_job_status_succeeded{job_name=\"stalled-job\"}"
+  ],
+  "allowed_observation_kinds": ["job.spec", "job.status", "pod.status", "pod.logs", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

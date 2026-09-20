@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-image-not-pinned",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the `app` Deployment image reference for immutability. Cite the exact image value and do not mutate resources.",
+  "visible_resource_refs": ["deployment/app"],
+  "allowed_observation_kinds": ["deployment.pod-template", "container.image"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

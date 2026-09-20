@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-duplicate-environment-variable",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:duplicate-env-var",
+    "kube-score:check:environment-variable-key-duplication",
+    "kubescape:rule:duplicate-env-var"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-duplicate-env-var:913c6a1ad59c",
+    "kube-score:semantic:kube-score-check-environment-variable-key-duplication:cd11e62f585c",
+    "kubescape:semantic:kubescape-rule-duplicate-env-var:357fa5928cce"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubescape"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0295-duplicateenvvar.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/duplicate-env-var.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

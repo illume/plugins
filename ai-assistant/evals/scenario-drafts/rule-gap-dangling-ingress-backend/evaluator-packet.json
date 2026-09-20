@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-dangling-ingress-backend",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "ingress-service-reference",
+        "resource_ref": "ingress/web",
+        "field_path": "spec.rules[0].http.paths[0].backend.service.name",
+        "observed_value": "missing-web",
+        "description": "The Ingress backend names missing-web."
+      },
+      {
+        "fact_id": "service-count",
+        "resource_ref": "service/*",
+        "field_path": "items[metadata.name=missing-web].length",
+        "observed_value": "0",
+        "description": "No Service named missing-web exists in the namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-service",
+      "resource_ref": "service/missing-web",
+      "field_path": "metadata.name",
+      "observed_value": "missing-web",
+      "description": "The referenced Service does not exist."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-438f28e5110b047a"
+}

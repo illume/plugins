@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubelet-server-cert-rotation-disabled-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: component-configuration
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/lib/kubelet/config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  config.yaml: |
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    rotateCertificates: true
+    featureGates:
+      RotateKubeletServerCertificate: false

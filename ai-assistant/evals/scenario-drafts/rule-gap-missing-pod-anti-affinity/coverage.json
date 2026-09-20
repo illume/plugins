@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-missing-pod-anti-affinity",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:no-anti-affinity",
+    "kube-score:check:deployment-has-host-podantiaffinity"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-no-anti-affinity:605d365a743d",
+    "kube-score:semantic:kube-score-check-deployment-has-host-podantiaffinity:a0a515cd93c2"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/no-anti-affinity.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

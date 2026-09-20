@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-rbac-subject-can-exec-into-pods",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubescape:rule:exec-into-container-v1",
+    "polaris:check:rolebindingRolePodExecAttach",
+    "polaris:check:rolePodExecAttach"
+  ],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-exec-into-container-v1:a1aaccf66f5f",
+    "polaris:semantic:polaris-check-rolebindingrolepodexecattach:d13775479e8b",
+    "polaris:semantic:polaris-check-rolepodexecattach:41bc4019034e"
+  ],
+  "target_tool_ids": ["kubescape", "polaris"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolePodExecAttach.yaml",
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolebindingRolePodExecAttach.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0002-execintocontainer.json"
+  ]
+}

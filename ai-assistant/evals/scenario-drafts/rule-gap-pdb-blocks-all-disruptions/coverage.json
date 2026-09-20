@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pdb-blocks-all-disruptions",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:pdb-max-unavailable",
+    "polaris:check:pdbDisruptionsIsZero"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-pdb-max-unavailable:04ba1f34410e",
+    "polaris:semantic:polaris-check-pdbdisruptionsiszero:c65e960df7f7"
+  ],
+  "target_tool_ids": ["kube-linter", "polaris"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/pdbDisruptionsIsZero.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/pdbs-max-unavailable.yaml"
+  ]
+}

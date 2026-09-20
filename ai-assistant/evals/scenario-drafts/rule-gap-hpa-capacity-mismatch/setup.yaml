@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capacity-target
+  labels:
+    app: capacity-target
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: capacity-target
+  template:
+    metadata:
+      labels:
+        app: capacity-target
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          resources:
+            requests:
+              cpu: '1000'
+              memory: 1Ti
+            limits:
+              cpu: '1000'
+              memory: 1Ti
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: capacity-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: capacity-target
+  minReplicas: 3
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 1

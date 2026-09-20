@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-in-cluster-kubectl-exfiltration",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Trace `kubectl-copy-action` access to `copy-victim`. Cite the ServiceAccount token policy, RBAC grant, kubectl command, and copied artifact evidence.",
+  "visible_resource_refs": [
+    "serviceaccount/copy-client",
+    "role/copy-client",
+    "rolebinding/copy-client",
+    "pod/copy-victim",
+    "job/kubectl-copy-action"
+  ],
+  "allowed_observation_kinds": [
+    "rbac.rules",
+    "pod.service-account",
+    "job.pod-template",
+    "pod.logs"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

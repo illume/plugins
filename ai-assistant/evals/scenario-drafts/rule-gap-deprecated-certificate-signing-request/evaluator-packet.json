@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-certificate-signing-request",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-csr-version",
+        "resource_ref": "manifest/certificatesigningrequest/legacy-client",
+        "field_path": "apiVersion",
+        "observed_value": "certificates.k8s.io/v1beta1",
+        "description": "The certificate request uses the deprecated v1beta1 API."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-csr-version",
+      "resource_ref": "manifest/certificatesigningrequest/legacy-client",
+      "field_path": "apiVersion",
+      "observed_value": "certificates.k8s.io/v1",
+      "description": "The manifest does not use the current certificates API."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-033a81ee18b93690"
+}

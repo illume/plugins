@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-release-agent-container-escape",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the listed Kubernetes resources, diagnose the unsafe or unhealthy state, and cite the exact native field, status, event, metric, or log evidence. Do not mutate resources.",
+  "visible_resource_refs": ["job/release-agent-action", "pod[label=job-name=release-agent-action]"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.security-context", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

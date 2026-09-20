@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-process-uses-ptrace",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=ptrace-action]",
+        "field_path": "logs",
+        "observed_value": "ptrace-attach-detach-and-traceme-complete",
+        "description": "The bounded helper attaches to its own child, detaches, and executes PTRACE_TRACEME."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod[label=job-name=ptrace-action]",
+      "field_path": "logs",
+      "observed_value": "<ptrace calls absent>",
+      "description": "Ordinary sibling processes that never invoke ptrace are healthy controls."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-aca33db4d7f0e83d"
+}

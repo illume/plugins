@@ -1,0 +1,2932 @@
+{
+  "schema_version": "1.0.0",
+  "batch_id": "rule-gap-scenarios-v3",
+  "generated_at": "2026-09-20",
+  "review_status": "provisional",
+  "inventory_path": "registrations/tool-rule-inventory-v1.json",
+  "mapping_path": "registrations/tool-scenario-rule-mapping-v1.json",
+  "prior_batch_path": "registrations/rule-gap-scenarios-v1.json",
+  "scenarios_goal": {
+    "name": "Scenarios Goal",
+    "statement": "Full coverage of product-scoped canonical diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host, and platform-specific tails.",
+    "generation_policy": "Versioned agents generate canonicalization, risk scoring, scenarios, fixtures, oracles, qualification evidence, and post-freeze challenge batches; deterministic validators reject incomplete or inconsistent outputs.",
+    "rule_use_policy": "Surveyed tools and their rule catalogs are provenance inputs only; scenarios create Kubernetes faults and validate normalized predicates from native evidence without installing or executing those tools.",
+    "product_scope": "A capability is product-scoped only when Headlamp can obtain its required evidence and present or safely orchestrate its outcome on a declared supported profile.",
+    "canonical_capability": "An agent-reviewed cross-tool equivalence class with the same subject, trigger predicate, required evidence, expected finding, negative condition, and material platform constraints.",
+    "core_completion": "Every approved product-scoped canonical capability has qualified positive and healthy-negative scenarios, plus uncertainty, temporal, or confounder cases when those are part of the predicate.",
+    "tail_completion": "Cover every critical tail capability and at least 80 percent of source-grounded, multi-agent-reviewed risk weight within each of policy, runtime, host, and platform-specific domains.",
+    "accounting": "Report targeted, implemented, and qualified coverage separately; tool-local occurrences and semantic groups are provenance and progress measures, not the completion denominator."
+  },
+  "optimization_objective": "Maximize distinct semantic groups and cross-tool breadth using reproducible Kubernetes states after excluding active, v1, and v2 targets.",
+  "methodology": {
+    "selection": "Select exactly 58 reviewed single-trigger states or coherent action chains from the remaining direct-predicate frontier, favoring cross-tool agreement.",
+    "deduplication": "Reject active coverage, v1 and v2 targets, duplicate v3 occurrences, and kube-bench-only profile multiplication without one equivalent Kubernetes state.",
+    "qualification": "Keep every specification draft and pending until setup, observation, oracle, and leakage blockers are resolved.",
+    "external_tool_execution": false
+  },
+  "total_scenarios": 58,
+  "total_target_rules": 195,
+  "total_target_semantic_groups": 106,
+  "category_counts": {
+    "workload_configuration": 32,
+    "control_plane_host_hardening": 0,
+    "runtime_node_failure": 21,
+    "operations_deprecation": 5
+  },
+  "coverage_by_tool": {
+    "falco": 9,
+    "kube-bench": 91,
+    "kube-linter": 18,
+    "kube-score": 8,
+    "kubernetes-mixin": 12,
+    "kubescape": 19,
+    "kubevious": 7,
+    "node-problem-detector": 7,
+    "pluto": 5,
+    "polaris": 12,
+    "popeye": 7
+  },
+  "coverage_by_feasibility": { "host": 7, "manifest_only": 167, "runtime": 9, "telemetry": 12 },
+  "scenario_counts_by_feasibility": {
+    "host": 6,
+    "manifest_only": 37,
+    "runtime": 7,
+    "telemetry": 8
+  },
+  "coverage_by_selection_track": {
+    "falco_chain": 9,
+    "node_problem_detector": 7,
+    "operations": 17,
+    "policy": 162
+  },
+  "scenario_counts_by_selection_track": {
+    "falco_chain": 7,
+    "node_problem_detector": 6,
+    "operations": 13,
+    "policy": 32
+  },
+  "scenarios": [
+    {
+      "scenario_id": "rule-gap-pod-shares-host-ipc",
+      "title": "Pod shares the host IPC namespace",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod spec sets hostIPC to true.",
+      "expected_finding": "Identify pod shares the host ipc namespace and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod leaves hostIPC false or unset.",
+      "required_resources": ["Pod"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-bench:source:ack-1-0-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:0bd639309495",
+        "kube-bench:source:aks-1-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to-s:d0bc011b2c92",
+        "kube-bench:source:aks-1-7-policies-4-2-3-minimize-the-admission-of-containers-wishing-to-s:edd7807dd3b2",
+        "kube-bench:source:aks-1-8-policies-4-2-3-minimize-the-admission-of-containers-wishing-to-s:7ede66146a4a",
+        "kube-bench:source:cis-1-10-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-:050a041a7385",
+        "kube-bench:source:cis-1-11-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-:e64a1306ded8",
+        "kube-bench:source:cis-1-12-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-:a56083d44c51",
+        "kube-bench:source:cis-1-20-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:ac515d62d183",
+        "kube-bench:source:cis-1-23-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-:caaab39669fe",
+        "kube-bench:source:cis-1-24-microk8s-policies-5-2-4-minimize-the-admission-of-containers-wi:875de43b0e28",
+        "kube-bench:source:cis-1-24-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-:542ef9d49ecf",
+        "kube-bench:source:cis-1-5-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:d1ddc13caccd",
+        "kube-bench:source:cis-1-6-k3s-policies-5-2-3-minimize-the-admission-of-containers-wishing-:12fa53f9cf59",
+        "kube-bench:source:cis-1-6-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:e17ed8a43943",
+        "kube-bench:source:cis-1-7-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-s:71f7fa05eac1",
+        "kube-bench:source:cis-1-8-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-s:8d2a876917f1",
+        "kube-bench:source:cis-1-9-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-s:29e6c412d25d",
+        "kube-bench:source:cis-2-0-policies-5-2-4-minimize-the-admission-of-containers-wishing-to-s:c44674afbc29",
+        "kube-bench:source:eks-1-0-1-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:cf37b44f13e4",
+        "kube-bench:source:eks-1-1-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:7efda6fc6694",
+        "kube-bench:source:eks-1-2-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:97996bb561b9",
+        "kube-bench:source:eks-1-5-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:2212be96e580",
+        "kube-bench:source:eks-1-7-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:c60bcc84059e",
+        "kube-bench:source:eks-1-8-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:6a477aa95aa1",
+        "kube-bench:source:gke-1-0-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:19e1767fef67",
+        "kube-bench:source:gke-1-2-0-policies-4-2-3-minimize-the-admission-of-containers-wishing-to:5f03fedf4d5f",
+        "kube-bench:source:k3s-cis-1-23-policies-5-2-4-minimize-the-admission-of-containers-wishing:ead9f5b30f00",
+        "kube-bench:source:k3s-cis-1-24-policies-5-2-4-minimize-the-admission-of-containers-wishing:0d1d90f924ef",
+        "kube-bench:source:k3s-cis-1-7-policies-5-2-4-minimize-the-admission-of-containers-wishing-:7ba508579f56",
+        "kube-bench:source:k3s-cis-1-8-policies-5-2-4-minimize-the-admission-of-containers-wishing-:f054a7ebeb9e",
+        "kube-bench:source:k3s-cis-1-9-policies-5-2-4-minimize-the-admission-of-containers-wishing-:c0e89edfb316",
+        "kube-bench:source:rh-1-0-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-sh:9703387d6f6a",
+        "kube-bench:source:rh-1-4-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-sh:a24ecd39feae",
+        "kube-bench:source:rh-1-8-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-sh:e597835d825d",
+        "kube-bench:source:rh-1-9-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-sh:d2f9573716d5",
+        "kube-bench:source:rke-cis-1-23-policies-5-2-4-minimize-the-admission-of-containers-wishing:c3d85ad12568",
+        "kube-bench:source:rke-cis-1-24-policies-5-2-4-minimize-the-admission-of-containers-wishing:291cee1bc330",
+        "kube-bench:source:rke-cis-1-7-policies-5-2-4-minimize-the-admission-of-containers-wishing-:f8557393a8ba",
+        "kube-bench:source:rke2-cis-1-23-policies-5-2-4-minimize-the-admission-of-containers-wishin:d3710442c78a",
+        "kube-bench:source:rke2-cis-1-24-policies-5-2-4-minimize-the-admission-of-containers-wishin:b3806b8d150c",
+        "kube-bench:source:rke2-cis-1-7-policies-5-2-4-minimize-the-admission-of-containers-wishing:5446f4a3369b",
+        "kube-bench:source:rke2-cis-1-8-policies-5-2-4-minimize-the-admission-of-containers-wishing:6786777232ad",
+        "kube-bench:source:rke2-cis-1-9-policies-5-2-4-minimize-the-admission-of-containers-wishing:eadcb5251f04",
+        "kube-bench:source:tkgi-1-2-53-policies-5-2-3-minimize-the-admission-of-containers-wishing-:b86eb184e392",
+        "kube-linter:check:host-ipc",
+        "kubescape:rule:host-ipc-privileges",
+        "polaris:check:hostIPCSet"
+      ],
+      "target_semantic_group_ids": [
+        "kube-bench:semantic:minimize-the-admission-of-containers-wishing-to-share-the-host-ipc-namespace:f641f7f897d3",
+        "kube-linter:semantic:kube-linter-check-host-ipc:d43a93f0632d",
+        "kubescape:semantic:kubescape-rule-host-ipc-privileges:dc94ec139d39",
+        "polaris:semantic:polaris-check-hostipcset:9b9891b70dc4"
+      ],
+      "target_tool_ids": ["kube-bench", "kube-linter", "kubescape", "polaris"],
+      "target_rule_count": 47,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/hostIPCSet.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/policies.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0276-minimizetheadmissionofcontainerswishingtosharethehostipcnamespace.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/hostipc.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-shares-host-pid",
+      "title": "Pod shares the host process namespace",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod spec sets hostPID to true.",
+      "expected_finding": "Identify pod shares the host process namespace and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod leaves hostPID false or unset.",
+      "required_resources": ["Pod"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-bench:source:ack-1-0-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-s:98626220d9fd",
+        "kube-bench:source:aks-1-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to-s:5eae185c5244",
+        "kube-bench:source:aks-1-7-policies-4-2-2-minimize-the-admission-of-containers-wishing-to-s:30ab46457254",
+        "kube-bench:source:aks-1-8-policies-4-2-2-minimize-the-admission-of-containers-wishing-to-s:a62f2637d383",
+        "kube-bench:source:cis-1-10-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:102ef0bb2778",
+        "kube-bench:source:cis-1-11-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:e0ee234913c2",
+        "kube-bench:source:cis-1-12-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:c9c6163167a3",
+        "kube-bench:source:cis-1-20-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-:6b29bd4d801d",
+        "kube-bench:source:cis-1-23-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:0917379ef7a6",
+        "kube-bench:source:cis-1-24-microk8s-policies-5-2-3-minimize-the-admission-of-containers-wi:55670be60a7f",
+        "kube-bench:source:cis-1-24-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-:1ac8b6bc76bd",
+        "kube-bench:source:cis-1-5-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-s:c0cde857286d",
+        "kube-bench:source:cis-1-6-k3s-policies-5-2-2-minimize-the-admission-of-containers-wishing-:2da4cedb2e5f",
+        "kube-bench:source:cis-1-6-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-s:ebe6b107426b",
+        "kube-bench:source:cis-1-7-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:e5a826657002",
+        "kube-bench:source:cis-1-8-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:e6ffde20e73d",
+        "kube-bench:source:cis-1-9-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:644e368fc65b",
+        "kube-bench:source:cis-2-0-policies-5-2-3-minimize-the-admission-of-containers-wishing-to-s:f449e420916f",
+        "kube-bench:source:eks-1-0-1-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:4bc708e5da04",
+        "kube-bench:source:eks-1-1-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:c5b3d725af67",
+        "kube-bench:source:eks-1-2-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:39e426450c78",
+        "kube-bench:source:eks-1-5-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:e77280fc0a0c",
+        "kube-bench:source:eks-1-7-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:778f661e939f",
+        "kube-bench:source:eks-1-8-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:80dd58473d71",
+        "kube-bench:source:gke-1-0-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-s:dc1514504f02",
+        "kube-bench:source:gke-1-2-0-policies-4-2-2-minimize-the-admission-of-containers-wishing-to:ecbed99ac0b1",
+        "kube-bench:source:k3s-cis-1-23-policies-5-2-3-minimize-the-admission-of-containers-wishing:a601b6dab64b",
+        "kube-bench:source:k3s-cis-1-24-policies-5-2-3-minimize-the-admission-of-containers-wishing:2320ccc370a8",
+        "kube-bench:source:k3s-cis-1-7-policies-5-2-3-minimize-the-admission-of-containers-wishing-:5e2d7e8ec35d",
+        "kube-bench:source:k3s-cis-1-8-policies-5-2-3-minimize-the-admission-of-containers-wishing-:fdea03627572",
+        "kube-bench:source:k3s-cis-1-9-policies-5-2-3-minimize-the-admission-of-containers-wishing-:a2eb0b3d332a",
+        "kube-bench:source:rh-1-0-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-sh:af7ef9e73144",
+        "kube-bench:source:rh-1-4-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-sh:8e660a0d3cf1",
+        "kube-bench:source:rh-1-8-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-sh:7a19424bb994",
+        "kube-bench:source:rh-1-9-policies-5-2-2-minimize-the-admission-of-containers-wishing-to-sh:ea3cc4031415",
+        "kube-bench:source:rke-cis-1-23-policies-5-2-3-minimize-the-admission-of-containers-wishing:28ec624d216d",
+        "kube-bench:source:rke-cis-1-24-policies-5-2-3-minimize-the-admission-of-containers-wishing:0a570c3044e7",
+        "kube-bench:source:rke-cis-1-7-policies-5-2-3-minimize-the-admission-of-containers-wishing-:4e722e0461fd",
+        "kube-bench:source:rke2-cis-1-23-policies-5-2-3-minimize-the-admission-of-containers-wishin:bf1adcaadefe",
+        "kube-bench:source:rke2-cis-1-24-policies-5-2-3-minimize-the-admission-of-containers-wishin:90798101ed9c",
+        "kube-bench:source:rke2-cis-1-7-policies-5-2-3-minimize-the-admission-of-containers-wishing:49a4b17b5994",
+        "kube-bench:source:rke2-cis-1-8-policies-5-2-3-minimize-the-admission-of-containers-wishing:bcdb308a2bbb",
+        "kube-bench:source:rke2-cis-1-9-policies-5-2-3-minimize-the-admission-of-containers-wishing:50b556b534f4",
+        "kube-bench:source:tkgi-1-2-53-policies-5-2-2-minimize-the-admission-of-containers-wishing-:ff2f2d725084",
+        "kube-linter:check:host-pid",
+        "kubescape:rule:host-pid-ipc-privileges",
+        "kubescape:rule:host-pid-privileges",
+        "polaris:check:hostPIDSet"
+      ],
+      "target_semantic_group_ids": [
+        "kube-bench:semantic:minimize-the-admission-of-containers-wishing-to-share-the-host-process-id-namesp:fe291177eeb9",
+        "kube-linter:semantic:kube-linter-check-host-pid:8ebb441bb6a9",
+        "kubescape:semantic:kubescape-rule-host-pid-ipc-privileges:b6f1d7afa8b4",
+        "kubescape:semantic:kubescape-rule-host-pid-privileges:4b4ca385f340",
+        "polaris:semantic:polaris-check-hostpidset:48fc0420a46d"
+      ],
+      "target_tool_ids": ["kube-bench", "kube-linter", "kubescape", "polaris"],
+      "target_rule_count": 48,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/hostPIDSet.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/policies.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0038-hostpidipcprivileges.json",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0275-minimizetheadmissionofcontainerswishingtosharethehostprocessidnamespace.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/hostpid.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-allows-privilege-escalation",
+      "title": "Container allows privilege escalation",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Container fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The container security context sets allowPrivilegeEscalation to true.",
+      "expected_finding": "Identify container allows privilege escalation and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container explicitly sets allowPrivilegeEscalation to false.",
+      "required_resources": ["Pod", "Container"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:privilege-escalation-container",
+        "kubescape:rule:rule-allow-privilege-escalation",
+        "polaris:check:privilegeEscalationAllowed"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-privilege-escalation-container:4e78b41ca0a5",
+        "kubescape:semantic:kubescape-rule-rule-allow-privilege-escalation:f8bcc2f0caca",
+        "polaris:semantic:polaris-check-privilegeescalationallowed:d091798dbed2"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape", "polaris"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/privilegeEscalationAllowed.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0016-allowprivilegeescalation.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/privilege-escalation.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-unmasks-proc",
+      "title": "Container uses an unmasked proc mount",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Container fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The container security context sets procMount to Unmasked.",
+      "expected_finding": "Identify container uses an unmasked proc mount and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container uses the runtime default proc mount.",
+      "required_resources": ["Pod", "Container"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:unsafe-proc-mount",
+        "kubescape:rule:set-procmount-default",
+        "polaris:check:procMount"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-unsafe-proc-mount:d86f7ba95bb1",
+        "kubescape:semantic:kubescape-rule-set-procmount-default:87dea3e78837",
+        "polaris:semantic:polaris-check-procmount:208237300721"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape", "polaris"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/procMount.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/unsafe-proc-mount.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-missing-seccomp-profile",
+      "title": "Container has no seccomp profile",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Container fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "Neither the Pod nor container security context specifies a seccomp profile.",
+      "expected_finding": "Identify container has no seccomp profile and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container inherits or declares RuntimeDefault seccomp.",
+      "required_resources": ["Pod", "Container"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-bench:source:gke-1-6-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:8b91bb775137",
+        "kube-bench:source:gke-1-8-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:a092c64c3536",
+        "kube-bench:source:gke-1-9-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:71ba9a999598",
+        "kube-score:check:container-seccomp-profile",
+        "kubescape:rule:set-seccomp-profile",
+        "kubescape:rule:set-seccomp-profile-RuntimeDefault"
+      ],
+      "target_semantic_group_ids": [
+        "kube-bench:semantic:ensure-that-the-seccomp-profile-is-set-to-runtimedefault-in-your-pod-definitions:1e77c126ee8a",
+        "kube-score:semantic:kube-score-check-container-seccomp-profile:45a55d295e1f",
+        "kubescape:semantic:kubescape-rule-set-seccomp-profile-runtimedefault:05d0f729c482",
+        "kubescape:semantic:kubescape-rule-set-seccomp-profile:79aabdbdb255"
+      ],
+      "target_tool_ids": ["kube-bench", "kube-score", "kubescape"],
+      "target_rule_count": 6,
+      "provenance_refs": [
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/policies.yaml",
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/policies.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0210-ensurethattheseccompprofileissettodockerdefaultinyourpoddefinitions.json",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json",
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-image-tag-omitted",
+      "title": "Container image omits an immutable tag",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Container fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The container image has no explicit tag and therefore resolves as latest.",
+      "expected_finding": "Identify container image omits an immutable tag and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container image uses an explicit non-latest immutable tag.",
+      "required_resources": ["Pod", "Container"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-score:check:container-image-tag", "polaris:check:tagNotSpecified"],
+      "target_semantic_group_ids": [
+        "kube-score:semantic:kube-score-check-container-image-tag:22015e801db9",
+        "polaris:semantic:polaris-check-tagnotspecified:eb330ea8bb8f"
+      ],
+      "target_tool_ids": ["kube-score", "polaris"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/tagNotSpecified.yaml",
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-service-uses-nodeport",
+      "title": "Service exposes a NodePort",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Service fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Service type is NodePort and allocates a node-level port.",
+      "expected_finding": "Identify service exposes a nodeport and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Service uses ClusterIP without a node-level port.",
+      "required_resources": ["Service"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:exposed-services",
+        "kube-score:check:service-type",
+        "popeye:code:1104"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-exposed-services:13708f58c1ee",
+        "kube-score:semantic:kube-score-check-service-type:48bb172180d5",
+        "popeye:semantic:popeye-code-1104:4c0559475ddb"
+      ],
+      "target_tool_ids": ["kube-linter", "kube-score", "popeye"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/servicetype.yaml",
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-hpa-minimum-replicas-too-low",
+      "title": "HorizontalPodAutoscaler minimum is below the resilience floor",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated HorizontalPodAutoscaler, Deployment fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The HorizontalPodAutoscaler sets minReplicas to one.",
+      "expected_finding": "Identify horizontalpodautoscaler minimum is below the resilience floor and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The HorizontalPodAutoscaler sets minReplicas to at least three.",
+      "required_resources": ["HorizontalPodAutoscaler", "Deployment"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:hpa-minimum-three-replicas",
+        "kube-score:check:horizontalpodautoscaler-replicas"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-hpa-minimum-three-replicas:86e4a5fead71",
+        "kube-score:semantic:kube-score-check-horizontalpodautoscaler-replicas:638a2b1bfd74"
+      ],
+      "target_tool_ids": ["kube-linter", "kube-score"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/hpa-minimum-replicas.yaml",
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-secret-exposed-through-environment",
+      "title": "Container exposes a Secret through environment variables",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Secret fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The container imports a Secret key as an environment variable.",
+      "expected_finding": "Identify container exposes a secret through environment variables and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Secret is mounted as a read-only volume instead of an environment variable.",
+      "required_resources": ["Pod", "Secret"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:env-var-secret",
+        "kube-linter:check:read-secret-from-env-var",
+        "kubescape:rule:rule-credentials-in-env-var",
+        "kubescape:rule:rule-secrets-in-env-var",
+        "polaris:check:sensitiveContainerEnvVar"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-env-var-secret:82a86659b29e",
+        "kube-linter:semantic:kube-linter-check-read-secret-from-env-var:dad698706c7e",
+        "kubescape:semantic:kubescape-rule-rule-credentials-in-env-var:d980dc706fab",
+        "kubescape:semantic:kubescape-rule-rule-secrets-in-env-var:80b8235b816f",
+        "polaris:semantic:polaris-check-sensitivecontainerenvvar:0c86cb27c4a3"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape", "polaris"],
+      "target_rule_count": 5,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/sensitiveContainerEnvVar.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0012-applicationscredentialsinconfigurationfiles.json",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0207-preferusingsecretsasfilesoversecretsasenvironmentvariables.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/env-var-secret.yaml",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/read-secret-from-env-var.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-uses-default-service-account",
+      "title": "Pod uses the default ServiceAccount",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, ServiceAccount fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod resolves to the namespace default ServiceAccount with token automount enabled.",
+      "expected_finding": "Identify pod uses the default serviceaccount and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod names a dedicated least-privilege ServiceAccount with token automount disabled.",
+      "required_resources": ["Pod", "ServiceAccount"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:default-service-account",
+        "kubescape:rule:automount-default-service-account",
+        "popeye:code:300",
+        "popeye:code:308"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-default-service-account:b69440721703",
+        "kubescape:semantic:kubescape-rule-automount-default-service-account:0ec633d9f9d8",
+        "popeye:semantic:popeye-code-300:9467586722de",
+        "popeye:semantic:popeye-code-308:721394501a7d"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape", "popeye"],
+      "target_rule_count": 4,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0189-ensurethatdefaultserviceaccountsarenotactivelyused.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/default-service-account.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-rbac-subject-can-create-pods",
+      "title": "RBAC subject can create Pods",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Role, RoleBinding, ServiceAccount fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A Role grants the subject create on the pods resource.",
+      "expected_finding": "Identify rbac subject can create pods and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The subject has no create permission on Pods.",
+      "required_resources": ["Role", "RoleBinding", "ServiceAccount"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:access-to-create-pods",
+        "kubescape:rule:rule-can-create-pod"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-access-to-create-pods:8e56b86978c2",
+        "kubescape:semantic:kubescape-rule-rule-can-create-pod:926121d092e3"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0188-minimizeaccesstocreatepods.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/access-to-create-pods.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-rbac-subject-can-read-secrets",
+      "title": "RBAC subject can read Secrets",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Role, RoleBinding, ServiceAccount, Secret fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A Role grants the subject get or list on the secrets resource.",
+      "expected_finding": "Identify rbac subject can read secrets and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The subject has no read permission on Secrets.",
+      "required_resources": ["Role", "RoleBinding", "ServiceAccount", "Secret"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:access-to-secrets",
+        "kubescape:rule:rule-can-list-get-secrets-v1"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-access-to-secrets:4f3db8af12b5",
+        "kubescape:semantic:kubescape-rule-rule-can-list-get-secrets-v1:5d64ac9c732a"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0015-listkubernetessecrets.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/access-to-secrets.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-rbac-role-uses-wildcards",
+      "title": "RBAC role grants wildcard permissions",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Role, RoleBinding, ServiceAccount fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A Role rule contains a wildcard verb or resource and is bound to a subject.",
+      "expected_finding": "Identify rbac role grants wildcard permissions and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Role enumerates only the required verbs and resources.",
+      "required_resources": ["Role", "RoleBinding", "ServiceAccount"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:wildcard-in-rules",
+        "polaris:check:rolebindingClusterAdminRole"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-wildcard-in-rules:7087d5822554",
+        "polaris:semantic:polaris-check-rolebindingclusteradminrole:f2c63f26dc4a"
+      ],
+      "target_tool_ids": ["kube-linter", "polaris"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolebindingClusterAdminRole.yaml",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/wildcard-use-in-rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-rbac-subject-can-exec-into-pods",
+      "title": "RBAC subject can exec into Pods",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Role, RoleBinding, ServiceAccount fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A bound RBAC role grants create on pods/exec.",
+      "expected_finding": "Identify rbac subject can exec into pods and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The bound role omits pods/exec and pods/attach permissions.",
+      "required_resources": ["Role", "RoleBinding", "ServiceAccount"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kubescape:rule:exec-into-container-v1",
+        "polaris:check:rolebindingRolePodExecAttach",
+        "polaris:check:rolePodExecAttach"
+      ],
+      "target_semantic_group_ids": [
+        "kubescape:semantic:kubescape-rule-exec-into-container-v1:a1aaccf66f5f",
+        "polaris:semantic:polaris-check-rolebindingrolepodexecattach:d13775479e8b",
+        "polaris:semantic:polaris-check-rolepodexecattach:41bc4019034e"
+      ],
+      "target_tool_ids": ["kubescape", "polaris"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolePodExecAttach.yaml",
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/rolebindingRolePodExecAttach.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0002-execintocontainer.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-references-missing-configmap",
+      "title": "Container references a missing ConfigMap",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, ConfigMap fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A container envFrom reference names a ConfigMap that does not exist.",
+      "expected_finding": "Identify container references a missing configmap and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The referenced ConfigMap exists in the Pod namespace.",
+      "required_resources": ["Pod", "ConfigMap"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:env-value-from",
+        "kubevious:rule:container-env-from-config-map-ref"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-env-value-from:0a66ddc69e80",
+        "kubevious:semantic:kubevious-rule-container-env-from-config-map-ref:2d1690828aa4"
+      ],
+      "target_tool_ids": ["kube-linter", "kubevious"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/container/env-from-config-map-ref.yaml",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/env-var-value-from.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-references-missing-secret",
+      "title": "Container references a missing Secret",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Secret fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A container envFrom reference names a Secret that does not exist.",
+      "expected_finding": "Identify container references a missing secret and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The referenced Secret exists in the Pod namespace.",
+      "required_resources": ["Pod", "Secret"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubevious:rule:container-env-from-secret-ref", "popeye:code:304"],
+      "target_semantic_group_ids": [
+        "kubevious:semantic:kubevious-rule-container-env-from-secret-ref:d7185ae90c21",
+        "popeye:semantic:popeye-code-304:b69aa6ce08bb"
+      ],
+      "target_tool_ids": ["kubevious", "popeye"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/container/env-from-secret-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-references-missing-service-account",
+      "title": "Workload Pod names a nonexistent ServiceAccount",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, ServiceAccount fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod names a ServiceAccount that does not exist in its namespace.",
+      "expected_finding": "Identify workload pod names a nonexistent serviceaccount and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The named ServiceAccount exists in the Pod namespace.",
+      "required_resources": ["Pod", "ServiceAccount"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubevious:rule:pod-spec-service-account-ref", "popeye:code:507"],
+      "target_semantic_group_ids": [
+        "kubevious:semantic:kubevious-rule-pod-spec-service-account-ref:62fb4cb402c6",
+        "popeye:semantic:popeye-code-507:4dbcaeec8a28"
+      ],
+      "target_tool_ids": ["kubevious", "popeye"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/pod-spec/service-account-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-rolebinding-references-missing-role",
+      "title": "RoleBinding references a missing role",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated RoleBinding, Role fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The RoleBinding roleRef names a Role that does not exist.",
+      "expected_finding": "Identify rolebinding references a missing role and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The referenced Role exists and has the intended scope.",
+      "required_resources": ["RoleBinding", "Role"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubevious:rule:role-binding-role-ref"],
+      "target_semantic_group_ids": [
+        "kubevious:semantic:kubevious-rule-role-binding-role-ref:87da40ecce86"
+      ],
+      "target_tool_ids": ["kubevious"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/rbac/role-binding-role-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-servicemonitor-selector-matches-no-service",
+      "title": "ServiceMonitor selector matches no Service",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated ServiceMonitor, Service fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The ServiceMonitor selector matches no Service labels in its selected namespaces.",
+      "expected_finding": "Identify servicemonitor selector matches no service and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "At least one intended Service matches the ServiceMonitor selector.",
+      "required_resources": ["ServiceMonitor", "Service"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-linter:check:dangling-servicemonitor"],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-dangling-servicemonitor:c713dced15de"
+      ],
+      "target_tool_ids": ["kube-linter"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/dangling-servicemonitor.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-hpa-references-missing-target",
+      "title": "HorizontalPodAutoscaler references a missing target",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated HorizontalPodAutoscaler, Deployment fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The HorizontalPodAutoscaler scaleTargetRef names a workload that does not exist.",
+      "expected_finding": "Identify horizontalpodautoscaler references a missing target and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The scaleTargetRef resolves to a scalable workload.",
+      "required_resources": ["HorizontalPodAutoscaler", "Deployment"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-score:check:horizontalpodautoscaler-has-target",
+        "kubescape:rule:hpa-has-target",
+        "popeye:code:600"
+      ],
+      "target_semantic_group_ids": [
+        "kube-score:semantic:kube-score-check-horizontalpodautoscaler-has-target:dc88adc18094",
+        "kubescape:semantic:kubescape-rule-hpa-has-target:cf17b88e3ccd",
+        "popeye:semantic:popeye-code-600:0aa0bafe8ca9"
+      ],
+      "target_tool_ids": ["kube-score", "kubescape", "popeye"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0300-danglinghpatarget.json",
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deployment-has-no-pdb",
+      "title": "Deployment has no PodDisruptionBudget",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Deployment, PodDisruptionBudget fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "No PodDisruptionBudget selector covers the Deployment Pods.",
+      "expected_finding": "Identify deployment has no poddisruptionbudget and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "A PodDisruptionBudget selects the Deployment Pods with a viable budget.",
+      "required_resources": ["Deployment", "PodDisruptionBudget"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-score:check:deployment-has-poddisruptionbudget"],
+      "target_semantic_group_ids": [
+        "kube-score:semantic:kube-score-check-deployment-has-poddisruptionbudget:925d2d783932"
+      ],
+      "target_tool_ids": ["kube-score"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-statefulset-has-no-pdb",
+      "title": "StatefulSet has no PodDisruptionBudget",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated StatefulSet, PodDisruptionBudget fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "No PodDisruptionBudget selector covers the StatefulSet Pods.",
+      "expected_finding": "Identify statefulset has no poddisruptionbudget and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "A PodDisruptionBudget selects the StatefulSet Pods with a viable budget.",
+      "required_resources": ["StatefulSet", "PodDisruptionBudget"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-score:check:statefulset-has-poddisruptionbudget"],
+      "target_semantic_group_ids": [
+        "kube-score:semantic:kube-score-check-statefulset-has-poddisruptionbudget:349ce63c1baf"
+      ],
+      "target_tool_ids": ["kube-score"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pdb-omits-unhealthy-eviction-policy",
+      "title": "PodDisruptionBudget omits unhealthy Pod eviction policy",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated PodDisruptionBudget fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The PodDisruptionBudget leaves unhealthyPodEvictionPolicy unset.",
+      "expected_finding": "Identify poddisruptionbudget omits unhealthy pod eviction policy and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The PodDisruptionBudget explicitly selects the reviewed unhealthy Pod eviction policy.",
+      "required_resources": ["PodDisruptionBudget"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-linter:check:pdb-unhealthy-pod-eviction-policy"],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-pdb-unhealthy-pod-eviction-policy:162c8a5357a5"
+      ],
+      "target_tool_ids": ["kube-linter"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/pdb-unhealthy-pod-eviction-policy.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-cronjob-misses-starting-deadline",
+      "title": "CronJob has no starting deadline",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated CronJob fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The CronJob leaves startingDeadlineSeconds unset.",
+      "expected_finding": "Identify cronjob has no starting deadline and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The CronJob declares a bounded starting deadline.",
+      "required_resources": ["CronJob"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-score:check:cronjob-has-deadline"],
+      "target_semantic_group_ids": [
+        "kube-score:semantic:kube-score-check-cronjob-has-deadline:cffffdfa9761"
+      ],
+      "target_tool_ids": ["kube-score"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-ingress-has-no-tls",
+      "title": "Ingress exposes HTTP without TLS",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Ingress, Secret, Service fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Ingress has HTTP rules but no TLS hosts or certificate Secret.",
+      "expected_finding": "Identify ingress exposes http without tls and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Ingress serves every host through a valid TLS Secret.",
+      "required_resources": ["Ingress", "Secret", "Service"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kubescape:rule:encrypt-traffic-to-https-load-balancers-with-tls-certificates",
+        "polaris:check:tlsSettingsMissing"
+      ],
+      "target_semantic_group_ids": [
+        "kubescape:semantic:kubescape-rule-encrypt-traffic-to-https-load-balancers-with-tls-certificates:d5c94750a025",
+        "polaris:semantic:polaris-check-tlssettingsmissing:b4c5202eeb5b"
+      ],
+      "target_tool_ids": ["kubescape", "polaris"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/tlsSettingsMissing.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0245-encrypttraffictohttpsloadbalancerswithtlscertificates.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-ingress-references-missing-service",
+      "title": "Ingress references a missing Service",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Ingress, Service fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "An Ingress backend names a Service that does not exist.",
+      "expected_finding": "Identify ingress references a missing service and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Every Ingress backend resolves to an existing Service and port.",
+      "required_resources": ["Ingress", "Service"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubevious:rule:ingress-ext-service-ref", "popeye:code:1402"],
+      "target_semantic_group_ids": [
+        "kubevious:semantic:kubevious-rule-ingress-ext-service-ref:08494a6ef8df",
+        "popeye:semantic:popeye-code-1402:349b333a6865"
+      ],
+      "target_tool_ids": ["kubevious", "popeye"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/ingress/ingress-ext-service-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-gateway-references-missing-class",
+      "title": "Gateway references a missing GatewayClass",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Gateway, GatewayClass fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Gateway gatewayClassName does not resolve to a GatewayClass.",
+      "expected_finding": "Identify gateway references a missing gatewayclass and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Gateway references an accepted GatewayClass.",
+      "required_resources": ["Gateway", "GatewayClass"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubevious:rule:gateway-class-ref"],
+      "target_semantic_group_ids": [
+        "kubevious:semantic:kubevious-rule-gateway-class-ref:290689257c75"
+      ],
+      "target_tool_ids": ["kubevious"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/gateway-api/gateway/gateway-class-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-httproute-references-missing-backend",
+      "title": "HTTPRoute references a missing backend Service",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated HTTPRoute, Service, Gateway fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "An HTTPRoute backendRef names a Service that does not exist.",
+      "expected_finding": "Identify httproute references a missing backend service and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Every HTTPRoute backendRef resolves to an existing Service and port.",
+      "required_resources": ["HTTPRoute", "Service", "Gateway"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kubescape:rule:dangling-gateway-backend",
+        "kubevious:rule:http-route-backend-ref"
+      ],
+      "target_semantic_group_ids": [
+        "kubescape:semantic:kubescape-rule-dangling-gateway-backend:1ac6cafcd317",
+        "kubevious:semantic:kubevious-rule-http-route-backend-ref:68266e2be582"
+      ],
+      "target_tool_ids": ["kubescape", "kubevious"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0302-danglinggatewaybackend.json",
+        "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/gateway-api/http-route/backend-ref.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-mounts-container-runtime-socket",
+      "title": "Pod mounts the container runtime socket",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, hostPath fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A hostPath volume exposes the node container runtime socket inside a container.",
+      "expected_finding": "Identify pod mounts the container runtime socket and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod has no hostPath to a container runtime socket.",
+      "required_resources": ["Pod", "hostPath"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:docker-sock",
+        "kubescape:rule:containers-mounting-docker-socket"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-docker-sock:6662b5947dc2",
+        "kubescape:semantic:kubescape-rule-containers-mounting-docker-socket:5a8bf1bb123a"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0074-containersmountingdockersocket.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/docker-sock.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-sets-unsafe-sysctl",
+      "title": "Pod sets an unsafe sysctl",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod security context declares a sysctl outside the safe allowlist.",
+      "expected_finding": "Identify pod sets an unsafe sysctl and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod declares only safe sysctls or none.",
+      "required_resources": ["Pod"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kube-linter:check:unsafe-sysctls", "kubescape:rule:set-sysctls-params"],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-unsafe-sysctls:a7977f47eefa",
+        "kubescape:semantic:kubescape-rule-set-sysctls-params:d56775ba98c1"
+      ],
+      "target_tool_ids": ["kube-linter", "kubescape"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/sysctls.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-misses-priority-class",
+      "title": "Pod has no valid PriorityClass",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, PriorityClass fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Pod omits priorityClassName or names a PriorityClass that does not exist.",
+      "expected_finding": "Identify pod has no valid priorityclass and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Pod references an existing reviewed PriorityClass.",
+      "required_resources": ["Pod", "PriorityClass"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "kube-linter:check:priority-class-name",
+        "polaris:check:priorityClassNotSet"
+      ],
+      "target_semantic_group_ids": [
+        "kube-linter:semantic:kube-linter-check-priority-class-name:b86a5a895fbd",
+        "polaris:semantic:polaris-check-priorityclassnotset:d3af388a3905"
+      ],
+      "target_tool_ids": ["kube-linter", "polaris"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/priorityClassNotSet.yaml",
+        "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/priority-class-name.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-binds-host-port",
+      "title": "Container binds a host port",
+      "selection_track": "policy",
+      "category": "workload_configuration",
+      "setup_summary": "Create one isolated Pod, Service fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A container port declares a nonzero hostPort.",
+      "expected_finding": "Identify container binds a host port and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The workload is reached through a Service without hostPort.",
+      "required_resources": ["Pod", "Service"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": ["kubescape:rule:container-hostPort", "polaris:check:hostPortSet"],
+      "target_semantic_group_ids": [
+        "kubescape:semantic:kubescape-rule-container-hostport:d43edbf84337",
+        "polaris:semantic:polaris-check-hostportset:1e4d93c150e9"
+      ],
+      "target_tool_ids": ["kubescape", "polaris"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/hostPortSet.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0044-containerhostport.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-cpu-throttling-sustained",
+      "title": "Container CPU throttling remains high",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The throttled-period ratio exceeds the pinned threshold for the alert duration.",
+      "expected_finding": "Identify container cpu throttling remains high and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The throttled-period ratio remains below the threshold.",
+      "required_resources": ["Pod", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": ["kubernetes-mixin:alert:CPUThrottlingHigh"],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-cputhrottlinghigh:a9fa00967ac5"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/resource_alerts.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-aggregated-api-unavailable",
+      "title": "Aggregated API is unavailable and returning errors",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated APIService, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "An APIService is unavailable while aggregated API error responses exceed the pinned ratio.",
+      "expected_finding": "Identify aggregated api is unavailable and returning errors and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The APIService remains available without an elevated error ratio.",
+      "required_resources": ["APIService", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": [
+        "kubernetes-mixin:alert:KubeAggregatedAPIDown",
+        "kubernetes-mixin:alert:KubeAggregatedAPIErrors"
+      ],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeaggregatedapidown:0b52d378f631",
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeaggregatedapierrors:0b0dc97a80c2"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kube_apiserver.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deployment-generation-stale",
+      "title": "Deployment observed generation remains stale",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Deployment, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Deployment metadata generation differs from status observedGeneration for the pinned duration.",
+      "expected_finding": "Identify deployment observed generation remains stale and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The controller observes the current Deployment generation.",
+      "required_resources": ["Deployment", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": ["kubernetes-mixin:alert:KubeDeploymentGenerationMismatch"],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubedeploymentgenerationmismatch:3b9ea118f524"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/apps_alerts.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-kubelet-certificate-renewal-fails",
+      "title": "Kubelet certificate renewal fails",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, Kubelet, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "Kubelet client and server certificate renewal error counters increase in the observation window.",
+      "expected_finding": "Identify kubelet certificate renewal fails and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Kubelet renews both certificate roles without errors.",
+      "required_resources": ["Node", "Kubelet", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": [
+        "kubernetes-mixin:alert:KubeletClientCertificateRenewalErrors",
+        "kubernetes-mixin:alert:KubeletServerCertificateRenewalErrors"
+      ],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletclientcertificaterenewalerrors:9c652fd2d1df",
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletservercertificaterenewalerrors:4237c315f507"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-kubelet-pleg-duration-high",
+      "title": "Kubelet PLEG relist duration is high",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, Kubelet, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The pinned kubelet PLEG relist duration quantile exceeds its threshold.",
+      "expected_finding": "Identify kubelet pleg relist duration is high and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "PLEG relist duration remains below the threshold.",
+      "required_resources": ["Node", "Kubelet", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": ["kubernetes-mixin:alert:KubeletPlegDurationHigh"],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletplegdurationhigh:3e3057f57782"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-pod-startup-latency-high",
+      "title": "Kubelet Pod startup latency is high",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, Pod, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The pinned Pod startup latency quantile exceeds its threshold.",
+      "expected_finding": "Identify kubelet pod startup latency is high and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Pod startup latency remains below the threshold.",
+      "required_resources": ["Node", "Pod", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": ["kubernetes-mixin:alert:KubeletPodStartUpLatencyHigh"],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletpodstartuplatencyhigh:c897046a25f2"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-node-readiness-flaps",
+      "title": "Node readiness repeatedly changes",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Node Ready condition changes more often than the pinned threshold permits.",
+      "expected_finding": "Identify node readiness repeatedly changes and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Node Ready condition remains stable during the observation window.",
+      "required_resources": ["Node", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": ["kubernetes-mixin:alert:KubeNodeReadinessFlapping"],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubenodereadinessflapping:1d1a9621421d"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-resource-quota-exceeded",
+      "title": "Namespace resource quota is exceeded",
+      "selection_track": "operations",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Namespace, ResourceQuota, Prometheus metrics fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "ResourceQuota usage reaches and attempts to exceed its hard limit.",
+      "expected_finding": "Identify namespace resource quota is exceeded and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "ResourceQuota usage remains below its hard limit.",
+      "required_resources": ["Namespace", "ResourceQuota", "Prometheus metrics"],
+      "required_mechanisms": ["Prometheus fixture", "PromQL evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "telemetry",
+      "target_rule_ids": [
+        "kubernetes-mixin:alert:KubeQuotaAlmostFull",
+        "kubernetes-mixin:alert:KubeQuotaExceeded",
+        "kubernetes-mixin:alert:KubeQuotaFullyUsed"
+      ],
+      "target_semantic_group_ids": [
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubequotaalmostfull:b8cddc285e05",
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubequotaexceeded:14a80b334a72",
+        "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubequotafullyused:a9388b3cfdea"
+      ],
+      "target_tool_ids": ["kubernetes-mixin"],
+      "target_rule_count": 3,
+      "provenance_refs": [
+        "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/resource_alerts.libsonnet"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-fileless-memfd-execution",
+      "title": "Process executes a fileless memfd payload",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, controlled executable payload fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled helper creates an executable memfd and executes it from memory.",
+      "expected_finding": "Identify process executes a fileless memfd payload and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The helper executes only an on-disk allowlisted binary.",
+      "required_resources": ["Pod", "controlled executable payload"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": ["falco:rule:fileless-execution-via-memfd-create:9a13b10b7954"],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-fileless-execution-via-memfd-create-9a13b10b7954:3911a3f43e98"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-release-agent-container-escape",
+      "title": "Container writes a cgroup release agent",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, cgroup fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A capability-bearing container writes a controlled release_agent path in its cgroup hierarchy.",
+      "expected_finding": "Identify container writes a cgroup release agent and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container has no capability or writable cgroup path for release_agent changes.",
+      "required_resources": ["Pod", "cgroup fixture"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": ["falco:rule:detect-release-agent-file-container-escapes:656197fb5d89"],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-detect-release-agent-file-container-escapes-656197fb5d89:0246cae14ff8"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-container-loads-kernel-module",
+      "title": "Container attempts to load a kernel module",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, Node, test kernel module fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled container with SYS_MODULE invokes finit_module for a harmless test module.",
+      "expected_finding": "Identify container attempts to load a kernel module and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The container lacks SYS_MODULE and never invokes module-loading syscalls.",
+      "required_resources": ["Pod", "Node", "test kernel module"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": ["falco:rule:linux-kernel-module-injection-detected:c2dba6ea0792"],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-linux-kernel-module-injection-detected-c2dba6ea0792:ec45ef2c5035"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-process-uses-ptrace",
+      "title": "Process attaches with ptrace and enables anti-debugging",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, two controlled processes fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled process attaches to a sibling with ptrace and then calls PTRACE_TRACEME.",
+      "expected_finding": "Identify process attaches with ptrace and enables anti-debugging and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Neither process invokes ptrace.",
+      "required_resources": ["Pod", "two controlled processes"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": [
+        "falco:rule:ptrace-anti-debug-attempt:4ff2dccac20a",
+        "falco:rule:ptrace-attached-to-process:44e91bf04e8a"
+      ],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-ptrace-anti-debug-attempt-4ff2dccac20a:8a5294a146ed",
+        "falco:semantic:falco-rule-ptrace-attached-to-process-44e91bf04e8a:8128e652e4c5"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-process-reads-proc-environ",
+      "title": "Process reads another process environment",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, two controlled processes fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled helper reads the environ file for a sibling process under procfs.",
+      "expected_finding": "Identify process reads another process environment and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The helper never opens another process environ file.",
+      "required_resources": ["Pod", "two controlled processes"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": ["falco:rule:read-environment-variable-from-proc-files:4e70120c6b24"],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-read-environment-variable-from-proc-files-4e70120c6b24:485d2cbbf38f"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-process-sets-setuid-bit",
+      "title": "Process sets and exercises a setuid bit",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, controlled executable fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled helper sets a setuid bit on a test executable and runs it without sudo.",
+      "expected_finding": "Identify process sets and exercises a setuid bit and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The test executable remains non-setuid and no process changes effective user unexpectedly.",
+      "required_resources": ["Pod", "controlled executable"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": [
+        "falco:rule:non-sudo-setuid:1c693a1b67bd",
+        "falco:rule:set-setuid-or-setgid-bit:163cfd660ac6"
+      ],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-non-sudo-setuid-1c693a1b67bd:d49ae90a2d21",
+        "falco:semantic:falco-rule-set-setuid-or-setgid-bit-163cfd660ac6:c2f6d327a2a5"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-sensitive-file-symlink-created",
+      "title": "Process creates a symlink over a sensitive path",
+      "selection_track": "falco_chain",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Pod, sensitive file fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A controlled helper creates a symlink targeting a fixture path representing a sensitive file.",
+      "expected_finding": "Identify process creates a symlink over a sensitive path and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "No symlink targets the sensitive fixture path.",
+      "required_resources": ["Pod", "sensitive file fixture"],
+      "required_mechanisms": ["runtime syscall evidence fixture", "runtime predicate evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "runtime",
+      "target_rule_ids": ["falco:rule:create-symlink-over-sensitive-files:0a0aa9f08b8a"],
+      "target_semantic_group_ids": [
+        "falco:semantic:falco-rule-create-symlink-over-sensitive-files-0a0aa9f08b8a:135fc96dd069"
+      ],
+      "target_tool_ids": ["falco"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-ntp-is-down",
+      "title": "Node time synchronization is down",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The custom monitor emits the pinned NTPIsDown result for one Node.",
+      "expected_finding": "Identify node time synchronization is down and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The custom monitor reports successful time synchronization.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "host",
+      "target_rule_ids": [
+        "node-problem-detector:source:custom-plugin-monitor-ntpisdown:43b6fa446259",
+        "node-problem-detector:source:custom-plugin-monitor-ntpisdown:dc62c6e4c02d"
+      ],
+      "target_semantic_group_ids": ["node-problem-detector:semantic:ntpisdown:157a220001c0"],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 2,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/custom-plugin-monitor.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-iptables-version-mismatch",
+      "title": "Node reports an iptables version mismatch",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The monitor emits the pinned IPTablesVersionsMismatch result.",
+      "expected_finding": "Identify node reports an iptables version mismatch and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The node networking components use compatible iptables modes.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "host",
+      "target_rule_ids": [
+        "node-problem-detector:source:iptables-mode-monitor-iptablesversionsmismatch:3d124b564c29"
+      ],
+      "target_semantic_group_ids": [
+        "node-problem-detector:semantic:iptablesversionsmismatch:07af537adf6d"
+      ],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/iptables-mode-monitor.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-kernel-oops",
+      "title": "Node reports a kernel oops",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The ABRT adaptor fixture emits the pinned KernelOops record.",
+      "expected_finding": "Identify node reports a kernel oops and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The ABRT stream contains no kernel oops record.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "host",
+      "target_rule_ids": ["node-problem-detector:source:abrt-adaptor-kerneloops:2257ec0e1cab"],
+      "target_semantic_group_ids": ["node-problem-detector:semantic:kerneloops:5046f14e57f4"],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/abrt-adaptor.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-vmcore-created",
+      "title": "Node reports a VMcore crash dump",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The ABRT adaptor fixture emits the pinned VMcore record.",
+      "expected_finding": "Identify node reports a vmcore crash dump and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The ABRT stream contains no VMcore record.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["local-minikube", "aks"],
+      "feasibility": "host",
+      "target_rule_ids": ["node-problem-detector:source:abrt-adaptor-vmcore:3cb63d427617"],
+      "target_semantic_group_ids": ["node-problem-detector:semantic:vmcore:bc1306d195bf"],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/abrt-adaptor.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-windows-defender-threat",
+      "title": "Windows Defender reports a threat",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Windows monitor emits the pinned WindowsDefenderThreatsDetected result.",
+      "expected_finding": "Identify windows defender reports a threat and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "Windows Defender reports no detected threat.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["aks"],
+      "feasibility": "host",
+      "target_rule_ids": [
+        "node-problem-detector:source:windows-defender-monitor-windowsdefenderthreatsdetected:1647030b06f6"
+      ],
+      "target_semantic_group_ids": [
+        "node-problem-detector:semantic:windowsdefenderthreatsdetected:913b2b97456b"
+      ],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/windows-defender-monitor.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-npd-windows-kubeproxy-unhealthy",
+      "title": "Windows kube-proxy health check fails",
+      "selection_track": "node_problem_detector",
+      "category": "runtime_node_failure",
+      "setup_summary": "Create one isolated Node, node evidence fixture fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "The Windows health checker reports the pinned KubeProxyUnhealthy condition.",
+      "expected_finding": "Identify windows kube-proxy health check fails and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The kube-proxy health endpoint remains healthy.",
+      "required_resources": ["Node", "node evidence fixture"],
+      "required_mechanisms": ["node evidence fixture", "node evidence evaluator"],
+      "supported_cluster_profiles": ["aks"],
+      "feasibility": "host",
+      "target_rule_ids": [
+        "node-problem-detector:source:windows-health-checker-kubeproxy-kubeproxyunhealthy:22ab318201b0"
+      ],
+      "target_semantic_group_ids": [
+        "node-problem-detector:semantic:kubeproxyunhealthy:8c0a35948d0f"
+      ],
+      "target_tool_ids": ["node-problem-detector"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/windows-health-checker-kubeproxy.json"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deprecated-crd-v1beta1",
+      "title": "CustomResourceDefinition uses removed v1beta1 API",
+      "selection_track": "operations",
+      "category": "operations_deprecation",
+      "setup_summary": "Create one isolated CustomResourceDefinition manifest fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A fixture contains an apiextensions.k8s.io/v1beta1 CustomResourceDefinition.",
+      "expected_finding": "Identify customresourcedefinition uses removed v1beta1 api and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The CustomResourceDefinition uses apiextensions.k8s.io/v1.",
+      "required_resources": ["CustomResourceDefinition manifest"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "pluto:source:k8s-customresourcedefinition-apiextensions-k8s-io-v1beta1-removed-v1-22-:8a0635b2de53"
+      ],
+      "target_semantic_group_ids": [
+        "pluto:semantic:k8s-apiextensions-k8s-io-v1beta1-customresourcedefinition-removed-in-v1-22-0:168f7212f410"
+      ],
+      "target_tool_ids": ["pluto"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deprecated-endpointslice-v1beta1",
+      "title": "EndpointSlice uses removed v1beta1 API",
+      "selection_track": "operations",
+      "category": "operations_deprecation",
+      "setup_summary": "Create one isolated EndpointSlice manifest fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A fixture contains a discovery.k8s.io/v1beta1 EndpointSlice.",
+      "expected_finding": "Identify endpointslice uses removed v1beta1 api and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The EndpointSlice uses discovery.k8s.io/v1.",
+      "required_resources": ["EndpointSlice manifest"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "pluto:source:k8s-endpointslice-discovery-k8s-io-v1beta1-removed-v1-25-0:1dad2acaa9c0"
+      ],
+      "target_semantic_group_ids": [
+        "pluto:semantic:k8s-discovery-k8s-io-v1beta1-endpointslice-removed-in-v1-25-0:bf16a109d0d8"
+      ],
+      "target_tool_ids": ["pluto"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deprecated-apiservice-v1beta1",
+      "title": "APIService uses removed v1beta1 API",
+      "selection_track": "operations",
+      "category": "operations_deprecation",
+      "setup_summary": "Create one isolated APIService manifest fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A fixture contains an apiregistration.k8s.io/v1beta1 APIService.",
+      "expected_finding": "Identify apiservice uses removed v1beta1 api and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The APIService uses apiregistration.k8s.io/v1.",
+      "required_resources": ["APIService manifest"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "pluto:source:k8s-apiservice-apiregistration-k8s-io-v1beta1-removed-v1-22-0:9fa80d63afa1"
+      ],
+      "target_semantic_group_ids": [
+        "pluto:semantic:k8s-apiregistration-k8s-io-v1beta1-apiservice-removed-in-v1-22-0:640b635c1a93"
+      ],
+      "target_tool_ids": ["pluto"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deprecated-validating-webhook-v1beta1",
+      "title": "ValidatingWebhookConfiguration uses removed v1beta1 API",
+      "selection_track": "operations",
+      "category": "operations_deprecation",
+      "setup_summary": "Create one isolated ValidatingWebhookConfiguration manifest fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A fixture contains an admissionregistration.k8s.io/v1beta1 ValidatingWebhookConfiguration.",
+      "expected_finding": "Identify validatingwebhookconfiguration uses removed v1beta1 api and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The ValidatingWebhookConfiguration uses admissionregistration.k8s.io/v1.",
+      "required_resources": ["ValidatingWebhookConfiguration manifest"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "pluto:source:k8s-validatingwebhookconfiguration-admissionregistration-k8s-io-v1beta1-:abcff4b6742b"
+      ],
+      "target_semantic_group_ids": [
+        "pluto:semantic:k8s-admissionregistration-k8s-io-v1beta1-validatingwebhookconfiguration-removed-:efe278ecb3cf"
+      ],
+      "target_tool_ids": ["pluto"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    },
+    {
+      "scenario_id": "rule-gap-deprecated-cert-manager-certificate-v1beta1",
+      "title": "Certificate uses removed cert-manager v1beta1 API",
+      "selection_track": "operations",
+      "category": "operations_deprecation",
+      "setup_summary": "Create one isolated Certificate manifest fixture satisfying the predicate and a healthy control differing only in that state.",
+      "trigger_predicate": "A fixture contains a cert-manager.io/v1beta1 Certificate.",
+      "expected_finding": "Identify certificate uses removed cert-manager v1beta1 api and cite the exact field, status, log, syscall, or metric satisfying the trigger.",
+      "healthy_condition": "The Certificate uses cert-manager.io/v1.",
+      "required_resources": ["Certificate manifest"],
+      "required_mechanisms": ["manifest parser", "normalized predicate evaluator"],
+      "supported_cluster_profiles": ["local-kwok", "local-minikube", "aks"],
+      "feasibility": "manifest_only",
+      "target_rule_ids": [
+        "pluto:source:cert-manager-certificate-cert-manager-io-v1beta1-removed-v1-6-0:d3ff836cb9fe"
+      ],
+      "target_semantic_group_ids": [
+        "pluto:semantic:cert-manager-cert-manager-io-v1beta1-certificate-removed-in-v1-6-0:97b99bf3f02d"
+      ],
+      "target_tool_ids": ["pluto"],
+      "target_rule_count": 1,
+      "provenance_refs": [
+        "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+      ],
+      "lifecycle_state": "draft",
+      "qualification_status": "pending",
+      "qualification_blockers": [
+        {
+          "kind": "setup",
+          "detail": "Generate and validate the isolated fixture and healthy control."
+        },
+        {
+          "kind": "observation",
+          "detail": "Prove the required native evidence is stable for a bounded observation window."
+        },
+        {
+          "kind": "oracle",
+          "detail": "Freeze positive, healthy-control, and confounder assertions before candidate runs."
+        },
+        {
+          "kind": "leakage",
+          "detail": "Keep rule names and expected findings out of candidate-visible inputs."
+        }
+      ]
+    }
+  ]
+}

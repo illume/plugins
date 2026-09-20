@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-windows-container-creation-failure-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: C:\etc\kubernetes\logs\containerd.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: >-
+    failed to create containerd container: error unpacking image: wrong diff id calculated on
+    extraction
+  normalized-message.txt: >-
+    failed to create containerd container: error unpacking image: wrong diff id calculated on
+    extraction
+  oracle.json: >-
+    {"source":"containerd","regex":".*failed to create containerd container.*error unpacking
+    image.*wrong diff id calculated on extraction.*","requiredMatches":1}
+  healthy-control.log: created containerd container and unpacked image

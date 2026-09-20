@@ -30,10 +30,46 @@ from a reviewed rule inventory and live scenario results.
 
 The cheapest falsification is a five-family pilot covering scheduling capacity,
 image pull, missing ConfigMap volume, Service-to-EndpointSlice selection, and
-stalled rollout. Compare source-derived candidates with independently
-hand-authored rules on hidden healthy, broken, stale-evidence, and confounded
+stalled rollout. Compare source-derived candidates with separately prompted,
+agent-generated rules on generated healthy, broken, stale-evidence, and confounded
 cases. If source derivation does not reduce authoring effort or preserve
 precision, it should remain a discovery aid rather than a construction system.
+
+## Scenarios Goal
+
+> Full coverage of product-scoped canonical diagnosis capabilities, plus
+> risk-weighted coverage of policy, runtime, host, and platform-specific tails.
+
+The authoritative program definition, risk model, milestones, and exit gates are
+in [Scenarios Goal](kubernetes-scenarios-goal.md).
+
+A capability is **product-scoped** only when Headlamp can obtain its required
+evidence and present or safely orchestrate its outcome on a declared supported
+profile. A **canonical diagnosis capability** is a reviewed cross-tool
+equivalence class with the same subject, trigger predicate, required evidence,
+expected finding, negative condition, and material platform constraints.
+Tool-local semantic groups remain provenance and review batches; they are not the
+completion denominator.
+
+Completion requires:
+
+1. **Product core:** 100% of approved canonical capabilities have qualified
+   positive and healthy-negative scenarios, plus uncertainty, temporal, or
+   confounder cases wherever those are part of the predicate.
+2. **Critical tails:** 100% of capabilities classified as critical in each of
+   policy, runtime, host, and platform-specific domains are qualified.
+3. **Risk-weighted tails:** at least 80% of source-grounded, multi-agent-reviewed
+   risk weight is qualified within each tail domain; aggregate coverage cannot
+   hide an omitted domain.
+4. **Honest accounting:** report `targeted`, `implemented`, and `qualified`
+   coverage separately. A draft specification, source-rule match, or silent
+   negative branch is not qualified coverage.
+
+Risk weights must be frozen before scenario selection from agent-scored impact,
+prevalence, exposure, and platform relevance. Qualification cost may order work
+with a set-cover utility calculation, but it must not reduce a capability's risk
+weight. Reproducible agent-generated capability and composition challenges run
+after each engine freeze and are then published with their provenance.
 
 ## Pinned rule inventories
 
@@ -90,6 +126,16 @@ The first provisional mapping is available in the
 It maps all 7,427 source occurrences and expands the 12 reviewed contracts to
 all 275 scenario IDs. No surveyed tool covers the full roster at predicate
 level; the highest result is kstatus at 47/275 (17.1%).
+
+The [rule-gap draft catalogue](kubernetes-rule-gap-scenarios.md) turns a
+selected set of uncovered direct predicates into 100 detailed, unqualified
+scenario specifications without adding them to the active roster.
+The [second rule-gap catalogue](kubernetes-rule-gap-scenarios-v2.md) then selects
+42 non-overlapping drafts optimized for marginal semantic coverage, also without
+changing the active roster.
+The [third rule-gap catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58
+non-overlapping specifications optimized for reproducible cross-tool states while
+excluding every active, v1, and v2 target.
 
 Assign `no_applicable_rule` only after reviewing every directly mappable group
 and every decomposed branch relevant to the scenario's resources and mechanisms.
@@ -186,15 +232,15 @@ then, 275/275 would establish complete behavior on seven public lineages, not
 general Kubernetes diagnosis quality. The portfolio is public and development-
 visible, and its generated rows do not create independent causal diversity.
 
-Use the current roster as a regression target, then require fresh, independently
-authored lineage holdouts with renamed resources, changed values, equivalent
-API representations, healthy twins, confounders, stale and missing evidence,
-actual tool failures, and composed faults. Report the following separately:
+Use the current roster as a regression target, then generate fresh post-freeze
+challenge lineages with renamed resources, changed values, equivalent API
+representations, healthy twins, confounders, stale and missing evidence, actual
+tool failures, and composed faults. Publish their generation provenance and report:
 
 1. rules-only diagnosis on all 235 read-only rows;
 2. deterministic repair orchestration on the 40 repair rows;
 3. integrated closed-roster 275/275 coverage;
-4. performance on unseen lineage holdouts after the implementation is frozen.
+4. performance on post-freeze generated challenge lineages.
 
 Do not use a closed-roster 275/275 result as evidence that a broad 75-120-family
 production engine is unnecessary. It would instead show that the current public
@@ -577,8 +623,9 @@ links are discovery pointers only.
    queries, causal edges, contradictions, and version/feature bounds.
 4. Join each candidate to the smallest owning tests and operator-facing docs.
    Reject candidates without a negative control or observable user evidence.
-5. Require human Kubernetes review to classify deterministic finding,
-   hypothesis, policy, or presentation-only behavior.
+5. Require agreement between versioned source, classifier, and skeptic agents to
+   classify deterministic finding, hypothesis, policy, or presentation-only
+   behavior; unresolved disagreements remain excluded.
 6. Generate declarative rule data or typed code plus provenance. Generated files
    must never contain unreviewed remediation or confidence claims.
 7. Qualify healthy, broken, stale, permission-denied, partial-data, and
@@ -641,7 +688,8 @@ missing evidence, and source strength reviewable.
 - [ ] Record what each source family can and cannot prove. In particular, never
       translate an Event reason directly into a root cause without the required
       object, producer, freshness, and contradictory evidence.
-- [ ] Run the five-family falsification pilot against hand-authored rules.
+- [ ] Run the five-family falsification pilot against separately prompted,
+      agent-generated rules and critic-agent-reviewed fixtures.
       Measure accepted candidates, author/reviewer time, precision, recall,
       abstention, source drift, and lines/tests per qualified family.
 - [ ] Test version-diff generation across three supported Kubernetes minors and
@@ -800,8 +848,8 @@ Evaluate three systems on the same observations and budgets:
 2. model only, without answer-bearing rule output;
 3. hybrid, where deterministic findings are disclosed as product input.
 
-Use unseen scenario lineages, healthy twins, confounders, stale evidence,
-missing permissions, missing telemetry, and composed faults. Score trigger-level
+Use post-freeze agent-generated scenario lineages, healthy twins, confounders,
+stale evidence, missing permissions, missing telemetry, and composed faults. Score trigger-level
 precision/recall, root-cause precision/recall, unsupported claims, evidence
 provenance, abstention, investigation cost, latency, and safe recovery. Cluster
 uncertainty by scenario lineage rather than treating message variants as
@@ -811,8 +859,8 @@ For model-quality comparisons, every model receives the same ontology and
 non-answer-bearing evidence. Product-system comparisons may include Headlamp
 rules, but must disclose that advantage and include rules-only and model-only
 ablations. Never tune a rule from protected evaluator aliases and then count its
-injected output as model reasoning. Fresh holdout lineages are mandatory after
-any rule or rubric change.
+injected output as model reasoning. A fresh, reproducible challenge batch is
+mandatory after any rule or rubric change.
 
 ## Ordered research backlog
 

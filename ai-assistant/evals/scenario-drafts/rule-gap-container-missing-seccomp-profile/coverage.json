@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-container-missing-seccomp-profile",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-6-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:8b91bb775137",
+    "kube-bench:source:gke-1-8-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:a092c64c3536",
+    "kube-bench:source:gke-1-9-0-policies-4-6-2-ensure-that-the-seccomp-profile-is-set-to-runti:71ba9a999598",
+    "kube-score:check:container-seccomp-profile",
+    "kubescape:rule:set-seccomp-profile",
+    "kubescape:rule:set-seccomp-profile-RuntimeDefault"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-seccomp-profile-is-set-to-runtimedefault-in-your-pod-definitions:1e77c126ee8a",
+    "kube-score:semantic:kube-score-check-container-seccomp-profile:45a55d295e1f",
+    "kubescape:semantic:kubescape-rule-set-seccomp-profile-runtimedefault:05d0f729c482",
+    "kubescape:semantic:kubescape-rule-set-seccomp-profile:79aabdbdb255"
+  ],
+  "target_tool_ids": ["kube-bench", "kube-score", "kubescape"],
+  "target_rule_count": 6,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/policies.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0210-ensurethattheseccompprofileissettodockerdefaultinyourpoddefinitions.json",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

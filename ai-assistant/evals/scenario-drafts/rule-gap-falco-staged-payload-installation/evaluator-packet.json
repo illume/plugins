@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-staged-payload-installation",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "download-decode-execute-install",
+        "resource_ref": "job/payload-stager",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "wget; base64 -d; chmod 0700; execute from /dev/shm; mv to controlled-bin",
+        "description": "One command chain downloads, decodes, marks executable, runs, and installs the file."
+      },
+      {
+        "fact_id": "payload-is-harmless-script",
+        "resource_ref": "configmap/controlled-payload",
+        "field_path": "data.payload.b64",
+        "observed_value": "#!/bin/sh\nprintf \"controlled-payload\\n\"\n",
+        "description": "The decoded payload only prints a fixed marker."
+      },
+      {
+        "fact_id": "install-target-is-emptydir",
+        "resource_ref": "job/payload-stager",
+        "field_path": "spec.template.spec.volumes[0].emptyDir",
+        "observed_value": "{}",
+        "description": "The installed file remains in disposable Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-install",
+      "resource_ref": "job/payload-stager",
+      "field_path": "spec.template.spec.volumes[0].hostPath",
+      "observed_value": "present",
+      "description": "No host binary directory is mounted or modified."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d53c1366e689dcfc"
+}

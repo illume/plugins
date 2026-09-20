@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-priority-class-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-priority-alpha",
+        "resource_ref": "manifest/priorityclass/legacy-batch-alpha",
+        "field_path": "apiVersion",
+        "observed_value": "scheduling.k8s.io/v1alpha1",
+        "description": "One PriorityClass uses scheduling.k8s.io/v1alpha1."
+      },
+      {
+        "fact_id": "deprecated-priority-beta",
+        "resource_ref": "manifest/priorityclass/legacy-batch-beta",
+        "field_path": "apiVersion",
+        "observed_value": "scheduling.k8s.io/v1beta1",
+        "description": "The other PriorityClass uses scheduling.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-priority-version",
+      "resource_ref": "manifest/priorityclass/legacy-batch-alpha",
+      "field_path": "apiVersion",
+      "observed_value": "scheduling.k8s.io/v1",
+      "description": "Neither fixture PriorityClass uses scheduling.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1d9155ad1f9c923c"
+}

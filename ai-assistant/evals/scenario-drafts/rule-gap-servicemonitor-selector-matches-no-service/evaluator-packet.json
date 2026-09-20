@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-servicemonitor-selector-matches-no-service",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "servicemonitor/application-monitor",
+        "field_path": "spec.selector.matchLabels + matching Service inventory",
+        "observed_value": "{\"metrics\":\"expected\"}; 0 matches",
+        "description": "The monitor selector matches none of the available Services."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "servicemonitor/application-monitor",
+      "field_path": "spec.selector.matchLabels + matching Service inventory",
+      "observed_value": "{\"metrics\":\"expected\"}; >= 1 match",
+      "description": "A healthy monitor selector matches its intended Service."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-884e0d454dd9b7ec"
+}

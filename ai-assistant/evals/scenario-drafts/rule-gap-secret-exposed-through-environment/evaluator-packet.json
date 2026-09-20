@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-secret-exposed-through-environment",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/environment-secret-consumer",
+        "field_path": "spec.containers[0].env[0].valueFrom.secretKeyRef",
+        "observed_value": "{\"name\":\"application-credential\",\"key\":\"token\"}",
+        "description": "The container imports a Secret value into its process environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/environment-secret-consumer",
+      "field_path": "spec.containers[0].env[0].valueFrom.secretKeyRef",
+      "observed_value": "readOnly secret volume mount",
+      "description": "The reviewed alternative mounts the Secret read-only instead of exporting it."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bb2b49f283b37858"
+}

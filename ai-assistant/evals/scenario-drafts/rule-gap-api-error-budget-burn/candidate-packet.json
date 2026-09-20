@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-api-error-budget-burn",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the fast API availability burn caused by requests to `v1alpha1.burn.telemetry.example`. Correlate APIService availability, Service endpoints, request status codes, and short- and long-window API error ratios. Do not mutate resources.",
+  "visible_resource_refs": [
+    "apiservice/v1alpha1.burn.telemetry.example",
+    "service/burn-api-backend",
+    "endpointslice/*?kubernetes.io/service-name=burn-api-backend",
+    "deployment/api-error-generator",
+    "metric/apiserver_request_total{group=\"burn.telemetry.example\"}"
+  ],
+  "allowed_observation_kinds": [
+    "apiservice.status",
+    "service.spec",
+    "endpointslice.list",
+    "pod.logs",
+    "metric.range",
+    "metric.ratio"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

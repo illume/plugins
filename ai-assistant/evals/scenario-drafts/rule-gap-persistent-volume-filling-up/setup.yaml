@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bytes-filling
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bytes-filler
+spec:
+  restartPolicy: Never
+  containers:
+    - name: writer
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - /bin/sh
+        - '-c'
+        - dd if=/dev/zero of=/data/fill bs=1M count=60 conv=fsync; sleep 3600
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: bytes-filling

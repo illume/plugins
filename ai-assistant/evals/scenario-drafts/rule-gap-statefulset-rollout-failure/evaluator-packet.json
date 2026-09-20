@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-statefulset-rollout-failure",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "statefulset-ready-replicas-zero",
+        "resource_ref": "statefulset/not-ready-db",
+        "field_path": "status.readyReplicas",
+        "observed_value": "0 or <absent>",
+        "description": "No StatefulSet replica reaches Ready."
+      },
+      {
+        "fact_id": "statefulset-pods-not-ready",
+        "resource_ref": "pod/*?app=not-ready-db",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+        "observed_value": "False",
+        "description": "The controller-created Pods fail their readiness probes."
+      },
+      {
+        "fact_id": "statefulset-ready-mismatch-sustained",
+        "resource_ref": "metric/kube_statefulset_status_replicas_ready{statefulset=\"not-ready-db\"}",
+        "field_path": "max_over_time[15m]",
+        "observed_value": "< kube_statefulset_replicas",
+        "description": "Native StatefulSet telemetry does not converge to the desired replica count."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-statefulset-converged",
+      "resource_ref": "statefulset/not-ready-db",
+      "field_path": "status.readyReplicas",
+      "observed_value": "2",
+      "description": "The two desired replicas do not become ready."
+    },
+    {
+      "fact_id": "invented-statefulset-unschedulable",
+      "resource_ref": "pod/*?app=not-ready-db",
+      "field_path": "status.conditions[?(@.type==\"PodScheduled\")].status",
+      "observed_value": "False",
+      "description": "The Pods schedule and run; readiness prevents convergence."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fb937f36315962b3"
+}

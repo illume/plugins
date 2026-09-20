@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-httproute-references-missing-backend",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubescape:rule:dangling-gateway-backend",
+    "kubevious:rule:http-route-backend-ref"
+  ],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-dangling-gateway-backend:1ac6cafcd317",
+    "kubevious:semantic:kubevious-rule-http-route-backend-ref:68266e2be582"
+  ],
+  "target_tool_ids": ["kubescape", "kubevious"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0302-danglinggatewaybackend.json",
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/gateway-api/http-route/backend-ref.yaml"
+  ]
+}

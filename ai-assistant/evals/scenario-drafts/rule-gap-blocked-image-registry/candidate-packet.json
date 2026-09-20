@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-blocked-image-registry",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Compare the `app` Deployment image source with the namespace image-source policy. Cite both exact values and do not mutate resources.",
+  "visible_resource_refs": ["namespace/image-policy", "deployment/app"],
+  "allowed_observation_kinds": [
+    "namespace.annotations",
+    "deployment.pod-template",
+    "container.image"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-exceeds-hpa-minimum",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "hpa-minimum",
+        "resource_ref": "horizontalpodautoscaler/api",
+        "field_path": "spec.minReplicas",
+        "observed_value": "2",
+        "description": "The autoscaler may reduce the api Deployment to two replicas."
+      },
+      {
+        "fact_id": "pdb-minimum",
+        "resource_ref": "poddisruptionbudget/api-budget",
+        "field_path": "spec.minAvailable",
+        "observed_value": "3",
+        "description": "The disruption budget requires three available pods, exceeding the autoscaling floor."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-compatible-budget",
+      "resource_ref": "poddisruptionbudget/api-budget",
+      "field_path": "spec.minAvailable",
+      "observed_value": "2",
+      "description": "The fixture budget is not bounded at the autoscaler minimum."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-855d4f2b0ca9877d"
+}

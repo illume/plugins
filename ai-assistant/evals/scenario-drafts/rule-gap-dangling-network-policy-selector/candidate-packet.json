@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-dangling-network-policy-selector",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review whether `web-policy` applies to the `web` Deployment. Cite the exact selectors and labels you retrieve; do not mutate resources.",
+  "visible_resource_refs": ["networkpolicy/web-policy", "deployment/web"],
+  "allowed_observation_kinds": ["networkpolicy.pod-selector", "deployment.pod-template-labels"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

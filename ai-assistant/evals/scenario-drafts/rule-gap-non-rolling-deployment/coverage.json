@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-non-rolling-deployment",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:no-rolling-update-strategy",
+    "kube-score:check:deployment-strategy",
+    "kubescape:rule:no-rolling-update-strategy"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-no-rolling-update-strategy:06afe9792dfa",
+    "kube-score:semantic:kube-score-check-deployment-strategy:3d181ffa6923",
+    "kubescape:semantic:kubescape-rule-no-rolling-update-strategy:f4f5567fe07e"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubescape"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0305-norollingupdatestrategy.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/no-rolling-update-strategy.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

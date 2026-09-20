@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-phase-errors",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "persistent-volume-failed",
+        "resource_ref": "persistentvolume/telemetry-failed-pv",
+        "field_path": "status.phase",
+        "observed_value": "Failed",
+        "description": "The PersistentVolume is in the terminal Failed phase."
+      },
+      {
+        "fact_id": "persistent-volume-driver-unavailable",
+        "resource_ref": "persistentvolume/telemetry-failed-pv",
+        "field_path": "status.reason",
+        "observed_value": "VolumePluginUnavailable",
+        "description": "The volume status identifies its unavailable CSI implementation."
+      },
+      {
+        "fact_id": "persistent-volume-failed-metric",
+        "resource_ref": "metric/kube_persistentvolume_status_phase{persistentvolume=\"telemetry-failed-pv\",phase=\"Failed\"}",
+        "field_path": "min_over_time[5m]",
+        "observed_value": "1",
+        "description": "Native volume-phase telemetry remains Failed through the window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-persistent-volume-bound",
+      "resource_ref": "persistentvolume/telemetry-failed-pv",
+      "field_path": "status.phase",
+      "observed_value": "Bound",
+      "description": "The fixture volume is not healthy and Bound."
+    },
+    {
+      "fact_id": "invented-working-csi-driver",
+      "resource_ref": "persistentvolume/telemetry-failed-pv",
+      "field_path": "spec.csi.driver",
+      "observed_value": "<registered CSI driver>",
+      "description": "The specified CSI driver is intentionally absent."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7626975b0cfdded7"
+}

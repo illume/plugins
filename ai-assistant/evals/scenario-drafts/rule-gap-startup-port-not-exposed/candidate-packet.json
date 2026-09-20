@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-startup-port-not-exposed",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Check whether the `app` Deployment startup check addresses a declared container port. Cite the probe target and declared ports; do not mutate resources.",
+  "visible_resource_refs": ["deployment/app"],
+  "allowed_observation_kinds": [
+    "deployment.pod-template",
+    "container.health-probes",
+    "container.ports"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

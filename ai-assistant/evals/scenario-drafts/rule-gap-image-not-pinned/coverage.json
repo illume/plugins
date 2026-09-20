@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-image-not-pinned",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:image-not-pinned-to-digest", "popeye:code:100"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-image-not-pinned-to-digest:58cc5bc63019",
+    "popeye:semantic:popeye-code-100:3d0b8fb01383"
+  ],
+  "target_tool_ids": ["kubescape", "popeye"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0306-imagenotpinnedtodigest.json"
+  ]
+}

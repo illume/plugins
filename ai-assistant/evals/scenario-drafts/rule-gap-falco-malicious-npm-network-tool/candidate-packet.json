@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-malicious-npm-network-tool",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `controlled-npm-package`, `npm-network-sink`, and `npm-install-action`. Identify the package-manager, lifecycle, and network-tool process chain from exact evidence.",
+  "visible_resource_refs": [
+    "configmap/controlled-npm-package",
+    "deployment/npm-network-sink",
+    "service/npm-network-sink",
+    "job/npm-install-action"
+  ],
+  "allowed_observation_kinds": [
+    "configmap.data",
+    "job.pod-template",
+    "service.endpoints",
+    "pod.logs"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

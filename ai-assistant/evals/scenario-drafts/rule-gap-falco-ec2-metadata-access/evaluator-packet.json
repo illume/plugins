@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-ec2-metadata-access",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "link-local-metadata-request",
+        "resource_ref": "job/metadata-address-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "wget http://169.254.169.254:8080/latest/meta-data/",
+        "description": "The application makes an HTTP request to the metadata link-local address."
+      },
+      {
+        "fact_id": "loopback-alias-precedes-request",
+        "resource_ref": "job/metadata-address-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "ip address add 169.254.169.254/32 dev lo",
+        "description": "The address is first assigned to Pod loopback, making the endpoint controlled."
+      },
+      {
+        "fact_id": "controlled-metadata-response",
+        "resource_ref": "pod/metadata-address-action-*",
+        "field_path": "logs[action]",
+        "observed_value": "controlled-metadata",
+        "description": "The response proves the connection terminated at the local fixture listener."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-cloud-credential-response",
+      "resource_ref": "pod/metadata-address-action-*",
+      "field_path": "logs[action]",
+      "observed_value": "AccessKeyId",
+      "description": "The fixture returns no cloud identity or credential material."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d113527f9139fc76"
+}

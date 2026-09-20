@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-anonymous-kubelet-auth",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the `kubelet-anonymous-auth-fixture` component configuration and determine whether unauthenticated kubelet requests are accepted. Cite the exact effective field.",
+  "visible_resource_refs": ["configmap/kubelet-anonymous-auth-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kubelet"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

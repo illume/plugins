@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-latest-image-tag",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "latest-image-tag",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].image",
+        "observed_value": "nginx:latest",
+        "description": "The image uses the mutable latest tag."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-image-digest",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].image",
+      "observed_value": "nginx@sha256:fixture",
+      "description": "The image is not digest pinned."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0336602ffd9cdcd6"
+}

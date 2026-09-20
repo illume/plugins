@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: unprotected-database
+spec:
+  serviceName: unprotected-database
+  replicas: 3
+  selector:
+    matchLabels:
+      app: unprotected-database
+  template:
+    metadata:
+      labels:
+        app: unprotected-database
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532

@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: fixture-flapping-node
+  labels:
+    evals.kubernetes.io/synthetic-node: 'true'
+spec:
+  unschedulable: true
+  taints:
+    - key: evals.kubernetes.io/synthetic-node
+      effect: NoSchedule
+status:
+  capacity:
+    cpu: '1'
+    memory: 1Gi
+    pods: '1'
+  allocatable:
+    cpu: '1'
+    memory: 1Gi
+    pods: '1'
+  conditions:
+    - type: Ready
+      status: 'False'
+      reason: FixtureHeartbeatLost
+      lastTransitionTime: '2026-09-20T00:04:00Z'
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: fixture-flapping-node-0
+involvedObject:
+  apiVersion: v1
+  kind: Node
+  name: fixture-flapping-node
+reason: NodeReady
+message: Node Ready condition changed to True
+type: Normal
+eventTime: '2026-09-20T00:00:00Z'
+reportingController: evals.kubernetes.io/status-fixture
+reportingInstance: fixture-1
+action: ReadyConditionChanged
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: fixture-flapping-node-1
+involvedObject:
+  apiVersion: v1
+  kind: Node
+  name: fixture-flapping-node
+reason: NodeNotReady
+message: Node Ready condition changed to False
+type: Warning
+eventTime: '2026-09-20T00:01:00Z'
+reportingController: evals.kubernetes.io/status-fixture
+reportingInstance: fixture-1
+action: ReadyConditionChanged
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: fixture-flapping-node-2
+involvedObject:
+  apiVersion: v1
+  kind: Node
+  name: fixture-flapping-node
+reason: NodeReady
+message: Node Ready condition changed to True
+type: Normal
+eventTime: '2026-09-20T00:02:00Z'
+reportingController: evals.kubernetes.io/status-fixture
+reportingInstance: fixture-1
+action: ReadyConditionChanged
+---
+apiVersion: v1
+kind: Event
+metadata:
+  name: fixture-flapping-node-3
+involvedObject:
+  apiVersion: v1
+  kind: Node
+  name: fixture-flapping-node
+reason: NodeNotReady
+message: Node Ready condition changed to False
+type: Warning
+eventTime: '2026-09-20T00:03:00Z'
+reportingController: evals.kubernetes.io/status-fixture
+reportingInstance: fixture-1
+action: ReadyConditionChanged

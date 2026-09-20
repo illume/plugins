@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-container-image-tag-omitted",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-score:check:container-image-tag", "polaris:check:tagNotSpecified"],
+  "target_semantic_group_ids": [
+    "kube-score:semantic:kube-score-check-container-image-tag:22015e801db9",
+    "polaris:semantic:polaris-check-tagnotspecified:eb330ea8bb8f"
+  ],
+  "target_tool_ids": ["kube-score", "polaris"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/tagNotSpecified.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

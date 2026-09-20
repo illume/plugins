@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-kernel-oops-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: /var/run/abrt/abrt.socket
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.txt: '{"type":"KernelOops","count":1,"message":"BUG: unable to handle controlled fixture fault"}'
+  predicate.json: '{"recordType":"KernelOops","minimumCount":1}'
+  healthy-control.txt: '{"type":"Health","count":1,"message":"no kernel oops records"}'

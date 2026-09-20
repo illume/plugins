@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+spec:
+  tls:
+    - hosts:
+        - internal.example.test
+      secretName: web-tls
+  rules:
+    - host: app.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: web-tls
+type: kubernetes.io/tls
+data:
+  tls.crt: >-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJsVENDQVR1Z0F3SUJBZ0lVYUNybFQySVg2THAyWnVIcVErbEdpT0J5MW9zd0NnWUlLb1pJemowRUF3SXcKSURFZU1Cd0dBMVVFQXd3VmFXNTBaWEp1WVd3dVpYaGhiWEJzWlM1MFpYTjBNQjRYRFRJMk1Ea3lNREV4TXpZegpNRm9YRFRNMk1Ea3hOekV4TXpZek1Gb3dJREVlTUJ3R0ExVUVBd3dWYVc1MFpYSnVZV3d1WlhoaGJYQnNaUzUwClpYTjBNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV4Wml6cVVUV3NiMkpKNTZKRStBMkVncVIKMVl4SWVDRkY0UWU0WC9KRjBCR2JOYnNNU20vcy9rcy8ySHRacDZURlBJekdRcVpLUjJLUUg3SG41dGU4Q3FOVApNRkV3SFFZRFZSME9CQllFRkdpQUo1OGNxUkRCVGVUdnpyYzlXYXlWelo1Q01COEdBMVVkSXdRWU1CYUFGR2lBCko1OGNxUkRCVGVUdnpyYzlXYXlWelo1Q01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0NnWUlLb1pJemowRUF3SUQKU0FBd1JRSWdOYng3RmtGaEVDTTNIQ3hpS0Y2UDNqQlBidFVpQ2NTcXdyUmR0N05YVThJQ0lRRFlObHBWNFBObApLVjJSMTM0NnR6WDVMa0JRVnVqZzhMOGJVcmtsL3NiWVhRPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: >-
+    LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2RzZVkwRkVNRmxRQ2NmTmEKdVN4eGVCVEdmdlhZRjJFVGFqWXhqOWJhNG5haFJBTkNBQVRGbUxPcFJOYXh2WWtubm9rVDREWVNDcEhWakVoNApJVVhoQjdoZjhrWFFFWnMxdXd4S2IreitTei9ZZTFtbnBNVThqTVpDcGtwSFlwQWZzZWZtMTd3SwotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==

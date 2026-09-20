@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-corrupt-container-image",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "corrupt-layer-verification-log",
+        "resource_ref": "pod[label=job-name=image-layer-integrity-probe]",
+        "field_path": "logs",
+        "observed_value": "image layer verification failed: corrupt compressed data",
+        "description": "Integrity validation rejects the deliberately malformed layer archive."
+      },
+      {
+        "fact_id": "integrity-probe-exit-code",
+        "resource_ref": "pod[label=job-name=image-layer-integrity-probe]",
+        "field_path": "status.containerStatuses[0].state.terminated.exitCode",
+        "observed_value": "31",
+        "description": "The integrity probe exits with its corruption-specific failure code."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-layer-verification-success",
+      "resource_ref": "job/image-layer-integrity-probe",
+      "field_path": "status.succeeded",
+      "observed_value": "1",
+      "description": "The malformed layer does not pass verification."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-baf6809ba25d8461"
+}

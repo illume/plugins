@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-audit-log-file-too-small",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/audit-log-file-too-small-fixture component fixture. The audit destination is valid, but each audit file rotates after only 20 MB. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/audit-log-file-too-small-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

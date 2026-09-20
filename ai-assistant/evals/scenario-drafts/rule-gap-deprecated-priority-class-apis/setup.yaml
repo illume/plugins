@@ -1,0 +1,15 @@
+apiVersion: scheduling.k8s.io/v1alpha1
+kind: PriorityClass
+metadata:
+  name: legacy-batch-alpha
+value: 1000
+globalDefault: false
+description: Priority for legacy batch workloads.
+---
+apiVersion: scheduling.k8s.io/v1beta1
+kind: PriorityClass
+metadata:
+  name: legacy-batch-beta
+value: 2000
+globalDefault: false
+description: Priority for legacy batch workers.

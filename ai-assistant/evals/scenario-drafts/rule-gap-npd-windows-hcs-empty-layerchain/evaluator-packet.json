@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-windows-hcs-empty-layerchain",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-windows-hcs-empty-layerchain-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "Failed to unmarshall layerchain json - invalid character '\u0000' looking for beginning of value",
+        "description": "The normalized Windows containerd line reports a NUL-prefixed empty HCS layerchain."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-windows-hcs-empty-layerchain-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"containerd\",\"regex\":\".*Failed to unmarshall layerchain json - invalid character '\\\\x00' looking for beginning of value*\",\"requiredMatches\":1}",
+        "description": "The local oracle requires 1 match(es) for .*Failed to unmarshall layerchain json - invalid character '\\x00' looking for beginning of value*."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-windows-hcs-empty-layerchain-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-windows-hcs-empty-layerchain-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "HCS unmarshalled layerchain with 3 layers",
+      "description": "The failing source is not the nonmatching healthy control: HCS unmarshalled layerchain with 3 layers"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-070cee1b19beea89"
+}

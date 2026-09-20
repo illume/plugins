@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-hpa-capacity-mismatch",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why `capacity-hpa` cannot converge. Cite HPA bounds and status, per-Pod requests, unschedulable events, and aggregate Node allocatable evidence.",
+  "visible_resource_refs": [
+    "horizontalpodautoscaler/capacity-hpa",
+    "deployment/capacity-target",
+    "pod/capacity-target-*",
+    "node/*",
+    "event/*"
+  ],
+  "allowed_observation_kinds": [
+    "horizontalpodautoscaler.spec",
+    "horizontalpodautoscaler.status",
+    "deployment.status",
+    "pod.resources",
+    "node.allocatable",
+    "event.list",
+    "metric.time-series"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

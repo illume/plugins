@@ -1,0 +1,11 @@
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: telemetry-expiring-client
+spec:
+  request: >-
+    MIH+MIGlAgEAMEMxIjAgBgNVBAMMGXRlbGVtZXRyeS1leHBpcmluZy1jbGllbnQxHTAbBgNVBAoMFHN5c3RlbTphdXRoZW50aWNhdGVkMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbFsma15xaWVy0yRlOxYaYwNZsMRCdPkHqLCu9N3xjQZLPAvGXqOtGWVIJ6WuDzTrNBereOxKToRuVlG+5TgoIKAAMAoGCCqGSM49BAMCA0gAMEUCIQDwL5SBnYrdkDewm05vcvESAu0BtpQfak76oORw2c86IAIgfCxviNKGxFEs84mOSR4Bj0E6p2tVcPnUDQASOFVP6Dw=
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 600
+  usages:
+    - client auth

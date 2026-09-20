@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-references-missing-secret",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/missing-environment-source",
+        "field_path": "spec.containers[0].envFrom[0].secretRef.name",
+        "observed_value": "missing-application-secret",
+        "description": "The required Secret named missing-application-secret does not exist in the namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/missing-environment-source",
+      "field_path": "spec.containers[0].envFrom[0].secretRef.name",
+      "observed_value": "missing-application-secret exists",
+      "description": "A healthy namespace contains the referenced Secret."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-41ab1cde25d1233e"
+}

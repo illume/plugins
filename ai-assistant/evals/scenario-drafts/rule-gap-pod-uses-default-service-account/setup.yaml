@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: default-account-workload
+  labels:
+    app: default-account-workload
+spec:
+  serviceAccountName: default
+  automountServiceAccountToken: true
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532

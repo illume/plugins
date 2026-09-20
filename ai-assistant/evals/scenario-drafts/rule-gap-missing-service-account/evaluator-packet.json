@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-service-account",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "service-account-reference",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.serviceAccountName",
+        "observed_value": "missing-app",
+        "description": "The Pod template names missing-app as its ServiceAccount."
+      },
+      {
+        "fact_id": "service-account-count",
+        "resource_ref": "serviceaccount/*",
+        "field_path": "items[metadata.name=missing-app].length",
+        "observed_value": "0",
+        "description": "No ServiceAccount named missing-app exists in the namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-service-account",
+      "resource_ref": "serviceaccount/missing-app",
+      "field_path": "metadata.name",
+      "observed_value": "missing-app",
+      "description": "The referenced ServiceAccount does not exist."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-aee0e269b59b1b7e"
+}

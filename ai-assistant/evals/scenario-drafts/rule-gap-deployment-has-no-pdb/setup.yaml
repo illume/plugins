@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unprotected-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: unprotected-api
+  template:
+    metadata:
+      labels:
+        app: unprotected-api
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532

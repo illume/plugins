@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-cluster-certificate-expiration",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeClientCertificateExpiration",
+    "kubernetes-mixin:alert:KubeletClientCertificateExpiration",
+    "kubernetes-mixin:alert:KubeletServerCertificateExpiration"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeclientcertificateexpiration:6258f2d20e3b",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletclientcertificateexpiration:c366b834f63f",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletservercertificateexpiration:4e5c9f1c79e7"
+  ],
+  "target_tool_ids": ["kubernetes-mixin"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kube_apiserver.libsonnet",
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+  ]
+}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-kernel-divide-error-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/kern.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: 'divide error: 0000 [#1] SMP'
+  normalized-message.txt: 'divide error: 0000 [#1] SMP'
+  oracle.json: '{"source":"kernel-monitor","regex":"divide error: 0000 \\[#\\d+\\] SMP","requiredMatches":1}'
+  healthy-control.log: 'kernel: arithmetic self-test passed'

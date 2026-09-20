@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-non-rolling-deployment",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review update availability for the `web` workload behind the `web` Service. Cite the selector relationship and update strategy; do not mutate resources.",
+  "visible_resource_refs": ["deployment/web", "service/web"],
+  "allowed_observation_kinds": [
+    "deployment.strategy",
+    "deployment.pod-template-labels",
+    "service.selector"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

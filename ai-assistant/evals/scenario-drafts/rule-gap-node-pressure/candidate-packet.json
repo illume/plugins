@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-pressure",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the sustained pressure condition on synthetic Node `telemetry-pressure`. Identify the exact pressure type and correlate its condition transition with native node-condition telemetry. Do not attribute unrelated disk or PID pressure and do not mutate resources.",
+  "visible_resource_refs": [
+    "node/telemetry-pressure",
+    "metric/kube_node_status_condition{node=\"telemetry-pressure\",condition=\"MemoryPressure\",status=\"true\"}"
+  ],
+  "allowed_observation_kinds": ["node.status", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

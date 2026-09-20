@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: unschedulable-agent
+spec:
+  selector:
+    matchLabels:
+      app: unschedulable-agent
+  template:
+    metadata:
+      labels:
+        app: unschedulable-agent
+    spec:
+      containers:
+        - name: agent
+          image: registry.k8s.io/pause:3.10
+          resources:
+            requests:
+              cpu: '100000'
+              memory: 1Ti

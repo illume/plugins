@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-truncate-logs-and-shell-history",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:clear-log-activities:bdc30194c7e5",
+    "falco:rule:delete-or-rename-shell-history:3613d13c8d75"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-clear-log-activities-bdc30194c7e5:66662b258a76",
+    "falco:semantic:falco-rule-delete-or-rename-shell-history-3613d13c8d75:a278a302ce51"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

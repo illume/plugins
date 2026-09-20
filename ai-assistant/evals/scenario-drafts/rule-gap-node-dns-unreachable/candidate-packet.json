@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-dns-unreachable",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the failed `dns-reachability-probe` Job. Use its DNS configuration and logs to compare the local IP control request with the resolver lookup; cite both outcomes and do not mutate resources.",
+  "visible_resource_refs": [
+    "job/dns-reachability-probe",
+    "pod[label=job-name=dns-reachability-probe]"
+  ],
+  "allowed_observation_kinds": ["job.status", "pod.spec", "pod.container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

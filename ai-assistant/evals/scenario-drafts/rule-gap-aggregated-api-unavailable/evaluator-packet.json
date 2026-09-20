@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-aggregated-api-unavailable",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "apiservice/v1alpha1.unavailable.example.test",
+        "field_path": "status.conditions[type=Available].status + service resolution",
+        "observed_value": "False; service/default/missing-aggregated-api absent",
+        "description": "The aggregation controller cannot resolve the APIService backend and marks it unavailable."
+      },
+      {
+        "fact_id": "aggregated-api-error-ratio",
+        "resource_ref": "metric/apiserver_request_total",
+        "field_path": "5xx responses / all responses for group unavailable.example.test over 5m",
+        "observed_value": "> 0.05",
+        "description": "Aggregated API error responses exceed the pinned five-percent ratio in the same window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "apiservice/v1alpha1.unavailable.example.test",
+      "field_path": "status.conditions[type=Available].status + service resolution",
+      "observed_value": "True; backend error ratio below 0.05",
+      "description": "A healthy APIService has an available backend without an elevated error ratio."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-23a2c9f7eaa1ccb6"
+}

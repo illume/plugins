@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-job-failed",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why Job `failing-job` terminated unsuccessfully. Correlate the Job condition and failed count with its Pod exit code, logs, Events, and native job-status telemetry. Do not mutate resources.",
+  "visible_resource_refs": [
+    "job/failing-job",
+    "pod/*?job-name=failing-job",
+    "event/*?involvedObject.name=failing-job",
+    "metric/kube_job_status_failed{job_name=\"failing-job\"}"
+  ],
+  "allowed_observation_kinds": [
+    "job.spec",
+    "job.status",
+    "pod.status",
+    "pod.logs",
+    "resource.events",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

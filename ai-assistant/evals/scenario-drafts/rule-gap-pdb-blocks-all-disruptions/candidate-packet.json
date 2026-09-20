@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-blocks-all-disruptions",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review whether the `web-budget` permits any voluntary disruption of `web`. Cite the replica and budget values; do not mutate resources.",
+  "visible_resource_refs": ["deployment/web", "poddisruptionbudget/web-budget"],
+  "allowed_observation_kinds": ["deployment.scale", "poddisruptionbudget.availability-policy"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

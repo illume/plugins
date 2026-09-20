@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: failing-job
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        job: failing-job
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: job
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-c'
+            - echo deterministic-job-failure >&2; exit 17

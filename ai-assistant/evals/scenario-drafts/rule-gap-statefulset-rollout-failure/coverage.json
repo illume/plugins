@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-statefulset-rollout-failure",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeStatefulSetGenerationMismatch",
+    "kubernetes-mixin:alert:KubeStatefulSetReplicasMismatch",
+    "kubernetes-mixin:alert:KubeStatefulSetUpdateNotRolledOut"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubestatefulsetgenerationmismatch:e8faae99f48f",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubestatefulsetreplicasmismatch:19c4ec16753c",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubestatefulsetupdatenotrolledout:29ffde638f59"
+  ],
+  "target_tool_ids": ["kubernetes-mixin"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/apps_alerts.libsonnet"
+  ]
+}

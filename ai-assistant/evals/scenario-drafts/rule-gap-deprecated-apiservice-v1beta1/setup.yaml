@@ -1,0 +1,13 @@
+apiVersion: apiregistration.k8s.io/v1beta1
+kind: APIService
+metadata:
+  name: v1alpha1.legacy.fixture.example
+spec:
+  group: legacy.fixture.example
+  version: v1alpha1
+  groupPriorityMinimum: 1000
+  versionPriority: 10
+  service:
+    namespace: default
+    name: legacy-api
+  insecureSkipTLSVerify: true

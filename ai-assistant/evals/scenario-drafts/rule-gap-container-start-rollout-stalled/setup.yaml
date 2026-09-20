@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stalled-rollout
+  labels:
+    app: stalled-rollout
+spec:
+  replicas: 2
+  progressDeadlineSeconds: 30
+  selector:
+    matchLabels:
+      app: stalled-rollout
+  template:
+    metadata:
+      labels:
+        app: stalled-rollout
+    spec:
+      containers:
+        - name: app
+          image: registry.invalid/evals/container-start-failure:v1
+          imagePullPolicy: Always

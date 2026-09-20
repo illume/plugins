@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-sensitive-file-symlink-created",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["falco:rule:create-symlink-over-sensitive-files:0a0aa9f08b8a"],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-create-symlink-over-sensitive-files-0a0aa9f08b8a:135fc96dd069"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

@@ -1,0 +1,45 @@
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: node-client-renewal-denied
+spec:
+  request: Y29udHJvbGxlZC1rdWJlbGV0ZS1yZW5ld2FsLXJlcXVlc3Q=
+  signerName: kubernetes.io/kube-apiserver-client-kubelet
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  username: system:node:fixture-node
+  groups:
+    - system:nodes
+    - system:authenticated
+status:
+  conditions:
+    - type: Denied
+      status: 'True'
+      reason: FixtureRenewalDenied
+      message: The controlled node renewal request was denied.
+      lastUpdateTime: '2026-09-20T00:00:00Z'
+---
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: node-server-renewal-denied
+spec:
+  request: Y29udHJvbGxlZC1rdWJlbGV0ZS1zZXJ2aW5nLXJlbmV3YWwtcmVxdWVzdA==
+  signerName: kubernetes.io/kubelet-serving
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  username: system:node:fixture-node
+  groups:
+    - system:nodes
+    - system:authenticated
+status:
+  conditions:
+    - type: Denied
+      status: 'True'
+      reason: FixtureRenewalDenied
+      message: The controlled node serving renewal request was denied.
+      lastUpdateTime: '2026-09-20T00:00:00Z'

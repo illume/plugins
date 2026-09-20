@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: privileged-storage-action
+  labels:
+    evals.kubernetes.io/controlled-action: privileged-storage-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: privileged-storage-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: workspace
+          emptyDir: {}
+      containers:
+        - name: action
+          image: debian:12-slim
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              apt-get update >/dev/null && apt-get install -y e2fsprogs mount >/dev/null
+              dd if=/dev/zero of=/workspace/controlled.img bs=1M count=8
+              mkfs.ext2 -F /workspace/controlled.img >/dev/null
+              mount -t tmpfs -o size=4m none /workspace/mnt
+              debugfs -R stats /workspace/controlled.img
+              umount /workspace/mnt
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace

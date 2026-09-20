@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recon-responder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recon-responder
+  template:
+    metadata:
+      labels:
+        app: recon-responder
+    spec:
+      containers:
+        - name: udp
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - while true; do printf controlled-udp | nc -u -l -p 9999; done
+          ports:
+            - name: udp
+              containerPort: 9999
+              protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recon-responder
+spec:
+  selector:
+    app: recon-responder
+  ports:
+    - name: udp
+      port: 9999
+      targetPort: 9999
+      protocol: UDP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recon-nodeport
+spec:
+  selector:
+    app: recon-responder
+  ports:
+    - name: udp
+      port: 9999
+      targetPort: 9999
+      protocol: UDP
+      nodePort: 30099
+  type: NodePort
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: interactive-recon
+  labels:
+    app: interactive-recon
+spec:
+  containers:
+    - name: scanner
+      image: python:3.12-alpine
+      stdin: true
+      tty: true
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          add:
+            - NET_RAW
+          drop:
+            - ALL
+      env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+      command:
+        - /bin/sh
+        - '-ceu'
+        - >-
+          id; python3 -c 'import os,socket;
+          p=socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(3));
+          print("af_packet_opened",p.fileno()); u=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);
+          u.sendto(b"cluster-probe",("recon-responder",9999));
+          u.sendto(b"nodeport-probe",(os.environ["NODE_IP"],30099));
+          print("controlled_udp_probes_sent")'; sleep 3600

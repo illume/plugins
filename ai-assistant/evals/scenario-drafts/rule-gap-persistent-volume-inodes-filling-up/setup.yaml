@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: inodes-filling
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 128Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inode-filler
+spec:
+  restartPolicy: Never
+  containers:
+    - name: writer
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - /bin/sh
+        - '-c'
+        - >-
+          i=0; while [ "$i" -lt 50000 ]; do : > "/data/file-$i" || break; i=$((i+1)); done; echo
+          "created=$i"; sleep 3600
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: inodes-filling

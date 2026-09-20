@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-rbac-role-uses-wildcards",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "role/wildcard-operator",
+        "field_path": "rules[0]",
+        "observed_value": "{\"apiGroups\":[\"\"],\"resources\":[\"*\"],\"verbs\":[\"*\"]}",
+        "description": "The bound Role grants every verb on every core resource."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "role/wildcard-operator",
+      "field_path": "rules[0]",
+      "observed_value": "explicit verbs and resources",
+      "description": "A healthy least-privilege Role omits this permission."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-95f2a156a6bdeb9a"
+}

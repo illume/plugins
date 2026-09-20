@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-etcd-client-keypair-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "configured-broken-value",
+        "resource_ref": "configmap/etcd-client-keypair-missing-fixture",
+        "field_path": "data.kube-apiserver.yaml#spec.containers[0].command",
+        "observed_value": "etcd-certfile present; etcd-keyfile absent",
+        "description": "The API server supplies an etcd client certificate but omits its private-key argument."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/etcd-client-keypair-missing-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The fixture explicitly forbids application to the current host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-healthy-value",
+      "resource_ref": "configmap/etcd-client-keypair-missing-fixture",
+      "field_path": "data.kube-apiserver.yaml#spec.containers[0].command",
+      "observed_value": "--etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key",
+      "description": "The configured TLS client identity is incomplete without etcd-keyfile."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c381bc4a891e9424"
+}

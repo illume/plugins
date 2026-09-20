@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-pod-disruption-budget",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "replicated-workload",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.replicas",
+        "observed_value": "3",
+        "description": "The web workload has three desired replicas."
+      },
+      {
+        "fact_id": "pdb-inventory-empty",
+        "resource_ref": "poddisruptionbudget/*",
+        "field_path": "items.length",
+        "observed_value": "0",
+        "description": "No PodDisruptionBudget exists to select the web pods."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-web-budget",
+      "resource_ref": "poddisruptionbudget/web",
+      "field_path": "spec.selector.matchLabels",
+      "observed_value": "{\"app\":\"web\"}",
+      "description": "The fixture contains no PodDisruptionBudget for web."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-443afd5b92cdcd9c"
+}

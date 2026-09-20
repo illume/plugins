@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-web-server-netcat-reverse-shell",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:netcat-remote-code-execution-in-container:84c8a6959cba",
+    "falco:rule:redirect-stdout-stdin-to-network-connection-in-container:9e554fed9f0a",
+    "falco:rule:reverse-shell-from-web-server:46f8fe13d8d9",
+    "falco:rule:run-shell-untrusted:bfb7c5bdbdf5",
+    "falco:rule:web-server-spawned-shell:a8283d223a6c",
+    "falco:rule:web-server-spawned-suspicious-child-process:9f9902691d80"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-netcat-remote-code-execution-in-container-84c8a6959cba:612884d7959b",
+    "falco:semantic:falco-rule-redirect-stdout-stdin-to-network-connection-in-container-9e554fed9f0a:70bf8f2e27b6",
+    "falco:semantic:falco-rule-reverse-shell-from-web-server-46f8fe13d8d9:15b0703b912e",
+    "falco:semantic:falco-rule-run-shell-untrusted-bfb7c5bdbdf5:95ab01cd8863",
+    "falco:semantic:falco-rule-web-server-spawned-shell-a8283d223a6c:6f00e584a90e",
+    "falco:semantic:falco-rule-web-server-spawned-suspicious-child-process-9f9902691d80:22ec502f898e"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 6,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

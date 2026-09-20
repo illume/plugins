@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-docker-start-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/journal
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: Starting Docker Application Container Engine...
+  normalized-message.txt: Starting Docker Application Container Engine...
+  oracle.json: >-
+    {"source":"systemd-monitor","regex":"Starting (Docker Application Container
+    Engine|docker.service|docker.service - Docker Application Container
+    Engine)...","requiredMatches":1}
+  healthy-control.log: docker.service is active and continuously running

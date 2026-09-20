@@ -9,12 +9,28 @@ The
 [`mapping generator`](../evals/src/scenarios/generateToolScenarioMapping.ts)
 expands 12 reviewed parent contracts to every scenario ID.
 
+The separate [rule-gap draft catalogue](kubernetes-rule-gap-scenarios.md)
+proposes 100 unqualified cases for uncovered direct predicates. Those drafts do
+not change the active roster or the coverage percentages below.
+The [marginal-coverage v2 catalogue](kubernetes-rule-gap-scenarios-v2.md) adds
+42 more non-overlapping, unqualified drafts under the same constraint.
+The [cross-tool v3 catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58 more
+non-overlapping specifications without changing active coverage.
+
+The governing objective is full qualified coverage of product-scoped canonical
+diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,
+and platform-specific tails. Percentages below describe the current tool-local
+inventory and active roster; they are progress measures, not that goal's final
+denominator. See [Scenarios Goal](kubernetes-scenarios-goal.md).
+
 ## What coverage means
 
 `covered` is predicate coverage: an existing executable rule distinguishes the
 Kubernetes state required by the normalized evaluator contract from its negative
 case. It does not mean the standalone tool emits this repository's evidence
 format, can execute approved repairs, or has passed the scenario in a live run.
+The surveyed tools are not executed by Scenarios Goal; their pinned predicates
+are normalized into Kubernetes fault setups and evaluator oracles.
 
 - `covered`: the reviewed predicate covers the contract behavior.
 - `unsure`: source or fixture ambiguity prevents a defensible decision.

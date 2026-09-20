@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: module-syscall-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: module-syscall-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 1Mi
+      containers:
+        - name: action
+          image: python:3.12-alpine
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              python3 - <<'PY'
+              import ctypes, errno, os, platform
+              path = '/fixture/empty.ko'
+              open(path, 'wb').close()
+              fd = os.open(path, os.O_RDONLY)
+              number = {'x86_64': 313, 'aarch64': 273}[platform.machine()]
+              libc = ctypes.CDLL(None, use_errno=True)
+              result = libc.syscall(number, fd, b'', 0)
+              error = ctypes.get_errno()
+              print(f'finit_module result={result} errno={error}')
+              assert result == -1 and error in (errno.EPERM, errno.ENOEXEC, errno.EINVAL)
+              PY
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_MODULE
+            runAsUser: 0
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

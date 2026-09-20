@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-httproute-references-missing-backend",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "httproute/orphan-backend",
+        "field_path": "spec.rules[0].backendRefs[0] + matching Service inventory",
+        "observed_value": "{\"name\":\"missing-backend\",\"port\":8080}; 0 matches",
+        "description": "The route backend Service does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "httproute/orphan-backend",
+      "field_path": "spec.rules[0].backendRefs[0] + matching Service inventory",
+      "observed_value": "missing-backend port 8080; 1 match",
+      "description": "A healthy route resolves every backend to an existing Service port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e41cc58fc8d21321"
+}

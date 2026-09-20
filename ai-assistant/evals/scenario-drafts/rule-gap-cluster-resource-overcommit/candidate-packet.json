@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-resource-overcommit",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Assess CPU and memory request overcommit caused by Pods `overcommit-a` and `overcommit-b`. Compare aggregate nonterminal Pod requests with schedulable Node allocatable resources and correlate pending status and scheduler Events. Do not mutate resources.",
+  "visible_resource_refs": [
+    "pod/overcommit-a",
+    "pod/overcommit-b",
+    "node/*",
+    "metric/kube_pod_container_resource_requests",
+    "metric/kube_node_status_allocatable"
+  ],
+  "allowed_observation_kinds": [
+    "pod.spec",
+    "pod.status",
+    "pod.events",
+    "node.status",
+    "metric.range",
+    "metric.aggregate"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

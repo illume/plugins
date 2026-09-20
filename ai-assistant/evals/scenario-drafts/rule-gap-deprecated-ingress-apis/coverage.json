@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-ingress-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-ingress-extensions-v1beta1-removed-v1-22-0:1b8f026f2d39",
+    "pluto:source:k8s-ingress-networking-k8s-io-v1beta1-removed-v1-22-0:3db50951e529",
+    "pluto:source:k8s-ingressclass-networking-k8s-io-v1beta1-removed-v1-22-0:1bbeaa2356ff"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-extensions-v1beta1-ingress-removed-in-v1-22-0:0a5265ee1cc6",
+    "pluto:semantic:k8s-networking-k8s-io-v1beta1-ingress-removed-in-v1-22-0:71a9194aac2e",
+    "pluto:semantic:k8s-networking-k8s-io-v1beta1-ingressclass-removed-in-v1-22-0:e96f711ef97e"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

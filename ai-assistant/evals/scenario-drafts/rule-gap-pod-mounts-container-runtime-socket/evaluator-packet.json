@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-mounts-container-runtime-socket",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/runtime-socket-client",
+        "field_path": "spec.volumes[0].hostPath.path + spec.containers[0].volumeMounts[0].mountPath",
+        "observed_value": "/run/containerd/containerd.sock",
+        "description": "A hostPath exposes the node container runtime socket inside the container."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/runtime-socket-client",
+      "field_path": "spec.volumes[0].hostPath.path + spec.containers[0].volumeMounts[0].mountPath",
+      "observed_value": "<hostPath absent>",
+      "description": "A healthy Pod does not mount a node runtime socket."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fe849fae80be1234"
+}

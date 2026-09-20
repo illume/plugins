@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cronjob-misses-starting-deadline",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "cronjob/nightly-report",
+        "field_path": "spec.startingDeadlineSeconds",
+        "observed_value": "<absent>",
+        "description": "The CronJob has no bound on how late a missed run may start."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "cronjob/nightly-report",
+      "field_path": "spec.startingDeadlineSeconds",
+      "observed_value": "300",
+      "description": "A healthy CronJob declares a bounded starting deadline."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-486f44f840791bc7"
+}

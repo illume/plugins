@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-hpa-capacity-mismatch",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "hpa-is-at-fixed-maximum",
+        "resource_ref": "horizontalpodautoscaler/capacity-hpa",
+        "field_path": "spec.minReplicas,spec.maxReplicas",
+        "observed_value": "minReplicas=3; maxReplicas=3",
+        "description": "The HPA is configured to demand its maximum of three replicas."
+      },
+      {
+        "fact_id": "per-pod-demand-is-impossible",
+        "resource_ref": "deployment/capacity-target",
+        "field_path": "spec.template.spec.containers[0].resources.requests",
+        "observed_value": "{\"cpu\":\"1000\",\"memory\":\"1Ti\"}",
+        "description": "Each desired Pod alone exceeds ordinary profile Node capacity."
+      },
+      {
+        "fact_id": "aggregate-maximum-demand",
+        "resource_ref": "horizontalpodautoscaler/capacity-hpa",
+        "field_path": "computed.max-demand",
+        "observed_value": "3000 CPU cores; 3 TiB memory",
+        "description": "Three maximum replicas multiply the impossible request across the workload."
+      },
+      {
+        "fact_id": "pods-remain-unschedulable",
+        "resource_ref": "event/*",
+        "field_path": "reason,message",
+        "observed_value": "FailedScheduling; Insufficient cpu and/or Insufficient memory",
+        "description": "Scheduler events connect failed convergence to exhausted capacity."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-safe-headroom",
+      "resource_ref": "node/*",
+      "field_path": "computed.aggregate-allocatable-minus-max-demand",
+      "observed_value": "positive",
+      "description": "The declared maximum demand cannot fit the supported cluster profiles."
+    },
+    {
+      "fact_id": "invented-hpa-convergence",
+      "resource_ref": "horizontalpodautoscaler/capacity-hpa",
+      "field_path": "status.currentReplicas,status.desiredReplicas",
+      "observed_value": "current=3; desired=3",
+      "description": "The workload cannot reach three scheduled current replicas."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7aab37299a6ece95"
+}

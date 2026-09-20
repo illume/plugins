@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-audit-log-retention-too-short",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/audit-log-retention-too-short-fixture component fixture. The audit destination is valid, but logs are retained for only 7 days. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/audit-log-retention-too-short-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-privileged-host-filesystem-escape",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "privileged-root-container",
+        "resource_ref": "job/privileged-storage-action",
+        "field_path": "spec.template.spec.containers[0].securityContext",
+        "observed_value": "{\"privileged\":true,\"runAsUser\":0}",
+        "description": "The controlled action runs as root in a privileged container."
+      },
+      {
+        "fact_id": "mount-debugfs-chain",
+        "resource_ref": "job/privileged-storage-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "create ext2 image; mount emptyDir-backed tmpfs; inspect image with debugfs; unmount",
+        "description": "The command performs the mount and debugfs inspection chain."
+      },
+      {
+        "fact_id": "workspace-is-emptydir",
+        "resource_ref": "job/privileged-storage-action",
+        "field_path": "spec.template.spec.volumes[0].emptyDir",
+        "observed_value": "{}",
+        "description": "All inspected storage is disposable Pod-local storage rather than the host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-hostpath",
+      "resource_ref": "job/privileged-storage-action",
+      "field_path": "spec.template.spec.volumes[0].hostPath",
+      "observed_value": "present",
+      "description": "The fixture has no hostPath and does not expose a host block device."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-66c6b7626589cde4"
+}

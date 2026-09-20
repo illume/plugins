@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-hpa-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-hpa-v2beta1",
+        "resource_ref": "manifest/horizontalpodautoscaler/legacy-api",
+        "field_path": "apiVersion",
+        "observed_value": "autoscaling/v2beta1",
+        "description": "The standalone autoscaler uses autoscaling/v2beta1."
+      },
+      {
+        "fact_id": "deprecated-hpa-v2beta2-list",
+        "resource_ref": "manifest/horizontalpodautoscalerlist/legacy-autoscalers",
+        "field_path": "apiVersion",
+        "observed_value": "autoscaling/v2beta2",
+        "description": "The autoscaler list and its item use autoscaling/v2beta2."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-hpa-version",
+      "resource_ref": "manifest/horizontalpodautoscaler/legacy-api",
+      "field_path": "apiVersion",
+      "observed_value": "autoscaling/v2",
+      "description": "The fixture autoscalers do not use autoscaling/v2."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-99ab5b01e2efcdae"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-namespace-breakout",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:change-namespace-privileges-via-unshare:f5eda80cc464",
+    "falco:rule:change-thread-namespace:8c29b880e857"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-change-namespace-privileges-via-unshare-f5eda80cc464:c7dbb91ce1df",
+    "falco:semantic:falco-rule-change-thread-namespace-8c29b880e857:4cd0d935c375"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml"
+  ]
+}

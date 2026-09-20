@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-unhealthy",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the node-agent failure for synthetic Node `telemetry-kubelet-down`. Correlate the kubelet health endpoint result, scrape availability, Node Ready reason, and Lease freshness. Do not mutate resources.",
+  "visible_resource_refs": [
+    "node/telemetry-kubelet-down",
+    "lease/telemetry-kubelet-down",
+    "metric/up{job=\"kubelet\",node=\"telemetry-kubelet-down\"}"
+  ],
+  "allowed_observation_kinds": ["node.status", "lease.status", "kubelet.health", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: metadata-address-action
+  labels:
+    evals.kubernetes.io/controlled-action: metadata-address-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: metadata-address-action
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: nicolaka/netshoot:v0.13
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              ip address add 169.254.169.254/32 dev lo
+
+              printf "HTTP/1.1 200 OK\r\nContent-Length: 19\r\n\r\ncontrolled-metadata" | nc -l -p
+              8080 &
+
+              sleep 1
+
+              wget -qO- http://169.254.169.254:8080/latest/meta-data/
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - NET_ADMIN
+              drop:
+                - ALL

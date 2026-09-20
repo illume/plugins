@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-disk-bad-block-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/messages
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: 101Currently unreadable sectors
+  normalized-message.txt: 101Currently unreadable sectors
+  oracle.json: >-
+    {"source":"disk-monitor","regex":".*([1-9]\\d{2,})(Currently unreadable.*sectors|Offline
+    uncorrectable sectors).*","requiredMatches":1}
+  healthy-control.log: 0 Currently unreadable sectors

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-uses-default-service-account",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/default-account-workload",
+        "field_path": "spec.serviceAccountName + spec.automountServiceAccountToken",
+        "observed_value": "default; true",
+        "description": "The Pod uses the namespace default account and mounts its API token."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/default-account-workload",
+      "field_path": "spec.serviceAccountName + spec.automountServiceAccountToken",
+      "observed_value": "dedicated account; false",
+      "description": "A healthy Pod uses a dedicated account without token automount."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-da6ff2f8ad2a2878"
+}

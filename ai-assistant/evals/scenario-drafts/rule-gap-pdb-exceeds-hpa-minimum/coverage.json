@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pdb-exceeds-hpa-minimum",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:pdb-min-available",
+    "polaris:check:pdbMinAvailableGreaterThanHPAMinReplicas"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-pdb-min-available:7f0ddfcd5ce4",
+    "polaris:semantic:polaris-check-pdbminavailablegreaterthanhpaminreplicas:44c7e072a9cd"
+  ],
+  "target_tool_ids": ["kube-linter", "polaris"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/pdbMinAvailableGreaterThanHPAMinReplicas.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/pdbs-min-available.yaml"
+  ]
+}

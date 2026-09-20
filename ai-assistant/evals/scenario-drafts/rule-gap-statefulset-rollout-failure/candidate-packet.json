@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-statefulset-rollout-failure",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why StatefulSet `not-ready-db` cannot converge. Correlate observed generation, desired, current, updated, and ready replicas with Pod readiness failures and native StatefulSet telemetry. Do not mutate resources.",
+  "visible_resource_refs": [
+    "statefulset/not-ready-db",
+    "service/not-ready-db",
+    "pod/*?app=not-ready-db",
+    "metric/kube_statefulset_status_replicas_ready{statefulset=\"not-ready-db\"}"
+  ],
+  "allowed_observation_kinds": [
+    "statefulset.spec",
+    "statefulset.status",
+    "pod.status",
+    "pod.events",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

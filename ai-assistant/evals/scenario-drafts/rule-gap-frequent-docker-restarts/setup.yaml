@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docker-restart-probe
+  labels:
+    app: docker-restart-probe
+spec:
+  activeDeadlineSeconds: 120
+  restartPolicy: Always
+  containers:
+    - name: docker-probe
+      image: busybox:1.36.1
+      command:
+        - /bin/sh
+        - '-c'
+        - echo 'docker start event'; sleep 1; exit 42
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000

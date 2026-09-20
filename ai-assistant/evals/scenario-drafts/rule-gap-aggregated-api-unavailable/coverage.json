@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-aggregated-api-unavailable",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeAggregatedAPIDown",
+    "kubernetes-mixin:alert:KubeAggregatedAPIErrors"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeaggregatedapidown:0b52d378f631",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeaggregatedapierrors:0b0dc97a80c2"
+  ],
+  "target_tool_ids": ["kubernetes-mixin"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kube_apiserver.libsonnet"
+  ]
+}

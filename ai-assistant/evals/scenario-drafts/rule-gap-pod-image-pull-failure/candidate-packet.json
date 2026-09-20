@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-image-pull-failure",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why `image-pull-probe` does not start. Inspect its container waiting state and namespace events during the bounded observation window; cite the image and exact failure state, and do not mutate resources.",
+  "visible_resource_refs": ["pod/image-pull-probe", "event/*"],
+  "allowed_observation_kinds": ["pod.status", "pod.container-status", "event.list"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

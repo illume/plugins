@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-namespace-breakout",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "unshare-then-nsenter",
+        "resource_ref": "job/namespace-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "unshare --user --map-root-user; nsenter --target 1 --mount",
+        "description": "The helper creates a user namespace and then invokes a setns-backed nsenter."
+      },
+      {
+        "fact_id": "no-sys-admin-capability",
+        "resource_ref": "job/namespace-action",
+        "field_path": "spec.template.spec.containers[0].securityContext.capabilities.drop",
+        "observed_value": "[\"ALL\"]",
+        "description": "The action does not receive CAP_SYS_ADMIN or another added capability."
+      },
+      {
+        "fact_id": "pod-local-setns-target",
+        "resource_ref": "pod/namespace-action-*",
+        "field_path": "logs[action]",
+        "observed_value": "controlled-setns-target=pod-pid-1",
+        "description": "The setns target is explicitly the Pod-local PID 1 process."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-pid",
+      "resource_ref": "job/namespace-action",
+      "field_path": "spec.template.spec.hostPID",
+      "observed_value": "true",
+      "description": "The Job does not enable hostPID and cannot target the host PID namespace."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3e3a13b36218c046"
+}

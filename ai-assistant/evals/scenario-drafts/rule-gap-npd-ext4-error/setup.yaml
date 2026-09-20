@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-ext4-error-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /dev/kmsg
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: 'EXT4-fs error (device sda1): ext4_find_entry:1455: inode #2: reading directory'
+  normalized-message.txt: 'EXT4-fs error (device sda1): ext4_find_entry:1455: inode #2: reading directory'
+  oracle.json: '{"source":"kernel-monitor","regex":"EXT4-fs error .*","requiredMatches":1}'
+  healthy-control.log: 'EXT4-fs (sda1): mounted filesystem with ordered data mode'

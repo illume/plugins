@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-corrupt-container-image",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the failed `image-layer-integrity-probe` Job from its command, termination status, and logs. Identify whether the bounded layer fixture passed integrity validation; do not mutate resources.",
+  "visible_resource_refs": [
+    "job/image-layer-integrity-probe",
+    "pod[label=job-name=image-layer-integrity-probe]"
+  ],
+  "allowed_observation_kinds": ["job.status", "pod.spec", "pod.container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-certificate-expiration",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Assess expiration risk for CertificateSigningRequest `telemetry-expiring-client` and the issued client certificate. Correlate the requested lifetime, signer, issuance status, and minimum native certificate lifetime. Do not approve, renew, or mutate the request.",
+  "visible_resource_refs": [
+    "certificatesigningrequest/telemetry-expiring-client",
+    "metric/apiserver_client_certificate_expiration_seconds"
+  ],
+  "allowed_observation_kinds": ["csr.spec", "csr.status", "certificate.parse", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

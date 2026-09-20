@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-docker-start",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-docker-start-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "Starting Docker Application Container Engine...",
+        "description": "The exact systemd line records Docker entering its start sequence."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-docker-start-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"systemd-monitor\",\"regex\":\"Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)...\",\"requiredMatches\":1}",
+        "description": "The local oracle requires 1 match(es) for Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)...."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-docker-start-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-docker-start-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "docker.service is active and continuously running",
+      "description": "The failing source is not the nonmatching healthy control: docker.service is active and continuously running"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-257b7ffcef465f83"
+}

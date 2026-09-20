@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-certificate-expiration",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "certificate-lifetime-request",
+        "resource_ref": "certificatesigningrequest/telemetry-expiring-client",
+        "field_path": "spec.expirationSeconds",
+        "observed_value": "600",
+        "description": "The CSR requests a ten-minute client certificate lifetime."
+      },
+      {
+        "fact_id": "certificate-client-signer",
+        "resource_ref": "certificatesigningrequest/telemetry-expiring-client",
+        "field_path": "spec.signerName",
+        "observed_value": "kubernetes.io/kube-apiserver-client",
+        "description": "The request targets the Kubernetes API client certificate signer."
+      },
+      {
+        "fact_id": "certificate-warning-horizon-crossed",
+        "resource_ref": "metric/apiserver_client_certificate_expiration_seconds",
+        "field_path": "minimum_over_time[5m]",
+        "observed_value": "< 604800",
+        "description": "Native certificate telemetry places the issued certificate inside the seven-day warning horizon."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-long-certificate-lifetime",
+      "resource_ref": "certificatesigningrequest/telemetry-expiring-client",
+      "field_path": "spec.expirationSeconds",
+      "observed_value": "31536000",
+      "description": "The request is for ten minutes, not one year."
+    },
+    {
+      "fact_id": "invented-server-certificate",
+      "resource_ref": "certificatesigningrequest/telemetry-expiring-client",
+      "field_path": "spec.usages",
+      "observed_value": "[\"server auth\"]",
+      "description": "The fixture requests client authentication only."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-38ac70108e9052ab"
+}

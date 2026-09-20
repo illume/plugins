@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-unreachable",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why synthetic Node `telemetry-unreachable` is unreachable. Correlate Ready status and reason, missing Lease renewal, heartbeat age, and native node telemetry. Distinguish unreachable from explicit Ready=False and do not mutate resources.",
+  "visible_resource_refs": [
+    "node/telemetry-unreachable",
+    "lease/telemetry-unreachable",
+    "metric/kube_node_status_condition{node=\"telemetry-unreachable\",condition=\"Ready\",status=\"unknown\"}"
+  ],
+  "allowed_observation_kinds": ["node.status", "lease.status", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

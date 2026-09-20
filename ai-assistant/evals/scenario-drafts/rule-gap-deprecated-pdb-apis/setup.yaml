@@ -1,0 +1,24 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: legacy-api-budget
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudgetList
+metadata:
+  resourceVersion: fixture-1
+items:
+  - apiVersion: policy/v1beta1
+    kind: PodDisruptionBudget
+    metadata:
+      name: legacy-worker-budget
+    spec:
+      maxUnavailable: 1
+      selector:
+        matchLabels:
+          app: worker

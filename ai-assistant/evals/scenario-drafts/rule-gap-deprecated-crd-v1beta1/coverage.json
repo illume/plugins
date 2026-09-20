@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-deprecated-crd-v1beta1",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-customresourcedefinition-apiextensions-k8s-io-v1beta1-removed-v1-22-:8a0635b2de53"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-apiextensions-k8s-io-v1beta1-customresourcedefinition-removed-in-v1-22-0:168f7212f410"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-oom-killed",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "bounded-memory-limit",
+        "resource_ref": "pod[label=job-name=oom-worker]",
+        "field_path": "spec.containers[0].resources.limits.memory",
+        "observed_value": "32Mi",
+        "description": "The allocator is constrained to 32 MiB."
+      },
+      {
+        "fact_id": "oom-killed-state",
+        "resource_ref": "pod[label=job-name=oom-worker]",
+        "field_path": "status.containerStatuses[0].state.terminated.reason",
+        "observed_value": "OOMKilled",
+        "description": "The kernel terminates the memory-constrained allocator for exceeding its cgroup limit."
+      },
+      {
+        "fact_id": "oom-exit-code",
+        "resource_ref": "pod[label=job-name=oom-worker]",
+        "field_path": "status.containerStatuses[0].state.terminated.exitCode",
+        "observed_value": "137",
+        "description": "The terminated container records the SIGKILL-style exit code."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-successful-completion",
+      "resource_ref": "job/oom-worker",
+      "field_path": "status.succeeded",
+      "observed_value": "1",
+      "description": "The allocator does not complete successfully."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c6d8f5a62af9e0a2"
+}

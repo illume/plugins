@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-interactive-container-network-recon",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `recon-responder`, `recon-nodeport`, and `interactive-recon`. Identify the interactive shell, packet socket, and both UDP probe destinations from exact evidence.",
+  "visible_resource_refs": [
+    "deployment/recon-responder",
+    "service/recon-responder",
+    "service/recon-nodeport",
+    "pod/interactive-recon"
+  ],
+  "allowed_observation_kinds": ["pod.spec", "pod.logs", "service.ports", "service.endpoints"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

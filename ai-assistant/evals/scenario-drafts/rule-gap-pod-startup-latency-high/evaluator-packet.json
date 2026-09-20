@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-startup-latency-high",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "metric/kubelet_pod_start_duration_seconds_bucket",
+        "field_path": "histogram_quantile(0.99, rate[10m])",
+        "observed_value": "> 30s with pod/slow-startup init duration=45s",
+        "description": "A bounded 45-second init delay drives Pod startup latency beyond the pinned 30-second quantile."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "metric/kubelet_pod_start_duration_seconds_bucket",
+      "field_path": "histogram_quantile(0.99, rate[10m])",
+      "observed_value": "<= 30s",
+      "description": "Normal startup remains at or below the pinned threshold."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-510e5009c9903b62"
+}

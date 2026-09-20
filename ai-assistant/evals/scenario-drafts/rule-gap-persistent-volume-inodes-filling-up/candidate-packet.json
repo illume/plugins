@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-inodes-filling-up",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Assess inode exhaustion risk for PersistentVolumeClaim `inodes-filling`. Correlate claim binding, free and total inode trends, and the file-writer Pod. Distinguish inode pressure from byte-capacity pressure and do not mutate resources.",
+  "visible_resource_refs": [
+    "persistentvolumeclaim/inodes-filling",
+    "pod/inode-filler",
+    "metric/kubelet_volume_stats_inodes_free{persistentvolumeclaim=\"inodes-filling\"}",
+    "metric/kubelet_volume_stats_inodes{persistentvolumeclaim=\"inodes-filling\"}"
+  ],
+  "allowed_observation_kinds": [
+    "pvc.status",
+    "pod.status",
+    "pod.logs",
+    "metric.range",
+    "metric.predict_linear"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

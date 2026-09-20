@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-truncate-logs-and-shell-history",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `truncate-history-action` and its logs. Identify both truncation targets and cite before-and-after evidence plus the storage boundary.",
+  "visible_resource_refs": ["job/truncate-history-action", "pod/truncate-history-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.init-container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

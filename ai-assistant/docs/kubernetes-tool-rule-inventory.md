@@ -2,6 +2,12 @@
 
 Provisional inventory of 7,427 source occurrences in 2,654 tool-local semantic groups from 23 pinned tools. At row level, 6,088 occurrences are direct predicates, 1,040 require decomposition, and 299 are reference-only. These are inventory handles, not scenario coverage or cross-tool equivalence claims.
 
+The governing objective is full qualified coverage of product-scoped canonical
+diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,
+and platform-specific tails. These tool-local groups must be reviewed into
+cross-tool canonical capabilities before they can serve as that denominator.
+See [Scenarios Goal](kubernetes-scenarios-goal.md).
+
 | Tool                            | Native unit           | Source identity | Mapping readiness        | Occurrences | Semantic groups | List                                                | Pinned source                                                                                                   |
 | ------------------------------- | --------------------- | --------------- | ------------------------ | ----------: | --------------: | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Headlamp diagnostics            | `diagnosis_reason`    | `derived`       | `direct_predicate`       |           8 |               8 | [rules](rule-inventories/headlamp.md)               | [source](https://github.com/illume/headlamp/tree/10bfb15261a7cfe0660e66fe2375c1bb98f89432)                      |

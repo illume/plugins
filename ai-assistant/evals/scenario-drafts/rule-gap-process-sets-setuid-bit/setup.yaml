@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: setuid-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: setuid-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 8Mi
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              cp /bin/busybox /fixture/test-executable; chmod 4755 /fixture/test-executable; stat -c
+              'mode=%a' /fixture/test-executable; /fixture/test-executable true; echo
+              setuid-test-executed-without-sudo
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - FOWNER
+                - SETUID
+            runAsUser: 0
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

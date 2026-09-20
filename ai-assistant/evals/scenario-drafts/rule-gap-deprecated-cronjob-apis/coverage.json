@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-cronjob-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-cronjob-batch-v1beta1-removed-v1-25-0:1bded1366684",
+    "pluto:source:k8s-cronjoblist-batch-v1beta1-removed-v1-25-0:434e62ec3f7e"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-batch-v1beta1-cronjob-removed-in-v1-25-0:f09329abe226",
+    "pluto:semantic:k8s-batch-v1beta1-cronjoblist-removed-in-v1-25-0:1097a3a47fa4"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

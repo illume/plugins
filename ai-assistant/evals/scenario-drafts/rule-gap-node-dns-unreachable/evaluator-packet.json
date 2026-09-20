@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-dns-unreachable",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "reserved-unreachable-resolver",
+        "resource_ref": "pod[label=job-name=dns-reachability-probe]",
+        "field_path": "spec.dnsConfig.nameservers",
+        "observed_value": "[\"192.0.2.53\"]",
+        "description": "The fixture pins DNS to the TEST-NET-1 address reserved for documentation."
+      },
+      {
+        "fact_id": "control-address-reachable",
+        "resource_ref": "pod[label=job-name=dns-reachability-probe]",
+        "field_path": "logs",
+        "observed_value": "control address reachable",
+        "description": "The local IP control request succeeds before the lookup."
+      },
+      {
+        "fact_id": "dns-lookup-unreachable",
+        "resource_ref": "pod[label=job-name=dns-reachability-probe]",
+        "field_path": "logs",
+        "observed_value": "dns resolver unreachable while control address reachable",
+        "description": "The pinned DNS lookup times out while the control remains reachable."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-general-network-outage",
+      "resource_ref": "pod[label=job-name=dns-reachability-probe]",
+      "field_path": "logs",
+      "observed_value": "control address unreachable",
+      "description": "The local control endpoint succeeds, so the evidence is not a general network outage."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7bebac7d9eea27c3"
+}

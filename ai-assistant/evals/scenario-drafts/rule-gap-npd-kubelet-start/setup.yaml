@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-kubelet-start-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/journal
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: Started Kubernetes kubelet.
+  normalized-message.txt: Started Kubernetes kubelet.
+  oracle.json: >-
+    {"source":"systemd-monitor","regex":"Started (Kubernetes kubelet|kubelet.service|kubelet.service
+    - Kubernetes kubelet|kubelet.service - .*).","requiredMatches":1}
+  healthy-control.log: kubelet.service is active and continuously running

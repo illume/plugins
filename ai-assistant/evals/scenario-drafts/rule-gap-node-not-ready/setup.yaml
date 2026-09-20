@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: telemetry-not-ready
+  labels:
+    scenario-eval.example/synthetic-node: 'true'
+spec:
+  unschedulable: true
+  taints:
+    - key: scenario-eval.example/synthetic-node
+      effect: NoSchedule
+status:
+  capacity:
+    cpu: '1'
+    memory: 1Gi
+    pods: '10'
+  allocatable:
+    cpu: '1'
+    memory: 1Gi
+    pods: '10'
+  conditions:
+    - type: MemoryPressure
+      status: 'False'
+      reason: KubeletHasSufficientMemory
+      lastHeartbeatTime: '2026-09-20T00:00:00Z'
+      lastTransitionTime: '2026-09-20T00:00:00Z'
+    - type: DiskPressure
+      status: 'False'
+      reason: KubeletHasNoDiskPressure
+      lastHeartbeatTime: '2026-09-20T00:00:00Z'
+      lastTransitionTime: '2026-09-20T00:00:00Z'
+    - type: PIDPressure
+      status: 'False'
+      reason: KubeletHasSufficientPID
+      lastHeartbeatTime: '2026-09-20T00:00:00Z'
+      lastTransitionTime: '2026-09-20T00:00:00Z'
+    - type: Ready
+      status: 'False'
+      reason: KubeletNotReady
+      message: The isolated synthetic node has no serving kubelet heartbeat.
+      lastHeartbeatTime: '2026-09-20T00:00:00Z'
+      lastTransitionTime: '2026-09-20T00:00:00Z'

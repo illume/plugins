@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-topology-spread",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review whether the `worker` Deployment explicitly spreads replicas across failure domains. Cite the relevant scale and scheduling fields; do not mutate resources.",
+  "visible_resource_refs": ["deployment/worker"],
+  "allowed_observation_kinds": ["deployment.scale", "pod.scheduling-constraints"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

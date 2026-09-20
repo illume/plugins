@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-event-qps-throttles-auditability",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/event-qps-throttles-auditability-fixture component fixture. The kubelet restricts event recording to 1 event per second with a burst of 1. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/event-qps-throttles-auditability-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kubelet"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

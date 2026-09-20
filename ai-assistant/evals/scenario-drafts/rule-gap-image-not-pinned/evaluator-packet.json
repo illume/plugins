@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-image-not-pinned",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "image-digest-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].image",
+        "observed_value": "nginx:1.27",
+        "description": "The image uses a tag and contains no sha256 digest."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-latest-tag",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].image",
+      "observed_value": "nginx:latest",
+      "description": "The image is tagged 1.27, not latest."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c86107701be6d63a"
+}

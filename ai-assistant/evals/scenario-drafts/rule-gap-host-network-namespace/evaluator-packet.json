@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-host-network-namespace",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "host-network-enabled",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.hostNetwork",
+        "observed_value": "true",
+        "description": "The Pod template joins the node network namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-network-disabled",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.hostNetwork",
+      "observed_value": "false",
+      "description": "The fixture explicitly enables host networking."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-19512b814dae88f2"
+}

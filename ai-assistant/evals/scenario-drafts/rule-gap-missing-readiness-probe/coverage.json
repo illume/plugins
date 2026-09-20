@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-missing-readiness-probe",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:no-readiness-probe",
+    "kubescape:rule:configured-readiness-probe",
+    "polaris:check:readinessProbeMissing",
+    "popeye:code:104"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-no-readiness-probe:6f4fbfa82825",
+    "kubescape:semantic:kubescape-rule-configured-readiness-probe:3d7047f0025c",
+    "polaris:semantic:polaris-check-readinessprobemissing:21f696ba875e",
+    "popeye:semantic:popeye-code-104:444873de1d53"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape", "polaris", "popeye"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/readinessProbeMissing.yaml",
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0018-configuredreadinessprobe.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/no-readiness-probe.yaml"
+  ]
+}

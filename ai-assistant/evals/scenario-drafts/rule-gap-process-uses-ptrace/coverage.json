@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-process-uses-ptrace",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:ptrace-anti-debug-attempt:4ff2dccac20a",
+    "falco:rule:ptrace-attached-to-process:44e91bf04e8a"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-ptrace-anti-debug-attempt-4ff2dccac20a:8a5294a146ed",
+    "falco:semantic:falco-rule-ptrace-attached-to-process-44e91bf04e8a:8128e652e4c5"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

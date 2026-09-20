@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-pod-security-policy-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-extensions-psp",
+        "resource_ref": "manifest/podsecuritypolicy/legacy-restricted-extensions",
+        "field_path": "apiVersion",
+        "observed_value": "extensions/v1beta1",
+        "description": "One PodSecurityPolicy uses extensions/v1beta1."
+      },
+      {
+        "fact_id": "deprecated-policy-psp",
+        "resource_ref": "manifest/podsecuritypolicy/legacy-restricted-policy",
+        "field_path": "apiVersion",
+        "observed_value": "policy/v1beta1",
+        "description": "The other PodSecurityPolicy uses policy/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-supported-psp-api",
+      "resource_ref": "manifest/podsecuritypolicy/legacy-restricted-policy",
+      "field_path": "apiVersion",
+      "observed_value": "policy/v1",
+      "description": "There is no policy/v1 PodSecurityPolicy API in the fixture or Kubernetes."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2df49d1d00da78b2"
+}

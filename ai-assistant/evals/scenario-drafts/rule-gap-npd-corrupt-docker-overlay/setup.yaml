@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-corrupt-docker-overlay-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/journal
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: |-
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+  normalized-message.txt: |-
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+    returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument
+  oracle.json: >-
+    {"source":"docker-monitor","regex":"returned error: readlink /var/lib/docker/overlay2.*: invalid
+    argument.*","requiredMatches":10,"lookback":"5m"}
+  healthy-control.log: 'overlay2: mounted /var/lib/docker/overlay2/abc/merged'

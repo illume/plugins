@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-rbac-subject-can-exec-into-pods",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "role/pod-executor",
+        "field_path": "rules[0]",
+        "observed_value": "{\"apiGroups\":[\"\"],\"resources\":[\"pods/exec\"],\"verbs\":[\"create\"]}",
+        "description": "The bound Role permits its ServiceAccount to create pod exec sessions."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "role/pod-executor",
+      "field_path": "rules[0]",
+      "observed_value": "pods/exec/create absent",
+      "description": "A healthy least-privilege Role omits this permission."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c09bb1ef54298f4b"
+}

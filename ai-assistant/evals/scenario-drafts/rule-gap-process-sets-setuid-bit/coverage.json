@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-process-sets-setuid-bit",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:non-sudo-setuid:1c693a1b67bd",
+    "falco:rule:set-setuid-or-setgid-bit:163cfd660ac6"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-non-sudo-setuid-1c693a1b67bd:d49ae90a2d21",
+    "falco:semantic:falco-rule-set-setuid-or-setgid-bit-163cfd660ac6:c2f6d327a2a5"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml"
+  ]
+}

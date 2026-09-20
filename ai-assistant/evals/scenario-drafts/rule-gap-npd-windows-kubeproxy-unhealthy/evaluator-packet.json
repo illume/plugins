@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-windows-kubeproxy-unhealthy",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/windows-network-proxy-health-evidence",
+        "field_path": "data.source-evidence.txt + data.predicate.json",
+        "observed_value": "2026-09-20T00:04:00Z GET /healthz status=503 body=\"proxy loop unhealthy\"; {\"condition\":\"KubeProxyUnhealthy\",\"statusCode\":{\"minimum\":500},\"requiredMatches\":1}",
+        "description": "The Windows health-check fixture records an HTTP 503 from the local proxy health endpoint."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "configmap/windows-network-proxy-health-evidence",
+      "field_path": "data.source-evidence.txt + data.predicate.json",
+      "observed_value": "2026-09-20T00:04:00Z GET /healthz status=200 body=\"ok\"",
+      "description": "The healthy control does not satisfy the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2877fc52db232851"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-memory-requirements-missing",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:unset-memory-requirements",
+    "kubescape:rule:resources-memory-limit-and-request"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-unset-memory-requirements:55c4e060b0ad",
+    "kubescape:semantic:kubescape-rule-resources-memory-limit-and-request:439fbb6c7ff0"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0004-resourcesmemorylimitandrequest.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/unset-memory-requirements.yaml"
+  ]
+}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: image-pull-probe
+spec:
+  activeDeadlineSeconds: 120
+  restartPolicy: Never
+  containers:
+    - name: app
+      image: registry.k8s.io/e2e-test-images/does-not-exist:runtime-gap-v1
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-credential-search-ssh-persistence",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the `credential-search-action` init and action containers and logs. Identify the search, read, and authorized_keys write sequence and prove that it is fixture-scoped.",
+  "visible_resource_refs": ["job/credential-search-action", "pod/credential-search-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.init-container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-unsafe-probe-suite",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "liveness-probe-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].livenessProbe",
+        "observed_value": "absent",
+        "description": "The application container has no liveness probe."
+      },
+      {
+        "fact_id": "readiness-probe-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].readinessProbe",
+        "observed_value": "absent",
+        "description": "The application container has no readiness probe."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-probe-suite",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0]",
+      "observed_value": "{\"livenessProbe\":\"configured\",\"readinessProbe\":\"configured\"}",
+      "description": "The fixture does not configure either required health probe."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fa7e955b9a265e0d"
+}

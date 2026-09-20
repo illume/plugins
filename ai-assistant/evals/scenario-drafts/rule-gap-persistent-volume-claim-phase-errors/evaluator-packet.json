@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-claim-phase-errors",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "claim-pending",
+        "resource_ref": "persistentvolumeclaim/pending-claim",
+        "field_path": "status.phase",
+        "observed_value": "Pending",
+        "description": "The required claim does not reach Bound."
+      },
+      {
+        "fact_id": "claim-storage-class-absent",
+        "resource_ref": "storageclass/telemetry-missing-provisioner",
+        "field_path": "metadata.name",
+        "observed_value": "<not found>",
+        "description": "The claim names a StorageClass that does not exist."
+      },
+      {
+        "fact_id": "consumer-unschedulable",
+        "resource_ref": "pod/pending-claim-consumer",
+        "field_path": "status.conditions[?(@.type==\"PodScheduled\")].reason",
+        "observed_value": "Unschedulable",
+        "description": "The scheduler cannot place a Pod with an unbound immediate claim."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-claim-bound",
+      "resource_ref": "persistentvolumeclaim/pending-claim",
+      "field_path": "status.phase",
+      "observed_value": "Bound",
+      "description": "No volume binds to the claim."
+    },
+    {
+      "fact_id": "invented-consumer-running",
+      "resource_ref": "pod/pending-claim-consumer",
+      "field_path": "status.phase",
+      "observed_value": "Running",
+      "description": "The consumer cannot start while its claim is unbound."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-804c3853bba126c9"
+}

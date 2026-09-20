@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-server-cert-rotation-disabled",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "configured-broken-value",
+        "resource_ref": "configmap/kubelet-server-cert-rotation-disabled-fixture",
+        "field_path": "data.config.yaml#featureGates.RotateKubeletServerCertificate",
+        "observed_value": "false",
+        "description": "Client certificate rotation is enabled, but the server certificate rotation gate is false."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/kubelet-server-cert-rotation-disabled-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The fixture explicitly forbids application to the current host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-healthy-value",
+      "resource_ref": "configmap/kubelet-server-cert-rotation-disabled-fixture",
+      "field_path": "data.config.yaml#featureGates.RotateKubeletServerCertificate",
+      "observed_value": "true",
+      "description": "The fixture does not enable RotateKubeletServerCertificate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fc3d5bc097229f34"
+}

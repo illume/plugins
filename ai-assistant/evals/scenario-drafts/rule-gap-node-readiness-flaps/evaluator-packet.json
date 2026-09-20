@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-readiness-flaps",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "event/*?involvedObject.name=fixture-flapping-node",
+        "field_path": "items[reason in (NodeReady,NodeNotReady)].eventTime",
+        "observed_value": "4 transitions in 5m",
+        "description": "The isolated unschedulable Node has four alternating Ready transitions within five minutes."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "event/*?involvedObject.name=fixture-flapping-node",
+      "field_path": "items[reason in (NodeReady,NodeNotReady)].eventTime",
+      "observed_value": "<= 1 transition in 5m",
+      "description": "A healthy Node Ready condition remains stable in the observation window."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7913729c029811f0"
+}

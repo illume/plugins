@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-statefulset-has-no-pdb",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "statefulset/unprotected-database",
+        "field_path": "spec.template.metadata.labels.app + matching PodDisruptionBudget inventory",
+        "observed_value": "unprotected-database; 0 matching budgets",
+        "description": "No disruption budget selector covers the StatefulSet Pods."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "statefulset/unprotected-database",
+      "field_path": "spec.template.metadata.labels.app + matching PodDisruptionBudget inventory",
+      "observed_value": "unprotected-database; 1 viable matching budget",
+      "description": "A healthy StatefulSet is covered by a viable disruption budget."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-759666e7eb09cfae"
+}

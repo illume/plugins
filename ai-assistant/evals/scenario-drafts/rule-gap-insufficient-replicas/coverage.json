@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-insufficient-replicas",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:minimum-three-replicas",
+    "kube-score:check:deployment-replicas",
+    "kubevious:rule:replica-count-check",
+    "polaris:check:deploymentMissingReplicas"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-minimum-three-replicas:724e32353d34",
+    "kube-score:semantic:kube-score-check-deployment-replicas:d878cbdcda03",
+    "kubevious:semantic:kubevious-rule-replica-count-check:9015441fdf92",
+    "polaris:semantic:polaris-check-deploymentmissingreplicas:dca2644bf81f"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubevious", "polaris"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/deploymentMissingReplicas.yaml",
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/workload/replica-count-check.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/minimum-replicas.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

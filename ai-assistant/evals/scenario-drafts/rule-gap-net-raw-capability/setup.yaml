@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: scenario-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scenario-app
+  template:
+    metadata:
+      labels:
+        app: scenario-app
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              add:
+                - NET_RAW
+              drop: []

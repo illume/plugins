@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-service-uses-nodeport",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:exposed-services",
+    "kube-score:check:service-type",
+    "popeye:code:1104"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-exposed-services:13708f58c1ee",
+    "kube-score:semantic:kube-score-check-service-type:48bb172180d5",
+    "popeye:semantic:popeye-code-1104:4c0559475ddb"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/servicetype.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

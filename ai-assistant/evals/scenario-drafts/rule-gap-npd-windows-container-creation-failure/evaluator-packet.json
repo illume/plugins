@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-windows-container-creation-failure",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-windows-container-creation-failure-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "failed to create containerd container: error unpacking image: wrong diff id calculated on extraction",
+        "description": "The normalized Windows containerd line reports a wrong extracted layer diff ID."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-windows-container-creation-failure-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"containerd\",\"regex\":\".*failed to create containerd container.*error unpacking image.*wrong diff id calculated on extraction.*\",\"requiredMatches\":1}",
+        "description": "The local oracle requires 1 match(es) for .*failed to create containerd container.*error unpacking image.*wrong diff id calculated on extraction.*."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-windows-container-creation-failure-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-windows-container-creation-failure-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "created containerd container and unpacked image",
+      "description": "The failing source is not the nonmatching healthy control: created containerd container and unpacked image"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9d7b95d60747a1ea"
+}

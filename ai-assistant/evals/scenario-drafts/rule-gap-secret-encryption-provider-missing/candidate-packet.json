@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-secret-encryption-provider-missing",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/secret-encryption-provider-missing-fixture component fixture. The static Pod does not reference the supplied reviewed EncryptionConfiguration. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/secret-encryption-provider-missing-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

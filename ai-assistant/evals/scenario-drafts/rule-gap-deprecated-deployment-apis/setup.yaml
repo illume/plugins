@@ -1,0 +1,59 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-apps-v1beta1
+spec:
+  selector:
+    matchLabels:
+      app: legacy-apps-v1beta1
+  template:
+    metadata:
+      labels:
+        app: legacy-apps-v1beta1
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: legacy-apps-v1beta2
+spec:
+  selector:
+    matchLabels:
+      app: legacy-apps-v1beta2
+  template:
+    metadata:
+      labels:
+        app: legacy-apps-v1beta2
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-extensions-v1beta1
+spec:
+  selector:
+    matchLabels:
+      app: legacy-extensions-v1beta1
+  template:
+    metadata:
+      labels:
+        app: legacy-extensions-v1beta1
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532

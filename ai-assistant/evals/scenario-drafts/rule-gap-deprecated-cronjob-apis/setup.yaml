@@ -1,0 +1,46 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: legacy-backup
+spec:
+  schedule: 0 2 * * *
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: legacy-backup
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: app
+              image: registry.k8s.io/pause:3.10
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65532
+---
+apiVersion: batch/v1beta1
+kind: CronJobList
+metadata:
+  resourceVersion: fixture-1
+items:
+  - apiVersion: batch/v1beta1
+    kind: CronJob
+    metadata:
+      name: legacy-report
+    spec:
+      schedule: 0 2 * * *
+      jobTemplate:
+        spec:
+          template:
+            metadata:
+              labels:
+                app: legacy-report
+            spec:
+              restartPolicy: Never
+              containers:
+                - name: app
+                  image: registry.k8s.io/pause:3.10
+                  securityContext:
+                    runAsNonRoot: true
+                    runAsUser: 65532

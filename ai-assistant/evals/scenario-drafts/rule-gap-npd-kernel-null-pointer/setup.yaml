@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-kernel-null-pointer-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/kern.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: 'BUG: unable to handle kernel NULL pointer dereference at 0000000000000010'
+  normalized-message.txt: 'BUG: unable to handle kernel NULL pointer dereference at 0000000000000010'
+  oracle.json: >-
+    {"source":"kernel-monitor","regex":"BUG: unable to handle kernel NULL pointer dereference at
+    .*","requiredMatches":1}
+  healthy-control.log: 'kernel: worker completed without a fault'

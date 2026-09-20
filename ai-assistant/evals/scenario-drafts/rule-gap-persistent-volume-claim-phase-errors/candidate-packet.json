@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-claim-phase-errors",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why Pod `pending-claim-consumer` cannot start and PersistentVolumeClaim `pending-claim` does not bind. Correlate the claim phase, StorageClass lookup, Pod scheduling status, and Events. Do not mutate resources.",
+  "visible_resource_refs": [
+    "persistentvolumeclaim/pending-claim",
+    "storageclass/telemetry-missing-provisioner",
+    "pod/pending-claim-consumer",
+    "event/*?involvedObject.name=pending-claim"
+  ],
+  "allowed_observation_kinds": [
+    "pvc.spec",
+    "pvc.status",
+    "storageclass.get",
+    "pod.status",
+    "resource.events"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

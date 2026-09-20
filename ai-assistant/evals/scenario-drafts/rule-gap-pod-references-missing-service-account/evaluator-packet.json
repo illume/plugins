@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-references-missing-service-account",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/missing-account-workload",
+        "field_path": "spec.serviceAccountName",
+        "observed_value": "missing-workload-account; inventory count 0",
+        "description": "The Pod names a ServiceAccount absent from its namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/missing-account-workload",
+      "field_path": "spec.serviceAccountName",
+      "observed_value": "missing-workload-account; inventory count 1",
+      "description": "A healthy namespace contains the named ServiceAccount."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-aff78e6f63f09149"
+}

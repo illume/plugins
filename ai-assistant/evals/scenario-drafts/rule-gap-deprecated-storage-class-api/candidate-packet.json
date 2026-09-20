@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-storage-class-api",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the API compatibility of the `legacy-standard` storage manifest. Cite the exact object identity and API version; do not submit the file.",
+  "visible_resource_refs": ["manifest/storageclass/legacy-standard"],
+  "allowed_observation_kinds": ["manifest.api-version", "manifest.object-identity"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

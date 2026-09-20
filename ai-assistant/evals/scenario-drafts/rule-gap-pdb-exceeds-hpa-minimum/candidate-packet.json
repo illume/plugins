@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-exceeds-hpa-minimum",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Compare the `api-budget` availability floor with the `api` autoscaling floor. Cite both exact values and do not mutate resources.",
+  "visible_resource_refs": [
+    "deployment/api",
+    "horizontalpodautoscaler/api",
+    "poddisruptionbudget/api-budget"
+  ],
+  "allowed_observation_kinds": [
+    "horizontalpodautoscaler.bounds",
+    "poddisruptionbudget.availability-policy"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-readonly-node-filesystem",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "readonly-probe-mount",
+        "resource_ref": "pod[label=job-name=readonly-filesystem-probe]",
+        "field_path": "spec.containers[0].volumeMounts[0].readOnly",
+        "observed_value": "true",
+        "description": "The probe target is mounted read-only."
+      },
+      {
+        "fact_id": "readonly-write-error",
+        "resource_ref": "pod[label=job-name=readonly-filesystem-probe]",
+        "field_path": "logs",
+        "observed_value": "filesystem probe failed: Read-only file system",
+        "description": "The bounded write receives a read-only filesystem error."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-mutation",
+      "resource_ref": "pod[label=job-name=readonly-filesystem-probe]",
+      "field_path": "spec.volumes[0].hostPath",
+      "observed_value": "<present>",
+      "description": "The fixture uses an isolated emptyDir and never mounts the host filesystem."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d5593227d15f923c"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-service-account",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Investigate the identity configuration for the `app` Deployment. Cite the exact ServiceAccount reference and namespace inventory; do not mutate resources.",
+  "visible_resource_refs": ["deployment/app", "serviceaccount/*"],
+  "allowed_observation_kinds": ["deployment.pod-template", "serviceaccount.list"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

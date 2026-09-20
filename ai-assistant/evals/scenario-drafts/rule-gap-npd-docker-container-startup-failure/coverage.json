@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-npd-docker-container-startup-failure",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:docker-monitor-dockercontainerstartupfailure:465231770743"
+  ],
+  "target_semantic_group_ids": [
+    "node-problem-detector:semantic:dockercontainerstartupfailure:19750539cedd"
+  ],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/docker-monitor.json"
+  ]
+}

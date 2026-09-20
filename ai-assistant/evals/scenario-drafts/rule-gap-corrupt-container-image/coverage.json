@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-corrupt-container-image",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:docker-monitor-corruptdockerimage:f6e356cdd415",
+    "node-problem-detector:source:docker-monitor-filelog-corruptdockerimage:a9d3ef8f4065",
+    "node-problem-detector:source:windows-containerd-monitor-filelog-corruptcontainerimagelayer:275732ca4880"
+  ],
+  "target_semantic_group_ids": [
+    "node-problem-detector:semantic:corruptcontainerimagelayer:01c949da16fd",
+    "node-problem-detector:semantic:corruptdockerimage:484510ad7562"
+  ],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/docker-monitor-filelog.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/docker-monitor.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/windows-containerd-monitor-filelog.json"
+  ]
+}

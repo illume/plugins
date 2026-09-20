@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deployment-generation-stale",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/stale-generation",
+        "field_path": "metadata.generation + status.observedGeneration",
+        "observed_value": "4; 3 for 10m",
+        "description": "The Deployment controller has not observed the current generation for ten minutes."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "deployment/stale-generation",
+      "field_path": "metadata.generation + status.observedGeneration",
+      "observed_value": "4; 4",
+      "description": "A healthy controller reports the current generation; transient lag under ten minutes is not accepted."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c4198326c760391b"
+}

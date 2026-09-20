@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-kubelet-start",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/npd-kubelet-start-fixture. Compare the exact normalized log fixture with its regex oracle, report the represented node condition, and cite the matching line without mutating resources.",
+  "visible_resource_refs": ["configmap/npd-kubelet-start-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "node-log-fixture", "normalized-regex-oracle"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

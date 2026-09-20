@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-evicted",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why Pod `storage-pressure` terminated. Correlate its resource limit, terminal reason and message, eviction Event, and eviction-count change. Distinguish eviction from an application crash and do not mutate resources.",
+  "visible_resource_refs": [
+    "pod/storage-pressure",
+    "event/*?involvedObject.kind=Pod&involvedObject.name=storage-pressure",
+    "metric/kubelet_evictions{eviction_signal=\"ephemeral_storage\"}"
+  ],
+  "allowed_observation_kinds": ["pod.spec", "pod.status", "pod.events", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

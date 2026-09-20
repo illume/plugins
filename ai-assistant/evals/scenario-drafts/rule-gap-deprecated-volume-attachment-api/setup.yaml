@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1beta1
+kind: VolumeAttachment
+metadata:
+  name: legacy-disk-attachment
+spec:
+  attacher: disk.csi.example.test
+  nodeName: worker-1
+  source:
+    persistentVolumeName: data-volume

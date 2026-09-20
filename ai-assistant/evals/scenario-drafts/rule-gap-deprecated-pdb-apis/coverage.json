@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-pdb-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-poddisruptionbudget-policy-v1beta1-removed-v1-25-0:3e249c55ea46",
+    "pluto:source:k8s-poddisruptionbudgetlist-policy-v1beta1-removed-v1-25-0:1cddda2a5c63"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-policy-v1beta1-poddisruptionbudget-removed-in-v1-25-0:4e5474b051be",
+    "pluto:semantic:k8s-policy-v1beta1-poddisruptionbudgetlist-removed-in-v1-25-0:b9b8f1b3213f"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

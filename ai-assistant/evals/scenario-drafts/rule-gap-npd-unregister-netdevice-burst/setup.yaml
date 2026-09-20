@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-unregister-netdevice-burst-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/kern.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: |-
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+  normalized-message.txt: |-
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+    unregister_netdevice: waiting for eth0 to become free. Usage count = 1
+  oracle.json: >-
+    {"source":"kernel-monitor","regex":"unregister_netdevice: waiting for \\w+ to become free. Usage
+    count = \\d+","requiredMatches":3,"lookback":"20m"}
+  healthy-control.log: 'unregister_netdevice: eth0 became free'

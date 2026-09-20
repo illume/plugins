@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-startup-port-not-exposed",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "startup-port-name",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].startupProbe.httpGet.port",
+        "observed_value": "startup",
+        "description": "The startup probe targets the named port startup."
+      },
+      {
+        "fact_id": "declared-port-name",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].ports[0]",
+        "observed_value": "{\"name\":\"web\",\"containerPort\":8080}",
+        "description": "The only declared container port is named web, so startup cannot resolve."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-startup-port",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].ports[*].name",
+      "observed_value": "[\"startup\"]",
+      "description": "No declared container port is named startup."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-6e60d0353ab21566"
+}

@@ -731,66 +731,60 @@ const popeyeFixture = (ruleId: string, index: number): Fixture => {
 const mixinFixture = (ruleId: string, index: number): Fixture => {
   const alert = ruleId.split(':').at(-1)!;
   const name = `telemetry-state-${index}`;
+  const telemetryConfigMap = (evidence: object) => ({
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      name,
+      labels: { 'evals.kubernetes.io/fixture-kind': 'telemetry-evidence' },
+      annotations: { 'evals.kubernetes.io/apply-to-current-host': 'false' },
+    },
+    data: { 'evidence.json': JSON.stringify(evidence) },
+  });
   const states: Record<
     string,
     { object: object; ref: string; path: string; broken: string; healthy: string }
   > = {
     KubeAPITerminatedRequests: {
-      object: {
-        apiVersion: 'v1',
-        kind: 'Event',
-        metadata: { name },
-        type: 'Warning',
+      object: telemetryConfigMap({
         reason: 'RequestTerminated',
-        action: 'WatchRequest',
-        regarding: { apiVersion: 'v1', kind: 'Pod', name: 'fixture' },
         note: 'apiserver_request_terminations_total increased by 6 in five minutes',
-      },
-      ref: `event/${name}`,
-      path: 'reason + note',
-      broken: 'RequestTerminated; increase=6/5m',
+      }),
+      ref: `configmap/${name}`,
+      path: 'data.evidence.json#reason + note',
+      broken:
+        'RequestTerminated; apiserver_request_terminations_total increased by 6 in five minutes',
       healthy: 'no termination events; increase=0/5m',
     },
     KubeClientErrors: {
-      object: {
-        apiVersion: 'v1',
-        kind: 'Event',
-        metadata: { name },
-        type: 'Warning',
+      object: telemetryConfigMap({
         reason: 'ClientRequestErrors',
-        action: 'ListPods',
-        regarding: { apiVersion: 'v1', kind: 'ServiceAccount', name: 'fixture-client' },
         note: 'rest_client_requests_total code=500 rate is 0.03 over five minutes',
-      },
-      ref: `event/${name}`,
-      path: 'reason + note',
-      broken: 'ClientRequestErrors; 500 ratio=0.03',
+      }),
+      ref: `configmap/${name}`,
+      path: 'data.evidence.json#reason + note',
+      broken:
+        'ClientRequestErrors; rest_client_requests_total code=500 rate is 0.03 over five minutes',
       healthy: '500 ratio=0',
     },
     KubeletTooManyPods: {
-      object: {
-        apiVersion: 'v1',
-        kind: 'Node',
-        metadata: { name },
+      object: telemetryConfigMap({
         status: { allocatable: { pods: '10' }, capacity: { pods: '10' } },
         observedPodCount: 10,
-      },
-      ref: `node/${name}`,
-      path: 'observedPodCount / status.allocatable.pods',
-      broken: '10/10',
+      }),
+      ref: `configmap/${name}`,
+      path: 'data.evidence.json#observedPodCount + status.allocatable.pods',
+      broken: '10; 10',
       healthy: '5/10',
     },
     KubeVersionMismatch: {
-      object: {
-        apiVersion: 'v1',
-        kind: 'Node',
-        metadata: { name },
+      object: telemetryConfigMap({
         status: { nodeInfo: { kubeletVersion: 'v1.31.0', kubeProxyVersion: 'v1.31.0' } },
         controlPlaneVersion: 'v1.34.0',
-      },
-      ref: `node/${name}`,
-      path: 'status.nodeInfo.kubeletVersion + controlPlaneVersion',
-      broken: 'v1.31.0 vs v1.34.0',
+      }),
+      ref: `configmap/${name}`,
+      path: 'data.evidence.json#status.nodeInfo.kubeletVersion + controlPlaneVersion',
+      broken: 'v1.31.0; v1.34.0',
       healthy: 'same minor version',
     },
   };

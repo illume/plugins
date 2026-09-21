@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=write-monitored-directory]",
         "field_path": "spec.containers[0].command + logs",
-        "observed_value": "mkdir -p /fixture/etc; printf controlled > /fixture/etc/monitor.conf; sha256sum /fixture/etc/monitor.conf; sha256 for controlled monitored file",
+        "observed_value": "mkdir -p /fixture/etc; printf controlled > /fixture/etc/monitor.conf; sha256sum /fixture/etc/monitor.conf; <sha256> /fixture/etc/monitor.conf",
         "description": "Process writes below a monitored fixture directory inside bounded Pod-local storage."
       }
     ]

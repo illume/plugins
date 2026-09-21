@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "configmap/ccppcrash-node-evidence",
         "field_path": "data.source-evidence.json + data.predicate.json",
-        "observed_value": "{\"type\":\"CCPPCrash\",\"count\":1,\"executable\":\"/usr/bin/fixture-worker\",\"signal\":11}; recordType=CCPPCrash; minimumCount=1",
+        "observed_value": "{\"type\":\"CCPPCrash\",\"count\":1,\"executable\":\"/usr/bin/fixture-worker\",\"signal\":11}; {\"recordType\":\"CCPPCrash\",\"minimumCount\":1}",
         "description": "Node adaptor records a C or C++ process crash appears once in the inert adaptor stream."
       }
     ]

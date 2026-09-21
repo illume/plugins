@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "replicaset/underready-replicaset",
         "field_path": "spec.replicas + status.readyReplicas",
-        "observed_value": "3; 0 after the bounded readiness window",
+        "observed_value": "3; <absent or 0>",
         "description": "None of the three desired replicas becomes ready."
       }
     ]

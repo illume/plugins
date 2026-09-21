@@ -7,8 +7,8 @@
       {
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=failed-owner]",
-        "field_path": "metadata.ownerReferences[0] + job/failed-owner.status.conditions[type=Failed]",
-        "observed_value": "Job/failed-owner; True",
+        "field_path": "metadata.ownerReferences[0].name + job/failed-owner.status.conditions[type=Failed].status",
+        "observed_value": "failed-owner; True",
         "description": "The Pod controller owner is a failed Job."
       }
     ]
@@ -20,7 +20,7 @@
     {
       "fact_id": "healthy-control",
       "resource_ref": "pod[label=job-name=failed-owner]",
-      "field_path": "metadata.ownerReferences[0] + job/failed-owner.status.conditions[type=Failed]",
+      "field_path": "metadata.ownerReferences[0].name + job/failed-owner.status.conditions[type=Failed].status",
       "observed_value": "Job/running-owner; Failed condition absent",
       "description": "The healthy Pod owner remains active or complete."
     }

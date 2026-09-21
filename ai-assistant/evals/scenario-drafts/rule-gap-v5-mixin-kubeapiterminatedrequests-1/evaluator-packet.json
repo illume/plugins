@@ -6,9 +6,9 @@
     [
       {
         "fact_id": "trigger-evidence",
-        "resource_ref": "event/telemetry-state-1",
-        "field_path": "reason + note",
-        "observed_value": "RequestTerminated; increase=6/5m",
+        "resource_ref": "configmap/telemetry-state-1",
+        "field_path": "data.evidence.json#reason + note",
+        "observed_value": "RequestTerminated; apiserver_request_terminations_total increased by 6 in five minutes",
         "description": "KubeAPITerminatedRequests is sustained by the controlled native status or event evidence."
       }
     ]
@@ -19,10 +19,10 @@
   "contradiction_facts": [
     {
       "fact_id": "healthy-control",
-      "resource_ref": "event/telemetry-state-1",
-      "field_path": "reason + note",
+      "resource_ref": "configmap/telemetry-state-1",
+      "field_path": "data.evidence.json#reason + note",
       "observed_value": "no termination events; increase=0/5m",
-      "description": "The healthy control differs only at reason + note."
+      "description": "The healthy control differs only at data.evidence.json#reason + note."
     }
   ],
   "expects_uncertainty": false,

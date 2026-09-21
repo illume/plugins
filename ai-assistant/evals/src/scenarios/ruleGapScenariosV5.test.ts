@@ -325,11 +325,18 @@ test('v5 definitions exactly match catalogue IDs and contain concrete safe setup
     if (scenarioMetadata.feasibility === 'telemetry') {
       assert.ok(scenarioMetadata.required_mechanisms.includes('api-server'));
       assert.ok(
-        definition.setup.some(object =>
-          ['Node', 'Event', 'PodMetrics', 'Deployment'].includes(
-            (object as { kind?: string }).kind ?? ''
-          )
-        ),
+        definition.setup.some(object => {
+          const fixture = object as {
+            kind?: string;
+            metadata?: { labels?: Record<string, string> };
+          };
+          return (
+            ['Node', 'Event', 'PodMetrics', 'Deployment'].includes(fixture.kind ?? '') ||
+            (fixture.kind === 'ConfigMap' &&
+              fixture.metadata?.labels?.['evals.kubernetes.io/fixture-kind'] ===
+                'telemetry-evidence')
+          );
+        }),
         definition.scenarioId
       );
     }

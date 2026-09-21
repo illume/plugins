@@ -6,9 +6,9 @@
     [
       {
         "fact_id": "trigger-evidence",
-        "resource_ref": "node/telemetry-state-3",
-        "field_path": "observedPodCount / status.allocatable.pods",
-        "observed_value": "10/10",
+        "resource_ref": "configmap/telemetry-state-3",
+        "field_path": "data.evidence.json#observedPodCount + status.allocatable.pods",
+        "observed_value": "10; 10",
         "description": "KubeletTooManyPods is sustained by the controlled native status or event evidence."
       }
     ]
@@ -19,10 +19,10 @@
   "contradiction_facts": [
     {
       "fact_id": "healthy-control",
-      "resource_ref": "node/telemetry-state-3",
-      "field_path": "observedPodCount / status.allocatable.pods",
+      "resource_ref": "configmap/telemetry-state-3",
+      "field_path": "data.evidence.json#observedPodCount + status.allocatable.pods",
       "observed_value": "5/10",
-      "description": "The healthy control differs only at observedPodCount / status.allocatable.pods."
+      "description": "The healthy control differs only at data.evidence.json#observedPodCount + status.allocatable.pods."
     }
   ],
   "expects_uncertainty": false,

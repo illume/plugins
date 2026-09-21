@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/linux-hardening-missing",
         "field_path": "spec.containers[0].securityContext",
-        "observed_value": "{}; seccompProfile field absent; capabilities field absent",
+        "observed_value": "{}",
         "description": "The Linux container declares neither RuntimeDefault seccomp nor a drop-all capability policy."
       }
     ]

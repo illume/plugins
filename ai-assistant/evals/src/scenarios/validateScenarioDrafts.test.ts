@@ -149,6 +149,23 @@ test('observed values use evaluator canonical strings', () => {
     true
   );
   assert.equal(observedValueMatches('<absent>', 'absent'), true);
+  assert.equal(factValueMatches(undefined, '[]'), true);
+  assert.equal(factValueMatches({}, 'field absent'), true);
+  assert.equal(factValueMatches(['SYS_ADMIN'], '[SYS_ADMIN]'), true);
+  assert.equal(
+    factValueMatches(
+      { apiGroups: [''], resources: ['pods/exec'], verbs: ['create'] },
+      'apiGroups=[""]; resources=["pods/exec"]; verbs=["create"]'
+    ),
+    true
+  );
+  assert.equal(
+    factValueMatches(
+      '-----BEGIN PRIVATE KEY-----\nfixture\n-----END PRIVATE KEY-----',
+      'PEM private-key header and footer present'
+    ),
+    true
+  );
   assert.equal(
     factValueMatches(
       'first command\nsecond command\nthird command',

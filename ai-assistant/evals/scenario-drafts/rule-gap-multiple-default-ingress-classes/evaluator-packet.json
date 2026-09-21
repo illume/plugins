@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "ingressclass/default-a + ingressclass/default-b",
         "field_path": "metadata.annotations[ingressclass.kubernetes.io/is-default-class]",
-        "observed_value": "true on two IngressClasses",
+        "observed_value": "true; true",
         "description": "Two IngressClasses simultaneously claim default status."
       }
     ]

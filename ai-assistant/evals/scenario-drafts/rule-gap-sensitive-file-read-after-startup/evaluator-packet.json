@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=sensitive-file-read-after-startup]",
         "field_path": "spec.containers[0].command + logs",
-        "observed_value": "printf controlled > /fixture/shadow; sleep 2; cat /fixture/shadow; controlled after 2 second startup boundary",
+        "observed_value": "printf controlled > /fixture/shadow; sleep 2; cat /fixture/shadow; controlled",
         "description": "Process reads a sensitive fixture after startup inside bounded Pod-local storage."
       }
     ]

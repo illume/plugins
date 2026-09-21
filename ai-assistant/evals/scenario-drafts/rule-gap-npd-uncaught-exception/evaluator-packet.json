@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "configmap/uncaughtexception-node-evidence",
         "field_path": "data.source-evidence.json + data.predicate.json",
-        "observed_value": "{\"type\":\"UncaughtException\",\"count\":1,\"runtime\":\"python\",\"message\":\"ControlledFixtureError\"}; recordType=UncaughtException; minimumCount=1",
+        "observed_value": "{\"type\":\"UncaughtException\",\"count\":1,\"runtime\":\"python\",\"message\":\"ControlledFixtureError\"}; {\"recordType\":\"UncaughtException\",\"minimumCount\":1}",
         "description": "Node adaptor records an uncaught exception appears once in the inert adaptor stream."
       }
     ]

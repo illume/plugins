@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/sys-admin-capability",
         "field_path": "spec.containers[0].securityContext.capabilities.add",
-        "observed_value": "[SYS_ADMIN]",
+        "observed_value": "[\"SYS_ADMIN\"]",
         "description": "The container explicitly adds SYS_ADMIN."
       }
     ]

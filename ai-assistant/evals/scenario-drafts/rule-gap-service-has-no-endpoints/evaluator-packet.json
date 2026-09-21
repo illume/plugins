@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "service/empty-service",
         "field_path": "spec.selector + EndpointSlice inventory",
-        "observed_value": "{app:missing-backend}; 0 ready endpoints",
+        "observed_value": "{\"app\":\"missing-backend\"}; 0",
         "description": "The Service selector produces no ready endpoints."
       }
     ]

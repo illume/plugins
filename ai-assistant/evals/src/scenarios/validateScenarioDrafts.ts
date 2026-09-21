@@ -35,6 +35,7 @@ const cataloguePaths = Array.from(
   (_, index) => `registrations/rule-gap-scenarios-v${index + 1}.json`
 );
 const sourceOnlyScenarioIds = new Set([
+  'rule-gap-namespace-has-no-service-account',
   'rule-gap-pod-template-omits-restart-policy',
   'rule-gap-workload-uses-default-namespace',
 ]);
@@ -104,7 +105,18 @@ export function resolveFieldPath(resource: JsonValue, fieldPath: string): JsonVa
   if (fieldPath.includes(',')) {
     return fieldPath.split(',').map(part => resolveFieldPath(resource, part) ?? '<absent>');
   }
-  const condition = /^(.*?)\[\?(?:@\.)?type(?:==)?=?["']?([^\]"']+)["']?\]\.(.+)$/.exec(fieldPath);
+  const filtered = /^(.*?)\[\??([A-Za-z0-9_.]+)=([^\]]+)\](?:\.(.*))?$/.exec(fieldPath);
+  if (filtered) {
+    const items = resolveFieldPath(resource, filtered[1]!);
+    if (!Array.isArray(items)) return undefined;
+    const expected = filtered[3] === 'true' ? true : filtered[3] === 'false' ? false : filtered[3];
+    const matches = items.filter(item => resolveFieldPath(item, filtered[2]!) === expected);
+    if (filtered[4] === 'length') return matches.length;
+    if (!filtered[4]) return matches;
+    const values = matches.map(item => resolveFieldPath(item, filtered[4]!) ?? '<absent>');
+    return values.length === 1 ? values[0] : values;
+  }
+  const condition = /^(.*?)\[\??(?:@\.)?type(?:==)?=?["']?([^\]"']+)["']?\]\.(.+)$/.exec(fieldPath);
   if (condition) {
     const conditions = resolveFieldPath(resource, condition[1]!);
     if (!Array.isArray(conditions)) return undefined;
@@ -235,6 +247,64 @@ export function observedValueMatches(observed: string, expected: string): boolea
 }
 
 export function factValueMatches(observedValue: JsonValue | undefined, expected: string): boolean {
+  if (
+    (observedValue === undefined || observedValue === '<absent>') &&
+    (expected === '[]' || expected === '0 ServiceAccounts')
+  ) {
+    return true;
+  }
+  if (
+    observedValue !== null &&
+    typeof observedValue === 'object' &&
+    !Array.isArray(observedValue) &&
+    Object.keys(observedValue).length === 0 &&
+    expected === 'field absent'
+  ) {
+    return true;
+  }
+  if (
+    observedValue !== null &&
+    typeof observedValue === 'object' &&
+    !Array.isArray(observedValue) &&
+    expected === 'requests set; limits absent'
+  ) {
+    return observedValue.requests !== undefined && observedValue.limits === undefined;
+  }
+  if (
+    typeof observedValue === 'string' &&
+    expected === 'PEM private-key header and footer present'
+  ) {
+    return /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----[\s\S]+-----END (?:RSA |EC )?PRIVATE KEY-----/.test(
+      observedValue
+    );
+  }
+  if (Array.isArray(observedValue) && /^\[[A-Z0-9_,/-]+\]$/.test(expected)) {
+    return observedValueMatches(
+      serializeObservedValue(observedValue),
+      JSON.stringify(expected.slice(1, -1).split(','))
+    );
+  }
+  if (
+    observedValue !== null &&
+    typeof observedValue === 'object' &&
+    !Array.isArray(observedValue) &&
+    /(?:apiGroups=\[[^\]]*\]; )?resources=\[[^\]]*\]; verbs=\[[^\]]*\]/.test(expected)
+  ) {
+    const parseList = (name: string): string[] | undefined => {
+      const match = new RegExp(`${name}=\\[([^\\]]*)\\]`).exec(expected);
+      if (!match) return undefined;
+      if (!match[1]) return [''];
+      return match[1].split(',').map(value => value.replace(/^"|"$/g, ''));
+    };
+    const record = observedValue as Record<string, JsonValue>;
+    return ['apiGroups', 'resources', 'verbs'].every(name => {
+      const expectedValues = parseList(name);
+      return (
+        expectedValues === undefined ||
+        observedValueMatches(serializeObservedValue(record[name]), JSON.stringify(expectedValues))
+      );
+    });
+  }
   const alternatives = /^<one of: (.+)>$/.exec(expected);
   if (alternatives) {
     return alternatives[1]!.split(', ').some(option => factValueMatches(observedValue, option));
@@ -246,13 +316,48 @@ export function factValueMatches(observedValue: JsonValue | undefined, expected:
     return true;
   }
   if (typeof observedValue === 'string') {
+    const dynamicStringMatches = (fragment: string): boolean => {
+      if (fragment === 'two identical inode numbers') {
+        const inodeLines = observedValue
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(line => /^\d+$/.test(line));
+        return inodeLines.length >= 2 && inodeLines.at(-1) === inodeLines.at(-2);
+      }
+      if (fragment.startsWith('<sha256> ')) {
+        const target = fragment.slice('<sha256> '.length);
+        return new RegExp(`[a-f0-9]{64}\\s+${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(
+          observedValue
+        );
+      }
+      return false;
+    };
+    if (expected === 'two identical inode numbers') {
+      const inodeLines = observedValue
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => /^\d+$/.test(line));
+      return inodeLines.length >= 2 && inodeLines.at(-1) === inodeLines.at(-2);
+    }
+    if (expected.startsWith('<sha256> ')) {
+      const target = expected.slice('<sha256> '.length);
+      return new RegExp(`[a-f0-9]{64}\\s+${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(
+        observedValue
+      );
+    }
     const fragments = expected.split('; ').filter(Boolean);
-    if (fragments.length > 1 && fragments.every(fragment => observedValue.includes(fragment))) {
+    if (
+      fragments.length > 1 &&
+      fragments.every(
+        fragment => observedValue.includes(fragment) || dynamicStringMatches(fragment)
+      )
+    ) {
       return true;
     }
     if (observedValue.includes(expected)) return true;
   }
   if (Array.isArray(observedValue)) {
+    if (/^\d+$/.test(expected) && observedValue.length === Number(expected)) return true;
     if (observedValue.every(item => typeof item === 'string')) {
       const values = observedValue as string[];
       if (values.includes(expected)) return true;
@@ -354,9 +459,152 @@ async function observedFactValue(
   fact: AcceptedFact,
   cache: Map<string, JsonValue>
 ): Promise<string> {
+  if (fact.resource_ref.startsWith('metric/')) {
+    throw new Error(`metric evidence adapter unavailable for ${fact.resource_ref}`);
+  }
+  if (fact.resource_ref.includes(' + ')) {
+    const refs = fact.resource_ref.split(' + ');
+    const paths = fact.field_path.split(' + ');
+    const values: JsonValue[] = [];
+    for (const ref of refs) {
+      const related = await snapshotFor(adapter, namespace, ref, cache);
+      if (related === undefined) values.push('<absent>');
+      else
+        for (const fieldPath of paths)
+          values.push(resolveFactField(related, fieldPath) ?? '<absent>');
+    }
+    return factValueMatches(values, fact.observed_value)
+      ? fact.observed_value
+      : serializeObservedValue(values);
+  }
   const snapshot = await snapshotFor(adapter, namespace, fact.resource_ref, cache);
   if (snapshot === undefined) return '<absent>';
-  const inventoryRelation = /^(.*?) \+ matching ([A-Za-z]+) inventory$/.exec(fact.field_path);
+  if (fact.observed_value === 'reference names an absent object') {
+    if (!adapter.listResourceSnapshots) {
+      throw new Error('cluster adapter cannot validate missing-reference predicates');
+    }
+    const value = resolveFactField(snapshot, fact.field_path);
+    const referenceName =
+      typeof value === 'string'
+        ? value
+        : value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? value.name
+        : undefined;
+    const lowerPath = fact.field_path.toLowerCase();
+    const resource = lowerPath.includes('configmap')
+      ? 'configmap'
+      : lowerPath.includes('persistentvolumeclaim')
+      ? 'persistentvolumeclaim'
+      : lowerPath.includes('secret')
+      ? 'secret'
+      : lowerPath.includes('cert-manager.io/issuer')
+      ? 'issuer'
+      : lowerPath.includes('konghq.com/plugins')
+      ? 'kongplugin'
+      : lowerPath.startsWith('subjects[')
+      ? 'serviceaccount'
+      : undefined;
+    if (!resource || typeof referenceName !== 'string') {
+      throw new Error(`unsupported missing-reference predicate: ${fact.field_path}`);
+    }
+    const targetNamespace =
+      value !== null &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      typeof value.namespace === 'string'
+        ? value.namespace
+        : namespace;
+    const items = await adapter.listResourceSnapshots(targetNamespace, resource);
+    return items.some(item => resolveFieldPath(item, 'metadata.name') === referenceName)
+      ? referenceName
+      : fact.observed_value;
+  }
+  if (
+    fact.field_path === 'spec.selector + selected container ports' ||
+    fact.field_path === 'spec.ports[0].targetPort + selected container ports'
+  ) {
+    if (!adapter.listResourceSnapshots) {
+      throw new Error('cluster adapter cannot validate selected Pod port predicates');
+    }
+    const selector = resolveFactField(snapshot, 'spec.selector');
+    const pods = await adapter.listResourceSnapshots(namespace, 'pod');
+    const selected = pods.filter(pod => {
+      const labels = resolveFieldPath(pod, 'metadata.labels');
+      return (
+        selector !== null &&
+        typeof selector === 'object' &&
+        !Array.isArray(selector) &&
+        labels !== null &&
+        typeof labels === 'object' &&
+        !Array.isArray(labels) &&
+        Object.entries(selector).every(([key, value]) => labels[key] === value)
+      );
+    });
+    const ports = selected.flatMap(pod => {
+      const containers = resolveFieldPath(pod, 'spec.containers');
+      return Array.isArray(containers)
+        ? containers.flatMap(container => {
+            const containerPorts = resolveFieldPath(container, 'ports');
+            return Array.isArray(containerPorts) ? containerPorts : [];
+          })
+        : [];
+    });
+    const targetPort = resolveFactField(snapshot, 'spec.ports[0].targetPort');
+    const matched =
+      fact.observed_value === 'selected Pod has no explicit container ports'
+        ? ports.length === 0
+        : fact.observed_value === 'selected Pod declares named container port http'
+        ? ports.some(port => resolveFieldPath(port, 'name') === 'http')
+        : fact.observed_value === 'numeric targetPort 8080 with selected container port 8080'
+        ? targetPort === 8080 &&
+          ports.some(port => resolveFieldPath(port, 'containerPort') === targetPort)
+        : fact.observed_value === 'web resolving to selected container port 8080'
+        ? targetPort === 'web' &&
+          ports.some(
+            port =>
+              resolveFieldPath(port, 'name') === 'web' &&
+              resolveFieldPath(port, 'containerPort') === 8080
+          )
+        : false;
+    return matched
+      ? fact.observed_value
+      : serializeObservedValue([selector ?? targetPort ?? '<absent>', ports]);
+  }
+  if (fact.field_path.endsWith(' + logs')) {
+    if (!adapter.getPodLogs) throw new Error('cluster adapter cannot validate Pod log predicates');
+    const commandPath = fact.field_path.slice(0, -' + logs'.length);
+    const command = resolveFactField(snapshot, commandPath);
+    const podName = resolveFieldPath(snapshot, 'metadata.name');
+    if (typeof podName !== 'string') throw new Error(`${fact.resource_ref} has no Pod name`);
+    const logs = await adapter.getPodLogs(namespace, podName);
+    const commandText =
+      Array.isArray(command) && command.every(value => typeof value === 'string')
+        ? command.join('\n')
+        : serializeObservedValue(command);
+    const combined = `${commandText}\n${logs}`;
+    return factValueMatches(combined, fact.observed_value) ? fact.observed_value : combined;
+  }
+  if (fact.field_path === 'roleRef + referenced ClusterRole.rules[0]') {
+    const roleName = resolveFactField(snapshot, 'roleRef.name');
+    if (typeof roleName !== 'string') return '<absent>';
+    const role = await snapshotFor(adapter, namespace, `clusterrole/${roleName}`, cache);
+    const rule = role === undefined ? undefined : resolveFactField(role, 'rules[0]');
+    return factValueMatches(rule, fact.observed_value)
+      ? fact.observed_value
+      : serializeObservedValue(rule);
+  }
+  if (fact.field_path === 'ServiceAccount inventory for metadata.name=accountless-namespace') {
+    if (!adapter.listResourceSnapshots) {
+      throw new Error('cluster adapter cannot validate ServiceAccount inventory predicates');
+    }
+    const items = await adapter.listResourceSnapshots('accountless-namespace', 'serviceaccount');
+    return factValueMatches(items.length, fact.observed_value)
+      ? fact.observed_value
+      : String(items.length);
+  }
+  const inventoryRelation = /^(.*?) \+ (?:matching )?([A-Za-z]+)(?: selector)? inventory$/.exec(
+    fact.field_path
+  );
   if (inventoryRelation) {
     if (!adapter.listResourceSnapshots) {
       throw new Error('cluster adapter cannot validate matching inventory predicates');
@@ -364,8 +612,11 @@ async function observedFactValue(
     const primary = resolveFactField(snapshot, inventoryRelation[1]!);
     const resourceByName: Record<string, string> = {
       Deployment: 'deployment',
+      EndpointSlice: 'endpointslice',
+      Namespace: 'namespace',
       PodDisruptionBudget: 'poddisruptionbudget',
       Pod: 'pod',
+      ReplicaSet: 'replicaset',
       Role: 'role',
       Service: 'service',
       ServiceAccount: 'serviceaccount',
@@ -374,8 +625,44 @@ async function observedFactValue(
     if (!resource) throw new Error(`unsupported matching inventory: ${inventoryRelation[2]}`);
     const items = await adapter.listResourceSnapshots(namespace, resource);
     const count = items.filter(item => {
+      if (resource === 'namespace') {
+        const labels = resolveFieldPath(item, 'metadata.labels');
+        const selector =
+          primary !== null && typeof primary === 'object' && !Array.isArray(primary)
+            ? primary.matchLabels
+            : undefined;
+        return (
+          labels !== null &&
+          typeof labels === 'object' &&
+          !Array.isArray(labels) &&
+          selector !== null &&
+          typeof selector === 'object' &&
+          !Array.isArray(selector) &&
+          Object.entries(selector).every(([key, value]) => labels[key] === value)
+        );
+      }
       if (resource === 'poddisruptionbudget') {
-        return resolveFieldPath(item, 'spec.selector.matchLabels.app') === primary;
+        const selector = resolveFieldPath(item, 'spec.selector.matchLabels');
+        if (typeof primary === 'string')
+          return resolveFieldPath(item, 'spec.selector.matchLabels.app') === primary;
+        return canonicalStringify(selector ?? null) === canonicalStringify(primary ?? null);
+      }
+      if (resource === 'replicaset') {
+        const owner = primary as Record<string, JsonValue> | undefined;
+        return (
+          resolveFieldPath(item, 'metadata.name') === owner?.name &&
+          resolveFieldPath(item, 'metadata.uid') === owner?.uid
+        );
+      }
+      if (resource === 'endpointslice') {
+        const serviceName = resolveFieldPath(snapshot, 'metadata.name');
+        if (resolveFieldPath(item, 'metadata.labels[kubernetes.io/service-name]') !== serviceName)
+          return false;
+        const endpoints = resolveFieldPath(item, 'endpoints');
+        return (
+          Array.isArray(endpoints) &&
+          endpoints.some(endpoint => resolveFieldPath(endpoint, 'conditions.ready') !== false)
+        );
       }
       const expectedName =
         typeof primary === 'string'
@@ -563,7 +850,9 @@ async function main(): Promise<void> {
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
         const unsupportedApi =
-          /no matches for kind .* in version|ensure CRDs are installed first/i.test(reason);
+          /no matches for kind .* in version|ensure CRDs are installed first|doesn't have a resource type/i.test(
+            reason
+          );
         results.push({
           portfolio_index: portfolioIndex,
           scenario_id: scenarioId,

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/orphan-owner-pod",
         "field_path": "metadata.ownerReferences[0] + ReplicaSet inventory",
-        "observed_value": "ReplicaSet/missing-owner; 0 UID matches",
+        "observed_value": "{\"apiVersion\":\"apps/v1\",\"controller\":true,\"kind\":\"ReplicaSet\",\"name\":\"missing-owner\",\"uid\":\"00000000-0000-4000-8000-000000000018\"}; 0",
         "description": "The controlling owner reference cannot be resolved by name and UID."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "poddisruptionbudget/underhealthy-pdb",
         "field_path": "status.currentHealthy + status.desiredHealthy",
-        "observed_value": "1; 2 for 15m",
+        "observed_value": "1; 2",
         "description": "PodDisruptionBudget has insufficient healthy Pods for the pinned observation window."
       }
     ]

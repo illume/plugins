@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "networkpolicy/orphan-namespace-peer",
         "field_path": "spec.ingress[0].from[0].namespaceSelector + Namespace inventory",
-        "observed_value": "{tenant:missing-tenant}; 0 matches",
+        "observed_value": "{\"matchLabels\":{\"tenant\":\"missing-tenant\"}}; 0",
         "description": "The ingress namespace selector resolves to no namespace."
       }
     ]

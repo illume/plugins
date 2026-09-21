@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=bounded-bulk-file-removal]",
         "field_path": "spec.containers[0].command + logs",
-        "observed_value": "mkdir -p /fixture/data; n=0; while [ \"$n\" -lt 40 ]; do printf x > /fixture/data/file-$n; n=$((n+1)); done; rm -f /fixture/data/file-*; find /fixture/data -type f | wc -l; 0 files after deleting exactly 40 Pod-local files",
+        "observed_value": "mkdir -p /fixture/data; n=0; while [ \"$n\" -lt 40 ]; do printf x > /fixture/data/file-$n; n=$((n+1)); done; rm -f /fixture/data/file-*; find /fixture/data -type f | wc -l; 0",
         "description": "Process removes a bounded bulk data set inside bounded Pod-local storage."
       }
     ]

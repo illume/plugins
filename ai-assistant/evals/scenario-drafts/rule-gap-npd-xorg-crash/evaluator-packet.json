@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "configmap/xorgcrash-node-evidence",
         "field_path": "data.source-evidence.json + data.predicate.json",
-        "observed_value": "{\"type\":\"XorgCrash\",\"count\":1,\"executable\":\"/usr/libexec/Xorg\",\"signal\":6}; recordType=XorgCrash; minimumCount=1",
+        "observed_value": "{\"type\":\"XorgCrash\",\"count\":1,\"executable\":\"/usr/libexec/Xorg\",\"signal\":6}; {\"recordType\":\"XorgCrash\",\"minimumCount\":1}",
         "description": "Node adaptor records an Xorg crash appears once in the inert adaptor stream."
       }
     ]

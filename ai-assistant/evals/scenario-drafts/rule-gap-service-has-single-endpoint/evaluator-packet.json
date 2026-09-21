@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "endpointslice/single-backend",
         "field_path": "endpoints[?conditions.ready=true]",
-        "observed_value": "exactly 1 endpoint",
+        "observed_value": "1",
         "description": "The Service backend has no redundancy because only one endpoint is ready."
       }
     ]

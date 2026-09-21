@@ -6,9 +6,9 @@
     [
       {
         "fact_id": "trigger-evidence",
-        "resource_ref": "event/telemetry-state-2",
-        "field_path": "reason + note",
-        "observed_value": "ClientRequestErrors; 500 ratio=0.03",
+        "resource_ref": "configmap/telemetry-state-2",
+        "field_path": "data.evidence.json#reason + note",
+        "observed_value": "ClientRequestErrors; rest_client_requests_total code=500 rate is 0.03 over five minutes",
         "description": "KubeClientErrors is sustained by the controlled native status or event evidence."
       }
     ]
@@ -19,10 +19,10 @@
   "contradiction_facts": [
     {
       "fact_id": "healthy-control",
-      "resource_ref": "event/telemetry-state-2",
-      "field_path": "reason + note",
+      "resource_ref": "configmap/telemetry-state-2",
+      "field_path": "data.evidence.json#reason + note",
       "observed_value": "500 ratio=0",
-      "description": "The healthy control differs only at reason + note."
+      "description": "The healthy control differs only at data.evidence.json#reason + note."
     }
   ],
   "expects_uncertainty": false,

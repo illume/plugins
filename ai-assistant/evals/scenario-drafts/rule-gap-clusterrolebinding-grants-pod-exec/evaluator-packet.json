@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "clusterrolebinding/clusterrolebinding-grants-pod-exec",
         "field_path": "roleRef + referenced ClusterRole.rules[0]",
-        "observed_value": "apiGroups=[\"\"]; resources=[\"pods/exec\",\"pods/attach\"]; verbs=[\"create\"]",
+        "observed_value": "{\"apiGroups\":[\"\"],\"resources\":[\"pods/exec\",\"pods/attach\"],\"verbs\":[\"create\"]}",
         "description": "ClusterRoleBinding grants Pod exec and attach."
       }
     ]

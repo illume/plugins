@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "clusterrole/clusterrole-grants-pod-exec-role",
         "field_path": "rules[0]",
-        "observed_value": "apiGroups=[\"\"]; resources=[\"pods/exec\",\"pods/attach\"]; verbs=[\"create\"]",
+        "observed_value": "{\"apiGroups\":[\"\"],\"resources\":[\"pods/exec\",\"pods/attach\"],\"verbs\":[\"create\"]}",
         "description": "ClusterRole grants Pod exec and attach."
       }
     ]

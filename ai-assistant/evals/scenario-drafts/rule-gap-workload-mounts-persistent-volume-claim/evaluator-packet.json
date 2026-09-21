@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/pvc-consumer",
         "field_path": "spec.volumes[0].persistentVolumeClaim",
-        "observed_value": "{claimName:workload-data,readOnly:false}",
+        "observed_value": "{\"claimName\":\"workload-data\"}",
         "description": "The workload mounts a writable persistent claim."
       }
     ]

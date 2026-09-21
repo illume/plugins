@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/multiply-protected",
         "field_path": "metadata.labels + PodDisruptionBudget selector inventory",
-        "observed_value": "{app:multiply-protected}; matches pdb-a and pdb-b",
+        "observed_value": "{\"app\":\"multiply-protected\"}; 2",
         "description": "Two disruption budgets select the same Pod."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "ingress/route-a + ingress/route-b",
         "field_path": "spec.rules[0].host + spec.rules[0].http.paths[0].path",
-        "observed_value": "duplicate.example.test; / on both objects",
+        "observed_value": "duplicate.example.test; /; duplicate.example.test; /",
         "description": "Two Ingress objects claim the same host and path."
       }
     ]

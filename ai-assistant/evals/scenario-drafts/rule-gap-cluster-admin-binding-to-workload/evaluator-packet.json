@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "clusterrolebinding/workload-cluster-admin",
         "field_path": "roleRef.name + subjects[0]",
-        "observed_value": "cluster-admin; ServiceAccount/default/overprivileged-workload",
+        "observed_value": "cluster-admin; {\"kind\":\"ServiceAccount\",\"name\":\"overprivileged-workload\",\"namespace\":\"default\"}",
         "description": "A namespaced workload account receives cluster-admin."
       }
     ]

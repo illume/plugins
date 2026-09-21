@@ -16,11 +16,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: action
-          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          image: python:3.12-alpine
           command:
             - /bin/sh
             - '-ceu'
-            - cp /bin/sh /fixture/mysqld; /fixture/mysqld -c "echo database-child-shell"
+            - >-
+              cp /usr/local/bin/python3 /fixture/mysqld; /fixture/mysqld -c 'import subprocess;
+              subprocess.run(["/bin/sh","-c","echo database-child-shell"], check=True)'
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

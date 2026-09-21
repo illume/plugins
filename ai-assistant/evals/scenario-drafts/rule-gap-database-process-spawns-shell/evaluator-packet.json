@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=database-process-spawns-shell]",
         "field_path": "spec.containers[0].command + logs",
-        "observed_value": "cp /bin/sh /fixture/mysqld; /fixture/mysqld -c \"echo database-child-shell\"; database-child-shell",
+        "observed_value": "cp /usr/local/bin/python3 /fixture/mysqld; /fixture/mysqld -c 'import subprocess; subprocess.run([\"/bin/sh\",\"-c\",\"echo database-child-shell\"], check=True)'; database-child-shell",
         "description": "Database-named process spawns a shell inside bounded Pod-local storage."
       }
     ]

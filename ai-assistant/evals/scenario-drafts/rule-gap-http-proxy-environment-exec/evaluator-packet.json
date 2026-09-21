@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=http-proxy-environment-exec]",
         "field_path": "spec.containers[0].command + logs",
-        "observed_value": "HTTP_PROXY=http://127.0.0.1:9 /bin/sh -c \"printf proxy-env-exec\"; proxy-env-exec with HTTP_PROXY=http://127.0.0.1:9",
+        "observed_value": "HTTP_PROXY=http://127.0.0.1:9 /bin/sh -c \"printf proxy-env-exec\"; proxy-env-exec",
         "description": "Program executes with an HTTP proxy environment variable inside bounded Pod-local storage."
       }
     ]

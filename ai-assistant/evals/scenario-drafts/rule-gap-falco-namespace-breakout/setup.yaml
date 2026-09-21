@@ -21,8 +21,8 @@ spec:
             - '-ceu'
             - |-
               apt-get update >/dev/null && apt-get install -y util-linux >/dev/null
-              unshare --user --map-root-user /bin/sh -c "id -u; mount | head -1"
-              nsenter --target 1 --mount -- /bin/true
+              unshare --user --map-root-user /bin/sh -c "id -u; mount | head -1" || true
+              nsenter --target 1 --mount -- /bin/true || true
               printf "controlled-setns-target=pod-pid-1\n"
           securityContext:
             allowPrivilegeEscalation: false

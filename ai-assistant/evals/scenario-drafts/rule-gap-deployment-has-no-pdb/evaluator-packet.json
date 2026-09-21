@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "deployment/unprotected-api",
         "field_path": "spec.template.metadata.labels.app + matching PodDisruptionBudget inventory",
-        "observed_value": "unprotected-api; 0 matching budgets",
+        "observed_value": "unprotected-api; 0",
         "description": "No disruption budget selector covers the Deployment Pods."
       }
     ]

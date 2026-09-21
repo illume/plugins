@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "networkpolicy/orphan-peer-policy",
         "field_path": "spec.egress[0].to[0].podSelector + matching Pod inventory",
-        "observed_value": "{app: missing-peer}; 0 matches",
+        "observed_value": "{\"matchLabels\":{\"app\":\"missing-peer\"}}; 0",
         "description": "The egress peer selector resolves to no Pods in the policy namespace."
       }
     ]

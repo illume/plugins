@@ -7,8 +7,8 @@
       {
         "fact_id": "trigger-evidence",
         "resource_ref": "rolebinding/missing-role-binding",
-        "field_path": "roleRef",
-        "observed_value": "{\"apiGroup\":\"rbac.authorization.k8s.io\",\"kind\":\"Role\",\"name\":\"missing-role\"}; inventory count 0",
+        "field_path": "roleRef + matching Role inventory",
+        "observed_value": "{\"apiGroup\":\"rbac.authorization.k8s.io\",\"kind\":\"Role\",\"name\":\"missing-role\"}; 0",
         "description": "The RoleBinding names a Role absent from its namespace."
       }
     ]
@@ -20,7 +20,7 @@
     {
       "fact_id": "healthy-or-confounding-state",
       "resource_ref": "rolebinding/missing-role-binding",
-      "field_path": "roleRef",
+      "field_path": "roleRef + matching Role inventory",
       "observed_value": "missing-role inventory count 1",
       "description": "A healthy binding resolves to an existing Role."
     }

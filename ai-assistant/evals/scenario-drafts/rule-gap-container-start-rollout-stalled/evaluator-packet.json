@@ -8,7 +8,7 @@
         "fact_id": "container-waits-for-image",
         "resource_ref": "pod/stalled-rollout-*",
         "field_path": "status.containerStatuses[0].state.waiting.reason",
-        "observed_value": "ImagePullBackOff",
+        "observed_value": "<one of: ErrImagePull, ImagePullBackOff>",
         "description": "The new revision container remains waiting because its image cannot be pulled."
       },
       {
@@ -22,7 +22,7 @@
         "fact_id": "desired-available-diverge",
         "resource_ref": "deployment/stalled-rollout",
         "field_path": "status.replicas,status.availableReplicas",
-        "observed_value": "desired=2; available=0",
+        "observed_value": "desired=2; available=<absent or 0>",
         "description": "Desired replicas remain above available replicas throughout the bounded window."
       }
     ]

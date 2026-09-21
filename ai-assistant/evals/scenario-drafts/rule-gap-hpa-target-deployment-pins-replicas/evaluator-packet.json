@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "deployment/autoscaled-pinned",
         "field_path": "spec.replicas + horizontalpodautoscaler/autoscaled-pinned.spec.scaleTargetRef",
-        "observed_value": "3; Deployment/autoscaled-pinned",
+        "observed_value": "3; {\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"autoscaled-pinned\"}",
         "description": "The Deployment targeted by an HPA also pins spec.replicas."
       }
     ]

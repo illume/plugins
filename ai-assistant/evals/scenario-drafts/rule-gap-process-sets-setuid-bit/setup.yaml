@@ -25,9 +25,9 @@ spec:
             - /bin/sh
             - '-ceu'
             - >-
-              cp /bin/busybox /fixture/test-executable; chmod 4755 /fixture/test-executable; stat -c
-              'mode=%a' /fixture/test-executable; /fixture/test-executable true; echo
-              setuid-test-executed-without-sudo
+              cp /bin/busybox /fixture/test-executable; chmod 4755 /fixture/test-executable; ln -s
+              test-executable /fixture/busybox; stat -c 'mode=%a' /fixture/test-executable;
+              /fixture/busybox true; echo setuid-test-executed-without-sudo
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:

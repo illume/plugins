@@ -57,6 +57,25 @@ test('applyManifest replaces namespace placeholders without changing the source 
   }
 });
 
+test('deleteManifest removes namespaced and cluster-scoped fixture resources', async () => {
+  const directory = makeScratchDir('kubectl-delete-fixture');
+  const fixturePath = path.join(directory, 'setup.yaml');
+  writeFileSync(fixturePath, 'metadata:\n  namespace: __EVAL_NAMESPACE__\n');
+  let invokedArgs: string[] = [];
+  const runner: CommandRunner = (_command, args) => {
+    invokedArgs = args;
+    return { status: 0, stdout: '', stderr: '' };
+  };
+  try {
+    await new TestKubectlAdapter(runner).deleteManifest('trial-namespace', fixturePath);
+    assert.deepEqual(invokedArgs.slice(2, 5), ['delete', '-n', 'trial-namespace']);
+    assert.ok(invokedArgs.includes('--ignore-not-found'));
+    assert.equal(readFileSync(fixturePath, 'utf8'), 'metadata:\n  namespace: __EVAL_NAMESPACE__\n');
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
 test('getDeployment distinguishes absence from operational failures', async () => {
   const notFoundRunner: CommandRunner = () => ({
     status: 1,
@@ -90,6 +109,17 @@ test('listResourceSnapshots returns a namespaced inventory', async () => {
   assert.deepEqual(
     await new TestKubectlAdapter(runner).listResourceSnapshots('trial', 'poddisruptionbudget'),
     [{ metadata: { name: 'web' } }]
+  );
+});
+
+test('getPodLogs reads all containers through the isolated kubeconfig', async () => {
+  const runner: CommandRunner = (_command, args) => {
+    assert.deepEqual(args.slice(-5), ['logs', 'probe-abc', '-n', 'trial', '--all-containers=true']);
+    return { status: 0, stdout: 'probe failed\n', stderr: '' };
+  };
+  assert.equal(
+    await new TestKubectlAdapter(runner).getPodLogs('trial', 'probe-abc'),
+    'probe failed'
   );
 });
 

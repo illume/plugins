@@ -27,9 +27,9 @@
     {
       "fact_id": "invented-least-privilege-role",
       "resource_ref": "rolebinding/app-admin",
-      "field_path": "roleRef.kind",
-      "observed_value": "Role",
-      "description": "The binding references a ClusterRole, not a namespaced Role."
+      "field_path": "roleRef.name",
+      "observed_value": "app-reader",
+      "description": "The binding references cluster-admin, not a least-privilege application role."
     }
   ],
   "expects_uncertainty": false,

@@ -15,14 +15,14 @@
         "fact_id": "packet-socket-opened",
         "resource_ref": "pod/interactive-recon",
         "field_path": "logs[scanner]",
-        "observed_value": "af_packet_opened <file-descriptor>",
+        "observed_value": "af_packet_opened",
         "description": "The Python scanner successfully creates an AF_PACKET raw socket."
       },
       {
         "fact_id": "cluster-and-nodeport-probes",
         "resource_ref": "pod/interactive-recon",
         "field_path": "spec.containers[0].command[2]",
-        "observed_value": "UDP recon-responder:9999 and status.hostIP:30099",
+        "observed_value": "recon-responder\",9999; os.environ[\"NODE_IP\"],30099",
         "description": "The interpreted scanner probes both controlled Service and NodePort paths."
       }
     ]

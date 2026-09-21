@@ -218,6 +218,43 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     }
   }
 
+  async deleteManifest(namespace: string, manifestYamlPath: string): Promise<void> {
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
+    const temporaryDirectory = hasNamespacePlaceholder
+      ? mkdtempSync(path.join(tmpdir(), 'headlamp-eval-fixture-'))
+      : undefined;
+    const appliedPath = temporaryDirectory
+      ? path.join(temporaryDirectory, path.basename(manifestYamlPath))
+      : manifestYamlPath;
+    try {
+      if (temporaryDirectory) {
+        writeFileSync(appliedPath, source.replaceAll('__EVAL_NAMESPACE__', namespace), 'utf8');
+      }
+      const result = this.runner(
+        'kubectl',
+        this.kubectl([
+          'delete',
+          '-n',
+          namespace,
+          '-f',
+          appliedPath,
+          '--ignore-not-found',
+          '--wait=true',
+          '--timeout=60s',
+        ])
+      );
+      if (
+        result.status !== 0 &&
+        !/no matches for kind|ensure CRDs are installed first/i.test(result.stderr)
+      ) {
+        throw new Error(`kubectl delete failed for ${manifestYamlPath}: ${result.stderr}`);
+      }
+    } finally {
+      if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
+    }
+  }
+
   /**
    * Reads the selector from a named Service.
    *
@@ -531,6 +568,17 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     }
     const list = JSON.parse(result.stdout) as { items?: JsonValue[] };
     return list.items ?? [];
+  }
+
+  async getPodLogs(namespace: string, podName: string): Promise<string> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['logs', podName, '-n', namespace, '--all-containers=true'])
+    );
+    if (result.status !== 0) {
+      throw new Error(`failed to read logs for pod/${podName}: ${result.stderr || result.stdout}`);
+    }
+    return result.stdout.trim();
   }
 
   async applyJsonPatch(

@@ -8,19 +8,28 @@ Validation does not promote a draft or change canonical qualification coverage.
 
 ## Current result
 
-The `local-minikube` validator executed portfolio scenarios 276 through 305:
+The `local-minikube` validator executed portfolio scenarios 276 through 505:
 
-- 29 scenarios passed fixture application, trusted Kubernetes API observation,
-  accepted-fact matching, contradiction rejection, and namespace cleanup;
-- scenario 300 was skipped because it does not declare `local-minikube` support;
-- no native Kubernetes API scenario in this range remains failed;
+- 159 scenarios passed fixture application, trusted Kubernetes API or decoded
+  ConfigMap observation, accepted-fact matching, contradiction rejection, and
+  fixture plus namespace cleanup;
+- 36 scenarios were skipped because they require another profile, a missing CRD
+  or removed API, or source-manifest evidence erased by API defaulting;
+- 35 scenarios remain failed, concentrated in temporal metrics, scheduler,
+  node, storage-controller, and admission-invalid fixture evidence;
 - all validated scenarios retain `qualification_status: pending`.
 
-The next resume point is scenario 306,
-`rule-gap-anonymous-kubelet-auth`. It fails closed because its predicate is encoded
-inside ConfigMap YAML at `data.config.yaml#authentication.anonymous.enabled`.
-Scenario 306 and the following host-configuration drafts require a typed decoder
-evidence adapter before their observations can count as executable validation.
+The next sequential resume point is scenario 506. The failed scenarios in the
+covered range should be revisited by mechanism rather than hidden by later passes:
+runtime convergence and metrics begin at 331, storage/controller evidence at 365,
+and the next telemetry-heavy block begins at 450.
+
+Validation now supports typed YAML and JSON data decoding, dotted Kubernetes map
+keys, exact related-resource inventories, generated Job Pod selection, Pod logs,
+and bounded controller convergence. It deletes the complete fixture before its
+namespace so cluster-scoped objects cannot leak into later runs. One unavailable
+APIService exposed this requirement during development; the leaked object and all
+empty terminating validation namespaces were removed before validation resumed.
 
 ## Command
 
@@ -35,9 +44,10 @@ npm run eval:validate:drafts -- \
 ```
 
 The validator starts or reuses `headlamp-ai-evals`, applies each setup in an
-isolated namespace, reads resources through the trusted adapter boundary, and
-always deletes the namespace. Unsupported profiles are reported as skipped.
-Unsupported field encodings are errors rather than inferred passes.
+isolated namespace, reads resources through the trusted adapter boundary, deletes
+the fixture, and then deletes the namespace. Unsupported profiles and API kinds
+are reported as skipped. Unsupported field encodings are errors rather than
+inferred passes.
 
 ## Remaining qualification controls
 

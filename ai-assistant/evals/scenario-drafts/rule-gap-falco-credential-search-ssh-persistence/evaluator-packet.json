@@ -8,7 +8,7 @@
         "fact_id": "credential-search-read-write-chain",
         "resource_ref": "job/credential-search-action",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": "find; grep CONTROLLED_SECRET; cat id_ed25519; append authorized_keys",
+        "observed_value": "find /fixture; grep -R \"CONTROLLED_SECRET\" /fixture; cat /fixture/home/.ssh/id_ed25519; /fixture/home/.ssh/authorized_keys",
         "description": "The action searches credentials, reads a private-key fixture, and writes authorized_keys."
       },
       {

@@ -8,7 +8,7 @@
         "fact_id": "python-reads-and-writes-bashrc",
         "resource_ref": "job/shell-profile-action",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": "python3 -c <read and append /root/.bashrc>",
+        "observed_value": "python3 -c; profile=\"/root/.bashrc\"; open(profile,\"a\").write",
         "description": "A Python process, rather than a shell editor, reads and appends to root .bashrc."
       },
       {

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/identical-probes",
         "field_path": "spec.containers[0].readinessProbe + spec.containers[0].livenessProbe",
-        "observed_value": "both GET /healthz:8080 every 10s",
+        "observed_value": "{\"failureThreshold\":3,\"httpGet\":{\"path\":\"/healthz\",\"port\":8080,\"scheme\":\"HTTP\"},\"periodSeconds\":10,\"successThreshold\":1,\"timeoutSeconds\":1}; {\"failureThreshold\":3,\"httpGet\":{\"path\":\"/healthz\",\"port\":8080,\"scheme\":\"HTTP\"},\"periodSeconds\":10,\"successThreshold\":1,\"timeoutSeconds\":1}",
         "description": "Readiness and liveness use the same endpoint and timing."
       }
     ]

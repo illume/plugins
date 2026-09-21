@@ -8,14 +8,14 @@
         "fact_id": "log-and-history-truncated",
         "resource_ref": "job/truncate-history-action",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": ": > access.log; : > .bash_history",
+        "observed_value": ": > /fixture/var/log/access.log; : > /fixture/root/.bash_history",
         "description": "The same action truncates a recognized access log and shell-history file."
       },
       {
         "fact_id": "both-files-zero-after-action",
         "resource_ref": "pod/truncate-history-action-*",
         "field_path": "logs[action]",
-        "observed_value": "0 access.log; 0 .bash_history",
+        "observed_value": "0 /fixture/var/log/access.log; 0 /fixture/root/.bash_history",
         "description": "Post-action byte counts prove both seeded files were truncated."
       },
       {

@@ -6,10 +6,10 @@
     [
       {
         "fact_id": "trigger-evidence",
-        "resource_ref": "pod/missing-account-workload",
-        "field_path": "spec.serviceAccountName",
-        "observed_value": "missing-workload-account; inventory count 0",
-        "description": "The Pod names a ServiceAccount absent from its namespace."
+        "resource_ref": "deployment/missing-account-workload",
+        "field_path": "spec.template.spec.serviceAccountName + matching ServiceAccount inventory",
+        "observed_value": "missing-workload-account; 0",
+        "description": "The Pod template names a ServiceAccount absent from its namespace."
       }
     ]
   ],
@@ -19,9 +19,9 @@
   "contradiction_facts": [
     {
       "fact_id": "healthy-or-confounding-state",
-      "resource_ref": "pod/missing-account-workload",
-      "field_path": "spec.serviceAccountName",
-      "observed_value": "missing-workload-account; inventory count 1",
+      "resource_ref": "deployment/missing-account-workload",
+      "field_path": "spec.template.spec.serviceAccountName + matching ServiceAccount inventory",
+      "observed_value": "missing-workload-account; 1",
       "description": "A healthy namespace contains the named ServiceAccount."
     }
   ],

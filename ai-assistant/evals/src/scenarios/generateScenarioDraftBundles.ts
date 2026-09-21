@@ -190,7 +190,7 @@ const initialDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'net-raw-not-dropped',
         resource_ref: 'deployment/app',
         field_path: 'spec.template.spec.containers[0].securityContext.capabilities.drop',
-        observed_value: '[]',
+        observed_value: '<absent>',
         description: 'The container does not drop NET_RAW or all capabilities.',
       },
     ],
@@ -281,9 +281,10 @@ const initialDefinitions: ScenarioDraftDefinition[] = [
       {
         fact_id: 'invented-least-privilege-role',
         resource_ref: 'rolebinding/app-admin',
-        field_path: 'roleRef.kind',
-        observed_value: 'Role',
-        description: 'The binding references a ClusterRole, not a namespaced Role.',
+        field_path: 'roleRef.name',
+        observed_value: 'app-reader',
+        description:
+          'The binding references cluster-admin, not a least-privilege application role.',
       },
     ],
   },

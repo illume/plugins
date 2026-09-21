@@ -97,7 +97,7 @@ const container = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const deployment = (name: string, replicas = 3) => ({
+const deployment = (name: string, replicas = 3, podSpec: Record<string, unknown> = {}) => ({
   apiVersion: 'apps/v1',
   kind: 'Deployment',
   metadata: { name },
@@ -106,7 +106,7 @@ const deployment = (name: string, replicas = 3) => ({
     selector: { matchLabels: { app: name } },
     template: {
       metadata: { labels: { app: name } },
-      spec: { containers: [container()] },
+      spec: { containers: [container()], ...podSpec },
     },
   },
 });
@@ -233,6 +233,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     resourceRefs: ['pod/unmasked-proc-workload'],
     setup: [
       pod('unmasked-proc-workload', {
+        hostUsers: false,
         containers: [container({ securityContext: { procMount: 'Unmasked' } })],
       }),
     ],
@@ -482,19 +483,19 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
   ),
   draft({
     scenarioId: 'rule-gap-pod-references-missing-service-account',
-    title: 'Pod references a missing ServiceAccount',
-    resourceRefs: ['pod/missing-account-workload', 'serviceaccount/*'],
+    title: 'Pod template references a missing ServiceAccount',
+    resourceRefs: ['deployment/missing-account-workload', 'serviceaccount/*'],
     setup: [
-      pod('missing-account-workload', {
+      deployment('missing-account-workload', 3, {
         serviceAccountName: 'missing-workload-account',
         containers: [container()],
       }),
     ],
-    resourceRef: 'pod/missing-account-workload',
-    fieldPath: 'spec.serviceAccountName',
-    brokenValue: 'missing-workload-account; inventory count 0',
-    finding: 'The Pod names a ServiceAccount absent from its namespace.',
-    healthyValue: 'missing-workload-account; inventory count 1',
+    resourceRef: 'deployment/missing-account-workload',
+    fieldPath: 'spec.template.spec.serviceAccountName + matching ServiceAccount inventory',
+    brokenValue: 'missing-workload-account; 0',
+    finding: 'The Pod template names a ServiceAccount absent from its namespace.',
+    healthyValue: 'missing-workload-account; 1',
     healthyDescription: 'A healthy namespace contains the named ServiceAccount.',
     observationKinds: ['manifest.object', 'manifest.reference', 'serviceaccount.list'],
   }),
@@ -507,9 +508,8 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
       roleBinding('missing-role-binding', 'missing-role', 'bound-account'),
     ],
     resourceRef: 'rolebinding/missing-role-binding',
-    fieldPath: 'roleRef',
-    brokenValue:
-      '{"apiGroup":"rbac.authorization.k8s.io","kind":"Role","name":"missing-role"}; inventory count 0',
+    fieldPath: 'roleRef + matching Role inventory',
+    brokenValue: '{"apiGroup":"rbac.authorization.k8s.io","kind":"Role","name":"missing-role"}; 0',
     finding: 'The RoleBinding names a Role absent from its namespace.',
     healthyValue: 'missing-role inventory count 1',
     healthyDescription: 'A healthy binding resolves to an existing Role.',
@@ -563,7 +563,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     ],
     resourceRef: 'horizontalpodautoscaler/orphan-autoscaler',
     fieldPath: 'spec.scaleTargetRef + matching Deployment inventory',
-    brokenValue: 'apps/v1 Deployment/missing-target; 0 matches',
+    brokenValue: '{"apiVersion":"apps/v1","kind":"Deployment","name":"missing-target"}; 0',
     finding: 'The autoscaler target does not exist.',
     healthyValue: 'apps/v1 Deployment/missing-target; 1 match',
     healthyDescription: 'A healthy autoscaler resolves to one scalable workload.',
@@ -576,7 +576,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     setup: [deployment('unprotected-api')],
     resourceRef: 'deployment/unprotected-api',
     fieldPath: 'spec.template.metadata.labels.app + matching PodDisruptionBudget inventory',
-    brokenValue: 'unprotected-api; 0 matching budgets',
+    brokenValue: 'unprotected-api; 0',
     finding: 'No disruption budget selector covers the Deployment Pods.',
     healthyValue: 'unprotected-api; 1 viable matching budget',
     healthyDescription: 'A healthy Deployment is covered by a viable disruption budget.',
@@ -589,7 +589,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     setup: [statefulSet('unprotected-database')],
     resourceRef: 'statefulset/unprotected-database',
     fieldPath: 'spec.template.metadata.labels.app + matching PodDisruptionBudget inventory',
-    brokenValue: 'unprotected-database; 0 matching budgets',
+    brokenValue: 'unprotected-database; 0',
     finding: 'No disruption budget selector covers the StatefulSet Pods.',
     healthyValue: 'unprotected-database; 1 viable matching budget',
     healthyDescription: 'A healthy StatefulSet is covered by a viable disruption budget.',
@@ -678,7 +678,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     ],
     resourceRef: 'ingress/plain-http',
     fieldPath: 'spec.rules[0].host + spec.tls',
-    brokenValue: 'app.example.test; <tls absent>',
+    brokenValue: 'app.example.test; <absent>',
     finding: 'The routed host has no TLS host entry or certificate Secret.',
     healthyValue: 'app.example.test; secretName present',
     healthyDescription: 'A healthy Ingress covers every routed host with TLS.',
@@ -712,7 +712,7 @@ const policyDefinitions: ScenarioDraftDefinition[] = [
     ],
     resourceRef: 'ingress/orphan-route',
     fieldPath: 'spec.rules[0].http.paths[0].backend.service + matching Service inventory',
-    brokenValue: '{"name":"missing-web","port":{"number":80}}; 0 matches',
+    brokenValue: '{"name":"missing-web","port":{"number":80}}; 0',
     finding: 'The Ingress backend Service does not exist.',
     healthyValue: 'missing-web port 80; 1 match',
     healthyDescription: 'A healthy backend resolves to an existing Service port.',
@@ -1286,7 +1286,7 @@ const runtimeDefinitions: ScenarioDraftDefinition[] = [
     resourceRef: 'job/release-agent-action',
     fieldPath:
       'spec.template.spec.volumes[0].emptyDir + spec.template.spec.containers[0].command[2]',
-    brokenValue: '8Mi emptyDir; writes /fixture/cgroup/release_agent=/fixture/controlled-handler',
+    brokenValue: '{"sizeLimit":"8Mi"}; /fixture/cgroup/release_agent',
     finding:
       'A capability-bearing container performs the release_agent write only in a size-limited Pod-local cgroup fixture.',
     healthyValue: 'SYS_ADMIN absent; release_agent write absent',
@@ -1318,7 +1318,8 @@ const runtimeDefinitions: ScenarioDraftDefinition[] = [
     ],
     resourceRef: 'pod[label=job-name=module-syscall-action]',
     fieldPath: 'logs',
-    brokenValue: 'finit_module result=-1 errno=1|8|22',
+    brokenValue:
+      '<one of: finit_module result=-1 errno=1, finit_module result=-1 errno=8, finit_module result=-1 errno=22>',
     finding:
       'The helper invokes finit_module with SYS_MODULE against an empty Pod-local test file; the kernel rejects it and no module loads.',
     healthyValue: '<finit_module invocation absent>',
@@ -1387,7 +1388,7 @@ const runtimeDefinitions: ScenarioDraftDefinition[] = [
       actionJob(
         'setuid-action',
         busyboxImage,
-        "cp /bin/busybox /fixture/test-executable; chmod 4755 /fixture/test-executable; stat -c 'mode=%a' /fixture/test-executable; /fixture/test-executable true; echo setuid-test-executed-without-sudo",
+        "cp /bin/busybox /fixture/test-executable; chmod 4755 /fixture/test-executable; ln -s test-executable /fixture/busybox; stat -c 'mode=%a' /fixture/test-executable; /fixture/busybox true; echo setuid-test-executed-without-sudo",
         {
           securityContext: {
             allowPrivilegeEscalation: true,

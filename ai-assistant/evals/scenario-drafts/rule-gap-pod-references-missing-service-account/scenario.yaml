@@ -3,8 +3,8 @@ scenario_id: rule-gap-pod-references-missing-service-account
 scenario_version: 0.1.0
 family: rule-gap-policy
 mode: diagnose_only
-title: Pod references a missing ServiceAccount
-description: The Pod names a ServiceAccount absent from its namespace.
+title: Pod template references a missing ServiceAccount
+description: The Pod template names a ServiceAccount absent from its namespace.
 provenance:
   owner: scenarios-goal-agents
   source: reference-implementation

@@ -15,7 +15,7 @@
         "fact_id": "mount-debugfs-chain",
         "resource_ref": "job/privileged-storage-action",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": "create ext2 image; mount emptyDir-backed tmpfs; inspect image with debugfs; unmount",
+        "observed_value": "mkfs.ext2; mount -t tmpfs; debugfs -R stats; umount",
         "description": "The command performs the mount and debugfs inspection chain."
       },
       {

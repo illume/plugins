@@ -7,7 +7,7 @@
       {
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/ephemeral-storage-request-limit-differ",
-        "field_path": "resources.requests.ephemeral-storage + resources.limits.ephemeral-storage",
+        "field_path": "spec.containers[0].resources.requests.ephemeral-storage + spec.containers[0].resources.limits.ephemeral-storage",
         "observed_value": "32Mi; 64Mi",
         "description": "Container ephemeral storage request differs from its limit."
       }
@@ -20,7 +20,7 @@
     {
       "fact_id": "healthy-control",
       "resource_ref": "pod/ephemeral-storage-request-limit-differ",
-      "field_path": "resources.requests.ephemeral-storage + resources.limits.ephemeral-storage",
+      "field_path": "spec.containers[0].resources.requests.ephemeral-storage + spec.containers[0].resources.limits.ephemeral-storage",
       "observed_value": "64Mi; 64Mi",
       "description": "The healthy container has the exact reviewed resource request and limit values."
     }

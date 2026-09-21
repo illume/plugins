@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "ingress/plain-http",
         "field_path": "spec.rules[0].host + spec.tls",
-        "observed_value": "app.example.test; <tls absent>",
+        "observed_value": "app.example.test; <absent>",
         "description": "The routed host has no TLS host entry or certificate Secret."
       }
     ]

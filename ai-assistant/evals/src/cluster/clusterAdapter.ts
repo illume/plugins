@@ -171,6 +171,8 @@ export interface ClusterAdapter {
    * @returns A Promise that resolves after all fixtures are applied.
    */
   applyManifest(namespace: string, manifestYamlPath: string): Promise<void>;
+  /** Deletes all resources declared by a scenario fixture, including cluster-scoped objects. */
+  deleteManifest?(namespace: string, manifestYamlPath: string): Promise<void>;
   /**
    * Reads the selector for a named Service.
    *
@@ -267,6 +269,8 @@ export interface ClusterAdapter {
   getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null>;
   /** Lists complete resources at the trusted harness boundary for inventory predicates. */
   listResourceSnapshots?(namespace: string, resource: string): Promise<JsonValue[]>;
+  /** Reads Pod logs at the trusted harness boundary for runtime predicates. */
+  getPodLogs?(namespace: string, podName: string): Promise<string>;
   /** Applies an authorized RFC 6902 patch and returns the resulting resource. */
   applyJsonPatch(target: ActionRequest['target'], patch: JsonPatchOperation[]): Promise<JsonValue>;
   /**

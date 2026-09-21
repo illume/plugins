@@ -7,8 +7,8 @@
       {
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/ephemeral-storage-omitted",
-        "field_path": "resources.requests.ephemeral-storage + resources.limits.ephemeral-storage",
-        "observed_value": "both fields absent",
+        "field_path": "spec.containers[0].resources.requests.ephemeral-storage + spec.containers[0].resources.limits.ephemeral-storage",
+        "observed_value": "<both absent>",
         "description": "Container omits ephemeral storage request and limit."
       }
     ]
@@ -20,7 +20,7 @@
     {
       "fact_id": "healthy-control",
       "resource_ref": "pod/ephemeral-storage-omitted",
-      "field_path": "resources.requests.ephemeral-storage + resources.limits.ephemeral-storage",
+      "field_path": "spec.containers[0].resources.requests.ephemeral-storage + spec.containers[0].resources.limits.ephemeral-storage",
       "observed_value": "64Mi; 64Mi",
       "description": "The healthy container has the exact reviewed resource request and limit values."
     }

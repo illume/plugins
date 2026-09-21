@@ -18,8 +18,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { JsonValue } from '../canonicalJson.js';
 import {
+  factValueMatches,
   orderedDraftScenarioIds,
   observedValueMatches,
+  resolveFactField,
   resolveFieldPath,
   serializeObservedValue,
 } from './validateScenarioDrafts.js';
@@ -40,7 +42,10 @@ test('field resolver observes nested values, array elements, and absent fields',
         },
       },
     },
-    metadata: { labels: { owner: 'platform' } },
+    metadata: {
+      labels: { owner: 'platform' },
+      annotations: { 'evals.kubernetes.io/apply-to-current-host': 'false' },
+    },
   } as JsonValue;
   assert.equal(
     resolveFieldPath(
@@ -50,6 +55,10 @@ test('field resolver observes nested values, array elements, and absent fields',
     false
   );
   assert.equal(resolveFieldPath(resource, 'metadata.labels[owner]'), 'platform');
+  assert.equal(
+    resolveFieldPath(resource, 'metadata.annotations.evals.kubernetes.io/apply-to-current-host'),
+    'false'
+  );
   assert.equal(
     serializeObservedValue(
       resolveFieldPath(resource, 'spec.template.spec.containers[0].livenessProbe')
@@ -71,16 +80,59 @@ test('field resolver observes nested values, array elements, and absent fields',
     ),
     0
   );
+  assert.equal(
+    resolveFieldPath(
+      { status: { conditions: [{ type: 'Progressing', reason: 'Deadline' }] } },
+      'status.conditions[?type=Progressing].reason'
+    ),
+    'Deadline'
+  );
+  assert.deepEqual(
+    resolveFieldPath({ spec: { type: 'NodePort', port: 30080 } }, 'spec.type + spec.port'),
+    ['NodePort', 30080]
+  );
 });
 
-test('field resolver rejects encoded and composite predicates instead of claiming validation', () => {
+test('field resolver rejects malformed encoded predicates instead of claiming validation', () => {
   assert.throws(
-    () => resolveFieldPath({ data: {} }, 'data.evidence.json#arguments.--request-timeout'),
-    /unsupported executable field path/
+    () => resolveFactField({ data: { 'config.yaml': 3 } }, 'data.config.yaml#spec.value'),
+    /is not a string/
   );
-  assert.throws(
-    () => resolveFieldPath({ spec: {} }, 'spec.type + spec.ports[0].nodePort'),
-    /unsupported executable field path/
+  assert.equal(
+    resolveFieldPath({ spec: {} }, 'spec.securityContext + spec.containerSecurityContext'),
+    '<both absent>'
+  );
+});
+
+test('fact resolver decodes exact and wildcard ConfigMap YAML fields', () => {
+  const resource = {
+    data: {
+      'config.yaml': 'authentication:\n  anonymous:\n    enabled: true\n',
+      'api.yaml': 'spec:\n  containers:\n    - command: [server, --profiling=true]\n',
+      'scheduler.yaml': 'spec:\n  containers:\n    - command: [scheduler, --profiling=true]\n',
+    },
+  } as JsonValue;
+  assert.equal(
+    resolveFactField(resource, 'data.config.yaml#authentication.anonymous.enabled'),
+    true
+  );
+  assert.deepEqual(resolveFactField(resource, 'data.*.yaml#spec.containers[0].command'), [
+    ['server', '--profiling=true'],
+    ['scheduler', '--profiling=true'],
+  ]);
+  assert.equal(
+    resolveFactField(
+      { data: { 'payload.b64': 'IyEvYmluL3NoCnByaW50ZiBjb250cm9sbGVkXG4=' } },
+      'data.payload.b64'
+    ),
+    '#!/bin/sh\nprintf controlled\\n'
+  );
+  assert.equal(
+    resolveFactField(
+      { data: { 'package.json': '{"scripts":{"postinstall":"printf controlled"}}' } },
+      'data.package.json.scripts.postinstall'
+    ),
+    'printf controlled'
   );
 });
 
@@ -97,4 +149,33 @@ test('observed values use evaluator canonical strings', () => {
     true
   );
   assert.equal(observedValueMatches('<absent>', 'absent'), true);
+  assert.equal(
+    factValueMatches(
+      'first command\nsecond command\nthird command',
+      'first command; third command'
+    ),
+    true
+  );
+  assert.equal(
+    factValueMatches(['kube-apiserver', '--secure-port=6443'], 'audit-log-path argument absent'),
+    true
+  );
+  assert.equal(
+    factValueMatches(
+      ['kube-apiserver', '--etcd-certfile=/tmp/client.crt'],
+      'etcd-certfile present; etcd-keyfile absent'
+    ),
+    true
+  );
+  assert.equal(
+    factValueMatches(
+      [
+        ['api', '--profiling=true'],
+        ['controller', '--profiling=true'],
+        ['scheduler', '--profiling=true'],
+      ],
+      '3 of 3 contain --profiling=true'
+    ),
+    true
+  );
 });

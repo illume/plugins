@@ -5,6 +5,7 @@ metadata:
   labels:
     app: unmasked-proc-workload
 spec:
+  hostUsers: false
   containers:
     - name: app
       image: registry.k8s.io/pause:3.10

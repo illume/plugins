@@ -7,7 +7,7 @@
       {
         "fact_id": "trigger-evidence",
         "resource_ref": "pod/cpu-request-limit-differ",
-        "field_path": "resources.requests.cpu + resources.limits.cpu",
+        "field_path": "spec.containers[0].resources.requests.cpu + spec.containers[0].resources.limits.cpu",
         "observed_value": "100m; 500m",
         "description": "Container CPU request differs from its limit."
       }
@@ -20,7 +20,7 @@
     {
       "fact_id": "healthy-control",
       "resource_ref": "pod/cpu-request-limit-differ",
-      "field_path": "resources.requests.cpu + resources.limits.cpu",
+      "field_path": "spec.containers[0].resources.requests.cpu + spec.containers[0].resources.limits.cpu",
       "observed_value": "500m; 500m",
       "description": "The healthy container has the exact reviewed resource request and limit values."
     }

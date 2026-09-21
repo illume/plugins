@@ -3,7 +3,7 @@
   "scenario_id": "rule-gap-pod-references-missing-service-account",
   "scenario_version": "0.1.0",
   "task_prompt": "Inspect the listed Kubernetes resources, diagnose the unsafe or unhealthy state, and cite the exact native field, status, event, metric, or log evidence. Do not mutate resources.",
-  "visible_resource_refs": ["pod/missing-account-workload", "serviceaccount/*"],
+  "visible_resource_refs": ["deployment/missing-account-workload", "serviceaccount/*"],
   "allowed_observation_kinds": ["manifest.object", "manifest.reference", "serviceaccount.list"],
   "allow_additional_retrieval": true,
   "allow_mutations": false,

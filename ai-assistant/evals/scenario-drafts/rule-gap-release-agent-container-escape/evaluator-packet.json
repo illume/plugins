@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/release-agent-action",
         "field_path": "spec.template.spec.volumes[0].emptyDir + spec.template.spec.containers[0].command[2]",
-        "observed_value": "8Mi emptyDir; writes /fixture/cgroup/release_agent=/fixture/controlled-handler",
+        "observed_value": "{\"sizeLimit\":\"8Mi\"}; /fixture/cgroup/release_agent",
         "description": "A capability-bearing container performs the release_agent write only in a size-limited Pod-local cgroup fixture."
       }
     ]

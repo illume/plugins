@@ -137,8 +137,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'mount-debugfs-chain',
         resource_ref: 'job/privileged-storage-action',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value:
-          'create ext2 image; mount emptyDir-backed tmpfs; inspect image with debugfs; unmount',
+        observed_value: 'mkfs.ext2; mount -t tmpfs; debugfs -R stats; umount',
         description: 'The command performs the mount and debugfs inspection chain.',
       },
       {
@@ -174,8 +173,8 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
       actionJob(
         'namespace-action',
         'apt-get update >/dev/null && apt-get install -y util-linux >/dev/null\n' +
-          'unshare --user --map-root-user /bin/sh -c "id -u; mount | head -1"\n' +
-          'nsenter --target 1 --mount -- /bin/true\n' +
+          'unshare --user --map-root-user /bin/sh -c "id -u; mount | head -1" || true\n' +
+          'nsenter --target 1 --mount -- /bin/true || true\n' +
           'printf "controlled-setns-target=pod-pid-1\\n"',
         {
           image: 'debian:12-slim',
@@ -404,7 +403,8 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'download-decode-execute-install',
         resource_ref: 'job/payload-stager',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value: 'wget; base64 -d; chmod 0700; execute from /dev/shm; mv to controlled-bin',
+        observed_value:
+          'wget -qO /dev/shm/.payload.b64; base64 -d /dev/shm/.payload.b64; chmod 0700 /dev/shm/.payload; /dev/shm/.payload; mv /dev/shm/.payload /controlled-bin/tools/controlled-payload',
         description:
           'One command chain downloads, decodes, marks executable, runs, and installs the file.',
       },
@@ -566,7 +566,8 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'credential-search-read-write-chain',
         resource_ref: 'job/credential-search-action',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value: 'find; grep CONTROLLED_SECRET; cat id_ed25519; append authorized_keys',
+        observed_value:
+          'find /fixture; grep -R "CONTROLLED_SECRET" /fixture; cat /fixture/home/.ssh/id_ed25519; /fixture/home/.ssh/authorized_keys',
         description:
           'The action searches credentials, reads a private-key fixture, and writes authorized_keys.',
       },
@@ -624,7 +625,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'python-reads-and-writes-bashrc',
         resource_ref: 'job/shell-profile-action',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value: 'python3 -c <read and append /root/.bashrc>',
+        observed_value: 'python3 -c; profile="/root/.bashrc"; open(profile,"a").write',
         description:
           'A Python process, rather than a shell editor, reads and appends to root .bashrc.',
       },
@@ -758,7 +759,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
           'kubectl cp copy-victim:/data/artifact /tmp/artifact\n' +
           'cat /tmp/artifact',
         {
-          image: 'bitnami/kubectl:1.31.1',
+          image: 'alpine/k8s:1.31.1',
           podSpec: { serviceAccountName: 'copy-client', automountServiceAccountToken: true },
         }
       ),
@@ -844,7 +845,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'link-local-metadata-request',
         resource_ref: 'job/metadata-address-action',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value: 'wget http://169.254.169.254:8080/latest/meta-data/',
+        observed_value: 'http://169.254.169.254:8080/latest/meta-data/',
         description: 'The application makes an HTTP request to the metadata link-local address.',
       },
       {
@@ -977,14 +978,14 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'packet-socket-opened',
         resource_ref: 'pod/interactive-recon',
         field_path: 'logs[scanner]',
-        observed_value: 'af_packet_opened <file-descriptor>',
+        observed_value: 'af_packet_opened',
         description: 'The Python scanner successfully creates an AF_PACKET raw socket.',
       },
       {
         fact_id: 'cluster-and-nodeport-probes',
         resource_ref: 'pod/interactive-recon',
         field_path: 'spec.containers[0].command[2]',
-        observed_value: 'UDP recon-responder:9999 and status.hostIP:30099',
+        observed_value: 'recon-responder",9999; os.environ["NODE_IP"],30099',
         description: 'The interpreted scanner probes both controlled Service and NodePort paths.',
       },
     ],
@@ -1048,14 +1049,14 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'log-and-history-truncated',
         resource_ref: 'job/truncate-history-action',
         field_path: 'spec.template.spec.containers[0].command[2]',
-        observed_value: ': > access.log; : > .bash_history',
+        observed_value: ': > /fixture/var/log/access.log; : > /fixture/root/.bash_history',
         description: 'The same action truncates a recognized access log and shell-history file.',
       },
       {
         fact_id: 'both-files-zero-after-action',
         resource_ref: 'pod/truncate-history-action-*',
         field_path: 'logs[action]',
-        observed_value: '0 access.log; 0 .bash_history',
+        observed_value: '0 /fixture/var/log/access.log; 0 /fixture/root/.bash_history',
         description: 'Post-action byte counts prove both seeded files were truncated.',
       },
       {
@@ -1215,7 +1216,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'container-waits-for-image',
         resource_ref: 'pod/stalled-rollout-*',
         field_path: 'status.containerStatuses[0].state.waiting.reason',
-        observed_value: 'ImagePullBackOff',
+        observed_value: '<one of: ErrImagePull, ImagePullBackOff>',
         description:
           'The new revision container remains waiting because its image cannot be pulled.',
       },
@@ -1231,7 +1232,7 @@ export const advancedScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         fact_id: 'desired-available-diverge',
         resource_ref: 'deployment/stalled-rollout',
         field_path: 'status.replicas,status.availableReplicas',
-        observed_value: 'desired=2; available=0',
+        observed_value: 'desired=2; available=<absent or 0>',
         description:
           'Desired replicas remain above available replicas throughout the bounded window.',
       },

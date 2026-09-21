@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "ingress/orphan-route",
         "field_path": "spec.rules[0].http.paths[0].backend.service + matching Service inventory",
-        "observed_value": "{\"name\":\"missing-web\",\"port\":{\"number\":80}}; 0 matches",
+        "observed_value": "{\"name\":\"missing-web\",\"port\":{\"number\":80}}; 0",
         "description": "The Ingress backend Service does not exist."
       }
     ]

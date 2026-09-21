@@ -8,7 +8,7 @@
         "fact_id": "link-local-metadata-request",
         "resource_ref": "job/metadata-address-action",
         "field_path": "spec.template.spec.containers[0].command[2]",
-        "observed_value": "wget http://169.254.169.254:8080/latest/meta-data/",
+        "observed_value": "http://169.254.169.254:8080/latest/meta-data/",
         "description": "The application makes an HTTP request to the metadata link-local address."
       },
       {

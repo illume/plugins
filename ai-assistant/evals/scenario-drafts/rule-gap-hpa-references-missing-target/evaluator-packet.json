@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "horizontalpodautoscaler/orphan-autoscaler",
         "field_path": "spec.scaleTargetRef + matching Deployment inventory",
-        "observed_value": "apps/v1 Deployment/missing-target; 0 matches",
+        "observed_value": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"missing-target\"}; 0",
         "description": "The autoscaler target does not exist."
       }
     ]

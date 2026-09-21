@@ -616,8 +616,11 @@ const hardening: BlueprintTuple[] = [
     'kubelet configuration, sysctls',
     'protect-kernel-defaults is absent or false',
     'protect-kernel-defaults is true and node sysctls conform',
-    g(
-      'kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6'
+    rg(
+      ['kubescape:rule:kubelet-protect-kernel-defaults'],
+      [
+        'kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6',
+      ]
     ),
   ],
   [

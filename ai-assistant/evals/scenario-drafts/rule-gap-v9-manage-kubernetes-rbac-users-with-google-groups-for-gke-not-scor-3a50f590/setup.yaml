@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-manage-kubernetes-rbac-users-with-google-groups-for-gke-not-scor-3a50f590
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /gke/cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: gke
+data:
+  evidence.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "authenticatorGroupsConfig.enabled",
+      "brokenValue": "false",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }
+  healthy-control.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "authenticatorGroupsConfig.enabled",
+      "healthyValue": "true",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }

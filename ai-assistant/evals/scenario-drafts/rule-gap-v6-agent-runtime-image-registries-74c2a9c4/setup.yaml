@@ -1,0 +1,6 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: WorkerPool
+metadata:
+  name: public-workers
+spec:
+  image: docker.io/example/worker:1.0.0

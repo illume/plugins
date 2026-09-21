@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soft-app
+  labels:
+    app: soft-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soft-app
+  template:
+    metadata:
+      labels:
+        app: soft-app
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: true

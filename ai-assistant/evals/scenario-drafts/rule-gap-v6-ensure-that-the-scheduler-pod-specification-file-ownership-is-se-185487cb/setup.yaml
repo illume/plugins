@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-scheduler-pod-specification-file-ownership-is-se-185487cb-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-scheduler",
+      "evidenceType": "file-metadata",
+      "field": "file.owner",
+      "observedValue": "nobody:nogroup",
+      "triggerPredicate": "Ensure that the scheduler pod specification file ownership is set to `root:root`."
+    }
+  predicate-summary.txt: Ensure that the scheduler pod specification file ownership is set to `root:root`.
+  healthy-control.json: |-
+    {
+      "subject": "kube-scheduler",
+      "evidenceType": "file-metadata",
+      "field": "file.owner",
+      "observedValue": "root:root"
+    }

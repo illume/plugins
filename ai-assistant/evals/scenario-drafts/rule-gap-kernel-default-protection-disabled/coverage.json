@@ -27,13 +27,15 @@
     "kube-bench:source:rke-cis-1-24-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument:479746386221",
     "kube-bench:source:rke2-cis-1-23-node-4-2-6-ensure-that-the-protect-kernel-defaults-argumen:f108ed88657d",
     "kube-bench:source:rke2-cis-1-24-node-4-2-6-ensure-that-the-protect-kernel-defaults-argumen:db2b2b55a37c",
-    "kube-bench:source:tkgi-1-2-53-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument-:f856cabcefec"
+    "kube-bench:source:tkgi-1-2-53-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument-:f856cabcefec",
+    "kubescape:rule:kubelet-protect-kernel-defaults"
   ],
   "target_semantic_group_ids": [
-    "kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6"
+    "kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6",
+    "kubescape:semantic:kubescape-rule-kubelet-protect-kernel-defaults:3693035db63c"
   ],
-  "target_tool_ids": ["kube-bench"],
-  "target_rule_count": 21,
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 22,
   "provenance_refs": [
     "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/node.yaml",
     "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
@@ -55,6 +57,7 @@
     "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/node.yaml",
     "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/node.yaml",
     "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/node.yaml",
-    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0177-ensurethattheprotectkerneldefaultsargumentissettotrue.json"
   ]
 }

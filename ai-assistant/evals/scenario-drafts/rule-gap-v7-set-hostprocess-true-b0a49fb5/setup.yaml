@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-set-hostprocess-true-b0a49fb5-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/windows-deployment.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "windows-security-context",
+      "exactField": "spec.template.spec.securityContext.windowsOptions.hostProcess",
+      "brokenValue": "true",
+      "targetPath": "/manifests/windows-deployment.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Fails if a pod, or a container/initContainer/ephemeralContainer within it, sets securityContext.windowsOptions.hostProcess to true. HostProcess containers run with privileged access to the underlying Windows node."
+    }
+  healthy-control.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "windows-security-context",
+      "exactField": "spec.template.spec.securityContext.windowsOptions.hostProcess",
+      "healthyValue": "false",
+      "targetPath": "/manifests/windows-deployment.yaml",
+      "applicability": "inert-review-only"
+    }

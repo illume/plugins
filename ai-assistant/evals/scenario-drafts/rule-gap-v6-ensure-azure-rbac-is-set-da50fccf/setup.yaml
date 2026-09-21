@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-azure-rbac-is-set-da50fccf-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/managed-cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cloud-cluster-configuration",
+      "field": "managedCluster.enableAzureRBAC",
+      "observedValue": "false",
+      "triggerPredicate": "Azure role-based access control (RBAC) is an authorization system built on Azure Resource Manager that provides fine-grained access management of Azure resources."
+    }
+  predicate-summary.txt: >-
+    Azure role-based access control (RBAC) is an authorization system built on Azure Resource
+    Manager that provides fine-grained access management of Azure resources.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cloud-cluster-configuration",
+      "field": "managedCluster.enableAzureRBAC",
+      "observedValue": "true"
+    }

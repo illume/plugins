@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-insecure-capabilities-39eb9ecc",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "insecure-capabilities",
+        "resource_ref": "deployment/cap-app",
+        "field_path": "spec.template.spec.containers[0].securityContext.capabilities.add",
+        "observed_value": "[\"SYS_ADMIN\",\"NET_RAW\"]",
+        "description": "fails if container has insecure capabilities"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/cap-app",
+      "field_path": "spec.template.spec.containers[0].securityContext.capabilities.drop",
+      "observed_value": "[\"ALL\"]",
+      "description": "The healthy control would drop all default capabilities."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-17e2caa2941faece"
+}

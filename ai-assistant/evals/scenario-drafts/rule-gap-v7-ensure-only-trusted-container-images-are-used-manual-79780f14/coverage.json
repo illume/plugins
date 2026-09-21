@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-only-trusted-container-images-are-used-manual-79780f14",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-6-0-managedservices-5-1-4-ensure-only-trusted-container-images-are:377369ffa924",
+    "kube-bench:source:gke-1-8-0-managedservices-5-1-4-ensure-only-trusted-container-images-are:a8ed48e8ccb2",
+    "kube-bench:source:gke-1-9-0-managedservices-5-1-4-ensure-only-trusted-container-images-are:01480aee5dab"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-only-trusted-container-images-are-used:6befcf57f8d9"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-only-trusted-container-images-are-used-manual:79780f14f007"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

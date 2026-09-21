@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-denyserviceexternalips-is-not-set-automated-1ca22e68",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-23-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-set-:059284dad90d",
+    "kube-bench:source:cis-1-24-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-set-:7fb1258a2cbe",
+    "kube-bench:source:cis-1-24-microk8s-master-1-2-3-ensure-that-the-denyserviceexternalips-is:70b317b48235",
+    "kube-bench:source:k3s-cis-1-23-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-:1c40f549f2fd",
+    "kube-bench:source:k3s-cis-1-24-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-:d12ddcbd41ae",
+    "kube-bench:source:k3s-cis-1-7-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-s:4658bc98cf4f",
+    "kube-bench:source:k3s-cis-1-8-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-s:cb60e2b29762",
+    "kube-bench:source:rke-cis-1-23-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-:c015e73cdcad",
+    "kube-bench:source:rke-cis-1-24-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-:1632335e8b10",
+    "kube-bench:source:rke-cis-1-7-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-s:816b97e1056c",
+    "kube-bench:source:rke2-cis-1-23-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not:4743835e11e9",
+    "kube-bench:source:rke2-cis-1-24-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not:8f9f1ee4416d",
+    "kube-bench:source:rke2-cis-1-7-master-1-2-3-ensure-that-the-denyserviceexternalips-is-not-:9a01cbb510b0"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-denyserviceexternalips-is-not-set:86dbdc1e235e"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-denyserviceexternalips-is-not-set-automated:1ca22e688274"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 13,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/master.yaml"
+  ]
+}

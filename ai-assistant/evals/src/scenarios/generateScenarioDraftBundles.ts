@@ -34,6 +34,10 @@ import { telemetryScenarioDraftDefinitions } from './scenarioDraftDefinitionsTel
 import { v3ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV3.js';
 import { v4ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV4.js';
 import { v5ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV5.js';
+import { v6ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV6.js';
+import { v7ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV7.js';
+import { v8ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV8.js';
+import { v9ScenarioDraftDefinitions } from './scenarioDraftDefinitionsV9.js';
 import type { ScenarioDraftDefinition } from './scenarioDraftDefinition.js';
 import { SCENARIOS_GOAL } from './scenariosGoal.js';
 
@@ -50,6 +54,7 @@ interface GapScenario {
   selection_track?: string;
   target_rule_ids: string[];
   target_semantic_group_ids: string[];
+  target_canonical_capability_ids?: string[];
   target_tool_ids: string[];
   target_rule_count: number;
   provenance_refs: string[];
@@ -63,6 +68,10 @@ const v2Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v2.json'
 const v3Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v3.json');
 const v4Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v4.json');
 const v5Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v5.json');
+const v6Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v6.json');
+const v7Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v7.json');
+const v8Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v8.json');
+const v9Path = path.join(evalRoot, 'registrations', 'rule-gap-scenarios-v9.json');
 const progressPath = path.resolve(
   evalRoot,
   '..',
@@ -751,6 +760,10 @@ const definitions: ScenarioDraftDefinition[] = [
   ...v3ScenarioDraftDefinitions,
   ...v4ScenarioDraftDefinitions,
   ...v5ScenarioDraftDefinitions,
+  ...v6ScenarioDraftDefinitions,
+  ...v7ScenarioDraftDefinitions,
+  ...v8ScenarioDraftDefinitions,
+  ...v9ScenarioDraftDefinitions,
 ];
 
 const catalogs = [
@@ -774,14 +787,30 @@ const catalogs = [
     path: 'registrations/rule-gap-scenarios-v5.json',
     scenarios: (JSON.parse(readFileSync(v5Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
   },
+  {
+    path: 'registrations/rule-gap-scenarios-v6.json',
+    scenarios: (JSON.parse(readFileSync(v6Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
+  },
+  {
+    path: 'registrations/rule-gap-scenarios-v7.json',
+    scenarios: (JSON.parse(readFileSync(v7Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
+  },
+  {
+    path: 'registrations/rule-gap-scenarios-v8.json',
+    scenarios: (JSON.parse(readFileSync(v8Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
+  },
+  {
+    path: 'registrations/rule-gap-scenarios-v9.json',
+    scenarios: (JSON.parse(readFileSync(v9Path, 'utf8')) as { scenarios: GapScenario[] }).scenarios,
+  },
 ];
 const gapById = new Map(
   catalogs.flatMap(catalog =>
     catalog.scenarios.map(scenario => [scenario.scenario_id, { ...scenario, catalog }] as const)
   )
 );
-assert.equal(definitions.length, 415);
-assert.equal(new Set(definitions.map(definition => definition.scenarioId)).size, 415);
+assert.equal(definitions.length, 980);
+assert.equal(new Set(definitions.map(definition => definition.scenarioId)).size, 980);
 
 mkdirSync(draftRoot, { recursive: true });
 for (const entry of readdirSync(draftRoot, { withFileTypes: true })) {
@@ -894,6 +923,9 @@ for (const definition of definitions) {
     external_tool_execution: false,
     target_rule_ids: gap.target_rule_ids,
     target_semantic_group_ids: gap.target_semantic_group_ids,
+    ...(gap.target_canonical_capability_ids
+      ? { target_canonical_capability_ids: gap.target_canonical_capability_ids }
+      : {}),
     target_tool_ids: gap.target_tool_ids,
     target_rule_count: gap.target_rule_count,
     provenance_refs: gap.provenance_refs,

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-the-kubernetes-kubelet-certificate-authority-must-be-owned-by-ro-5c3ff74b
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/pki/ca.crt
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/ca.crt].owner",
+      "brokenValue": "nobody:nogroup",
+      "targetPath": "/etc/kubernetes/pki/ca.crt",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/ca.crt].owner",
+      "healthyValue": "root:root",
+      "targetPath": "/etc/kubernetes/pki/ca.crt",
+      "applicability": "inert-review-only"
+    }

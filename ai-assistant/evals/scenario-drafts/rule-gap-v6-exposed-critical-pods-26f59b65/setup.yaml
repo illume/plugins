@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: public-app
+  labels:
+    app: public-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: public-app
+  template:
+    metadata:
+      labels:
+        app: public-app
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/public/demo:1.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: public-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: public-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: public-app-vulnerability-report
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/vuln-report.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  report.json: |-
+    {
+      "image": "ghcr.io/public/demo:1.0",
+      "severity": "critical",
+      "remoteCodeExecution": true
+    }
+  healthy-control.json: |-
+    {
+      "image": "ghcr.io/public/demo:1.0",
+      "severity": "none",
+      "remoteCodeExecution": false
+    }

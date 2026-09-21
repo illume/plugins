@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-use-security-context-constraints-instead-of-denyescalatingexec-a-84df2925
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /openshift/security-context-constraints.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: openshift
+data:
+  evidence.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.defaultAllowPrivilegeEscalation",
+      "brokenValue": "true",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }
+  healthy-control.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.defaultAllowPrivilegeEscalation",
+      "healthyValue": "false",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }

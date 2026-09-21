@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-use-azure-rbac-for-kubernetes-authorization-manual-26c120b9",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-managedservices-5-5-2-use-azure-rbac-for-kubernetes-authorizatio:a5429f676a12",
+    "kube-bench:source:aks-1-7-managedservices-5-5-2-use-azure-rbac-for-kubernetes-authorizatio:889ea2fd24aa",
+    "kube-bench:source:aks-1-8-managedservices-5-5-2-use-azure-rbac-for-kubernetes-authorizatio:8dd1b84f91e6"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:use-azure-rbac-for-kubernetes-authorization:29e603d15a36"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:use-azure-rbac-for-kubernetes-authorization-manual:26c120b9d97d"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/managedservices.yaml"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-enable-audit-logs-1c06d917",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-controlplane-2-1-1-enable-audit-logs:ea906a2b8448",
+    "kube-bench:source:aks-1-7-controlplane-2-1-1-enable-audit-logs:e54393f2eb84",
+    "kube-bench:source:aks-1-8-controlplane-2-1-1-enable-audit-logs:345fcf20215c",
+    "kube-bench:source:eks-1-0-1-controlplane-2-1-1-enable-audit-logs-manual:b67bc827568e",
+    "kube-bench:source:eks-1-1-0-controlplane-2-1-1-enable-audit-logs-manual:2f08c197bdc8",
+    "kube-bench:source:eks-1-2-0-controlplane-2-1-1-enable-audit-logs-manual:9fa2292227f4",
+    "kube-bench:source:eks-1-5-0-controlplane-2-1-1-enable-audit-logs-automated:4822fcff816e",
+    "kube-bench:source:eks-1-7-0-controlplane-2-1-1-enable-audit-logs-manual:779b29c32a73",
+    "kube-bench:source:eks-1-8-0-controlplane-2-1-1-enable-audit-logs-manual:723e7c261738"
+  ],
+  "target_semantic_group_ids": ["kube-bench:semantic:enable-audit-logs:9665a72f0ad9"],
+  "target_canonical_capability_ids": ["canonical:enable-audit-logs:1c06d9172a6b"],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 9,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/controlplane.yaml"
+  ]
+}

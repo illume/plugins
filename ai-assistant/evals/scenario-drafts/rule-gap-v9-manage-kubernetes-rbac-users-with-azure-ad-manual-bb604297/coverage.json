@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-manage-kubernetes-rbac-users-with-azure-ad-manual-bb604297",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-managedservices-5-5-1-manage-kubernetes-rbac-users-with-azure-ad:b92d94b8c79b",
+    "kube-bench:source:aks-1-7-managedservices-5-5-1-manage-kubernetes-rbac-users-with-azure-ad:65d74cbb724d",
+    "kube-bench:source:aks-1-8-managedservices-5-5-1-manage-kubernetes-rbac-users-with-azure-ad:ad4c3dcd487f"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:manage-kubernetes-rbac-users-with-azure-ad:a3a70c37bbf1"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:manage-kubernetes-rbac-users-with-azure-ad-manual:bb604297f70a"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/managedservices.yaml"
+  ]
+}

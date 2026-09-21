@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-verify-that-the-read-only-port-argument-is-set-to-0-manual-03d1985e",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to-0-:b75fd5b2a336",
+    "kube-bench:source:cis-1-24-microk8s-node-4-2-4-verify-that-the-read-only-port-argument-is-:488ea3d3f933",
+    "kube-bench:source:cis-1-24-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to-0-:812f986adbad",
+    "kube-bench:source:cis-1-7-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to-0-m:4f3b91afc343",
+    "kube-bench:source:cis-1-8-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to-0-m:2d05accddafe",
+    "kube-bench:source:cis-1-9-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to-0-m:200e744f0dbf",
+    "kube-bench:source:k3s-cis-1-24-node-4-2-4-verify-that-the-read-only-port-argument-is-set-t:111616ab1781",
+    "kube-bench:source:k3s-cis-1-7-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to:2db232d8693f",
+    "kube-bench:source:k3s-cis-1-8-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to:511498eaa91d",
+    "kube-bench:source:k3s-cis-1-9-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to:9609b6b126c9",
+    "kube-bench:source:rke-cis-1-24-node-4-2-4-verify-that-the-read-only-port-argument-is-set-t:411023420c09",
+    "kube-bench:source:rke-cis-1-7-node-4-2-4-verify-that-the-read-only-port-argument-is-set-to:d1b2a0a3d1b8",
+    "kube-bench:source:rke2-cis-1-24-node-4-2-4-verify-that-the-read-only-port-argument-is-set-:b3c0d54e870b",
+    "kube-bench:source:rke2-cis-1-7-node-4-2-4-verify-that-the-read-only-port-argument-is-set-t:4defabe0cda6",
+    "kube-bench:source:rke2-cis-1-8-node-4-2-4-verify-that-the-read-only-port-argument-is-set-t:1f2678978b7c",
+    "kube-bench:source:rke2-cis-1-9-node-4-2-4-verify-that-the-read-only-port-argument-is-set-t:eddcd75fc742"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:verify-that-the-read-only-port-argument-is-set-to-0:f1166d46c90f"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:verify-that-the-read-only-port-argument-is-set-to-0-manual:03d1985e9245"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 16,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/node.yaml"
+  ]
+}

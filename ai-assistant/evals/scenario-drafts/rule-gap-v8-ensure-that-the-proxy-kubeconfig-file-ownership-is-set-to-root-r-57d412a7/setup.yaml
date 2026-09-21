@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-ensure-that-the-proxy-kubeconfig-file-ownership-is-set-to-root-r-57d412a7
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/kube-proxy/kubeconfig
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-proxy",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/var/lib/kube-proxy/kubeconfig].owner",
+      "brokenValue": "nobody:nogroup",
+      "targetPath": "/var/lib/kube-proxy/kubeconfig",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-proxy",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/var/lib/kube-proxy/kubeconfig].owner",
+      "healthyValue": "root:root",
+      "targetPath": "/var/lib/kube-proxy/kubeconfig",
+      "applicability": "inert-review-only"
+    }

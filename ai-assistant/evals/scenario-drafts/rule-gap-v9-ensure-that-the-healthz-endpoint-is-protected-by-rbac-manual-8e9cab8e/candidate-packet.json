@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-ensure-that-the-healthz-endpoint-is-protected-by-rbac-manual-8e9cab8e",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v9-ensure-that-the-healthz-endpoint-is-protected-by-rbac-manual-8e9cab8e. Explain the concrete configuration defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v9-ensure-that-the-healthz-endpoint-is-protected-by-rbac-manual-8e9cab8e"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

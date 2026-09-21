@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-verify-that-rbac-is-enabled-manual-d27c0877",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-0-master-1-2-9-verify-that-rbac-is-enabled-manual:30712155c050",
+    "kube-bench:source:rh-1-4-master-1-2-8-verify-that-rbac-is-enabled-manual:e5e68dd736ea",
+    "kube-bench:source:rh-1-8-master-1-2-6-verify-that-rbac-is-enabled-manual:8390e679f232",
+    "kube-bench:source:rh-1-9-master-1-2-6-verify-that-rbac-is-enabled-manual:c8b946bad301"
+  ],
+  "target_semantic_group_ids": ["kube-bench:semantic:verify-that-rbac-is-enabled:2f271875a311"],
+  "target_canonical_capability_ids": ["canonical:verify-that-rbac-is-enabled-manual:d27c0877e603"],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

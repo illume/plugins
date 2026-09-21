@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-rbac-istio-io-authorizationpolicies-removed-in-v1-4-0-8b182ca1",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect authorizationpolicy/legacy-authz and explain the concrete API deprecation risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["authorizationpolicy/legacy-authz"],
+  "allowed_observation_kinds": ["custom-resource.metadata", "custom-resource.spec"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

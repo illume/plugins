@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-minimize-access-to-the-proxy-sub-resource-of-nodes-manual-d3478f52",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-8-policies-4-1-9-minimize-access-to-the-proxy-sub-resource-of-node:3f9b44339bcc",
+    "kube-bench:source:cis-1-10-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-no:643c8cf9bfac",
+    "kube-bench:source:cis-1-11-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-no:64bc69ad3fae",
+    "kube-bench:source:cis-1-12-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-no:5cdb6f6b4229",
+    "kube-bench:source:cis-1-7-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-nod:df78d0586250",
+    "kube-bench:source:cis-1-8-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-nod:170aa9f995c8",
+    "kube-bench:source:cis-1-9-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-nod:144587175784",
+    "kube-bench:source:cis-2-0-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of-nod:1ba56fe3f19e",
+    "kube-bench:source:k3s-cis-1-7-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of:9983351d3489",
+    "kube-bench:source:k3s-cis-1-8-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of:b36531753542",
+    "kube-bench:source:k3s-cis-1-9-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of:6ec755bf1b41",
+    "kube-bench:source:rke-cis-1-7-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-of:acdbe4cdf508",
+    "kube-bench:source:rke2-cis-1-7-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-o:8ec5bf137b90",
+    "kube-bench:source:rke2-cis-1-8-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-o:d49bf02c27a3",
+    "kube-bench:source:rke2-cis-1-9-policies-5-1-10-minimize-access-to-the-proxy-sub-resource-o:bd614072c34b"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:minimize-access-to-the-proxy-sub-resource-of-nodes:8b8f803acdb4"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:minimize-access-to-the-proxy-sub-resource-of-nodes-manual:d3478f52fbc5"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 15,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml"
+  ]
+}

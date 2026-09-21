@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-cni-in-use-supports-network-policies-17cf1661",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polic:34c068dd9e90",
+    "kube-bench:source:cis-1-20-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-poli:2cb5b652b1fd",
+    "kube-bench:source:cis-1-5-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polic:3e890b15e60b",
+    "kube-bench:source:cis-1-6-k3s-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-p:b065ba8d13f9",
+    "kube-bench:source:cis-1-6-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polic:2422a7eb321a",
+    "kube-bench:source:gke-1-0-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polic:2c106dd31cd9",
+    "kube-bench:source:gke-1-2-0-policies-4-3-1-ensure-that-the-cni-in-use-supports-network-pol:c2f1422fd97e",
+    "kube-bench:source:gke-1-6-0-policies-4-3-1-ensure-that-the-cni-in-use-supports-network-pol:1ed490a9daa0",
+    "kube-bench:source:gke-1-8-0-policies-4-3-1-ensure-that-the-cni-in-use-supports-network-pol:f0547993213a",
+    "kube-bench:source:gke-1-9-0-policies-4-3-1-ensure-that-the-cni-in-use-supports-network-pol:3c03449ed064",
+    "kube-bench:source:rh-1-0-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polici:7922fdf79c12",
+    "kube-bench:source:rh-1-4-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polici:99f62d660644",
+    "kube-bench:source:rh-1-8-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polici:986bf9da2514",
+    "kube-bench:source:rh-1-9-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-polici:64d42ff51007",
+    "kube-bench:source:tkgi-1-2-53-policies-5-3-1-ensure-that-the-cni-in-use-supports-network-p:fdd9c688b9b0",
+    "kubescape:rule:ensure-that-the-cni-in-use-supports-network-policies"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-cni-in-use-supports-network-policies-not-scored:2a7bc0a53028",
+    "kube-bench:semantic:ensure-that-the-cni-in-use-supports-network-policies:a57ec4369298",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-cni-in-use-supports-network-policies:a38f2fc291cb"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-cni-in-use-supports-network-policies:17cf1661ad3a"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 16,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/policies.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0205-ensurethatthecniinusesupportsnetworkpolicies.json"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-ensure-that-the-audit-logs-are-forwarded-off-the-cluster-for-ret-60ca5169",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-ensure-that-the-audit-logs-are-forwarded-off-the-cluster-for-ret-60ca5169",
+        "field_path": "data.evidence.json#auditLogExport.destination",
+        "observed_value": "absent",
+        "description": "Ensure that the audit logs are forwarded off the cluster for retention (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-ensure-that-the-audit-logs-are-forwarded-off-the-cluster-for-ret-60ca5169",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-ensure-that-the-audit-logs-are-forwarded-off-the-cluster-for-ret-60ca5169",
+      "field_path": "data.healthy-control.json#auditLogExport.destination",
+      "observed_value": "gs://central-audit-bucket",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9e3f209aa5d1fed1"
+}

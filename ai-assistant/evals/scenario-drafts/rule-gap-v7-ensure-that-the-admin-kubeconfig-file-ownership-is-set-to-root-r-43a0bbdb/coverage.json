@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-the-admin-kubeconfig-file-ownership-is-set-to-root-r-43a0bbdb",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-6-k3s-master-1-1-14-ensure-that-the-admin-kubeconfig-file-ownershi:6be1e4ddb581"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-admin-kubeconfig-file-ownership-is-set-to-root-root:111fe253bc16"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-admin-kubeconfig-file-ownership-is-set-to-root-r:43a0bbdb5a3b"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/master.yaml"
+  ]
+}

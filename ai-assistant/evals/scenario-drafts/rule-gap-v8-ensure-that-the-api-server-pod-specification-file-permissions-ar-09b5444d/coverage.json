@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-api-server-pod-specification-file-permissions-ar-09b5444d",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-master-1-1-1-ensure-that-the-api-server-pod-specification-file-p:1782c2d7e11b",
+    "kube-bench:source:cis-1-20-master-1-1-1-ensure-that-the-api-server-pod-specification-file-:551a03361a84",
+    "kube-bench:source:cis-1-23-master-1-1-1-ensure-that-the-api-server-pod-specification-file-:15eb12858f08",
+    "kube-bench:source:cis-1-24-microk8s-master-1-1-1-ensure-that-the-api-server-pod-specificat:ee0c99b27a9f",
+    "kube-bench:source:cis-1-5-master-1-1-1-ensure-that-the-api-server-pod-specification-file-p:da1822adcc6a",
+    "kube-bench:source:cis-1-6-master-1-1-1-ensure-that-the-api-server-pod-specification-file-p:ab779771230e",
+    "kube-bench:source:k3s-cis-1-23-master-1-1-1-ensure-that-the-api-server-pod-specification-f:d0f2f1f02220",
+    "kube-bench:source:k3s-cis-1-24-master-1-1-1-ensure-that-the-api-server-pod-specification-f:cb652cf2ef8f",
+    "kube-bench:source:rh-1-0-master-1-1-1-ensure-that-the-api-server-pod-specification-file-pe:eccd240f26bd",
+    "kube-bench:source:rke-cis-1-23-master-1-1-1-ensure-that-the-api-server-pod-specification-f:464afb40f221",
+    "kube-bench:source:rke-cis-1-24-master-1-1-1-ensure-that-the-api-server-pod-specification-f:53d084185b52",
+    "kube-bench:source:rke2-cis-1-23-master-1-1-1-ensure-that-the-api-server-pod-specification-:ca63a91e9d8d",
+    "kube-bench:source:rke2-cis-1-24-master-1-1-1-ensure-that-the-api-server-pod-specification-:a910f6e3c7aa",
+    "kube-bench:source:tkgi-1-2-53-master-1-1-1-ensure-that-the-api-server-pod-specification-fi:e463da662108"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-api-server-pod-specification-file-permissions-are-set-to-644-or-:4930418e0850"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-api-server-pod-specification-file-permissions-ar:09b5444dd760"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 14,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/master.yaml"
+  ]
+}

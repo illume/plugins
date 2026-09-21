@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-configure-image-provenance-using-imagepolicywebhook-admission-co-b7451645",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-policies-5-5-1-configure-image-provenance-using-imagepolicywebho:86737684c1ae",
+    "kube-bench:source:gke-1-0-policies-5-5-1-configure-image-provenance-using-imagepolicywebho:9381f28080b1"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:configure-image-provenance-using-imagepolicywebhook-admission-controller-not-sco:d79576eba6a3"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:configure-image-provenance-using-imagepolicywebhook-admission-co:b7451645e69c"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/policies.yaml"
+  ]
+}

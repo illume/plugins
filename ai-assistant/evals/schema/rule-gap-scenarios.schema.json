@@ -67,6 +67,7 @@
     "total_scenarios": { "type": "integer", "minimum": 1 },
     "total_target_rules": { "type": "integer", "minimum": 1 },
     "total_target_semantic_groups": { "type": "integer", "minimum": 1 },
+    "total_target_canonical_capabilities": { "type": "integer", "minimum": 1 },
     "category_counts": {
       "type": "object",
       "required": [
@@ -185,6 +186,7 @@
         "feasibility": { "$ref": "#/$defs/feasibility" },
         "target_rule_ids": { "$ref": "#/$defs/nonemptyStrings" },
         "target_semantic_group_ids": { "$ref": "#/$defs/nonemptyStrings" },
+        "target_canonical_capability_ids": { "$ref": "#/$defs/nonemptyStrings" },
         "target_tool_ids": { "$ref": "#/$defs/nonemptyStrings" },
         "target_rule_count": { "type": "integer", "minimum": 1 },
         "provenance_refs": {

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-namespace-mismatch-with-security-labels-namespace-q-vs-q-50e36f2f",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "label-state",
+        "resource_ref": "namespace/team-a",
+        "field_path": "metadata.labels",
+        "observed_value": "{\"pod-security.kubernetes.io/audit\":\"team-b\"}",
+        "description": "Emitted by checkNS when the pinned source predicate for issue 1604 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "namespace/team-a",
+      "field_path": "metadata.labels",
+      "observed_value": "{\"pod-security.kubernetes.io/enforce\":\"restricted\"}",
+      "description": "The healthy control applies the expected restricted label set."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-80e7adb8b3e8af14"
+}

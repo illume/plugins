@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-audit-log-maxage-argument-is-set-to-3-6826292d-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--audit-log-maxage",
+      "observedValue": "7",
+      "triggerPredicate": "Retain the logs for at least 30 days or as appropriate."
+    }
+  predicate-summary.txt: Retain the logs for at least 30 days or as appropriate.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--audit-log-maxage",
+      "observedValue": "30"
+    }

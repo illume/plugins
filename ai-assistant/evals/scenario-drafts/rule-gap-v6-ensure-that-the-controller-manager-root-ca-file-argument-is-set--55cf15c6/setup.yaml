@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-controller-manager-root-ca-file-argument-is-set--55cf15c6-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--root-ca-file",
+      "observedValue": "absent",
+      "triggerPredicate": "Allow pods to verify the API server's serving certificate before establishing connections."
+    }
+  predicate-summary.txt: Allow pods to verify the API server's serving certificate before establishing connections.
+  healthy-control.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--root-ca-file",
+      "observedValue": "/etc/kubernetes/pki/ca.crt"
+    }

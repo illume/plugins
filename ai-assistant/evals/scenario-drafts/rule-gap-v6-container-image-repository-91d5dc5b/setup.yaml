@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-image
+  labels:
+    app: external-image
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-image
+  template:
+    metadata:
+      labels:
+        app: external-image
+    spec:
+      containers:
+        - name: app
+          image: quay.io/example/unapproved:2.1.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+          ports:
+            - containerPort: 8080

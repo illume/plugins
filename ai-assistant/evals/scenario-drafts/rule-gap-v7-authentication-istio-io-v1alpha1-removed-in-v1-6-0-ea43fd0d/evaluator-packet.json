@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-authentication-istio-io-v1alpha1-removed-in-v1-6-0-ea43fd0d",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-api-trigger",
+        "resource_ref": "policy/default",
+        "field_path": "apiVersion",
+        "observed_value": "authentication.istio.io/v1alpha1",
+        "description": "Flags authentication.istio.io/v1alpha1 removed in v1.6.0 for istio; deprecated in v1.5.0 and replaced by security.istio.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "policy/default",
+      "field_path": "apiVersion",
+      "observed_value": "security.istio.io/v1beta1",
+      "description": "The healthy control uses the supported API version for the same resource."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bae5a098b877b1c3"
+}

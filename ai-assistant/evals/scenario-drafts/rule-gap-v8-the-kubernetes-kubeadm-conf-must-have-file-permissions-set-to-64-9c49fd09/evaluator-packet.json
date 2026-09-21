@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-the-kubernetes-kubeadm-conf-must-have-file-permissions-set-to-64-9c49fd09",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v8-the-kubernetes-kubeadm-conf-must-have-file-permissions-set-to-64-9c49fd09",
+        "field_path": "data.evidence.json#files[/etc/kubernetes/kubeadm.conf].mode",
+        "observed_value": "0666",
+        "description": "The Kubernetes kubeadm.conf must have file permissions set to 644 or more restrictive | Component of EKS Control Plane"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v8-the-kubernetes-kubeadm-conf-must-have-file-permissions-set-to-64-9c49fd09",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v8-the-kubernetes-kubeadm-conf-must-have-file-permissions-set-to-64-9c49fd09",
+      "field_path": "data.healthy-control.json#files[/etc/kubernetes/kubeadm.conf].mode",
+      "observed_value": "0644",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-06550a1ffbc25773"
+}

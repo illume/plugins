@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-ensure-anonymous-auth-is-not-disabled-22807e48
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/kubelet/config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: openshift
+data:
+  evidence.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "kubelet-configuration",
+      "exactField": "authentication.anonymous.enabled",
+      "brokenValue": "false",
+      "targetPath": "/var/lib/kubelet/config.yaml",
+      "applicability": "openshift"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "kubelet-configuration",
+      "exactField": "authentication.anonymous.enabled",
+      "healthyValue": "true",
+      "targetPath": "/var/lib/kubelet/config.yaml",
+      "applicability": "openshift"
+    }

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-the-kubernetes-component-etcd-must-be-owned-by-etcd-component-of-f684bc8a",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242445-the-kubernetes-compone:92d1b6345be3"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:the-kubernetes-component-etcd-must-be-owned-by-etcd-component-of-eks-control-pla:8c9ab68f6dd8"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:the-kubernetes-component-etcd-must-be-owned-by-etcd-component-of:f684bc8ae283"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/managedservices.yaml"
+  ]
+}

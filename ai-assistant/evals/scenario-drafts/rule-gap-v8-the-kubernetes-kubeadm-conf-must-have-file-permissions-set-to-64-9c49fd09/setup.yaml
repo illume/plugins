@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-the-kubernetes-kubeadm-conf-must-have-file-permissions-set-to-64-9c49fd09
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/kubeadm.conf
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/kubeadm.conf].mode",
+      "brokenValue": "0666",
+      "targetPath": "/etc/kubernetes/kubeadm.conf",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/kubeadm.conf].mode",
+      "healthyValue": "0644",
+      "targetPath": "/etc/kubernetes/kubeadm.conf",
+      "applicability": "inert-review-only"
+    }

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-integrity-monitoring-for-shielded-gke-nodes-is-enabled-au-a7e437b2
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /gke/node-pool.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: gke
+data:
+  evidence.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "shieldedInstanceConfig.enableIntegrityMonitoring",
+      "brokenValue": "false",
+      "targetPath": "/gke/node-pool.json",
+      "applicability": "gke"
+    }
+  healthy-control.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "shieldedInstanceConfig.enableIntegrityMonitoring",
+      "healthyValue": "true",
+      "targetPath": "/gke/node-pool.json",
+      "applicability": "gke"
+    }

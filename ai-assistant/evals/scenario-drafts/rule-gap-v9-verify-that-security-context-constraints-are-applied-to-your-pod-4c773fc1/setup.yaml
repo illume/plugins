@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-verify-that-security-context-constraints-are-applied-to-your-pod-4c773fc1
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /openshift/security-context-constraints.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: openshift
+data:
+  evidence.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.defaultAllowPrivilegeEscalation",
+      "brokenValue": "true",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }
+  healthy-control.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.defaultAllowPrivilegeEscalation",
+      "healthyValue": "false",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }

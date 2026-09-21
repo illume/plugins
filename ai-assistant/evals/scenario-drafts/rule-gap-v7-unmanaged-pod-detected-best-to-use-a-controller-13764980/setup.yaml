@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-unmanaged-pod-detected-best-to-use-a-controller-13764980-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/pod-app.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "owner-reference",
+      "exactField": "metadata.ownerReferences",
+      "brokenValue": "[]",
+      "targetPath": "/manifests/pod-app.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkOwnedByAnything when the pinned source predicate for issue 208 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "owner-reference",
+      "exactField": "metadata.ownerReferences",
+      "healthyValue": "[{\"kind\":\"Deployment\",\"name\":\"app\"}]",
+      "targetPath": "/manifests/pod-app.yaml",
+      "applicability": "inert-review-only"
+    }

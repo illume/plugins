@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-the-kubernetes-kubelet-configuration-files-must-have-file-permis-a1558b7c",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-node-v-242407-the-kubernetes-kubelet-configurat:ed1b2d14dc1e"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:the-kubernetes-kubelet-configuration-files-must-have-file-permissions-set-to-644:eb3f15777a81"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:the-kubernetes-kubelet-configuration-files-must-have-file-permis:a1558b7ceb08"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/node.yaml"
+  ]
+}

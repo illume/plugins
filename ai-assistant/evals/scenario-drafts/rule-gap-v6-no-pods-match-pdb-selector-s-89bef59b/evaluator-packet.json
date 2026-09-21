@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-pods-match-pdb-selector-s-89bef59b",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pdb-selector-mismatch",
+        "resource_ref": "poddisruptionbudget/web-pdb",
+        "field_path": "spec.selector.matchLabels",
+        "observed_value": "{\"app\":\"api\"}",
+        "description": "Emitted by checkInUse when the pinned source predicate for issue 900 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "poddisruptionbudget/web-pdb",
+      "field_path": "spec.selector.matchLabels",
+      "observed_value": "{\"app\":\"web\"}",
+      "description": "The healthy control would target the actual workload labels."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-29bbc4cc853b1ea4"
+}

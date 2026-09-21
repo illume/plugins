@@ -1,0 +1,8 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: floating-template
+spec:
+  containers:
+    - name: runner
+      image: registry.example.corp/agent/runner:latest

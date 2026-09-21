@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-the-kubernetes-etcd-must-use-tls-to-protect-the-confidentiality--5f0f03bd",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v8-the-kubernetes-etcd-must-use-tls-to-protect-the-confidentiality--5f0f03bd",
+        "field_path": "data.evidence.json#arguments.--client-cert-auth",
+        "observed_value": "absent",
+        "description": "The Kubernetes etcd must use TLS to protect the confidentiality of sensitive data during electronic dissemination | Component of EKS Control Plane"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v8-the-kubernetes-etcd-must-use-tls-to-protect-the-confidentiality--5f0f03bd",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v8-the-kubernetes-etcd-must-use-tls-to-protect-the-confidentiality--5f0f03bd",
+      "field_path": "data.healthy-control.json#arguments.--client-cert-auth",
+      "observed_value": "true",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-832072c3ede0a2a3"
+}

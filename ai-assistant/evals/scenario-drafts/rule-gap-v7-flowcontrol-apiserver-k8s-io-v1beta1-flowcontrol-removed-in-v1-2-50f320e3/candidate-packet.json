@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-flowcontrol-apiserver-k8s-io-v1beta1-flowcontrol-removed-in-v1-2-50f320e3",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect flowschema/legacy-flow and explain the concrete API deprecation risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["flowschema/legacy-flow"],
+  "allowed_observation_kinds": ["custom-resource.metadata", "custom-resource.spec"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-pod-is-in-an-unhappy-phase-s-9f2c61da",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v7-pod-is-in-an-unhappy-phase-s-9f2c61da-fixture. Explain the concrete defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": ["configmap/v7-pod-is-in-an-unhappy-phase-s-9f2c61da-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

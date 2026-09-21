@@ -17,10 +17,16 @@ The [marginal-coverage v2 catalogue](kubernetes-rule-gap-scenarios-v2.md) adds
 The [cross-tool v3 catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58 more
 non-overlapping specifications without changing active coverage.
 The [undercovered-tool v4 catalogue](kubernetes-rule-gap-scenarios-v4.md) adds
-105 more non-overlapping specifications while preserving the 275-scenario active
+104 more non-overlapping specifications while preserving the 275-scenario active
 roster.
 The [remaining direct-predicate v5 catalogue](kubernetes-rule-gap-scenarios-v5.md)
 adds 110 more non-overlapping specifications while preserving that active roster.
+The [canonical capability v6 catalogue](kubernetes-rule-gap-scenarios-v6.md) adds
+115 scenarios selected only from previously untargeted canonical capabilities.
+The [canonical capability v7 catalogue](kubernetes-rule-gap-scenarios-v7.md) adds
+116 more scenarios under the same exclusive-ownership requirement.
+The [canonical capability v8 catalogue](kubernetes-rule-gap-scenarios-v8.md) adds
+117 more kube-bench-only scenarios under the same exclusive-ownership requirement.
 
 The governing objective is full qualified coverage of product-scoped canonical
 diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,

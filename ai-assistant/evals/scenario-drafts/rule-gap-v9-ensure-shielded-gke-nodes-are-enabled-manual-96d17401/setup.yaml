@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-shielded-gke-nodes-are-enabled-manual-96d17401
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /gke/cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: gke
+data:
+  evidence.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "shieldedNodes.enabled",
+      "brokenValue": "false",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }
+  healthy-control.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "shieldedNodes.enabled",
+      "healthyValue": "true",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }

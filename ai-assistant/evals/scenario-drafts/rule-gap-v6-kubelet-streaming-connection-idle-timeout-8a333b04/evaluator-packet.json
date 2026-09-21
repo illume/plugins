@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-kubelet-streaming-connection-idle-timeout-8a333b04",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-kubelet-streaming-connection-idle-timeout-8a333b04-fixture",
+        "field_path": "data.observation.json#streamingConnectionIdleTimeout",
+        "observed_value": "0s",
+        "description": "Determines if a kubelet has not disabled timeouts on streaming connections"
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-kubelet-streaming-connection-idle-timeout-8a333b04-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-kubelet-streaming-connection-idle-timeout-8a333b04-fixture",
+      "field_path": "data.healthy-control.json#streamingConnectionIdleTimeout",
+      "observed_value": "4h0m0s",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ad934dcd21f54315"
+}

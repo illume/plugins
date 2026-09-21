@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-container-network-interface-file-permissions-are-2e6adda6-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0644",
+      "triggerPredicate": "Ensure that the Container Network Interface files have permissions of `600` or more restrictive."
+    }
+  predicate-summary.txt: Ensure that the Container Network Interface files have permissions of `600` or more restrictive.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0600"
+    }

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-instance-metadata-api-access-9c1fb110",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-instance-metadata-api-access-9c1fb110-fixture",
+        "field_path": "data.observation.json#networkAccess.instanceMetadataEndpoint",
+        "observed_value": "allowed",
+        "description": "Checks if there is access from the nodes to cloud prividers instance metadata services"
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-instance-metadata-api-access-9c1fb110-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-instance-metadata-api-access-9c1fb110-fixture",
+      "field_path": "data.healthy-control.json#networkAccess.instanceMetadataEndpoint",
+      "observed_value": "blocked",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a062a90fb0e63794"
+}

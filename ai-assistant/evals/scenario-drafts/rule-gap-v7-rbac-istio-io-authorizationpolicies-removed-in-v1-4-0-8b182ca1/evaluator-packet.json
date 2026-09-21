@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-rbac-istio-io-authorizationpolicies-removed-in-v1-4-0-8b182ca1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-api-trigger",
+        "resource_ref": "authorizationpolicy/legacy-authz",
+        "field_path": "apiVersion",
+        "observed_value": "rbac.istio.io/v1alpha1",
+        "description": "Flags rbac.istio.io AuthorizationPolicies removed in v1.4.0 for istio; deprecated in v1.4.0 and replaced by security.istio.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "authorizationpolicy/legacy-authz",
+      "field_path": "apiVersion",
+      "observed_value": "security.istio.io/v1beta1",
+      "description": "The healthy control uses the supported API version for the same resource."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c2384f33e56a709a"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-pods-match-controller-selector-s-e0ad471c",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "selector-mismatch",
+        "resource_ref": "deployment/mismatch",
+        "field_path": "spec.selector.matchLabels + spec.template.metadata.labels",
+        "observed_value": "{\"app\":\"api\"}+{\"app\":\"web\"}",
+        "description": "Emitted by resourceUsage when the pinned source predicate for issue 508 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/mismatch",
+      "field_path": "spec.template.metadata.labels",
+      "observed_value": "{\"app\":\"api\"}",
+      "description": "The healthy control uses matching labels."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b53101b78334a4c2"
+}

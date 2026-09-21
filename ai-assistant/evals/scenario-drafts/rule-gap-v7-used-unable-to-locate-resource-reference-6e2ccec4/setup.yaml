@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-used-unable-to-locate-resource-reference-6e2ccec4-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/ingress-app.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "resource-reference",
+      "exactField": "spec.rules[0].http.paths[0].backend.service.name",
+      "brokenValue": "missing-service",
+      "targetPath": "/manifests/ingress-app.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkStale, checkRefs, Lint, checkInUse when the pinned source predicate for issue 400 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "resource-reference",
+      "exactField": "spec.rules[0].http.paths[0].backend.service.name",
+      "healthyValue": "api",
+      "targetPath": "/manifests/ingress-app.yaml",
+      "applicability": "inert-review-only"
+    }

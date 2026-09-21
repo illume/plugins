@@ -1,0 +1,49 @@
+schema_version: 1.0.0
+scenario_id: rule-gap-v6-kubelet-streaming-connection-idle-timeout-8a333b04
+scenario_version: 0.1.0
+family: rule-gap-policy
+mode: diagnose_only
+title: Kubelet streaming connection idle timeout
+description: >-
+  Determines if a kubelet has not disabled timeouts on streaming connections The fixture is inert
+  ConfigMap evidence for normalized-predicate review and does not alter a live control-plane, node,
+  or cloud resource.
+provenance:
+  owner: scenarios-goal-agents
+  source: reference-implementation
+  license: Apache-2.0
+  admission_date: '2026-09-20'
+  last_review: '2026-09-20'
+  review_due: '2026-12-19'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: rule-gap-policy
+  lineage_id: rule-gap-v6-kubelet-streaming-connection-idle-timeout-8a333b04
+  variant_kind: anchor
+  splits:
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-ad934dcd21f5
+artifact_policy:
+  retain_raw_tool_output: true

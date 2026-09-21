@@ -2019,15 +2019,6 @@ const hostRecords: ScenarioRecord[] = [
     'kubescape:rule:kubelet-rotate-certificates'
   ),
   nodeConfigRecord(
-    'rule-gap-kubelet-kernel-default-protection-disabled',
-    'Kubelet kernel default protection is disabled',
-    'kubelet-kernel-defaults-config',
-    'apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nprotectKernelDefaults: false\n',
-    '{"path":"protectKernelDefaults","operator":"equals","value":false}',
-    'apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nprotectKernelDefaults: true\n',
-    'kubescape:rule:kubelet-protect-kernel-defaults'
-  ),
-  nodeConfigRecord(
     'rule-gap-kubelet-pod-limit-excessive',
     'Kubelet Pod limit exceeds the reviewed ceiling',
     'kubelet-pod-limit-config',

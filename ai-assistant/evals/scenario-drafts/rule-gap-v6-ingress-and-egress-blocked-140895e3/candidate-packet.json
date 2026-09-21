@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ingress-and-egress-blocked-140895e3",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the workload and selecting NetworkPolicy. Explain how traffic is blocked, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["deployment/isolated-app", "networkpolicy/default-deny-all"],
+  "allowed_observation_kinds": ["deployment.pod-template", "networkpolicy.spec"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

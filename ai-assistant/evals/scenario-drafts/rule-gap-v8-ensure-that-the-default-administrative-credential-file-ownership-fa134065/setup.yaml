@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-ensure-that-the-default-administrative-credential-file-ownership-fa134065
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/openshift-master/admin.kubeconfig
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/openshift-master/admin.kubeconfig].owner",
+      "brokenValue": "nobody:nogroup",
+      "targetPath": "/etc/kubernetes/openshift-master/admin.kubeconfig",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/openshift-master/admin.kubeconfig].owner",
+      "healthyValue": "root:root",
+      "targetPath": "/etc/kubernetes/openshift-master/admin.kubeconfig",
+      "applicability": "inert-review-only"
+    }

@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-rule-can-ssh-to-pod-v1-286572e3-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/role-pod-exec.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "brokenValue": "[\"create\"]",
+      "targetPath": "/manifests/role-pod-exec.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "denies pods with SSH ports opened(22/222)"
+    }
+  healthy-control.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "healthyValue": "[\"get\"]",
+      "targetPath": "/manifests/role-pod-exec.yaml",
+      "applicability": "inert-review-only"
+    }

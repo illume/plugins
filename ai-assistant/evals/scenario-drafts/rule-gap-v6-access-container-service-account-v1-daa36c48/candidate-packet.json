@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-access-container-service-account-v1-daa36c48",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the workload identity and associated RBAC grant. Explain the access risk with exact fields and do not mutate resources.",
+  "visible_resource_refs": [
+    "deployment/workload",
+    "serviceaccount/workload-sa",
+    "rolebinding/workload-edit"
+  ],
+  "allowed_observation_kinds": [
+    "deployment.pod-template",
+    "rolebinding.subjects",
+    "rolebinding.role-ref"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -6,7 +6,8 @@ The governing objective is full qualified coverage of product-scoped canonical
 diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host,
 and platform-specific tails. These tool-local groups must be reviewed into
 cross-tool canonical capabilities before they can serve as that denominator.
-See [Scenarios Goal](kubernetes-scenarios-goal.md).
+See [Scenarios Goal](kubernetes-scenarios-goal.md) and the reviewed
+[canonical capability registry](kubernetes-canonical-capability-registry.md).
 
 | Tool                            | Native unit           | Source identity | Mapping readiness        | Occurrences | Semantic groups | List                                                | Pinned source                                                                                                   |
 | ------------------------------- | --------------------- | --------------- | ------------------------ | ----------: | --------------: | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |

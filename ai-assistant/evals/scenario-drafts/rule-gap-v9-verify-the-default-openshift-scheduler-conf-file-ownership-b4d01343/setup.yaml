@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-verify-the-default-openshift-scheduler-conf-file-ownership-b4d01343
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/scheduler.conf
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-scheduler",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/scheduler.conf].owner",
+      "brokenValue": "nobody:nogroup",
+      "targetPath": "/etc/kubernetes/scheduler.conf",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-scheduler",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/scheduler.conf].owner",
+      "healthyValue": "root:root",
+      "targetPath": "/etc/kubernetes/scheduler.conf",
+      "applicability": "inert-review-only"
+    }

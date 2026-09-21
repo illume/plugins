@@ -24,7 +24,11 @@
         "registrations/rule-gap-scenarios-v2.json",
         "registrations/rule-gap-scenarios-v3.json",
         "registrations/rule-gap-scenarios-v4.json",
-        "registrations/rule-gap-scenarios-v5.json"
+        "registrations/rule-gap-scenarios-v5.json",
+        "registrations/rule-gap-scenarios-v6.json",
+        "registrations/rule-gap-scenarios-v7.json",
+        "registrations/rule-gap-scenarios-v8.json",
+        "registrations/rule-gap-scenarios-v9.json"
       ]
     },
     "scenario_id": { "type": "string", "pattern": "^rule-gap-[a-z0-9-]+$" },
@@ -44,6 +48,12 @@
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 3 }
     },
+    "target_canonical_capability_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 3 }
+    },
     "target_tool_ids": {
       "type": "array",
       "minItems": 1,
@@ -58,5 +68,23 @@
       "items": { "type": "string", "format": "uri" }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source_catalog": {
+            "enum": [
+              "registrations/rule-gap-scenarios-v6.json",
+              "registrations/rule-gap-scenarios-v7.json",
+              "registrations/rule-gap-scenarios-v8.json",
+              "registrations/rule-gap-scenarios-v9.json"
+            ]
+          }
+        },
+        "required": ["source_catalog"]
+      },
+      "then": { "required": ["target_canonical_capability_ids"] }
+    }
+  ],
   "additionalProperties": false
 }

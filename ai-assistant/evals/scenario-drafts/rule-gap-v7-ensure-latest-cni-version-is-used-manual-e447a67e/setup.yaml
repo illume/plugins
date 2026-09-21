@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-latest-cni-version-is-used-manual-e447a67e-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/cni/net.d/10-container.conflist
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-network-configuration",
+      "exactField": "cni.version",
+      "brokenValue": "0.9.1",
+      "targetPath": "/etc/cni/net.d/10-container.conflist",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure latest CNI version is used (Manual)"
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-network-configuration",
+      "exactField": "cni.version",
+      "healthyValue": "1.4.0",
+      "targetPath": "/etc/cni/net.d/10-container.conflist",
+      "applicability": "inert-review-only"
+    }

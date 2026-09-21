@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-kubernetes-pki-certificate-file-permissions-are--bf825183",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-file-p:a355be9f07a5",
+    "kube-bench:source:cis-1-24-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-file-p:edbf3690aa39",
+    "kube-bench:source:cis-1-24-microk8s-master-1-1-20-ensure-that-the-kubernetes-pki-certifica:83294e63c28e",
+    "kube-bench:source:cis-1-7-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-file-pe:f6d8d4c4f2d7",
+    "kube-bench:source:cis-1-8-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-file-pe:4a28b74268c9",
+    "kube-bench:source:cis-1-9-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-file-pe:eb3a8a655c2a",
+    "kube-bench:source:k3s-cis-1-24-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fi:5edb78506b00",
+    "kube-bench:source:k3s-cis-1-7-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fil:6c3a1e719349",
+    "kube-bench:source:k3s-cis-1-8-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fil:c9447e0b8f57",
+    "kube-bench:source:k3s-cis-1-9-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fil:ddb2561c42ff",
+    "kube-bench:source:rke-cis-1-24-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fi:e6bad34f5125",
+    "kube-bench:source:rke-cis-1-7-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fil:467b734e071a",
+    "kube-bench:source:rke2-cis-1-24-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-f:6fd3cff125c4",
+    "kube-bench:source:rke2-cis-1-7-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fi:56ca87b78e9c",
+    "kube-bench:source:rke2-cis-1-8-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fi:c9f0b8c6fd3f",
+    "kube-bench:source:rke2-cis-1-9-master-1-1-20-ensure-that-the-kubernetes-pki-certificate-fi:fc4d3bc028c8",
+    "kubescape:rule:ensure-that-the-Kubernetes-PKI-certificate-file-permissions-are-set-to-600-or-more-restrictive"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubernetes-pki-certificate-file-permissions-are-set-to-600-or-mo:819fc7b61f4f",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-kubernetes-pki-certificate-file-permissions-are-s:d0aca57ed822"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubernetes-pki-certificate-file-permissions-are-:bf8251831c59"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 17,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/master.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0111-ensurethatthekubernetespkicertificatefilepermissionsaresetto600ormorerestrictive.json"
+  ]
+}

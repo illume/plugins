@@ -51,6 +51,12 @@ expected finding, negative condition, and material platform constraints.
 Tool-local semantic groups remain provenance and review batches; they are not the
 completion denominator.
 
+The reviewed
+[canonical capability registry](kubernetes-canonical-capability-registry.md)
+assigns every direct-predicate occurrence exactly once and records cross-tool merges,
+required component splits, and reviewed separations. Future scenario batches must
+select untargeted canonical IDs instead of raw tool-local groups.
+
 Completion requires:
 
 1. **Product core:** 100% of approved canonical capabilities have qualified
@@ -136,12 +142,18 @@ changing the active roster.
 The [third rule-gap catalogue](kubernetes-rule-gap-scenarios-v3.md) adds 58
 non-overlapping specifications optimized for reproducible cross-tool states while
 excluding every active, v1, and v2 target.
-The [fourth rule-gap catalogue](kubernetes-rule-gap-scenarios-v4.md) adds 105
+The [fourth rule-gap catalogue](kubernetes-rule-gap-scenarios-v4.md) adds 104
 non-overlapping specifications for the remaining direct-predicate frontier while
 excluding every active, v1, v2, and v3 target.
 The [fifth rule-gap catalogue](kubernetes-rule-gap-scenarios-v5.md) adds 110
 non-overlapping specifications across five still-undercovered tools while excluding
 every active and v1-v4 target occurrence and semantic group.
+The [sixth rule-gap catalogue](kubernetes-rule-gap-scenarios-v6.md) adds 115
+non-overlapping specifications selected from untargeted canonical capabilities.
+The [seventh rule-gap catalogue](kubernetes-rule-gap-scenarios-v7.md) adds 116
+more specifications with exclusive canonical ownership.
+The [eighth rule-gap catalogue](kubernetes-rule-gap-scenarios-v8.md) adds 117
+more kube-bench-only specifications with exclusive canonical ownership.
 
 Assign `no_applicable_rule` only after reviewing every directly mappable group
 and every decomposed branch relevant to the scenario's resources and mechanisms.

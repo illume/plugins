@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-kubelet-conf-file-ownership-is-set-to-root-root-4439d761",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-node-4-1-6-ensure-that-the-kubelet-conf-file-ownership-is-set-to:ad830be89dfc",
+    "kube-bench:source:tkgi-1-2-53-node-4-1-6-ensure-that-the-kubelet-conf-file-ownership-is-se:86f1e51a94f6"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-conf-file-ownership-is-set-to-root-root:d924ed835668"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-conf-file-ownership-is-set-to-root-root:4439d761041d"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-exposed-critical-pods-26f59b65",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the workload exposure path and any supporting evidence. Explain the risk with exact fields and do not mutate resources.",
+  "visible_resource_refs": [
+    "deployment/public-app",
+    "service/public-app",
+    "configmap/public-app-vulnerability-report"
+  ],
+  "allowed_observation_kinds": ["deployment.pod-template", "service.spec", "configmap.data"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

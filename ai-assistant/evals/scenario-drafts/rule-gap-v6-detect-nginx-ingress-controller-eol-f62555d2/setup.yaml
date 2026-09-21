@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-nginx-controller
+  labels:
+    app: ingress-nginx-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingress-nginx-controller
+  template:
+    metadata:
+      labels:
+        app: ingress-nginx-controller
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/ingress-nginx/controller:v1.11.3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532

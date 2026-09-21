@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-namespace-mismatch-with-security-labels-namespace-q-vs-q-50e36f2f",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the Namespace metadata and identify the missing or conflicting security label state. Cite exact labels and do not mutate resources.",
+  "visible_resource_refs": ["namespace/team-a"],
+  "allowed_observation_kinds": ["namespace.metadata"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

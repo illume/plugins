@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-at-current-load-cpu-over-allocated-current-s-vs-requested-s-s-a1c9da1e-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/cluster-capacity.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-capacity",
+      "exactField": "cluster.capacity.cpu.requestedVsCurrent",
+      "brokenValue": "14 > 8",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkCPU when the pinned source predicate for issue 504 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-capacity",
+      "exactField": "cluster.capacity.cpu.requestedVsCurrent",
+      "healthyValue": "4 <= 8",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only"
+    }

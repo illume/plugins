@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-denyserviceexternalips-is-set-b307f113-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-configuration",
+      "field": "featureGates.DenyServiceExternalIPs",
+      "observedValue": "absent",
+      "triggerPredicate": "This admission controller rejects all net-new usage of the Service field externalIPs."
+    }
+  predicate-summary.txt: This admission controller rejects all net-new usage of the Service field externalIPs.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-configuration",
+      "field": "featureGates.DenyServiceExternalIPs",
+      "observedValue": "true"
+    }

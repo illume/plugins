@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-admission-control-plugin-securitycontextconstrai-0cba0bcc",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-0-master-1-2-16-ensure-that-the-admission-control-plugin-securityco:16fe011a16df",
+    "kube-bench:source:rh-1-4-master-1-2-14-ensure-that-the-admission-control-plugin-securityco:8cfcda3866cb",
+    "kube-bench:source:rh-1-8-master-1-2-12-ensure-that-the-admission-control-plugin-securityco:b5992f2a9c6a",
+    "kube-bench:source:rh-1-9-master-1-2-12-ensure-that-the-admission-control-plugin-securityco:3adfc62c34df"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-admission-control-plugin-securitycontextconstraint-is-set:faa18d51ead8"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-admission-control-plugin-securitycontextconstrai:0cba0bcc65d8"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

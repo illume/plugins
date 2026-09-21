@@ -30,7 +30,11 @@ interface Coverage {
     | 'registrations/rule-gap-scenarios-v2.json'
     | 'registrations/rule-gap-scenarios-v3.json'
     | 'registrations/rule-gap-scenarios-v4.json'
-    | 'registrations/rule-gap-scenarios-v5.json';
+    | 'registrations/rule-gap-scenarios-v5.json'
+    | 'registrations/rule-gap-scenarios-v6.json'
+    | 'registrations/rule-gap-scenarios-v7.json'
+    | 'registrations/rule-gap-scenarios-v8.json'
+    | 'registrations/rule-gap-scenarios-v9.json';
   scenario_id: string;
   implementation_status: 'authored';
   qualification_status: 'pending';
@@ -38,6 +42,7 @@ interface Coverage {
   external_tool_execution: false;
   target_rule_ids: string[];
   target_semantic_group_ids: string[];
+  target_canonical_capability_ids?: string[];
   target_tool_ids: string[];
   target_rule_count: number;
   provenance_refs: string[];
@@ -72,9 +77,9 @@ function resource(
   return match;
 }
 
-test('Scenarios Goal implementation batches contain 415 valid pending bundles', () => {
+test('Scenarios Goal implementation batches contain 980 valid pending bundles', () => {
   const scenarios = loadAllScenarios(draftRoot);
-  assert.equal(scenarios.length, 415);
+  assert.equal(scenarios.length, 980);
   assert.ok(scenarios.every(scenario => scenario.manifest.provenance.lifecycle_state === 'draft'));
   assert.ok(
     scenarios.every(scenario => scenario.manifest.portfolio.qualification_status === 'pending')
@@ -90,7 +95,7 @@ test('Scenarios Goal implementation batches contain 415 valid pending bundles', 
   assert.equal(loadAllScenarios(scenariosRoot).length, 275);
 });
 
-test('draft coverage metadata exactly matches its v1 through v5 source targets', () => {
+test('draft coverage metadata exactly matches its v1 through v9 source targets', () => {
   const schema = readJson<AnySchema>(
     path.join(evalRoot, 'schema', 'draft-scenario-coverage.schema.json')
   );
@@ -104,13 +109,17 @@ test('draft coverage metadata exactly matches its v1 through v5 source targets',
       'registrations/rule-gap-scenarios-v3.json',
       'registrations/rule-gap-scenarios-v4.json',
       'registrations/rule-gap-scenarios-v5.json',
+      'registrations/rule-gap-scenarios-v6.json',
+      'registrations/rule-gap-scenarios-v7.json',
+      'registrations/rule-gap-scenarios-v8.json',
+      'registrations/rule-gap-scenarios-v9.json',
     ].map(relativePath => [relativePath, readJson<GapCatalogue>(path.join(evalRoot, relativePath))])
   );
   const coverageRows = readdirSync(draftRoot)
     .filter(directory => existsSync(path.join(draftRoot, directory, 'coverage.json')))
     .map(directory => readJson<Coverage>(path.join(draftRoot, directory, 'coverage.json')));
 
-  assert.equal(coverageRows.length, 415);
+  assert.equal(coverageRows.length, 980);
   const targetRuleIds = new Set<string>();
   const targetGroupIds = new Set<string>();
   const targetToolIds = new Set<string>();
@@ -127,6 +136,7 @@ test('draft coverage metadata exactly matches its v1 through v5 source targets',
     assert.equal(coverage.target_rule_count, coverage.target_rule_ids.length);
     assert.deepEqual(coverage.target_rule_ids, gap.target_rule_ids);
     assert.deepEqual(coverage.target_semantic_group_ids, gap.target_semantic_group_ids);
+    assert.deepEqual(coverage.target_canonical_capability_ids, gap.target_canonical_capability_ids);
     assert.deepEqual(coverage.target_tool_ids, gap.target_tool_ids);
     for (const ruleId of coverage.target_rule_ids) {
       assert.equal(targetRuleIds.has(ruleId), false, ruleId);
@@ -135,8 +145,8 @@ test('draft coverage metadata exactly matches its v1 through v5 source targets',
     coverage.target_semantic_group_ids.forEach(groupId => targetGroupIds.add(groupId));
     coverage.target_tool_ids.forEach(toolId => targetToolIds.add(toolId));
   }
-  assert.equal(targetRuleIds.size, 1997);
-  assert.equal(targetGroupIds.size, 656);
+  assert.equal(targetRuleIds.size, 5299);
+  assert.equal(targetGroupIds.size, 1323);
   assert.equal(targetToolIds.size, 12);
 });
 

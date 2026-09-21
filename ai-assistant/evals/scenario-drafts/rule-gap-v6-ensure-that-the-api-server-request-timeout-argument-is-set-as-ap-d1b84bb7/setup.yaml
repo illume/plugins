@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-request-timeout-argument-is-set-as-ap-d1b84bb7-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--request-timeout",
+      "observedValue": "0s",
+      "triggerPredicate": "Set global request timeout for API server requests as appropriate."
+    }
+  predicate-summary.txt: Set global request timeout for API server requests as appropriate.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--request-timeout",
+      "observedValue": "60s"
+    }

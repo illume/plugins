@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-kubelet-client-certificate-and-kubele-f9fd46fd-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--kubelet-client-certificate + arguments.--kubelet-client-key",
+      "observedValue": "absent + absent",
+      "triggerPredicate": "Enable certificate based kubelet authentication."
+    }
+  predicate-summary.txt: Enable certificate based kubelet authentication.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--kubelet-client-certificate + arguments.--kubelet-client-key",
+      "observedValue": "/etc/kubernetes/pki/apiserver-kubelet-client.crt + /etc/kubernetes/pki/apiserver-kubelet-client.key"
+    }

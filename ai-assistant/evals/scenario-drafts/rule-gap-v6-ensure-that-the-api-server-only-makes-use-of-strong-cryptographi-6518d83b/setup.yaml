@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-only-makes-use-of-strong-cryptographi-6518d83b-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--tls-cipher-suites",
+      "observedValue": "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+      "triggerPredicate": "Ensure that the API server is configured to only use strong cryptographic ciphers."
+    }
+  predicate-summary.txt: Ensure that the API server is configured to only use strong cryptographic ciphers.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--tls-cipher-suites",
+      "observedValue": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+    }

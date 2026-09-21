@@ -73,7 +73,7 @@ const priorTargetIds = new Set(
   priorBatches.flatMap(batch => batch.scenarios.flatMap(scenario => scenario.target_rule_ids))
 );
 
-assert.equal(v4ScenarioCatalogSeeds.length, 105, 'expected exactly 105 v4 specifications');
+assert.equal(v4ScenarioCatalogSeeds.length, 104, 'expected exactly 104 v4 specifications');
 const claimedRuleIds = new Set<string>();
 const scenarios = v4ScenarioCatalogSeeds.map(seed => {
   const targetRules = seed.targetRuleIds
@@ -210,7 +210,7 @@ const document = {
     'Maximize distinct remaining direct-predicate semantic groups and improve undercovered source tools using reproducible Kubernetes states after excluding active and v1/v2/v3 targets.',
   methodology: {
     selection:
-      'Select exactly 105 reviewed single-trigger states or coherent bounded action chains from ten prioritized undercovered tools.',
+      'Select exactly 104 reviewed single-trigger states or coherent bounded action chains from ten prioritized undercovered tools.',
     deduplication:
       'Reject active coverage, v1/v2/v3 targets, duplicate v4 occurrences, duplicate identities, and partial kube-bench profile groups.',
     qualification:
@@ -265,7 +265,7 @@ const markdown = [
   '',
   '## Marginal coverage',
   '',
-  `The 105 drafts add **${targetIds.length}** exact target occurrences in`,
+  `The 104 drafts add **${targetIds.length}** exact target occurrences in`,
   `**${targetGroups.size}** semantic groups across **${targetTools.size}** tools.`,
   '',
   '| Tool | Occurrences |',

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-pod-security-admission-baseline-applied-2-00b6dbd3",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:pod-security-admission-baseline-applied-2"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-pod-security-admission-baseline-applied-2:995e36341d59"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:pod-security-admission-baseline-applied-2:00b6dbd3a602"
+  ],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0193-minimizetheadmissionofprivilegedcontainers.json"
+  ]
+}

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-kubernetes-secrets-are-encrypted-using-keys-managed-in-cl-d28a3cef
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /gke/cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: gke
+data:
+  evidence.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "databaseEncryption.keyName",
+      "brokenValue": "absent",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }
+  healthy-control.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "databaseEncryption.keyName",
+      "healthyValue": "projects/example/locations/global/keyRings/kubernetes/cryptoKeys/secrets",
+      "targetPath": "/gke/cluster.json",
+      "applicability": "gke"
+    }

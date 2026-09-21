@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-container-image-repository-v1-01f9d14a",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "disallowed-registry",
+        "resource_ref": "deployment/legacy-image",
+        "field_path": "spec.template.spec.containers[0].image",
+        "observed_value": "docker.io/library/nginx:1.27",
+        "description": "Fails if image is not from allowed repository"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/legacy-image",
+      "field_path": "spec.template.spec.containers[0].image",
+      "observed_value": "registry.k8s.io/pause:3.10",
+      "description": "The healthy control uses an explicitly allowed registry."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4ca4a3aa203ca5aa"
+}

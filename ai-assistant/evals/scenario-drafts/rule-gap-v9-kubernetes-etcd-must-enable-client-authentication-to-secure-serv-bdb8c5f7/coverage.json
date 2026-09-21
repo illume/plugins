@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-kubernetes-etcd-must-enable-client-authentication-to-secure-serv-bdb8c5f7",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242423-kubernetes-etcd-must-e:53591124677c",
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242424-kubernetes-etcd-must-e:c1994915921c",
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242426-kubernetes-etcd-must-e:9868528f6134"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:kubernetes-etcd-must-enable-client-authentication-to-secure-service-component-of:3befc7f48816"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:kubernetes-etcd-must-enable-client-authentication-to-secure-serv:bdb8c5f77edc"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/managedservices.yaml"
+  ]
+}

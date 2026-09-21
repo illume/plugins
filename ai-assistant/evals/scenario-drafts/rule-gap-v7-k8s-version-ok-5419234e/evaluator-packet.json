@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-k8s-version-ok-5419234e",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-k8s-version-ok-5419234e-fixture",
+        "field_path": "data.evidence.json#cluster.version",
+        "observed_value": "v1.23.0",
+        "description": "Emitted by checkVersion when the pinned source predicate for issue 406 is satisfied."
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-k8s-version-ok-5419234e-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-k8s-version-ok-5419234e-fixture",
+      "field_path": "data.healthy-control.json#cluster.version",
+      "observed_value": "v1.30.0",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fbee08d58885ac07"
+}

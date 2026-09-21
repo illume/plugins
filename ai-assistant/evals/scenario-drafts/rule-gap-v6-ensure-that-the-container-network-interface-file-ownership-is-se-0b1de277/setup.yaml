@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-container-network-interface-file-ownership-is-se-0b1de277-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "file-metadata",
+      "field": "file.owner",
+      "observedValue": "nobody:nogroup",
+      "triggerPredicate": "Ensure that the Container Network Interface files have ownership set to `root:root`."
+    }
+  predicate-summary.txt: Ensure that the Container Network Interface files have ownership set to `root:root`.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "file-metadata",
+      "field": "file.owner",
+      "observedValue": "root:root"
+    }

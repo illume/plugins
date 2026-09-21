@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-unhealthy-d-desired-but-have-d-available-4c90c5a8-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/deployment-status.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "workload-status",
+      "exactField": "deployment.status.availableReplicas",
+      "brokenValue": "1",
+      "targetPath": "/var/lib/evals/deployment-status.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkDeployment, checkStatefulSet when the pinned source predicate for issue 501 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "workload-status",
+      "exactField": "deployment.status.availableReplicas",
+      "healthyValue": "3",
+      "targetPath": "/var/lib/evals/deployment-status.json",
+      "applicability": "inert-review-only"
+    }

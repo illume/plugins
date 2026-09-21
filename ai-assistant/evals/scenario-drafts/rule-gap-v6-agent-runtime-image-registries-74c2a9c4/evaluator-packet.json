@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-runtime-image-registries-74c2a9c4",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "workerpool/public-workers",
+        "field_path": "spec.image",
+        "observed_value": "docker.io/example/worker:1.0.0",
+        "description": "Checks Sandbox, SandboxTemplate and WorkerPool image registries against imageRepositoryAllowList."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "workerpool/public-workers",
+      "field_path": "spec.image",
+      "observed_value": "registry.example.corp/worker@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "description": "The healthy control removes the represented defect."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b45273508c998c6c"
+}

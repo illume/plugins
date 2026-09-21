@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-ensure-that-the-etcd-data-directory-permissions-are-set-to-700-o-f73508f2",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-ensure-that-the-etcd-data-directory-permissions-are-set-to-700-o-f73508f2-fixture",
+        "field_path": "data.evidence.json#file.mode",
+        "observed_value": "0666",
+        "description": "Ensure that the etcd data directory has permissions of `700` or more restrictive."
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-ensure-that-the-etcd-data-directory-permissions-are-set-to-700-o-f73508f2-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-ensure-that-the-etcd-data-directory-permissions-are-set-to-700-o-f73508f2-fixture",
+      "field_path": "data.healthy-control.json#file.mode",
+      "observed_value": "0700",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-58c3c338dc38def0"
+}

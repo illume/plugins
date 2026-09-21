@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: isolated-app
+  labels:
+    app: isolated-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: isolated-app
+  template:
+    metadata:
+      labels:
+        app: isolated-app
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector:
+    matchLabels:
+      app: isolated-app
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress: []

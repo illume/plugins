@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-deprecated-service-account-field-b3694ab1",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the workload identity configuration and identify the deprecated field use. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["deployment/deprecated-identity"],
+  "allowed_observation_kinds": ["deployment.pod-template"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

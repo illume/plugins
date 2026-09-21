@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-default-administrative-credential-file-ownership-fa134065",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-master-1-1-14-ensure-that-the-default-administrative-credential:03b381ee86c3",
+    "kube-bench:source:cis-1-11-master-1-1-14-ensure-that-the-default-administrative-credential:235c9c84204b",
+    "kube-bench:source:cis-1-12-master-1-1-14-ensure-that-the-default-administrative-credential:39be47c7de2a",
+    "kube-bench:source:cis-1-9-master-1-1-14-ensure-that-the-default-administrative-credential-:61a8830c1eda",
+    "kube-bench:source:cis-2-0-master-1-1-14-ensure-that-the-default-administrative-credential-:7a2269301873"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-default-administrative-credential-file-ownership-is-set-to-root-:5afdce62cdec"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-default-administrative-credential-file-ownership:fa134065fa65"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/master.yaml"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-alert-mount-potential-credentials-paths-976fc30f",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "hostpath-mounted",
+        "resource_ref": "deployment/credential-mount",
+        "field_path": "spec.template.spec.volumes[0].hostPath.path",
+        "observed_value": "/var/lib/kubelet/pki",
+        "description": "The workload mounts a host credentials directory."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/credential-mount",
+      "field_path": "spec.template.spec.volumes[0].hostPath.path",
+      "observed_value": "/var/run/fixtures",
+      "description": "The healthy control uses a non-sensitive workload-local path instead."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-962d8f34a575d934"
+}

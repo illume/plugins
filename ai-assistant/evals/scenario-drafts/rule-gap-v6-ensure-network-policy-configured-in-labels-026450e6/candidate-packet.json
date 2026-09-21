@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-network-policy-configured-in-labels-026450e6",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the workload labels and any policy selectors. Explain why the workload is not protected, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["deployment/tenant-app", "networkpolicy/*"],
+  "allowed_observation_kinds": ["deployment.pod-template", "networkpolicy.list"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

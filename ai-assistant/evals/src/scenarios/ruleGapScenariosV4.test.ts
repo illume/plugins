@@ -82,18 +82,18 @@ test('v4 catalogue matches the shared schema and exact allocation', () => {
   assert.equal(validate(catalogue), true, JSON.stringify(validate.errors));
   assert.deepEqual(catalogue.scenarios_goal, SCENARIOS_GOAL);
   assert.equal(catalogue.methodology.external_tool_execution, false);
-  assert.equal(catalogue.total_scenarios, 105);
-  assert.equal(catalogue.scenarios.length, 105);
-  assert.equal(catalogue.total_target_rules, 106);
-  assert.equal(catalogue.total_target_semantic_groups, 106);
+  assert.equal(catalogue.total_scenarios, 104);
+  assert.equal(catalogue.scenarios.length, 104);
+  assert.equal(catalogue.total_target_rules, 105);
+  assert.equal(catalogue.total_target_semantic_groups, 105);
   assert.deepEqual(catalogue.scenario_counts_by_selection_track, {
     falco_chain: 10,
     node_problem_detector: 3,
     operations: 18,
-    policy: 74,
+    policy: 73,
   });
   assert.deepEqual(catalogue.scenario_counts_by_feasibility, {
-    host: 7,
+    host: 6,
     live_cluster: 1,
     manifest_only: 82,
     runtime: 10,
@@ -207,8 +207,8 @@ test('v4 generated summaries match exact occurrence, group, tool, and dimension 
     catalogue.scenarios.flatMap(scenario => scenario.target_semantic_group_ids)
   );
   const toolIds = new Set(catalogue.scenarios.flatMap(scenario => scenario.target_tool_ids));
-  assert.equal(targetIds.length, 106);
-  assert.equal(groupIds.size, 106);
+  assert.equal(targetIds.length, 105);
+  assert.equal(groupIds.size, 105);
   assert.equal(toolIds.size, 10);
   assert.deepEqual(
     catalogue.category_counts,
@@ -272,8 +272,8 @@ test('v4 drafts remain outside the exact 275-scenario active roster', () => {
 test('v4 definitions exactly match catalogue IDs and contain concrete safe setups', () => {
   const catalogueIds = catalogue.scenarios.map(scenario => scenario.scenario_id).sort();
   const definitionIds = v4ScenarioDraftDefinitions.map(definition => definition.scenarioId).sort();
-  assert.equal(v4ScenarioDraftDefinitions.length, 105);
-  assert.equal(v4ScenarioCatalogSeeds.length, 105);
+  assert.equal(v4ScenarioDraftDefinitions.length, 104);
+  assert.equal(v4ScenarioCatalogSeeds.length, 104);
   assert.deepEqual(definitionIds, catalogueIds);
   const sourceToolPattern = new RegExp(
     inventory.tools.map(tool => tool.tool_id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
@@ -361,8 +361,8 @@ test('v4 documentation has exact catalogue parity', () => {
     path.resolve(evalRoot, '..', 'docs', 'kubernetes-rule-gap-scenarios-v4.md'),
     'utf8'
   );
-  assert.match(documentation, /\*\*106\*\* exact target occurrences/);
-  assert.match(documentation, /\*\*106\*\* semantic groups across \*\*10\*\* tools/);
+  assert.match(documentation, /\*\*105\*\* exact target occurrences/);
+  assert.match(documentation, /\*\*105\*\* semantic groups across \*\*10\*\* tools/);
   const documentedRows = new Set(
     documentation
       .split('\n')
@@ -385,5 +385,5 @@ test('v4 documentation has exact catalogue parity', () => {
       scenario.scenario_id
     );
   }
-  assert.equal(documentedRows.size, 105);
+  assert.equal(documentedRows.size, 104);
 });

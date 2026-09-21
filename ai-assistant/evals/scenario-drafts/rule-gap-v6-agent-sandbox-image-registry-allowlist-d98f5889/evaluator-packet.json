@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-sandbox-image-registry-allowlist-d98f5889",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "sandboxtemplate/external-template",
+        "field_path": "spec.containers[0].image",
+        "observed_value": "docker.io/library/alpine:3.20",
+        "description": "Checks that container images in Agent Sandbox SandboxTemplate resources come from an approved image registry."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "sandboxtemplate/external-template",
+      "field_path": "spec.containers[0].image",
+      "observed_value": "registry.example.corp/agent/alpine:3.20",
+      "description": "The healthy control removes the represented defect."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-91e7fcf76714ab82"
+}

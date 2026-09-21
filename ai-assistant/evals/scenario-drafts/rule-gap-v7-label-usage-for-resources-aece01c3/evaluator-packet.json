@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-label-usage-for-resources-aece01c3",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-label-usage-for-resources-aece01c3-fixture",
+        "field_path": "data.evidence.json#metadata.labels.app.kubernetes.io/name",
+        "observed_value": "absent",
+        "description": "check if a certain set of labels is defined, this is a configurable control. Initial list: app, tier, phase, version, owner, env."
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-label-usage-for-resources-aece01c3-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-label-usage-for-resources-aece01c3-fixture",
+      "field_path": "data.healthy-control.json#metadata.labels.app.kubernetes.io/name",
+      "observed_value": "payments-api",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1c2d2e88ec210543"
+}

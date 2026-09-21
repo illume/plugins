@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-adjust-the-terminated-pod-gc-threshold-argument-as-needed-fdb1b6ba
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-controller-manager",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--terminated-pod-gc-threshold",
+      "brokenValue": "0",
+      "targetPath": "/etc/kubernetes/manifests/kube-controller-manager.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-controller-manager",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--terminated-pod-gc-threshold",
+      "healthyValue": "12500",
+      "targetPath": "/etc/kubernetes/manifests/kube-controller-manager.yaml",
+      "applicability": "inert-review-only"
+    }

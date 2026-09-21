@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-controlplane-3-1-1-client-certificate-authentication-should-not-:1c078b713d4c",
+    "kube-bench:source:gke-1-0-controlplane-3-1-1-client-certificate-authentication-should-not-:a9c1a427030a"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:client-certificate-authentication-should-not-be-used-for-users-not-scored:f21b6901d7c1"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:client-certificate-authentication-should-not-be-used-for-users-n:288acdbf6f68"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/controlplane.yaml"
+  ]
+}

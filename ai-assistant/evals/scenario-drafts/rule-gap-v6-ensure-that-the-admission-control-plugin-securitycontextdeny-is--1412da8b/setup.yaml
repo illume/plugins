@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-admission-control-plugin-securitycontextdeny-is--1412da8b-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "component-arguments",
+      "field": "admissionControl.enabledPlugins",
+      "observedValue": "[\"ServiceAccount\"]",
+      "triggerPredicate": "The SecurityContextDeny admission controller can be used to deny pods which make use of some SecurityContext fields which could allow for privilege escalation in the cluster. This should be used where PodSecurityPolicy is not in place within the cluster."
+    }
+  predicate-summary.txt: >-
+    The SecurityContextDeny admission controller can be used to deny pods which make use of some
+    SecurityContext fields which could allow for privilege escalation in the cluster. This should be
+    used where PodSecurityPolicy is not in place within the cluster.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "component-arguments",
+      "field": "admissionControl.enabledPlugins",
+      "observedValue": "[\"ServiceAccount\",\"SecurityContextDeny\"]"
+    }

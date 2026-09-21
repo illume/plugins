@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-enforce-kubelet-client-tls-authentication-updated-ed87299e-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/kubelet/config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kubelet",
+      "evidenceType": "kubelet-configuration",
+      "field": "authentication.x509.clientCAFile",
+      "observedValue": "absent",
+      "triggerPredicate": "Determines if kubelet client tls authentication is enabled."
+    }
+  predicate-summary.txt: Determines if kubelet client tls authentication is enabled.
+  healthy-control.json: |-
+    {
+      "subject": "kubelet",
+      "evidenceType": "kubelet-configuration",
+      "field": "authentication.x509.clientCAFile",
+      "observedValue": "/etc/kubernetes/pki/ca.crt"
+    }

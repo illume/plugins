@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-ensure-kubernetes-secrets-are-encrypted-using-keys-managed-in-km-1a1fde26",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-ensure-kubernetes-secrets-are-encrypted-using-keys-managed-in-km-1a1fde26",
+        "field_path": "data.evidence.json#encryptionConfig.provider.keyArn",
+        "observed_value": "absent",
+        "description": "Ensure Kubernetes Secrets are encrypted using keys managed in KMS (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-ensure-kubernetes-secrets-are-encrypted-using-keys-managed-in-km-1a1fde26",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-ensure-kubernetes-secrets-are-encrypted-using-keys-managed-in-km-1a1fde26",
+      "field_path": "data.healthy-control.json#encryptionConfig.provider.keyArn",
+      "observed_value": "acs:kms:cn-hangzhou:111122223333:key/example",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fa85deb0be11b706"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-sandbox-image-tag-provenance-dee5a230",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review sandboxtemplate/floating-template and identify the concrete policy or configuration defect. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["sandboxtemplate/floating-template"],
+  "allowed_observation_kinds": ["custom-resource.spec", "custom-resource.metadata"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

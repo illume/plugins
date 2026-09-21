@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-encryption-providers-are-appropriatel-db98ae9e-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-configuration",
+      "field": "encryptionConfig.providers[0]",
+      "observedValue": "identity",
+      "triggerPredicate": "Where `etcd` encryption is used, appropriate providers should be configured."
+    }
+  predicate-summary.txt: Where `etcd` encryption is used, appropriate providers should be configured.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-configuration",
+      "field": "encryptionConfig.providers[0]",
+      "observedValue": "aescbc"
+    }

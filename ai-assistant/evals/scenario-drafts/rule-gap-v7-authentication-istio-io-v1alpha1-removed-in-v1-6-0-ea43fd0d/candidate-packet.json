@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-authentication-istio-io-v1alpha1-removed-in-v1-6-0-ea43fd0d",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect policy/default and explain the concrete API deprecation risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["policy/default"],
+  "allowed_observation_kinds": ["custom-resource.metadata", "custom-resource.spec"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,48 @@
+schema_version: 1.0.0
+scenario_id: rule-gap-v6-access-container-service-account-v1-daa36c48
+scenario_version: 0.1.0
+family: rule-gap-policy
+mode: diagnose_only
+title: Workload uses an elevated service account
+description: >-
+  determines which service accounts can be used to access other resources in the cluster The
+  workload runs under a service account that is bound to edit in its namespace.
+provenance:
+  owner: scenarios-goal-agents
+  source: reference-implementation
+  license: Apache-2.0
+  admission_date: '2026-09-20'
+  last_review: '2026-09-20'
+  review_due: '2026-12-19'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: rule-gap-policy
+  lineage_id: rule-gap-v6-access-container-service-account-v1-daa36c48
+  variant_kind: anchor
+  splits:
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-kwok
+required_mechanisms:
+  - api-server
+  - authorization
+declared_kwok_compatible: false
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-900a50938f07
+artifact_policy:
+  retain_raw_tool_output: true

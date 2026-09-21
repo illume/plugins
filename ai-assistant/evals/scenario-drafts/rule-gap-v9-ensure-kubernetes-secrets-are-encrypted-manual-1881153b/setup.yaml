@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-kubernetes-secrets-are-encrypted-manual-1881153b
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/encryption-config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: aks
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "etcdEncryption.enabled",
+      "brokenValue": "absent",
+      "targetPath": "/etc/kubernetes/encryption-config.yaml",
+      "applicability": "aks"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "etcdEncryption.enabled",
+      "healthyValue": "true",
+      "targetPath": "/etc/kubernetes/encryption-config.yaml",
+      "applicability": "aks"
+    }

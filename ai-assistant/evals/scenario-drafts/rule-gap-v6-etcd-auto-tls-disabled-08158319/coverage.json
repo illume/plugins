@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-etcd-auto-tls-disabled-08158319",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:etcd-auto-tls-disabled"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-etcd-auto-tls-disabled:f0b0b1ee80af"
+  ],
+  "target_canonical_capability_ids": ["canonical:etcd-auto-tls-disabled:08158319a0da"],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0155-ensurethattheautotlsargumentisnotsettotrue.json"
+  ]
+}

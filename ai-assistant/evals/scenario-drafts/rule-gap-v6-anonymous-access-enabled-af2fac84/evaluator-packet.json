@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-anonymous-access-enabled-af2fac84",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "anonymous-bound",
+        "resource_ref": "clusterrolebinding/anonymous-pod-reader",
+        "field_path": "subjects[0].name",
+        "observed_value": "system:anonymous",
+        "description": "Anonymous subjects are bound to a cluster role."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "clusterrolebinding/anonymous-pod-reader",
+      "field_path": "subjects[0].name",
+      "observed_value": "system:serviceaccounts",
+      "description": "The healthy control would bind an intended service-account group instead."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-06b31baae03b7890"
+}

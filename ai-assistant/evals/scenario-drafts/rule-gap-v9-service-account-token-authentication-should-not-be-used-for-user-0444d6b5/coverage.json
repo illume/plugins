@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-service-account-token-authentication-should-not-be-used-for-user-0444d6b5",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-controlplane-3-1-2-service-account-token-authentication-should-:1ca2af43c1c8",
+    "kube-bench:source:cis-1-11-controlplane-3-1-2-service-account-token-authentication-should-:efc255d219f2",
+    "kube-bench:source:cis-1-12-controlplane-3-1-2-service-account-token-authentication-should-:6f20d755e003",
+    "kube-bench:source:cis-1-7-controlplane-3-1-2-service-account-token-authentication-should-n:8d2812dda7e3",
+    "kube-bench:source:cis-1-8-controlplane-3-1-2-service-account-token-authentication-should-n:2b754c5f81b5",
+    "kube-bench:source:cis-1-9-controlplane-3-1-2-service-account-token-authentication-should-n:70f7f2150a53",
+    "kube-bench:source:cis-2-0-controlplane-3-1-2-service-account-token-authentication-should-n:67b5fe7d1f30",
+    "kube-bench:source:k3s-cis-1-7-controlplane-3-1-2-service-account-token-authentication-shou:54f8d2628bb9",
+    "kube-bench:source:k3s-cis-1-8-controlplane-3-1-2-service-account-token-authentication-shou:f434dc1dc98b",
+    "kube-bench:source:k3s-cis-1-9-controlplane-3-1-2-service-account-token-authentication-shou:6ba27d375666",
+    "kube-bench:source:rke-cis-1-7-controlplane-3-1-2-service-account-token-authentication-shou:d7962dff6a47",
+    "kube-bench:source:rke2-cis-1-7-controlplane-3-1-2-service-account-token-authentication-sho:93610bfa345c",
+    "kube-bench:source:rke2-cis-1-8-controlplane-3-1-2-service-account-token-authentication-sho:4bef897d80f5",
+    "kube-bench:source:rke2-cis-1-9-controlplane-3-1-2-service-account-token-authentication-sho:697ad890d67e"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:service-account-token-authentication-should-not-be-used-for-users:74410a909105"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:service-account-token-authentication-should-not-be-used-for-user:0444d6b5faf9"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 14,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/controlplane.yaml"
+  ]
+}

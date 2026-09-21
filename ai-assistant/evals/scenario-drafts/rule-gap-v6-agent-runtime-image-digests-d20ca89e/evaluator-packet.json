@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-runtime-image-digests-d20ca89e",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "sandboxtemplate/build-sandbox",
+        "field_path": "spec.image + spec.workerPoolImage",
+        "observed_value": "ghcr.io/example/agent-runner:latest + ghcr.io/example/worker:v1",
+        "description": "Requires exact lowercase SHA-256 image pins on Sandbox, SandboxTemplate and WorkerPool resources."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "sandboxtemplate/build-sandbox",
+      "field_path": "spec.image + spec.workerPoolImage",
+      "observed_value": "ghcr.io/example/agent-runner@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + ghcr.io/example/worker@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "description": "The healthy control removes the represented defect."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2b502df948720056"
+}

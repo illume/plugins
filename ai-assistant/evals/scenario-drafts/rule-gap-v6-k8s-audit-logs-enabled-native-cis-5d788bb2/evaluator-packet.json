@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-k8s-audit-logs-enabled-native-cis-5d788bb2",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-k8s-audit-logs-enabled-native-cis-5d788bb2-fixture",
+        "field_path": "data.observation.json#audit.enabled",
+        "observed_value": "false",
+        "description": "Kubernetes can audit the details of requests made to the API server. The `--audit-policy-file` flag must be set for this logging to be enabled."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-k8s-audit-logs-enabled-native-cis-5d788bb2-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-k8s-audit-logs-enabled-native-cis-5d788bb2-fixture",
+      "field_path": "data.healthy-control.json#audit.enabled",
+      "observed_value": "true",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-72b08f5d489ad382"
+}

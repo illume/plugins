@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-etcd-peer-auto-tls-disabled-94fc8f11",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-etcd-peer-auto-tls-disabled-94fc8f11-fixture",
+        "field_path": "data.observation.json#arguments.--peer-auto-tls",
+        "observed_value": "true",
+        "description": "Do not use automatically generated self-signed certificates for TLS connections between peers."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-etcd-peer-auto-tls-disabled-94fc8f11-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-etcd-peer-auto-tls-disabled-94fc8f11-fixture",
+      "field_path": "data.healthy-control.json#arguments.--peer-auto-tls",
+      "observed_value": "false",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c52f8efd867c806e"
+}

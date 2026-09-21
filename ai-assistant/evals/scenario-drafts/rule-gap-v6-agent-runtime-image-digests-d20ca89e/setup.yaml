@@ -1,0 +1,7 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: build-sandbox
+spec:
+  image: ghcr.io/example/agent-runner:latest
+  workerPoolImage: ghcr.io/example/worker:v1

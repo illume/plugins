@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-that-the-container-network-interface-file-ownership-is-se-0b1de277",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v6-ensure-that-the-container-network-interface-file-ownership-is-se-0b1de277-fixture. Explain the concrete configuration or evidence defect represented by the fixture, cite exact fields, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v6-ensure-that-the-container-network-interface-file-ownership-is-se-0b1de277-fixture"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "normalized-predicate"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

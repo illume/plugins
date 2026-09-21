@@ -44,12 +44,12 @@ or execute the surveyed tools named by `target_rule_ids`.
 | Category                     |  Drafts | Target occurrences |
 | ---------------------------- | ------: | -----------------: |
 | Workload/configuration       |      30 |                 72 |
-| Control-plane/host hardening |      25 |                896 |
+| Control-plane/host hardening |      25 |                897 |
 | Runtime/node failure         |      20 |                 35 |
 | Operations/deprecation       |      25 |                 52 |
-| **Total**                    | **100** |          **1,055** |
+| **Total**                    | **100** |          **1,056** |
 
-The 1,055 target occurrences represent 179 tool-local semantic groups across 11 tools.
+The 1,056 target occurrences represent 180 tool-local semantic groups across 11 tools.
 
 | Tool                  | Target occurrences |
 | --------------------- | -----------------: |
@@ -58,7 +58,7 @@ The 1,055 target occurrences represent 179 tool-local semantic groups across 11 
 | kube-linter           |                 18 |
 | kube-score            |                 11 |
 | kubernetes-mixin      |                 24 |
-| kubescape             |                 18 |
+| kubescape             |                 19 |
 | kubevious             |                  5 |
 | node-problem-detector |                 17 |
 | pluto                 |                 29 |
@@ -67,7 +67,7 @@ The 1,055 target occurrences represent 179 tool-local semantic groups across 11 
 
 | Feasibility   | Drafts | Target occurrences |
 | ------------- | -----: | -----------------: |
-| host          |     25 |                896 |
+| host          |     25 |                897 |
 | live_cluster  |      1 |                  2 |
 | manifest_only |     44 |                101 |
 | runtime       |     13 |                 20 |
@@ -141,7 +141,7 @@ candidate coverage claim.
 | rule-gap-component-profiling-enabled            | Control-plane profiling endpoint is enabled           |      86 |
 | rule-gap-kubelet-read-only-port                 | Kubelet read-only port is enabled                     |      15 |
 | rule-gap-unbounded-streaming-idle-timeout       | Kubelet streaming idle timeout is disabled            |      45 |
-| rule-gap-kernel-default-protection-disabled     | Kubelet does not protect kernel defaults              |      21 |
+| rule-gap-kernel-default-protection-disabled     | Kubelet does not protect kernel defaults              |      22 |
 | rule-gap-event-qps-throttles-auditability       | Kubelet event QPS is too restrictive                  |      12 |
 | rule-gap-kubelet-server-cert-rotation-disabled  | Kubelet server certificate rotation is disabled       |      43 |
 | rule-gap-pod-crash-loop                         | Pod repeatedly crashes and backs off                  |       3 |

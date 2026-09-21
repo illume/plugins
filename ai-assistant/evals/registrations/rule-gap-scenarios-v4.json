@@ -19,17 +19,17 @@
   },
   "optimization_objective": "Maximize distinct remaining direct-predicate semantic groups and improve undercovered source tools using reproducible Kubernetes states after excluding active and v1/v2/v3 targets.",
   "methodology": {
-    "selection": "Select exactly 105 reviewed single-trigger states or coherent bounded action chains from ten prioritized undercovered tools.",
+    "selection": "Select exactly 104 reviewed single-trigger states or coherent bounded action chains from ten prioritized undercovered tools.",
     "deduplication": "Reject active coverage, v1/v2/v3 targets, duplicate v4 occurrences, duplicate identities, and partial kube-bench profile groups.",
     "qualification": "Keep every specification draft and pending until setup, observation, oracle, and leakage blockers are resolved.",
     "external_tool_execution": false
   },
-  "total_scenarios": 105,
-  "total_target_rules": 106,
-  "total_target_semantic_groups": 106,
+  "total_scenarios": 104,
+  "total_target_rules": 105,
+  "total_target_semantic_groups": 105,
   "category_counts": {
     "workload_configuration": 69,
-    "control_plane_host_hardening": 4,
+    "control_plane_host_hardening": 3,
     "runtime_node_failure": 18,
     "operations_deprecation": 14
   },
@@ -38,7 +38,7 @@
     "kube-linter": 17,
     "kube-score": 14,
     "kubernetes-mixin": 3,
-    "kubescape": 19,
+    "kubescape": 18,
     "kubevious": 9,
     "node-problem-detector": 3,
     "pluto": 13,
@@ -46,14 +46,14 @@
     "popeye": 8
   },
   "coverage_by_feasibility": {
-    "host": 7,
+    "host": 6,
     "live_cluster": 1,
     "manifest_only": 83,
     "runtime": 10,
     "telemetry": 5
   },
   "scenario_counts_by_feasibility": {
-    "host": 7,
+    "host": 6,
     "live_cluster": 1,
     "manifest_only": 82,
     "runtime": 10,
@@ -63,13 +63,13 @@
     "falco_chain": 10,
     "node_problem_detector": 3,
     "operations": 18,
-    "policy": 75
+    "policy": 74
   },
   "scenario_counts_by_selection_track": {
     "falco_chain": 10,
     "node_problem_detector": 3,
     "operations": 18,
-    "policy": 74
+    "policy": 73
   },
   "scenarios": [
     {
@@ -3816,49 +3816,6 @@
       "target_rule_count": 1,
       "provenance_refs": [
         "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0182-ensurethattherotatecertificatesargumentisnotsettofalse.json"
-      ],
-      "lifecycle_state": "draft",
-      "qualification_status": "pending",
-      "qualification_blockers": [
-        {
-          "kind": "setup",
-          "detail": "Generate and validate the isolated fixture and healthy control."
-        },
-        {
-          "kind": "observation",
-          "detail": "Prove the required native evidence is stable for a bounded observation window."
-        },
-        {
-          "kind": "oracle",
-          "detail": "Freeze exact positive, healthy-control, and contradiction assertions."
-        },
-        {
-          "kind": "leakage",
-          "detail": "Keep source rule identities and expected findings out of candidate-visible inputs."
-        }
-      ]
-    },
-    {
-      "scenario_id": "rule-gap-kubelet-kernel-default-protection-disabled",
-      "title": "Kubelet kernel default protection is disabled",
-      "selection_track": "policy",
-      "category": "control_plane_host_hardening",
-      "setup_summary": "Create the concrete isolated configmap/kubelet-kernel-defaults-config fixture encoded by the matching ScenarioDraftDefinition and a healthy control differing only in the trigger state.",
-      "trigger_predicate": "Kubelet kernel default protection is disabled: data.component-config.yaml + data.predicate.json is apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nprotectKernelDefaults: false; {\"path\":\"protectKernelDefaults\",\"operator\":\"equals\",\"value\":false}.",
-      "expected_finding": "Identify kubelet kernel default protection is disabled and cite the exact native evidence satisfying the trigger.",
-      "healthy_condition": "data.component-config.yaml + data.predicate.json is apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nprotectKernelDefaults: true.",
-      "required_resources": ["configmap/kubelet-kernel-defaults-config"],
-      "required_mechanisms": ["api-server"],
-      "supported_cluster_profiles": ["local-minikube", "aks"],
-      "feasibility": "host",
-      "target_rule_ids": ["kubescape:rule:kubelet-protect-kernel-defaults"],
-      "target_semantic_group_ids": [
-        "kubescape:semantic:kubescape-rule-kubelet-protect-kernel-defaults:3693035db63c"
-      ],
-      "target_tool_ids": ["kubescape"],
-      "target_rule_count": 1,
-      "provenance_refs": [
-        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0177-ensurethattheprotectkerneldefaultsargumentissettotrue.json"
       ],
       "lifecycle_state": "draft",
       "qualification_status": "pending",

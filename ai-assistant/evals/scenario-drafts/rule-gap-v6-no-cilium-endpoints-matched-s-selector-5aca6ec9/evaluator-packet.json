@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-cilium-endpoints-matched-s-selector-5aca6ec9",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "cilium-selector-mismatch",
+        "resource_ref": "ciliumnetworkpolicy/web-policy",
+        "field_path": "spec.endpointSelector.matchLabels",
+        "observed_value": "{\"app\":\"api\"}",
+        "description": "Emitted by checkRule, checkID when the pinned source predicate for issue 1700 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "ciliumnetworkpolicy/web-policy",
+      "field_path": "spec.endpointSelector.matchLabels",
+      "observed_value": "{\"app\":\"web\"}",
+      "description": "The healthy control uses the actual workload label set."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f5f9db5b69f299e6"
+}

@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-that-the-etcd-data-directory-permissions-are-set-to-700-o-f73508f2-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "brokenValue": "0666",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure that the etcd data directory has permissions of `700` or more restrictive."
+    }
+  healthy-control.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "healthyValue": "0700",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only"
+    }

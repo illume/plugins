@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-access-container-service-account-v1-daa36c48",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:access-container-service-account-v1"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-access-container-service-account-v1:c0837c588083"
+  ],
+  "target_canonical_capability_ids": ["canonical:access-container-service-account-v1:daa36c4819f6"],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0053-accesscontainerserviceaccount.json"
+  ]
+}

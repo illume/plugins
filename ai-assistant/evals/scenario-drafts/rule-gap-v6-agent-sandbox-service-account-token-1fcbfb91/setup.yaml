@@ -1,0 +1,8 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: token-sandbox
+spec:
+  podTemplate:
+    spec:
+      automountServiceAccountToken: true

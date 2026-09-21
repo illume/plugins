@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-client-ca-file-argument-is-set-as-app-c491d9ca-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--client-ca-file",
+      "observedValue": "absent",
+      "triggerPredicate": "Setup TLS connection on the API server."
+    }
+  predicate-summary.txt: Setup TLS connection on the API server.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--client-ca-file",
+      "observedValue": "/etc/kubernetes/pki/ca.crt"
+    }

@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-avoid-non-default-bindings-to-system-authenticated-automated-ba94eed3",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-6-0-policies-4-1-10-avoid-non-default-bindings-to-system-authentic:8eb9ba2fb927",
+    "kube-bench:source:gke-1-8-0-policies-4-1-10-avoid-non-default-bindings-to-system-authentic:06cb8c72fae3",
+    "kube-bench:source:gke-1-9-0-policies-4-1-10-avoid-non-default-bindings-to-system-authentic:cd05194cd232"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:avoid-non-default-bindings-to-system-authenticated:0c8ef3e0ba28"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:avoid-non-default-bindings-to-system-authenticated-automated:ba94eed3f77f"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/policies.yaml"
+  ]
+}

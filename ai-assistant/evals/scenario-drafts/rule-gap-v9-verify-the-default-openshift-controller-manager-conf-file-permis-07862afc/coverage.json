@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-verify-the-default-openshift-controller-manager-conf-file-permis-07862afc",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-0-7-master-4-17-verify-the-default-openshift-controller-manager-conf-:2b11f1945251"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:verify-the-default-openshift-controller-manager-conf-file-permissions:441a8ee44fac"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:verify-the-default-openshift-controller-manager-conf-file-permis:07862afccad5"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-0.7/master.yaml"
+  ]
+}

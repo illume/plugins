@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-ensure-that-the-openshift-pki-certificate-file-permissions-are-s-341273f7",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v8-ensure-that-the-openshift-pki-certificate-file-permissions-are-s-341273f7",
+        "field_path": "data.evidence.json#files[/etc/kubernetes/pki/apiserver.crt].mode",
+        "observed_value": "0644",
+        "description": "Ensure that the OpenShift PKI certificate file permissions are set to 600 or more restrictive (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v8-ensure-that-the-openshift-pki-certificate-file-permissions-are-s-341273f7",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v8-ensure-that-the-openshift-pki-certificate-file-permissions-are-s-341273f7",
+      "field_path": "data.healthy-control.json#files[/etc/kubernetes/pki/apiserver.crt].mode",
+      "observed_value": "0600",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3d98f608fa7ec213"
+}

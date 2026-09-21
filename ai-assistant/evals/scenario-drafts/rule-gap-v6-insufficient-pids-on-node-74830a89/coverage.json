@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-insufficient-pids-on-node-74830a89",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["popeye:code:706"],
+  "target_semantic_group_ids": ["popeye:semantic:popeye-code-706:231117322109"],
+  "target_canonical_capability_ids": ["canonical:insufficient-pids-on-node:74830a89f5dc"],
+  "target_tool_ids": ["popeye"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml"
+  ]
+}

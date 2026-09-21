@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-linux-hardening-9f46be5a",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "hardening-missing",
+        "resource_ref": "deployment/soft-app",
+        "field_path": "spec.template.spec.containers[0].securityContext",
+        "observed_value": "{\"allowPrivilegeEscalation\":true}",
+        "description": "fails if container does not define any linux security hardening"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/soft-app",
+      "field_path": "spec.template.spec.containers[0].securityContext.seccompProfile.type",
+      "observed_value": "RuntimeDefault",
+      "description": "The healthy control would define baseline Linux hardening."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-963c375d313d5823"
+}

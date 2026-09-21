@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-deprecated-service-account-field-b3694ab1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-field-present",
+        "resource_ref": "deployment/deprecated-identity",
+        "field_path": "spec.template.spec.serviceAccount",
+        "observed_value": "legacy-identity",
+        "description": "The workload uses the deprecated serviceAccount field."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/deprecated-identity",
+      "field_path": "spec.template.spec.serviceAccountName",
+      "observed_value": "legacy-identity",
+      "description": "The healthy control would set serviceAccountName instead."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-584290d7eb6316ef"
+}

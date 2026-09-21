@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-minimize-access-to-the-proxy-sub-resource-of-node-objects-manual-41aab34c
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrole-scope.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].resources",
+      "brokenValue": "[\"nodes/proxy\"]",
+      "targetPath": "/manifests/clusterrole-scope.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].resources",
+      "healthyValue": "[\"nodes\"]",
+      "targetPath": "/manifests/clusterrole-scope.yaml",
+      "applicability": "inert-review-only"
+    }

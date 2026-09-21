@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-verify-image-signature-158acf93-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/image-signature-report.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "image-signature-verification",
+      "exactField": "signature.verification.status",
+      "brokenValue": "missing",
+      "targetPath": "/var/lib/evals/image-signature-report.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Verifies the signature of each image with given public keys"
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "image-signature-verification",
+      "exactField": "signature.verification.status",
+      "healthyValue": "verified",
+      "targetPath": "/var/lib/evals/image-signature-report.json",
+      "applicability": "inert-review-only"
+    }

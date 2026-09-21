@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-limit-use-of-the-bind-impersonate-and-escalate-permissions-in-th-91751ba7
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrole-escalation.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "brokenValue": "[\"bind\",\"impersonate\",\"escalate\"]",
+      "targetPath": "/manifests/clusterrole-escalation.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "healthyValue": "[\"get\",\"list\"]",
+      "targetPath": "/manifests/clusterrole-escalation.yaml",
+      "applicability": "inert-review-only"
+    }

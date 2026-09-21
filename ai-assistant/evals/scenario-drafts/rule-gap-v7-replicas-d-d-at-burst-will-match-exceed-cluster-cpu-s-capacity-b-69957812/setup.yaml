@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-replicas-d-d-at-burst-will-match-exceed-cluster-cpu-s-capacity-b-69957812-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/cluster-capacity.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "autoscaling-capacity",
+      "exactField": "hpa.projectedBurst.cpuCapacity",
+      "brokenValue": "18 > 8",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkResources when the pinned source predicate for issue 602 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "autoscaling-capacity",
+      "exactField": "hpa.projectedBurst.cpuCapacity",
+      "healthyValue": "6 <= 8",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only"
+    }

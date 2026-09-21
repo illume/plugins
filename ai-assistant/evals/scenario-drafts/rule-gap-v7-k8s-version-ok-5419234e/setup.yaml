@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-k8s-version-ok-5419234e-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/cluster-version.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-version",
+      "exactField": "cluster.version",
+      "brokenValue": "v1.23.0",
+      "targetPath": "/var/lib/evals/cluster-version.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkVersion when the pinned source predicate for issue 406 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-version",
+      "exactField": "cluster.version",
+      "healthyValue": "v1.30.0",
+      "targetPath": "/var/lib/evals/cluster-version.json",
+      "applicability": "inert-review-only"
+    }

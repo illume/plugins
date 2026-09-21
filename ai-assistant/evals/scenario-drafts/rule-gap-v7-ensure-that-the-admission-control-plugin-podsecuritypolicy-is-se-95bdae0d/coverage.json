@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-the-admission-control-plugin-podsecuritypolicy-is-se-95bdae0d",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-master-1-2-16-ensure-that-the-admission-control-plugin-podsecuri:f15f5af4f3f8"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-admission-control-plugin-podsecuritypolicy-is-set-not-scored:f19254495f1d"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-admission-control-plugin-podsecuritypolicy-is-se:95bdae0d8bca"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/master.yaml"
+  ]
+}

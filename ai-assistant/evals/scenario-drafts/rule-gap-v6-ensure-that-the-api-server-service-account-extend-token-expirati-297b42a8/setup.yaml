@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-service-account-extend-token-expirati-297b42a8-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--service-account-extend-token-expiration",
+      "observedValue": "true",
+      "triggerPredicate": "Ensure that the --service-account-extend-token-expiration parameter is set to false to use shorter token lifetimes."
+    }
+  predicate-summary.txt: >-
+    Ensure that the --service-account-extend-token-expiration parameter is set to false to use
+    shorter token lifetimes.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--service-account-extend-token-expiration",
+      "observedValue": "false"
+    }

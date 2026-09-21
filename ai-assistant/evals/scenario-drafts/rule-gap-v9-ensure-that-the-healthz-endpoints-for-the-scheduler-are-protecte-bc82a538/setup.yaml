@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-that-the-healthz-endpoints-for-the-scheduler-are-protecte-bc82a538
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrole-healthz.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].nonResourceURLs",
+      "brokenValue": "[\"/healthz\"]",
+      "targetPath": "/manifests/clusterrole-healthz.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].nonResourceURLs",
+      "healthyValue": "[]",
+      "targetPath": "/manifests/clusterrole-healthz.yaml",
+      "applicability": "inert-review-only"
+    }

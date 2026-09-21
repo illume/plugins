@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-external-secret-storage-7cceabdd",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the Secret consumption pattern and explain the secret-management gap. Cite exact resources and do not mutate resources.",
+  "visible_resource_refs": ["secret/app-db", "deployment/app"],
+  "allowed_observation_kinds": ["secret.metadata", "deployment.pod-template"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

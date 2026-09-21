@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-that-the-seccomp-profile-is-set-to-docker-default-in-your-3d49e1b6
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/workload-pod.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "workload",
+      "evidenceKind": "pod-security-context",
+      "exactField": "spec.template.spec.securityContext.seccompProfile.type",
+      "brokenValue": "Unconfined",
+      "targetPath": "/manifests/workload-pod.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "workload",
+      "evidenceKind": "pod-security-context",
+      "exactField": "spec.template.spec.securityContext.seccompProfile.type",
+      "healthyValue": "RuntimeDefault",
+      "targetPath": "/manifests/workload-pod.yaml",
+      "applicability": "inert-review-only"
+    }

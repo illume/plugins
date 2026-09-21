@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-set-selinuxoptions-23627ee6",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-set-selinuxoptions-23627ee6-fixture",
+        "field_path": "data.evidence.json#spec.template.spec.containers[0].securityContext.seLinuxOptions.type",
+        "observed_value": "spc_t",
+        "description": "fails if workload and container do not define any seLinuxOptions"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-set-selinuxoptions-23627ee6-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-set-selinuxoptions-23627ee6-fixture",
+      "field_path": "data.healthy-control.json#spec.template.spec.containers[0].securityContext.seLinuxOptions.type",
+      "observed_value": "container_t",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-be8eef091191ae54"
+}

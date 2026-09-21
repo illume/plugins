@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-use-security-context-constraints-as-compensating-controls-for-pr-5a52513e
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /openshift/security-context-constraints.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: openshift
+data:
+  evidence.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.allowHostPorts",
+      "brokenValue": "true",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }
+  healthy-control.json: |-
+    {
+      "component": "openshift-admission",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "securityContextConstraints.allowHostPorts",
+      "healthyValue": "false",
+      "targetPath": "/openshift/security-context-constraints.json",
+      "applicability": "openshift"
+    }

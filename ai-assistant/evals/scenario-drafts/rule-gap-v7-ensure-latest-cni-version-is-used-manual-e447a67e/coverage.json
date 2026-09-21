@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-latest-cni-version-is-used-manual-e447a67e",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-7-policies-4-4-1-ensure-latest-cni-version-is-used-manual:31897b920dd2",
+    "kube-bench:source:aks-1-8-policies-4-4-1-ensure-latest-cni-version-is-used-manual:e53deef26517"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-latest-cni-version-is-used:70949fa32835"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-latest-cni-version-is-used-manual:e447a67eaaf9"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml"
+  ]
+}

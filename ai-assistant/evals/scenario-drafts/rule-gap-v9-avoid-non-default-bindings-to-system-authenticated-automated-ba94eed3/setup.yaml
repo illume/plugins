@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-avoid-non-default-bindings-to-system-authenticated-automated-ba94eed3
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrolebinding-subject.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-binding",
+      "exactField": "subjects[0].name",
+      "brokenValue": "system:authenticated",
+      "targetPath": "/manifests/clusterrolebinding-subject.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-binding",
+      "exactField": "subjects[0].name",
+      "healthyValue": "system:serviceaccounts",
+      "targetPath": "/manifests/clusterrolebinding-subject.yaml",
+      "applicability": "inert-review-only"
+    }

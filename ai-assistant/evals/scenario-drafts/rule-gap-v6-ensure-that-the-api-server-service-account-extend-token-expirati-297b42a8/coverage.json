@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-api-server-service-account-extend-token-expirati-297b42a8",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-11-master-1-2-30-ensure-that-the-service-account-extend-token-expi:992840870a56",
+    "kube-bench:source:cis-1-12-master-1-2-30-ensure-that-the-service-account-extend-token-expi:d99a02a8cf5c",
+    "kube-bench:source:cis-2-0-master-1-2-30-ensure-that-the-service-account-extend-token-expir:e5647c27e7a3",
+    "kubescape:rule:ensure-that-the-api-server-service-account-extend-token-expiration-is-set-to-false"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-service-account-extend-token-expiration-parameter-is-set-to-fals:4b6204007a57",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-api-server-service-account-extend-token-expiratio:f5f1c6acbefa"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-api-server-service-account-extend-token-expirati:297b42a87a09"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/master.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0290-ensurethattheserviceaccountextendtokenexpirationparameterissettofalse.json"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-scheduler-kubeconfig-file-ownership-is-set-to-ro-2ef7565c",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-6-k3s-master-1-1-16-ensure-that-the-scheduler-kubeconfig-file-owne:a4fb5ca4b199",
+    "kube-bench:source:rh-1-4-master-1-1-16-ensure-that-the-scheduler-kubeconfig-file-ownership:a4af5c8748ad",
+    "kube-bench:source:rh-1-8-master-1-1-16-ensure-that-the-scheduler-kubeconfig-file-ownership:d9ea602da49d",
+    "kube-bench:source:rh-1-9-master-1-1-16-ensure-that-the-scheduler-kubeconfig-file-ownership:1e6af0db75a5"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-scheduler-kubeconfig-file-ownership-is-set-to-root-root:3d5dc8af2ba6"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-scheduler-kubeconfig-file-ownership-is-set-to-ro:2ef7565c8849"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-that-garbage-collection-is-configured-as-appropriate-manu-bb2b4f92-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--terminated-pod-gc-threshold",
+      "brokenValue": "0",
+      "targetPath": "/etc/kubernetes/manifests/kube-controller-manager.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure that garbage collection is configured as appropriate (Manual)"
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--terminated-pod-gc-threshold",
+      "healthyValue": "12500",
+      "targetPath": "/etc/kubernetes/manifests/kube-controller-manager.yaml",
+      "applicability": "inert-review-only"
+    }

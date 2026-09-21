@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-image
+  labels:
+    app: legacy-image
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-image
+  template:
+    metadata:
+      labels:
+        app: legacy-image
+    spec:
+      containers:
+        - name: app
+          image: docker.io/library/nginx:1.27
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+          ports:
+            - containerPort: 8080

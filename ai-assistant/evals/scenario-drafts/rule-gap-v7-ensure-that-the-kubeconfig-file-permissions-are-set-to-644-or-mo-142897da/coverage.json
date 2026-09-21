@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-the-kubeconfig-file-permissions-are-set-to-644-or-mo-142897da",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set-t:57c1d16323b5",
+    "kube-bench:source:aks-1-7-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set-t:e5181967e083",
+    "kube-bench:source:aks-1-8-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set-t:2a4568bfab38",
+    "kube-bench:source:eks-1-0-1-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:0f06cb19fdf3",
+    "kube-bench:source:eks-1-1-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:8e74f50ab688",
+    "kube-bench:source:eks-1-2-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:3d08a776eacf",
+    "kube-bench:source:eks-1-5-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:ea45508e1e08",
+    "kube-bench:source:eks-1-7-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:d1740a46ca1e",
+    "kube-bench:source:eks-1-8-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:10bf53c7c162",
+    "kube-bench:source:gke-1-8-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:ee76b2ec8033",
+    "kube-bench:source:gke-1-9-0-node-3-1-1-ensure-that-the-kubeconfig-file-permissions-are-set:293f0212ffa3",
+    "kubescape:rule:Ensure-that-the-kubeconfig-file-permissions-are-set-to-644-or-more-restrictive"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubeconfig-file-permissions-are-set-to-644-or-more-restrictive:f8afbe89dc7c",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-kubeconfig-file-permissions-are-set-to-644-or-mor:504190f6c785"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubeconfig-file-permissions-are-set-to-644-or-mo:142897da97ec"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 12,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/node.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0238-ensurethatthekubeconfigfilepermissionsaresetto644ormorerestrictive.json"
+  ]
+}

@@ -21,8 +21,8 @@
     "qualification": "Drafts remain outside the active roster until setup, observation, oracle, and leakage blockers are resolved."
   },
   "total_scenarios": 100,
-  "total_target_rules": 1055,
-  "total_target_semantic_groups": 179,
+  "total_target_rules": 1056,
+  "total_target_semantic_groups": 180,
   "category_counts": {
     "workload_configuration": 30,
     "control_plane_host_hardening": 25,
@@ -35,7 +35,7 @@
     "kube-linter": 18,
     "kube-score": 11,
     "kubernetes-mixin": 24,
-    "kubescape": 18,
+    "kubescape": 19,
     "kubevious": 5,
     "node-problem-detector": 17,
     "pluto": 29,
@@ -43,7 +43,7 @@
     "popeye": 19
   },
   "coverage_by_feasibility": {
-    "host": 896,
+    "host": 897,
     "live_cluster": 2,
     "manifest_only": 101,
     "runtime": 20,
@@ -4022,13 +4022,15 @@
         "kube-bench:source:rke-cis-1-24-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument:479746386221",
         "kube-bench:source:rke2-cis-1-23-node-4-2-6-ensure-that-the-protect-kernel-defaults-argumen:f108ed88657d",
         "kube-bench:source:rke2-cis-1-24-node-4-2-6-ensure-that-the-protect-kernel-defaults-argumen:db2b2b55a37c",
-        "kube-bench:source:tkgi-1-2-53-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument-:f856cabcefec"
+        "kube-bench:source:tkgi-1-2-53-node-4-2-6-ensure-that-the-protect-kernel-defaults-argument-:f856cabcefec",
+        "kubescape:rule:kubelet-protect-kernel-defaults"
       ],
       "target_semantic_group_ids": [
-        "kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6"
+        "kube-bench:semantic:ensure-that-the-protect-kernel-defaults-argument-is-set-to-true:f691c11ca1b6",
+        "kubescape:semantic:kubescape-rule-kubelet-protect-kernel-defaults:3693035db63c"
       ],
-      "target_tool_ids": ["kube-bench"],
-      "target_rule_count": 21,
+      "target_tool_ids": ["kube-bench", "kubescape"],
+      "target_rule_count": 22,
       "provenance_refs": [
         "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/node.yaml",
         "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
@@ -4050,7 +4052,8 @@
         "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/node.yaml",
         "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/node.yaml",
         "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/node.yaml",
-        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+        "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml",
+        "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0177-ensurethattheprotectkerneldefaultsargumentissettotrue.json"
       ],
       "lifecycle_state": "draft",
       "qualification_status": "pending",

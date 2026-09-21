@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-maximumretainedfiles-argument-is-set-to-10-or-as-21ea1974",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-0-master-1-2-24-ensure-that-the-maximumretainedfiles-argument-is-se:6e7ba073b161",
+    "kube-bench:source:rh-1-4-master-1-2-22-ensure-that-the-maximumretainedfiles-argument-is-se:3bdf73a7689e",
+    "kube-bench:source:rh-1-8-master-1-2-20-ensure-that-the-maximumretainedfiles-argument-is-se:1b88fd33ea42",
+    "kube-bench:source:rh-1-9-master-1-2-20-ensure-that-the-maximumretainedfiles-argument-is-se:b4d9c6ffefc2"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-maximumretainedfiles-argument-is-set-to-10-or-as-appropriate:7fd4daad1a15"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-maximumretainedfiles-argument-is-set-to-10-or-as:21ea197411b0"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

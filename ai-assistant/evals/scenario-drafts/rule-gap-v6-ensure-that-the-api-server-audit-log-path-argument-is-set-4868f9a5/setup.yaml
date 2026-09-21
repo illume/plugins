@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-audit-log-path-argument-is-set-4868f9a5-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--audit-log-path",
+      "observedValue": "absent",
+      "triggerPredicate": "Enable auditing on the Kubernetes API Server and set the desired audit log path."
+    }
+  predicate-summary.txt: Enable auditing on the Kubernetes API Server and set the desired audit log path.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--audit-log-path",
+      "observedValue": "/var/log/kubernetes/audit.log"
+    }

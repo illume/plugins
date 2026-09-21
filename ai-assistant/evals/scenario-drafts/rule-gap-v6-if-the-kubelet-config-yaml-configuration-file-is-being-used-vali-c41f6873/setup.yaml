@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-if-the-kubelet-config-yaml-configuration-file-is-being-used-vali-c41f6873-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kubelet",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0644",
+      "triggerPredicate": "Ensure that if the kubelet refers to a configuration file with the `--config` argument, that file has permissions of 600 or more restrictive."
+    }
+  predicate-summary.txt: >-
+    Ensure that if the kubelet refers to a configuration file with the `--config` argument, that
+    file has permissions of 600 or more restrictive.
+  healthy-control.json: |-
+    {
+      "subject": "kubelet",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0600"
+    }

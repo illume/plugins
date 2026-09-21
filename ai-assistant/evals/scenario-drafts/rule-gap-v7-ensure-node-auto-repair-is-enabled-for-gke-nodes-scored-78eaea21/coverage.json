@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-node-auto-repair-is-enabled-for-gke-nodes-scored-78eaea21",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-managedservices-6-5-2-ensure-node-auto-repair-is-enabled-for-gke:00e27b174206",
+    "kube-bench:source:gke-1-2-0-managedservices-5-5-2-ensure-node-auto-repair-is-enabled-for-g:b418aa0d3561",
+    "kube-bench:source:gke-1-6-0-managedservices-5-5-2-ensure-node-auto-repair-is-enabled-for-g:fe85d8107fb3",
+    "kube-bench:source:gke-1-8-0-managedservices-5-5-2-ensure-node-auto-repair-is-enabled-for-g:f20053e42eb5",
+    "kube-bench:source:gke-1-9-0-managedservices-5-5-2-ensure-node-auto-repair-is-enabled-for-g:d9b9a3957db6"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-node-auto-repair-is-enabled-for-gke-nodes:519691088313"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-node-auto-repair-is-enabled-for-gke-nodes-scored:78eaea21a0c6"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

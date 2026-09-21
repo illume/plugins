@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-verify-that-the-service-account-key-file-argument-is-not-set-c3420b4b
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--service-account-key-file",
+      "brokenValue": "/etc/kubernetes/pki/sa.pub",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--service-account-key-file",
+      "healthyValue": "absent",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }

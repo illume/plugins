@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-list-all-mutating-webhooks-ccd754b1-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/mutatingwebhookconfiguration.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "admission-webhook",
+      "evidenceKind": "admission-webhooks",
+      "exactField": "webhooks[0].name",
+      "brokenValue": "mutate.example.dev",
+      "targetPath": "/manifests/mutatingwebhookconfiguration.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Returns mutating webhook configurations to be verified"
+    }
+  healthy-control.json: |-
+    {
+      "component": "admission-webhook",
+      "evidenceKind": "admission-webhooks",
+      "exactField": "webhooks[0].name",
+      "healthyValue": "[]",
+      "targetPath": "/manifests/mutatingwebhookconfiguration.yaml",
+      "applicability": "inert-review-only"
+    }

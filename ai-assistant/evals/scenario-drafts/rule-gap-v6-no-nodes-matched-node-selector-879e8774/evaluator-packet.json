@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-nodes-matched-node-selector-879e8774",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "selector-has-no-match",
+        "resource_ref": "deployment/storage-app",
+        "field_path": "spec.template.spec.nodeSelector.disk",
+        "observed_value": "ssd",
+        "description": "Emitted by checkRule when the pinned source predicate for issue 1701 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "node/worker-a",
+      "field_path": "metadata.labels.disk",
+      "observed_value": "ssd",
+      "description": "The healthy control would expose the requested label on a node."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ca8cc3501641f76a"
+}

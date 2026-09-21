@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-bootstrap-token-authentication-should-not-be-used-for-users-manu-97404ee2",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-controlplane-3-1-3-bootstrap-token-authentication-should-not-be:6e4bd5685972",
+    "kube-bench:source:cis-1-11-controlplane-3-1-3-bootstrap-token-authentication-should-not-be:4800b2f7d5f8",
+    "kube-bench:source:cis-1-12-controlplane-3-1-3-bootstrap-token-authentication-should-not-be:01a1de3c42ae",
+    "kube-bench:source:cis-1-7-controlplane-3-1-3-bootstrap-token-authentication-should-not-be-:485f4d5ef9a2",
+    "kube-bench:source:cis-1-8-controlplane-3-1-3-bootstrap-token-authentication-should-not-be-:058e657feeb8",
+    "kube-bench:source:cis-1-9-controlplane-3-1-3-bootstrap-token-authentication-should-not-be-:218ae2411708",
+    "kube-bench:source:cis-2-0-controlplane-3-1-3-bootstrap-token-authentication-should-not-be-:7defee2eb6dd",
+    "kube-bench:source:k3s-cis-1-7-controlplane-3-1-3-bootstrap-token-authentication-should-not:45bee8513083",
+    "kube-bench:source:k3s-cis-1-8-controlplane-3-1-3-bootstrap-token-authentication-should-not:3027583703bd",
+    "kube-bench:source:k3s-cis-1-9-controlplane-3-1-3-bootstrap-token-authentication-should-not:fcc5957a3f3d",
+    "kube-bench:source:rke-cis-1-7-controlplane-3-1-3-bootstrap-token-authentication-should-not:2d4a5c17175c",
+    "kube-bench:source:rke2-cis-1-7-controlplane-3-1-3-bootstrap-token-authentication-should-no:63f7f8c062e5",
+    "kube-bench:source:rke2-cis-1-8-controlplane-3-1-3-bootstrap-token-authentication-should-no:3d58590b7039",
+    "kube-bench:source:rke2-cis-1-9-controlplane-3-1-3-bootstrap-token-authentication-should-no:7d7b1e0f5e0b"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:bootstrap-token-authentication-should-not-be-used-for-users:7c9fd9d6ea47"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:bootstrap-token-authentication-should-not-be-used-for-users-manu:97404ee280f6"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 14,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/controlplane.yaml"
+  ]
+}

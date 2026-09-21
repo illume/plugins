@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost-5a4429ec",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-10-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bound-:e63fb0f83673",
+    "kube-bench:source:cis-1-11-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bound-:50c7b2e19dbd",
+    "kube-bench:source:cis-1-12-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bound-:ac5b56de9d2e",
+    "kube-bench:source:cis-1-9-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bound-t:bd7703795518",
+    "kube-bench:source:cis-2-0-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bound-t:c52d2a60257a",
+    "kube-bench:source:k3s-cis-1-9-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bou:29bb222bc01d",
+    "kube-bench:source:rke2-cis-1-9-node-4-3-1-ensure-that-the-kube-proxy-metrics-service-is-bo:ebe5701b3bbc",
+    "kubescape:rule:ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost:a7ae174e813b",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost:a902435950b4"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost:5a4429ec8966"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 8,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/node.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0291-ensurethatthekubeproxymetricsserviceisboundtolocalhost.json"
+  ]
+}

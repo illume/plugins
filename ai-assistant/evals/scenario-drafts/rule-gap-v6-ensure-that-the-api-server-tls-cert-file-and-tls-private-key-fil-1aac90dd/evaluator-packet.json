@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-that-the-api-server-tls-cert-file-and-tls-private-key-fil-1aac90dd",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-ensure-that-the-api-server-tls-cert-file-and-tls-private-key-fil-1aac90dd-fixture",
+        "field_path": "data.observation.json#arguments.--tls-cert-file + arguments.--tls-private-key-file",
+        "observed_value": "absent + absent",
+        "description": "Setup TLS connection on the API server."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-ensure-that-the-api-server-tls-cert-file-and-tls-private-key-fil-1aac90dd-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-ensure-that-the-api-server-tls-cert-file-and-tls-private-key-fil-1aac90dd-fixture",
+      "field_path": "data.healthy-control.json#arguments.--tls-cert-file + arguments.--tls-private-key-file",
+      "observed_value": "/etc/kubernetes/pki/apiserver.crt + /etc/kubernetes/pki/apiserver.key",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e5e5540c9ef1a557"
+}

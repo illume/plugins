@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-set-gmsacredentialspecname-value-ec4f661d-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/windows-deployment.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "windows-security-context",
+      "exactField": "spec.template.spec.securityContext.windowsOptions.gmsaCredentialSpecName",
+      "brokenValue": "legacy-gmsa",
+      "targetPath": "/manifests/windows-deployment.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Fails if a Windows pod/workload (identified via spec.os.name or the kubernetes.io/os nodeSelector) does not define securityContext.windowsOptions.gmsaCredentialSpecName at the pod level or on every container."
+    }
+  healthy-control.json: |-
+    {
+      "component": "pod",
+      "evidenceKind": "windows-security-context",
+      "exactField": "spec.template.spec.securityContext.windowsOptions.gmsaCredentialSpecName",
+      "healthyValue": "absent",
+      "targetPath": "/manifests/windows-deployment.yaml",
+      "applicability": "inert-review-only"
+    }

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-ensure-that-the-kubelet-configuration-file-has-permissions-set-t-262e1298",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v8-ensure-that-the-kubelet-configuration-file-has-permissions-set-t-262e1298. Explain the concrete configuration defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v8-ensure-that-the-kubelet-configuration-file-has-permissions-set-t-262e1298"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

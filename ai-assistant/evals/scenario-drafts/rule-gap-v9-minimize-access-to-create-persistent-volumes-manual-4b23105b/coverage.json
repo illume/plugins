@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-minimize-access-to-create-persistent-volumes-manual-4b23105b",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-8-policies-4-1-8-minimize-access-to-create-persistent-volumes-manu:f422e487886e",
+    "kube-bench:source:cis-1-10-policies-5-1-9-minimize-access-to-create-persistent-volumes-man:86976ea04ba5",
+    "kube-bench:source:cis-1-11-policies-5-1-9-minimize-access-to-create-persistent-volumes-man:6c3762649f25",
+    "kube-bench:source:cis-1-12-policies-5-1-9-minimize-access-to-create-persistent-volumes-man:d4ce8c34805d",
+    "kube-bench:source:cis-1-7-policies-5-1-9-minimize-access-to-create-persistent-volumes-manu:1a6a7b078574",
+    "kube-bench:source:cis-1-8-policies-5-1-9-minimize-access-to-create-persistent-volumes-manu:adaa28da9abf",
+    "kube-bench:source:cis-1-9-policies-5-1-9-minimize-access-to-create-persistent-volumes-manu:414be1151201",
+    "kube-bench:source:cis-2-0-policies-5-1-9-minimize-access-to-create-persistent-volumes-manu:bb1352637912",
+    "kube-bench:source:k3s-cis-1-7-policies-5-1-9-minimize-access-to-create-persistent-volumes-:1a6f57e2bb60",
+    "kube-bench:source:k3s-cis-1-8-policies-5-1-9-minimize-access-to-create-persistent-volumes-:b194067cace4",
+    "kube-bench:source:k3s-cis-1-9-policies-5-1-9-minimize-access-to-create-persistent-volumes-:1014956fe863",
+    "kube-bench:source:rke-cis-1-7-policies-5-1-9-minimize-access-to-create-persistent-volumes-:8152f4146ae5",
+    "kube-bench:source:rke2-cis-1-7-policies-5-1-9-minimize-access-to-create-persistent-volumes:8c3d02c77645",
+    "kube-bench:source:rke2-cis-1-8-policies-5-1-9-minimize-access-to-create-persistent-volumes:259424130e1c",
+    "kube-bench:source:rke2-cis-1-9-policies-5-1-9-minimize-access-to-create-persistent-volumes:5c83774e8f1e"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:minimize-access-to-create-persistent-volumes:5a1fafc98d0d"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:minimize-access-to-create-persistent-volumes-manual:4b23105b3a07"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 15,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml"
+  ]
+}

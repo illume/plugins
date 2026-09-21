@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-manage-kubernetes-rbac-users-with-azure-ad-manual-bb604297
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /aks/cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: aks
+data:
+  evidence.json: |-
+    {
+      "component": "aks-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "aadProfile.enableAzureRbac",
+      "brokenValue": "false",
+      "targetPath": "/aks/cluster.json",
+      "applicability": "aks"
+    }
+  healthy-control.json: |-
+    {
+      "component": "aks-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "aadProfile.enableAzureRbac",
+      "healthyValue": "true",
+      "targetPath": "/aks/cluster.json",
+      "applicability": "aks"
+    }

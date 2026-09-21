@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-has-image-signature-baed11d8",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the workload image and the attached verification evidence. Explain the signature gap and do not mutate resources.",
+  "visible_resource_refs": ["deployment/signed-app", "configmap/image-verification-report"],
+  "allowed_observation_kinds": ["deployment.pod-template", "configmap.data"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

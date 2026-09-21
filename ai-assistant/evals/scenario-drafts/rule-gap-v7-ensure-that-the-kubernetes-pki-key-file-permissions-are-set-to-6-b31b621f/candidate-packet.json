@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-ensure-that-the-kubernetes-pki-key-file-permissions-are-set-to-6-b31b621f",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v7-ensure-that-the-kubernetes-pki-key-file-permissions-are-set-to-6-b31b621f-fixture. Explain the concrete defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v7-ensure-that-the-kubernetes-pki-key-file-permissions-are-set-to-6-b31b621f-fixture"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,48 @@
+schema_version: 1.0.0
+scenario_id: rule-gap-v8-ensure-that-the-profiling-argument-is-set-to-false-not-scored-5c0b0b21
+scenario_version: 0.1.0
+family: rule-gap-policy
+mode: diagnose_only
+title: Ensure that the profiling argument is set to false (Not Scored)
+description: >-
+  Ensure that the --profiling argument is set to false (Not Scored) The fixture preserves inert,
+  typed evidence for review without mutating a host, runtime, or control-plane surface.
+provenance:
+  owner: scenarios-goal-agents
+  source: reference-implementation
+  license: Apache-2.0
+  admission_date: '2026-09-20'
+  last_review: '2026-09-20'
+  review_due: '2026-12-19'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: rule-gap-policy
+  lineage_id: rule-gap-v8-ensure-that-the-profiling-argument-is-set-to-false-not-scored-5c0b0b21
+  variant_kind: anchor
+  splits:
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-minikube
+  - aks
+required_mechanisms:
+  - api-server
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-8a4d9633a155
+artifact_policy:
+  retain_raw_tool_output: true

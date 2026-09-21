@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-audit-policy-content-b5e39d96-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/audit-policy.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "audit-policy",
+      "field": "auditPolicy.rules",
+      "observedValue": "[]",
+      "triggerPredicate": "Kubernetes can audit the details of requests made to the API server. The `--audit-policy-file` flag must be set for this logging to be enabled."
+    }
+  predicate-summary.txt: >-
+    Kubernetes can audit the details of requests made to the API server. The `--audit-policy-file`
+    flag must be set for this logging to be enabled.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "audit-policy",
+      "field": "auditPolicy.rules",
+      "observedValue": "[{\"level\":\"Metadata\"}]"
+    }

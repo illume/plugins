@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-manage-the-namespacelifecycle-admission-controller-995def9b",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-manage-the-namespacelifecycle-admission-controller-995def9b",
+        "field_path": "data.evidence.json#admissionControl.enabledPlugins",
+        "observed_value": "[\"ServiceAccount\"]",
+        "description": "Manage the NamespaceLifecycle admission controller"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-manage-the-namespacelifecycle-admission-controller-995def9b",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-manage-the-namespacelifecycle-admission-controller-995def9b",
+      "field_path": "data.healthy-control.json#admissionControl.enabledPlugins",
+      "observed_value": "[\"NamespaceLifecycle\",\"ServiceAccount\"]",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bee9fd5f91a5147b"
+}

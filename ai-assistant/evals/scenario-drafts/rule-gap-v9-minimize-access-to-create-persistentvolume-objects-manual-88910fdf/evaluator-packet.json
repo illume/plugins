@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-minimize-access-to-create-persistentvolume-objects-manual-88910fdf",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-minimize-access-to-create-persistentvolume-objects-manual-88910fdf",
+        "field_path": "data.evidence.json#rules[0].resources",
+        "observed_value": "[\"persistentvolumes\"]",
+        "description": "Minimize access to create PersistentVolume objects (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-minimize-access-to-create-persistentvolume-objects-manual-88910fdf",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-minimize-access-to-create-persistentvolume-objects-manual-88910fdf",
+      "field_path": "data.healthy-control.json#rules[0].resources",
+      "observed_value": "[\"persistentvolumeclaims\"]",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bc3081d602cc38bf"
+}

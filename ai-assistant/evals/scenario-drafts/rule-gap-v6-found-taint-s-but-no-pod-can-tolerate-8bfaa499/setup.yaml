@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: worker-a
+  labels:
+    kubernetes.io/hostname: worker-a
+spec:
+  taints:
+    - key: dedicated
+      value: infra
+      effect: NoSchedule
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workload
+  labels:
+    app: workload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workload
+  template:
+    metadata:
+      labels:
+        app: workload
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker-a
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532

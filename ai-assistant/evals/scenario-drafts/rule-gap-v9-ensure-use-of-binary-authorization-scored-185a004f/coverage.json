@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-use-of-binary-authorization-scored-185a004f",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-managedservices-6-10-5-ensure-use-of-binary-authorization-scored:39c220ac9600",
+    "kube-bench:source:gke-1-2-0-managedservices-5-10-5-ensure-use-of-binary-authorization-auto:f74f415b4b47",
+    "kube-bench:source:gke-1-6-0-managedservices-5-10-4-ensure-use-of-binary-authorization-auto:c6235cc5367d"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-use-of-binary-authorization:681309e56b31"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-use-of-binary-authorization-scored:185a004fbd05"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml"
+  ]
+}

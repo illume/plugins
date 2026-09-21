@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-unhealthy-d-desired-but-have-d-available-4c90c5a8",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["popeye:code:501"],
+  "target_semantic_group_ids": ["popeye:semantic:popeye-code-501:ca5469bef22a"],
+  "target_canonical_capability_ids": [
+    "canonical:unhealthy-d-desired-but-have-d-available:4c90c5a881ca"
+  ],
+  "target_tool_ids": ["popeye"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml"
+  ]
+}

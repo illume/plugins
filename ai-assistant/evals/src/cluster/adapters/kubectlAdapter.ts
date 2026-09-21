@@ -521,6 +521,18 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     return JSON.parse(result.stdout) as JsonValue;
   }
 
+  async listResourceSnapshots(namespace: string, resource: string): Promise<JsonValue[]> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', resource, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) {
+      throw new Error(`failed to list ${resource}: ${result.stderr || result.stdout}`);
+    }
+    const list = JSON.parse(result.stdout) as { items?: JsonValue[] };
+    return list.items ?? [];
+  }
+
   async applyJsonPatch(
     target: ActionRequest['target'],
     patch: JsonPatchOperation[]

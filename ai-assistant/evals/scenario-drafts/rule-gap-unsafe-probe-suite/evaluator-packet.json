@@ -8,14 +8,14 @@
         "fact_id": "liveness-probe-absent",
         "resource_ref": "deployment/app",
         "field_path": "spec.template.spec.containers[0].livenessProbe",
-        "observed_value": "absent",
+        "observed_value": "<absent>",
         "description": "The application container has no liveness probe."
       },
       {
         "fact_id": "readiness-probe-absent",
         "resource_ref": "deployment/app",
         "field_path": "spec.template.spec.containers[0].readinessProbe",
-        "observed_value": "absent",
+        "observed_value": "<absent>",
         "description": "The application container has no readiness probe."
       }
     ]

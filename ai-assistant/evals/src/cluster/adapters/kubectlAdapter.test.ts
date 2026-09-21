@@ -78,6 +78,21 @@ test('getDeployment distinguishes absence from operational failures', async () =
   );
 });
 
+test('listResourceSnapshots returns a namespaced inventory', async () => {
+  const runner: CommandRunner = (_command, args) => {
+    assert.deepEqual(args.slice(-6), ['get', 'poddisruptionbudget', '-n', 'trial', '-o', 'json']);
+    return {
+      status: 0,
+      stdout: JSON.stringify({ items: [{ metadata: { name: 'web' } }] }),
+      stderr: '',
+    };
+  };
+  assert.deepEqual(
+    await new TestKubectlAdapter(runner).listResourceSnapshots('trial', 'poddisruptionbudget'),
+    [{ metadata: { name: 'web' } }]
+  );
+});
+
 test('applyJsonPatch passes an exact RFC 6902 document and verifies target identity', async () => {
   let invokedArgs: string[] = [];
   const runner: CommandRunner = (_command, args) => {

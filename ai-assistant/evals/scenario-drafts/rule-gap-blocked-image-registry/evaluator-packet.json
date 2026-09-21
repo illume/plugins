@@ -6,8 +6,8 @@
     [
       {
         "fact_id": "allowed-registry",
-        "resource_ref": "namespace/image-policy",
-        "field_path": "metadata.annotations[\"evals.headlamp.dev/allowed-image-registries\"]",
+        "resource_ref": "configmap/image-policy",
+        "field_path": "data.allowedImageRegistries",
         "observed_value": "registry.k8s.io",
         "description": "The fixture policy permits images only from registry.k8s.io."
       },

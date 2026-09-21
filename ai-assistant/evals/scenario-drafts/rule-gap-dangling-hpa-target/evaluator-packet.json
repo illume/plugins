@@ -15,7 +15,7 @@
         "fact_id": "target-not-found",
         "resource_ref": "deployment/missing-api",
         "field_path": "metadata.name",
-        "observed_value": "not found",
+        "observed_value": "<absent>",
         "description": "No Deployment named missing-api exists in the scenario namespace."
       }
     ]

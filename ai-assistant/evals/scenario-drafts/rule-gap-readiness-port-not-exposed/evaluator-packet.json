@@ -15,7 +15,7 @@
         "fact_id": "declared-port-name",
         "resource_ref": "deployment/app",
         "field_path": "spec.template.spec.containers[0].ports[0]",
-        "observed_value": "{\"name\":\"web\",\"containerPort\":8080}",
+        "observed_value": "{\"containerPort\":8080,\"name\":\"web\",\"protocol\":\"TCP\"}",
         "description": "The only declared container port is named web, so ready cannot resolve."
       }
     ]

@@ -265,6 +265,8 @@ export interface ClusterAdapter {
   ): Promise<ActionRequest['target'] | null>;
   /** Reads one complete resource for repair diffing at the trusted harness boundary. */
   getResourceSnapshot(target: ActionRequest['target']): Promise<JsonValue | null>;
+  /** Lists complete resources at the trusted harness boundary for inventory predicates. */
+  listResourceSnapshots?(namespace: string, resource: string): Promise<JsonValue[]>;
   /** Applies an authorized RFC 6902 patch and returns the resulting resource. */
   applyJsonPatch(target: ActionRequest['target'], patch: JsonPatchOperation[]): Promise<JsonValue>;
   /**

@@ -5,8 +5,8 @@ family: rule-gap-policy
 mode: diagnose_only
 title: Container uses a disallowed image registry
 description: >-
-  A namespace-scoped image policy allows registry.k8s.io while its application image comes from
-  docker.io.
+  A namespace-scoped image policy ConfigMap allows registry.k8s.io while its application image comes
+  from docker.io.
 provenance:
   owner: scenarios-goal-agents
   source: reference-implementation

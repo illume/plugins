@@ -219,3 +219,4 @@ not retroactively become qualification evidence for that frozen engine version.
 - [Canonical capability rule-gap draft batch v8](kubernetes-rule-gap-scenarios-v8.md)
 - [Canonical capability rule-gap draft batch v9](kubernetes-rule-gap-scenarios-v9.md)
 - [Scenario implementation progress](kubernetes-scenario-implementation-progress.md)
+- [Scenario validation progress](kubernetes-scenario-validation-progress.md)

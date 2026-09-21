@@ -1,15 +1,14 @@
 apiVersion: v1
-kind: Namespace
+kind: ConfigMap
 metadata:
   name: image-policy
-  annotations:
-    evals.headlamp.dev/allowed-image-registries: registry.k8s.io
+data:
+  allowedImageRegistries: registry.k8s.io
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app
-  namespace: image-policy
   labels:
     app: app
 spec:

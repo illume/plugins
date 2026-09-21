@@ -30,6 +30,7 @@
     "eval:map:tools": "tsx src/scenarios/generateToolScenarioMapping.ts",
     "eval:qualify:minikube": "tsx src/scenarios/qualifyMinikubePortfolio.ts",
     "eval:qualify:aks": "tsx src/scenarios/qualifyMinikubePortfolio.ts --profile aks",
+    "eval:validate:drafts": "tsx src/scenarios/validateScenarioDrafts.ts",
     "eval:comparison:status": "tsx src/cli.ts comparison:status",
     "eval:holdout:verify": "tsx src/cli.ts holdout:verify",
     "eval:aks": "tsx src/cli.ts run --profile aks --execute real --candidate headlamp-cli --provider copilot",

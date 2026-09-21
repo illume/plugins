@@ -138,14 +138,14 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'liveness-probe-absent',
         'deployment/app',
         'spec.template.spec.containers[0].livenessProbe',
-        'absent',
+        '<absent>',
         'The application container has no liveness probe.'
       ),
       manifestFact(
         'readiness-probe-absent',
         'deployment/app',
         'spec.template.spec.containers[0].readinessProbe',
-        'absent',
+        '<absent>',
         'The application container has no readiness probe.'
       ),
     ],
@@ -189,7 +189,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'declared-port-name',
         'deployment/app',
         'spec.template.spec.containers[0].ports[0]',
-        '{"name":"web","containerPort":8080}',
+        '{"containerPort":8080,"name":"web","protocol":"TCP"}',
         'The only declared container port is named web, so health cannot resolve.'
       ),
     ],
@@ -233,7 +233,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'declared-port-name',
         'deployment/app',
         'spec.template.spec.containers[0].ports[0]',
-        '{"name":"web","containerPort":8080}',
+        '{"containerPort":8080,"name":"web","protocol":"TCP"}',
         'The only declared container port is named web, so ready cannot resolve.'
       ),
     ],
@@ -278,7 +278,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'declared-port-name',
         'deployment/app',
         'spec.template.spec.containers[0].ports[0]',
-        '{"name":"web","containerPort":8080}',
+        '{"containerPort":8080,"name":"web","protocol":"TCP"}',
         'The only declared container port is named web, so startup cannot resolve.'
       ),
     ],
@@ -316,7 +316,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'cpu-request-absent',
         'deployment/app',
         'spec.template.spec.containers[0].resources.requests.cpu',
-        'absent',
+        '<absent>',
         'The application container does not declare a CPU request.'
       ),
       manifestFact(
@@ -361,7 +361,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'cpu-limit-absent',
         'deployment/app',
         'spec.template.spec.containers[0].resources.limits.cpu',
-        'absent',
+        '<absent>',
         'The application container does not declare a CPU limit.'
       ),
       manifestFact(
@@ -406,7 +406,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'memory-request-absent',
         'deployment/app',
         'spec.template.spec.containers[0].resources.requests.memory',
-        'absent',
+        '<absent>',
         'The application container does not declare a memory request.'
       ),
       manifestFact(
@@ -520,30 +520,25 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
     scenarioId: 'rule-gap-blocked-image-registry',
     title: 'Container uses a disallowed image registry',
     description:
-      'A namespace-scoped image policy allows registry.k8s.io while its application image comes from docker.io.',
+      'A namespace-scoped image policy ConfigMap allows registry.k8s.io while its application image comes from docker.io.',
     taskPrompt:
       'Compare the `app` Deployment image source with the namespace image-source policy. Cite both exact values and do not mutate resources.',
-    visibleResourceRefs: ['namespace/image-policy', 'deployment/app'],
-    observationKinds: ['namespace.annotations', 'deployment.pod-template', 'container.image'],
+    visibleResourceRefs: ['configmap/image-policy', 'deployment/app'],
+    observationKinds: ['configmap.data', 'deployment.pod-template', 'container.image'],
     setup: [
       {
         apiVersion: 'v1',
-        kind: 'Namespace',
-        metadata: {
-          name: 'image-policy',
-          annotations: { 'evals.headlamp.dev/allowed-image-registries': 'registry.k8s.io' },
-        },
+        kind: 'ConfigMap',
+        metadata: { name: 'image-policy' },
+        data: { allowedImageRegistries: 'registry.k8s.io' },
       },
-      {
-        ...deployment('app', 2, { image: 'docker.io/library/nginx:1.27.4' }),
-        metadata: { name: 'app', namespace: 'image-policy', labels: { app: 'app' } },
-      },
+      deployment('app', 2, { image: 'docker.io/library/nginx:1.27.4' }),
     ],
     acceptedFacts: [
       manifestFact(
         'allowed-registry',
-        'namespace/image-policy',
-        'metadata.annotations["evals.headlamp.dev/allowed-image-registries"]',
+        'configmap/image-policy',
+        'data.allowedImageRegistries',
         'registry.k8s.io',
         'The fixture policy permits images only from registry.k8s.io.'
       ),
@@ -953,7 +948,7 @@ export const manifestScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'target-not-found',
         'deployment/missing-api',
         'metadata.name',
-        'not found',
+        '<absent>',
         'No Deployment named missing-api exists in the scenario namespace.'
       ),
     ],

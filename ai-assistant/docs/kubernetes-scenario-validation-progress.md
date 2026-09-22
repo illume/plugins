@@ -8,12 +8,12 @@ Validation does not promote a draft or change canonical qualification coverage.
 
 ## Current result
 
-The `local-minikube` validator executed portfolio scenarios 276 through 1024:
+The `local-minikube` validator executed portfolio scenarios 276 through 1131:
 
-- 461 scenarios passed fixture application, trusted Kubernetes API or decoded
+- 551 scenarios passed fixture application, trusted Kubernetes API or decoded
   ConfigMap observation, accepted-fact matching, contradiction rejection, and
   fixture plus namespace cleanup;
-- 251 scenarios were skipped because they require another profile, a missing CRD
+- 268 scenarios were skipped because they require another profile, a missing CRD
   or removed API, or source-manifest evidence erased by API defaulting;
 - 37 scenarios remain failed, concentrated in temporal metrics, scheduler,
   node, storage-controller, and admission-invalid fixture evidence;
@@ -39,7 +39,11 @@ The 106-scenario batch from 919 through 1024 produced 85 passes, 21 skips, and n
 failures. The skipped scenarios require cloud or managed-platform evidence, or
 host files that are not represented by the local Minikube profile.
 
-The next sequential resume point is scenario 1025. The failed scenarios in the
+The 107-scenario batch from 1025 through 1131 produced 90 passes, 17 skips, and no
+failures. The skipped scenarios require GKE, EKS, ACK, managed-cluster, or other
+cloud-specific evidence unavailable on local Minikube.
+
+The next sequential resume point is scenario 1132. The failed scenarios in the
 covered range should be revisited by mechanism rather than hidden by later passes:
 runtime convergence and metrics begin at 331, storage/controller evidence at 365,
 and the next telemetry-heavy block begins at 450.

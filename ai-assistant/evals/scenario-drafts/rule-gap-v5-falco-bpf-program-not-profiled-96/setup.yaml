@@ -22,7 +22,7 @@ spec:
             - '-ceu'
             - >-
               mkdir -p /fixture/sys/fs/bpf; printf unprofiled > /fixture/sys/fs/bpf/program; test -s
-              /fixture/sys/fs/bpf/program
+              /fixture/sys/fs/bpf/program; cat /fixture/sys/fs/bpf/program
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "deployment/object-finding-38",
         "field_path": "spec.template.spec.serviceAccountName + ServiceAccount inventory",
-        "observed_value": "absent-account; 0 matches",
+        "observed_value": "absent-account; 0",
         "description": "The controlled object satisfies the exact 1300 trigger described by its native fields or status."
       }
     ]

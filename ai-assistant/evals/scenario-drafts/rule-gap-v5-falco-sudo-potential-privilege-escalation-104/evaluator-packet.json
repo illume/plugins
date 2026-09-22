@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-104",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf \"#!/bin/sh\nprintf sudo-fixture\n\" > /fixture/sudo; chmod 700 /fixture/sudo; /fixture/sudo -n true; sudo-named fixture runs as the existing non-root user",
+        "observed_value": "printf \"#!/bin/sh\nprintf sudo-fixture\n\" > /fixture/sudo; chmod 700 /fixture/sudo; /fixture/sudo -n true; sudo-fixture",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Sudo Potential Privilege Escalation."
       }
     ]

@@ -25,4 +25,3 @@ spec:
     - to:
         - ipBlock:
             cidr: 192.0.2.0/24
-            except: []

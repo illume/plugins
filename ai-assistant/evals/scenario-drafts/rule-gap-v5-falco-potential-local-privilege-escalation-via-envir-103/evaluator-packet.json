@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-103",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf controlled > /fixture/preload.so; LD_PRELOAD=/fixture/preload.so /bin/true 2> /fixture/loader.log || true; printf preload-marker >> /fixture/loader.log; cat /fixture/loader.log; process starts with controlled LD_PRELOAD evidence",
+        "observed_value": "printf controlled > /fixture/preload.so; LD_PRELOAD=/fixture/preload.so /bin/true 2> /fixture/loader.log || true; printf preload-marker >> /fixture/loader.log; cat /fixture/loader.log; preload-marker",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Potential Local Privilege Escalation via Environment Variables Misuse."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-96",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "mkdir -p /fixture/sys/fs/bpf; printf unprofiled > /fixture/sys/fs/bpf/program; test -s /fixture/sys/fs/bpf/program; unprofiled program marker exists in the Pod-local bpf fixture",
+        "observed_value": "mkdir -p /fixture/sys/fs/bpf; printf unprofiled > /fixture/sys/fs/bpf/program; test -s /fixture/sys/fs/bpf/program; cat /fixture/sys/fs/bpf/program; unprofiled",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for BPF Program Not Profiled."
       }
     ]

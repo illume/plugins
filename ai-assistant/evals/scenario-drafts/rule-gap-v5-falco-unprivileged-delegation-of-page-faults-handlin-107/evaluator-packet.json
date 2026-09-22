@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-107",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "mkdir -p /fixture/userfaultfd; printf delegated > /fixture/userfaultfd/registration; cat /fixture/userfaultfd/registration; Pod-local userfaultfd registration marker is recorded",
+        "observed_value": "mkdir -p /fixture/userfaultfd; printf delegated > /fixture/userfaultfd/registration; cat /fixture/userfaultfd/registration; delegated",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Unprivileged Delegation of Page Faults Handling to a Userspace Process."
       }
     ]

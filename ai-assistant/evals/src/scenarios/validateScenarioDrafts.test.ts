@@ -134,6 +134,20 @@ test('fact resolver decodes exact and wildcard ConfigMap YAML fields', () => {
     ),
     'printf controlled'
   );
+  assert.equal(
+    resolveFactField(
+      {
+        data: {
+          'observation.json': JSON.stringify({
+            field: 'authentication.anonymous.enabled',
+            observedValue: 'true',
+          }),
+        },
+      },
+      'data.observation.json#authentication.anonymous.enabled'
+    ),
+    'true'
+  );
 });
 
 test('observed values use evaluator canonical strings', () => {

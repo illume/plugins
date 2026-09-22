@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-97",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf controlled > /fixture/ssh-payload; /bin/busybox nc -l -p 2222 < /fixture/ssh-payload & listener=$!; /bin/busybox nc 127.0.0.1 2222 > /fixture/ssh-result; wait \"$listener\"; cat /fixture/ssh-result; loopback SSH-shaped connection on port 2222",
+        "observed_value": "printf controlled > /fixture/ssh-payload; /bin/busybox nc -l -p 2222 < /fixture/ssh-payload & listener=$!; /bin/busybox nc 127.0.0.1 2222 > /fixture/ssh-result; wait \"$listener\"; cat /fixture/ssh-result; controlled",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Disallowed SSH Connection Non Standard Port."
       }
     ]

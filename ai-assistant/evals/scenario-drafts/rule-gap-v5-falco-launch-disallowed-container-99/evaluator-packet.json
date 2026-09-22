@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-99",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf disallowed-container-marker > /fixture/container-name; cat /fixture/container-name; bounded Job launches the explicitly marked action container",
+        "observed_value": "printf disallowed-container-marker > /fixture/container-name; cat /fixture/container-name; disallowed-container-marker",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Launch Disallowed Container."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "networkpolicy/object-finding-37",
         "field_path": "spec.egress[0].to[0] + namespace and Pod inventory",
-        "observed_value": "peer matches no controlled destination",
+        "observed_value": "{\"namespaceSelector\":{\"matchLabels\":{\"tenant\":\"controlled\"}},\"podSelector\":{\"matchLabels\":{\"app\":\"absent\"}}}; 0",
         "description": "The controlled object satisfies the exact 1208 trigger described by its native fields or status."
       }
     ]

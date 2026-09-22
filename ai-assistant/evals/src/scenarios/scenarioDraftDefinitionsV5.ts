@@ -609,7 +609,7 @@ const popeyeFixture = (ruleId: string, index: number): Fixture => {
       ];
       resourceRef = `networkpolicy/${name}`;
       fieldPath = 'spec.podSelector + spec.policyTypes + ingress + egress';
-      brokenValue = 'empty selector with both policy types and no rules';
+      brokenValue = '{}; ["Ingress","Egress"]; <absent>; <absent>';
       healthyValue = 'non-empty selector scoped to one workload';
     } else {
       const peer =
@@ -626,7 +626,7 @@ const popeyeFixture = (ruleId: string, index: number): Fixture => {
           : {
               ipBlock: {
                 cidr: '192.0.2.0/24',
-                except: code === '1207' ? ['192.0.2.128/25'] : [],
+                ...(code === '1207' ? { except: ['192.0.2.128/25'] } : {}),
               },
             };
       setup = [
@@ -656,13 +656,13 @@ const popeyeFixture = (ruleId: string, index: number): Fixture => {
       brokenValue =
         code === '1207'
           ? 'CIDR matches a Pod IP but except range matches none'
-          : 'peer matches no controlled destination';
+          : `${JSON.stringify(peer)}; 0`;
       healthyValue = 'peer matches one controlled destination';
     }
   } else if (code === '1300') {
     setup = [deployment(name, { serviceAccountName: 'absent-account' })];
     fieldPath = 'spec.template.spec.serviceAccountName + ServiceAccount inventory';
-    brokenValue = 'absent-account; 0 matches';
+    brokenValue = 'absent-account; 0';
     healthyValue = 'fixture-account; 1 match';
   } else if (['1400', '1403', '1404'].includes(code)) {
     const port = code === '1403' ? { number: 8080 } : code === '1404' ? {} : { name: 'http' };
@@ -709,7 +709,7 @@ const popeyeFixture = (ruleId: string, index: number): Fixture => {
         ? 'status.loadBalancer.ingress[0].ports[0].error'
         : 'spec.rules[0].http.paths[0].backend.service.port';
     brokenValue =
-      code === '1400' ? 'fixture port unavailable' : code === '1403' ? '{number: 8080}' : '{}';
+      code === '1400' ? 'fixture port unavailable' : code === '1403' ? '{"number":8080}' : '{}';
     healthyValue = code === '1400' ? 'error field absent' : '{name: http}';
   }
   return {
@@ -814,80 +814,80 @@ const falcoFixture = (ruleId: string, title: string, index: number): Fixture => 
     'backdoored-library-loaded-into-sshd-cve-2024-3094:07b397541f6f': {
       command:
         'mkdir -p /fixture/lib; printf xz-fixture > /fixture/lib/liblzma.so.5; printf "#!/bin/sh\ncat /fixture/lib/liblzma.so.5\n" > /fixture/sshd; chmod 700 /fixture/sshd; /fixture/sshd',
-      evidence: 'sshd-named fixture reads controlled liblzma.so.5',
+      evidence: 'xz-fixture',
     },
     'bpf-program-not-profiled:c852d4ff5dc4': {
       command:
-        'mkdir -p /fixture/sys/fs/bpf; printf unprofiled > /fixture/sys/fs/bpf/program; test -s /fixture/sys/fs/bpf/program',
-      evidence: 'unprofiled program marker exists in the Pod-local bpf fixture',
+        'mkdir -p /fixture/sys/fs/bpf; printf unprofiled > /fixture/sys/fs/bpf/program; test -s /fixture/sys/fs/bpf/program; cat /fixture/sys/fs/bpf/program',
+      evidence: 'unprofiled',
     },
     'disallowed-ssh-connection-non-standard-port:01e10d51e54d': {
       command:
         'printf controlled > /fixture/ssh-payload; /bin/busybox nc -l -p 2222 < /fixture/ssh-payload & listener=$!; /bin/busybox nc 127.0.0.1 2222 > /fixture/ssh-result; wait "$listener"; cat /fixture/ssh-result',
-      evidence: 'loopback SSH-shaped connection on port 2222',
+      evidence: 'controlled',
     },
     'java-process-class-file-download:2880c71d3043': {
       command:
         'printf cafebabe > /fixture/Controlled.class; printf "#!/bin/sh\ncat /fixture/Controlled.class\n" > /fixture/java; chmod 700 /fixture/java; /fixture/java',
-      evidence: 'java-named fixture reads a controlled class file',
+      evidence: 'cafebabe',
     },
     'launch-disallowed-container:53dab90d12d4': {
       command:
         'printf disallowed-container-marker > /fixture/container-name; cat /fixture/container-name',
-      evidence: 'bounded Job launches the explicitly marked action container',
+      evidence: 'disallowed-container-marker',
     },
     'launch-suspicious-network-tool-on-host:12d60c2b4bc7': {
       command: '/bin/busybox nc -z -w 1 127.0.0.1 1 || printf closed-loopback-port',
-      evidence: 'network utility probes one closed loopback port',
+      evidence: 'closed-loopback-port',
     },
     'netcat-socat-remote-code-execution-on-host:3fa7002640b7': {
       command:
         'printf bounded-command > /fixture/input; /bin/busybox nc -l -p 2323 < /fixture/input & listener=$!; /bin/busybox nc 127.0.0.1 2323 > /fixture/output; wait "$listener"; cat /fixture/output',
-      evidence: 'netcat transfers a fixed string over Pod loopback',
+      evidence: 'bounded-command',
     },
     'polkit-local-privilege-escalation-vulnerability-cve-2021-4034:561465fb9c8d': {
       command:
         'printf "#!/bin/sh\nprintf pkexec-fixture\n" > /fixture/pkexec; chmod 700 /fixture/pkexec; /fixture/pkexec',
-      evidence: 'pkexec-named fixture runs without privileges',
+      evidence: 'pkexec-fixture',
     },
     'potential-local-privilege-escalation-via-environment-variables-misuse:6e949965f6d1': {
       command:
         'printf controlled > /fixture/preload.so; LD_PRELOAD=/fixture/preload.so /bin/true 2> /fixture/loader.log || true; printf preload-marker >> /fixture/loader.log; cat /fixture/loader.log',
-      evidence: 'process starts with controlled LD_PRELOAD evidence',
+      evidence: 'preload-marker',
     },
     'sudo-potential-privilege-escalation:c88287c4bb4e': {
       command:
         'printf "#!/bin/sh\nprintf sudo-fixture\n" > /fixture/sudo; chmod 700 /fixture/sudo; /fixture/sudo -n true',
-      evidence: 'sudo-named fixture runs as the existing non-root user',
+      evidence: 'sudo-fixture',
     },
     'system-procs-network-activity:350606efdb57': {
       command:
         'printf "#!/bin/sh\n/bin/busybox nc -z -w 1 127.0.0.1 1 || true\nprintf systemd-loopback\n" > /fixture/systemd; chmod 700 /fixture/systemd; /fixture/systemd',
-      evidence: 'systemd-named fixture performs one loopback probe',
+      evidence: 'systemd-loopback',
     },
     'system-user-interactive:d27a9e9973d0': {
       command: 'USER=root SHELL=/bin/sh /bin/sh -c "printf system-user-shell"',
-      evidence: 'bounded shell starts with a controlled system-user identity marker',
+      evidence: 'system-user-shell',
     },
     'unprivileged-delegation-of-page-faults-handling-to-a-userspace-process:5c66ac38f88e': {
       command:
         'mkdir -p /fixture/userfaultfd; printf delegated > /fixture/userfaultfd/registration; cat /fixture/userfaultfd/registration',
-      evidence: 'Pod-local userfaultfd registration marker is recorded',
+      evidence: 'delegated',
     },
     'update-package-repository:35ae1f185013': {
       command:
         'printf "#!/bin/sh\nprintf repository-update-fixture\n" > /fixture/apt-get; chmod 700 /fixture/apt-get; /fixture/apt-get update',
-      evidence: 'package-manager-named fixture receives update',
+      evidence: 'repository-update-fixture',
     },
     'user-mgmt-binaries:9e567b3bae75': {
       command:
         'printf "#!/bin/sh\nprintf useradd-fixture\n" > /fixture/useradd; chmod 700 /fixture/useradd; /fixture/useradd controlled-user',
-      evidence: 'useradd-named fixture receives a controlled username',
+      evidence: 'useradd-fixture',
     },
     'write-below-rpm-database:8947bdea39d4': {
       command:
         'mkdir -p /fixture/var/lib/rpm; printf controlled > /fixture/var/lib/rpm/Packages; sha256sum /fixture/var/lib/rpm/Packages',
-      evidence: 'write occurs below the Pod-local rpm database fixture',
+      evidence: '<sha256> /fixture/var/lib/rpm/Packages',
     },
   };
   const action = actions[ruleId.replace('falco:rule:', '')];

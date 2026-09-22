@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-101",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf bounded-command > /fixture/input; /bin/busybox nc -l -p 2323 < /fixture/input & listener=$!; /bin/busybox nc 127.0.0.1 2323 > /fixture/output; wait \"$listener\"; cat /fixture/output; netcat transfers a fixed string over Pod loopback",
+        "observed_value": "printf bounded-command > /fixture/input; /bin/busybox nc -l -p 2323 < /fixture/input & listener=$!; /bin/busybox nc 127.0.0.1 2323 > /fixture/output; wait \"$listener\"; cat /fixture/output; bounded-command",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Netcat/Socat Remote Code Execution on Host."
       }
     ]

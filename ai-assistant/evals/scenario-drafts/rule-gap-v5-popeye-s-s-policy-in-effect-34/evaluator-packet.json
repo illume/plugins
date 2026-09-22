@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "networkpolicy/object-finding-34",
         "field_path": "spec.podSelector + spec.policyTypes + ingress + egress",
-        "observed_value": "empty selector with both policy types and no rules",
+        "observed_value": "{}; [\"Ingress\",\"Egress\"]; <absent>; <absent>",
         "description": "The controlled object satisfies the exact 1203 trigger described by its native fields or status."
       }
     ]

@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "ingress/object-finding-40",
         "field_path": "spec.rules[0].http.paths[0].backend.service.port",
-        "observed_value": "{number: 8080}",
+        "observed_value": "{\"number\":8080}",
         "description": "The controlled object satisfies the exact 1403 trigger described by its native fields or status."
       }
     ]

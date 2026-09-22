@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-98",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "printf cafebabe > /fixture/Controlled.class; printf \"#!/bin/sh\ncat /fixture/Controlled.class\n\" > /fixture/java; chmod 700 /fixture/java; /fixture/java; java-named fixture reads a controlled class file",
+        "observed_value": "printf cafebabe > /fixture/Controlled.class; printf \"#!/bin/sh\ncat /fixture/Controlled.class\n\" > /fixture/java; chmod 700 /fixture/java; /fixture/java; cafebabe",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Java Process Class File Download."
       }
     ]

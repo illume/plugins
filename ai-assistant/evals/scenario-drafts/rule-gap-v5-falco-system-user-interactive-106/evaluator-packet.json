@@ -8,7 +8,7 @@
         "fact_id": "trigger-evidence",
         "resource_ref": "job/bounded-action-106",
         "field_path": "spec.template.spec.containers[0].command + logs[action]",
-        "observed_value": "USER=root SHELL=/bin/sh /bin/sh -c \"printf system-user-shell\"; bounded shell starts with a controlled system-user identity marker",
+        "observed_value": "USER=root SHELL=/bin/sh /bin/sh -c \"printf system-user-shell\"; system-user-shell",
         "description": "The bounded Job emits the exact controlled process, file, or network action evidence for System user interactive."
       }
     ]

@@ -35,6 +35,9 @@ const cataloguePaths = Array.from(
   (_, index) => `registrations/rule-gap-scenarios-v${index + 1}.json`
 );
 const sourceOnlyScenarioIds = new Set([
+  'rule-gap-v5-popeye-ingress-loadbalancer-port-reported-an-error-s-39',
+  'rule-gap-v5-popeye-invalid-ingress-backend-spec-must-use-port-nam-41',
+  'rule-gap-v5-popeye-no-pods-matched-except-s-ipblock-s-36',
   'rule-gap-namespace-has-no-service-account',
   'rule-gap-pod-template-omits-restart-policy',
   'rule-gap-workload-uses-default-namespace',
@@ -215,6 +218,15 @@ export function resolveFactField(resource: JsonValue, fieldPath: string): JsonVa
       throw new Error(`encoded ConfigMap field data.${key} is not a string`);
     }
     const decoded = yaml.load(source) as JsonValue;
+    if (
+      decoded !== null &&
+      typeof decoded === 'object' &&
+      !Array.isArray(decoded) &&
+      decoded.field === encoded[2] &&
+      decoded.observedValue !== undefined
+    ) {
+      return decoded.observedValue;
+    }
     return resolveFieldPath(decoded, encoded[2]!);
   });
   return matchingKeys.length === 1 ? resolved[0] : resolved.filter(value => value !== undefined);
@@ -565,16 +577,68 @@ async function observedFactValue(
               resolveFieldPath(port, 'name') === 'web' &&
               resolveFieldPath(port, 'containerPort') === 8080
           )
+        : fact.observed_value === 'targetPort 8080 with no selected container port 8080'
+        ? targetPort === 8080 &&
+          !ports.some(port => resolveFieldPath(port, 'containerPort') === targetPort)
         : false;
     return matched
       ? fact.observed_value
       : serializeObservedValue([selector ?? targetPort ?? '<absent>', ports]);
   }
-  if (fact.field_path.endsWith(' + logs')) {
+  if (fact.field_path === 'spec.egress[0].to[0] + namespace and Pod inventory') {
+    if (!adapter.listResourceSnapshots) {
+      throw new Error('cluster adapter cannot validate NetworkPolicy peer inventories');
+    }
+    const peer = resolveFactField(snapshot, 'spec.egress[0].to[0]');
+    const pods = await adapter.listResourceSnapshots(namespace, 'pod');
+    const podLabels =
+      peer !== null &&
+      typeof peer === 'object' &&
+      !Array.isArray(peer) &&
+      peer.podSelector !== null &&
+      typeof peer.podSelector === 'object' &&
+      !Array.isArray(peer.podSelector) &&
+      peer.podSelector.matchLabels !== null &&
+      typeof peer.podSelector.matchLabels === 'object' &&
+      !Array.isArray(peer.podSelector.matchLabels)
+        ? peer.podSelector.matchLabels
+        : undefined;
+    const count = podLabels
+      ? pods.filter(pod => {
+          const labels = resolveFieldPath(pod, 'metadata.labels');
+          return (
+            labels !== null &&
+            typeof labels === 'object' &&
+            !Array.isArray(labels) &&
+            Object.entries(podLabels).every(([key, value]) => labels[key] === value)
+          );
+        }).length
+      : 0;
+    const value: JsonValue = [peer ?? '<absent>', count];
+    return factValueMatches(value, fact.observed_value)
+      ? fact.observed_value
+      : serializeObservedValue(value);
+  }
+  const commandAndLogs = /^(.*?) \+ logs(?:\[[^\]]+\])?$/.exec(fact.field_path);
+  if (commandAndLogs) {
     if (!adapter.getPodLogs) throw new Error('cluster adapter cannot validate Pod log predicates');
-    const commandPath = fact.field_path.slice(0, -' + logs'.length);
+    const commandPath = commandAndLogs[1]!;
     const command = resolveFactField(snapshot, commandPath);
-    const podName = resolveFieldPath(snapshot, 'metadata.name');
+    let podName = resolveFieldPath(snapshot, 'metadata.name');
+    if (fact.resource_ref.startsWith('job/') && typeof podName === 'string') {
+      if (!adapter.listResourceSnapshots) {
+        throw new Error('cluster adapter cannot validate Job Pod log predicates');
+      }
+      const pods = await adapter.listResourceSnapshots(namespace, 'pod');
+      const jobPods = pods
+        .filter(pod => resolveFieldPath(pod, 'metadata.labels[job-name]') === podName)
+        .sort((left, right) =>
+          String(resolveFieldPath(right, 'metadata.creationTimestamp') ?? '').localeCompare(
+            String(resolveFieldPath(left, 'metadata.creationTimestamp') ?? '')
+          )
+        );
+      podName = jobPods[0] ? resolveFieldPath(jobPods[0], 'metadata.name') : undefined;
+    }
     if (typeof podName !== 'string') throw new Error(`${fact.resource_ref} has no Pod name`);
     const logs = await adapter.getPodLogs(namespace, podName);
     const commandText =
@@ -730,6 +794,14 @@ async function validateScenario(
   }
   for (const fact of scenario.evaluatorPacket.contradiction_facts) {
     const observed = await observedFactValue(adapter, namespace, fact, cache);
+    if (fact.field_path.startsWith('data.healthy-control.')) {
+      if (!observedValueMatches(observed, fact.observed_value)) {
+        throw new Error(
+          `healthy control ${fact.fact_id} expected ${fact.observed_value}, got ${observed}`
+        );
+      }
+      continue;
+    }
     if (observedValueMatches(observed, fact.observed_value)) {
       throw new Error(`contradiction ${fact.fact_id} matched ${fact.observed_value}`);
     }

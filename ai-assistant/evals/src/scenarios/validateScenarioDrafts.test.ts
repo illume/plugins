@@ -148,6 +148,34 @@ test('fact resolver decodes exact and wildcard ConfigMap YAML fields', () => {
     ),
     'true'
   );
+  assert.equal(
+    resolveFactField(
+      {
+        data: {
+          'evidence.json': JSON.stringify({
+            exactField: 'admissionPlugins.EventRateLimit.enabled',
+            brokenValue: 'false',
+          }),
+        },
+      },
+      'data.evidence.json#admissionPlugins.EventRateLimit.enabled'
+    ),
+    'false'
+  );
+  assert.equal(
+    resolveFactField(
+      {
+        data: {
+          'healthy-control.json': JSON.stringify({
+            exactField: 'admissionPlugins.EventRateLimit.enabled',
+            healthyValue: 'true',
+          }),
+        },
+      },
+      'data.healthy-control.json#admissionPlugins.EventRateLimit.enabled'
+    ),
+    'true'
+  );
 });
 
 test('observed values use evaluator canonical strings', () => {

@@ -227,6 +227,15 @@ export function resolveFactField(resource: JsonValue, fieldPath: string): JsonVa
     ) {
       return decoded.observedValue;
     }
+    if (
+      decoded !== null &&
+      typeof decoded === 'object' &&
+      !Array.isArray(decoded) &&
+      decoded.exactField === encoded[2]
+    ) {
+      if (decoded.brokenValue !== undefined) return decoded.brokenValue;
+      if (decoded.healthyValue !== undefined) return decoded.healthyValue;
+    }
     return resolveFieldPath(decoded, encoded[2]!);
   });
   return matchingKeys.length === 1 ? resolved[0] : resolved.filter(value => value !== undefined);

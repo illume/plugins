@@ -136,6 +136,13 @@ export interface EventObservation {
   reason?: string;
 }
 
+/** One sample returned by a trusted Prometheus instant query. */
+export interface PrometheusSample {
+  labels: Record<string, string>;
+  value: number;
+  timestamp: number;
+}
+
 /**
  * Operations the harness needs to create, observe, and remove a trial world.
  *
@@ -171,6 +178,8 @@ export interface ClusterAdapter {
    * @returns A Promise that resolves after all fixtures are applied.
    */
   applyManifest(namespace: string, manifestYamlPath: string): Promise<void>;
+  /** Reapplies fixture-authored status subresources during bounded convergence. */
+  refreshManifestStatuses?(namespace: string, manifestYamlPath: string): Promise<void>;
   /** Deletes all resources declared by a scenario fixture, including cluster-scoped objects. */
   deleteManifest?(namespace: string, manifestYamlPath: string): Promise<void>;
   /**
@@ -271,6 +280,14 @@ export interface ClusterAdapter {
   listResourceSnapshots?(namespace: string, resource: string): Promise<JsonValue[]>;
   /** Reads Pod logs at the trusted harness boundary for runtime predicates. */
   getPodLogs?(namespace: string, podName: string): Promise<string>;
+  /** Probes one kubelet health endpoint through the API-server node proxy. */
+  getNodeProxyHealth?(nodeName: string): Promise<{ reachable: boolean; detail: string }>;
+  /** Sends one read-only request to an API-server path for bounded telemetry fixtures. */
+  probeApiPath?(apiPath: string): Promise<void>;
+  /** Installs or verifies the profile's trusted metrics collection stack. */
+  ensureMetricsCollection?(): Promise<void>;
+  /** Runs one Prometheus instant query through the trusted harness boundary. */
+  queryPrometheus?(expression: string): Promise<PrometheusSample[]>;
   /** Applies an authorized RFC 6902 patch and returns the resulting resource. */
   applyJsonPatch(target: ActionRequest['target'], patch: JsonPatchOperation[]): Promise<JsonValue>;
   /**

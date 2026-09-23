@@ -45,13 +45,54 @@ test('applyManifest replaces namespace placeholders without changing the source 
   let applied = '';
   const runner: CommandRunner = (_command, args) => {
     const fileIndex = args.indexOf('-f');
-    applied = readFileSync(args[fileIndex + 1]!, 'utf8');
+    if (fileIndex >= 0) applied = readFileSync(args[fileIndex + 1]!, 'utf8');
     return { status: 0, stdout: '', stderr: '' };
   };
   try {
     await new TestKubectlAdapter(runner).applyManifest('trial-namespace', fixturePath);
     assert.equal(applied, 'metadata:\n  namespace: trial-namespace\n');
     assert.equal(readFileSync(fixturePath, 'utf8'), source);
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('applyManifest patches fixture-authored status through the status subresource', async () => {
+  const directory = makeScratchDir('kubectl-status-fixture');
+  const fixturePath = path.join(directory, 'setup.yaml');
+  writeFileSync(
+    fixturePath,
+    [
+      'apiVersion: v1',
+      'kind: Node',
+      'metadata:',
+      '  name: synthetic',
+      'status:',
+      '  conditions:',
+      '    - type: Ready',
+      '      status: "False"',
+      '',
+    ].join('\n')
+  );
+  const calls: string[][] = [];
+  const runner: CommandRunner = (_command, args) => {
+    calls.push(args);
+    return { status: 0, stdout: '', stderr: '' };
+  };
+  try {
+    await new TestKubectlAdapter(runner).applyManifest('trial', fixturePath);
+    assert.deepEqual(calls[1]?.slice(2, 8), [
+      'patch',
+      'node/synthetic',
+      '-n',
+      'trial',
+      '--subresource=status',
+      '--type=merge',
+    ]);
+    assert.equal(
+      calls[1]?.at(-1),
+      JSON.stringify({ status: { conditions: [{ type: 'Ready', status: 'False' }] } })
+    );
   } finally {
     removeScratchDir(directory);
   }
@@ -121,6 +162,35 @@ test('getPodLogs reads all containers through the isolated kubeconfig', async ()
     await new TestKubectlAdapter(runner).getPodLogs('trial', 'probe-abc'),
     'probe failed'
   );
+});
+
+test('getNodeProxyHealth reports kubelet proxy connection failures', async () => {
+  const runner: CommandRunner = (_command, args) => {
+    assert.deepEqual(args.slice(-3), [
+      'get',
+      '--raw',
+      '/api/v1/nodes/synthetic-node/proxy/healthz',
+    ]);
+    return { status: 1, stdout: '', stderr: 'service unavailable' };
+  };
+  assert.deepEqual(await new TestKubectlAdapter(runner).getNodeProxyHealth('synthetic-node'), {
+    reachable: false,
+    detail: 'service unavailable',
+  });
+});
+
+test('probeApiPath issues a read-only raw API-server request', async () => {
+  let invokedArgs: string[] = [];
+  const runner: CommandRunner = (_command, args) => {
+    invokedArgs = args;
+    return { status: 1, stdout: '', stderr: 'service unavailable' };
+  };
+  await new TestKubectlAdapter(runner).probeApiPath('/apis/unavailable.example.test/v1alpha1');
+  assert.deepEqual(invokedArgs.slice(-3), [
+    'get',
+    '--raw',
+    '/apis/unavailable.example.test/v1alpha1',
+  ]);
 });
 
 test('applyJsonPatch passes an exact RFC 6902 document and verifies target identity', async () => {

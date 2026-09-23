@@ -8,14 +8,16 @@ Validation does not promote a draft or change canonical qualification coverage.
 
 ## Current result
 
-The `local-minikube` validator executed portfolio scenarios 276 through 1131:
+The `local-minikube` validator executed portfolio scenarios 276 through 1255,
+covering all 980 draft scenarios:
 
-- 551 scenarios passed fixture application, trusted Kubernetes API or decoded
+- 655 scenarios passed fixture application, trusted Kubernetes API, Prometheus,
+  or decoded
   ConfigMap observation, accepted-fact matching, contradiction rejection, and
   fixture plus namespace cleanup;
-- 268 scenarios were skipped because they require another profile, a missing CRD
+- 301 scenarios were skipped because they require another profile, a missing CRD
   or removed API, or source-manifest evidence erased by API defaulting;
-- 37 scenarios remain failed, concentrated in temporal metrics, scheduler,
+- 24 scenarios remain failed, concentrated in temporal metrics, scheduler,
   node, storage-controller, and admission-invalid fixture evidence;
 - all validated scenarios retain `qualification_status: pending`.
 
@@ -43,10 +45,23 @@ The 107-scenario batch from 1025 through 1131 produced 90 passes, 17 skips, and 
 failures. The skipped scenarios require GKE, EKS, ACK, managed-cluster, or other
 cloud-specific evidence unavailable on local Minikube.
 
-The next sequential resume point is scenario 1132. The failed scenarios in the
-covered range should be revisited by mechanism rather than hidden by later passes:
-runtime convergence and metrics begin at 331, storage/controller evidence at 365,
-and the next telemetry-heavy block begins at 450.
+The final 124-scenario batch from 1132 through 1255 produced 91 passes, 33 skips,
+and no failures. Every authored draft has now received a first-pass validation
+disposition on local Minikube.
+
+There is no remaining sequential draft range. The 24 failed scenarios should be
+revisited by mechanism rather than hidden by passing later scenarios: runtime
+convergence and metrics begin at 331, storage/controller evidence at 365, and the
+next telemetry-heavy block begins at 450.
+
+The metrics follow-up installed an isolated Prometheus-compatible collector with
+kube-state-metrics plus API-server, kubelet, and cAdvisor scraping. Bounded PromQL
+queries revalidated all 23 metric-backed failures: 13 now pass and 10 remain
+failed. The remaining metric-backed failures are evidence-specific: one kubelet
+eviction counter does not increase, one PersistentVolume status is overwritten
+by its controller, two local volumes expose no kubelet volume-stat series, two
+runtime thresholds are not reached, one API group exposes no request-counter
+series, and three setup manifests are rejected by Kubernetes admission.
 
 Validation now supports typed YAML and JSON data decoding, dotted Kubernetes map
 keys, exact related-resource inventories, generated Job Pod selection, Pod logs,
@@ -65,6 +80,15 @@ npm run eval:validate:drafts -- \
   --start 276 \
   --limit 1 \
   --output .private/draft-validation.json
+```
+
+Run an exact mechanism-focused set while sharing one collector lifecycle:
+
+```sh
+npm run eval:validate:drafts -- \
+  --profile local-minikube \
+  --indices 331,335,337 \
+  --output .private/draft-validation-metrics.json
 ```
 
 The validator starts or reuses `headlamp-ai-evals`, applies each setup in an

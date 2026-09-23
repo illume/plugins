@@ -18,13 +18,22 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import type { PreflightResult } from '../clusterAdapter.js';
+import type { PreflightResult, PrometheusSample } from '../clusterAdapter.js';
 import { commandExists, type CommandRunner } from '../commandRunner.js';
 import { KubectlClusterAdapter } from './kubectlAdapter.js';
 
 const profileName = 'headlamp-ai-evals';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const defaultKubeconfigDirectory = path.resolve(here, '..', '..', '..', '.private');
+const metricsManifest = path.resolve(
+  here,
+  '..',
+  '..',
+  '..',
+  'fixtures',
+  'minikube-metrics-stack.yaml'
+);
+const metricsNamespace = 'headlamp-evals-metrics';
 
 function createDefaultKubeconfigPath(): string {
   return path.join(
@@ -36,6 +45,8 @@ function createDefaultKubeconfigPath(): string {
 /** Real Kubernetes adapter backed by a dedicated local Minikube profile. */
 export class MinikubeAdapter extends KubectlClusterAdapter {
   private readonly candidateDirectories = new Map<string, string>();
+  private metricsInstalled = false;
+  private metricsReady = false;
 
   constructor(runner: CommandRunner, kubeconfigPath = createDefaultKubeconfigPath()) {
     super('local-minikube', runner, { clusterName: profileName, kubeconfigPath });
@@ -203,6 +214,87 @@ export class MinikubeAdapter extends KubectlClusterAdapter {
     return { KUBECONFIG: candidatePath, KUBERNETES_NAMESPACE: namespace };
   }
 
+  async ensureMetricsCollection(): Promise<void> {
+    if (this.metricsReady) return;
+    if (!this.metricsInstalled) {
+      const apply = this.runner('kubectl', this.kubectl(['apply', '-f', metricsManifest]));
+      if (apply.status !== 0) {
+        throw new Error(`failed to install metrics collection: ${apply.stderr || apply.stdout}`);
+      }
+      this.metricsInstalled = true;
+    }
+    for (const deployment of ['kube-state-metrics', 'prometheus']) {
+      const rollout = this.runner(
+        'kubectl',
+        this.kubectl([
+          'rollout',
+          'status',
+          `deployment/${deployment}`,
+          '-n',
+          metricsNamespace,
+          '--timeout=240s',
+        ])
+      );
+      if (rollout.status !== 0) {
+        throw new Error(
+          `metrics deployment ${deployment} was not ready: ${rollout.stderr || rollout.stdout}`
+        );
+      }
+    }
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const samples = await this.queryPrometheus(
+        'up{job=~"apiserver|cadvisor|kube-state-metrics|kubelet"}'
+      );
+      if (
+        new Set(samples.filter(sample => sample.value === 1).map(sample => sample.labels.job))
+          .size === 4
+      ) {
+        this.metricsReady = true;
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2_500));
+    }
+    throw new Error(
+      'metrics collection did not observe API server, kubelet, cAdvisor, and kube-state-metrics'
+    );
+  }
+
+  async queryPrometheus(expression: string): Promise<PrometheusSample[]> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl([
+        'exec',
+        '-n',
+        metricsNamespace,
+        'deployment/prometheus',
+        '-c',
+        'query',
+        '--',
+        'curl',
+        '--fail',
+        '--silent',
+        '--get',
+        '--data-urlencode',
+        `query=${expression}`,
+        'http://127.0.0.1:9090/api/v1/query',
+      ])
+    );
+    if (result.status !== 0) {
+      throw new Error(`Prometheus query failed: ${result.stderr || result.stdout}`);
+    }
+    const response = JSON.parse(result.stdout) as {
+      status: string;
+      error?: string;
+      data?: { result?: Array<{ metric?: Record<string, string>; value?: [number, string] }> };
+    };
+    if (response.status !== 'success') throw new Error(response.error ?? 'Prometheus query failed');
+    return (response.data?.result ?? []).map(sample => ({
+      labels: sample.metric ?? {},
+      timestamp: sample.value?.[0] ?? 0,
+      value: Number(sample.value?.[1] ?? 'NaN'),
+    }));
+  }
+
   override async deleteNamespace(namespace: string): Promise<void> {
     try {
       if (this.candidateDirectories.has(namespace)) {
@@ -232,6 +324,21 @@ export class MinikubeAdapter extends KubectlClusterAdapter {
   override async dispose(): Promise<void> {
     for (const directory of this.candidateDirectories.values()) {
       rmSync(directory, { recursive: true, force: true });
+    }
+    if (this.metricsInstalled) {
+      this.runner(
+        'kubectl',
+        this.kubectl([
+          'delete',
+          '-f',
+          metricsManifest,
+          '--ignore-not-found',
+          '--wait=true',
+          '--timeout=120s',
+        ])
+      );
+      this.metricsInstalled = false;
+      this.metricsReady = false;
     }
     rmSync(this.kubeconfigPath, { force: true });
   }

@@ -25,6 +25,11 @@ import { createClusterAdapter } from '../cluster/adapterFactory.js';
 import type { ClusterAdapter } from '../cluster/clusterAdapter.js';
 import type { AcceptedFact, ClusterProfileName } from '../contracts/evaluationContracts.js';
 import { loadScenario, type LoadedScenario } from './loader.js';
+import {
+  prometheusFactMatched,
+  prometheusQueryForFact,
+  prometheusRawQueryForFact,
+} from './prometheusMetricFacts.js';
 
 const activeScenarioCount = 275;
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -47,6 +52,7 @@ interface ValidationOptions {
   profile: 'local-minikube' | 'aks';
   start: number;
   limit: number;
+  indices?: number[];
   output?: string;
 }
 
@@ -107,6 +113,19 @@ export function resolveFieldPath(resource: JsonValue, fieldPath: string): JsonVa
   }
   if (fieldPath.includes(',')) {
     return fieldPath.split(',').map(part => resolveFieldPath(resource, part) ?? '<absent>');
+  }
+  const jsonPathFiltered = /^(.*?)\[\?\(@\.([A-Za-z0-9_.]+)==["']([^"']+)["']\)\](?:\.(.*))?$/.exec(
+    fieldPath
+  );
+  if (jsonPathFiltered) {
+    const items = resolveFieldPath(resource, jsonPathFiltered[1]!);
+    if (!Array.isArray(items)) return undefined;
+    const matches = items.filter(
+      item => resolveFieldPath(item, jsonPathFiltered[2]!) === jsonPathFiltered[3]
+    );
+    if (!jsonPathFiltered[4]) return matches;
+    const values = matches.map(item => resolveFieldPath(item, jsonPathFiltered[4]!) ?? '<absent>');
+    return values.length === 1 ? values[0] : values;
   }
   const filtered = /^(.*?)\[\??([A-Za-z0-9_.]+)=([^\]]+)\](?:\.(.*))?$/.exec(fieldPath);
   if (filtered) {
@@ -270,6 +289,12 @@ export function observedValueMatches(observed: string, expected: string): boolea
 export function factValueMatches(observedValue: JsonValue | undefined, expected: string): boolean {
   if (
     (observedValue === undefined || observedValue === '<absent>') &&
+    expected.endsWith(' absent')
+  ) {
+    return true;
+  }
+  if (
+    (observedValue === undefined || observedValue === '<absent>') &&
     (expected === '[]' || expected === '0 ServiceAccounts')
   ) {
     return true;
@@ -329,6 +354,20 @@ export function factValueMatches(observedValue: JsonValue | undefined, expected:
   const alternatives = /^<one of: (.+)>$/.exec(expected);
   if (alternatives) {
     return alternatives[1]!.split(', ').some(option => factValueMatches(observedValue, option));
+  }
+  const numericComparison = /^(<=|>=|<|>)\s*(-?\d+(?:\.\d+)?)$/.exec(expected);
+  if (numericComparison && typeof observedValue === 'number') {
+    const threshold = Number(numericComparison[2]);
+    switch (numericComparison[1]) {
+      case '<':
+        return observedValue < threshold;
+      case '<=':
+        return observedValue <= threshold;
+      case '>':
+        return observedValue > threshold;
+      case '>=':
+        return observedValue >= threshold;
+    }
   }
   if (
     (expected === '<absent or 0>' || expected === '0 or <absent>') &&
@@ -429,8 +468,9 @@ async function snapshotFor(
   const cached = cache.get(resourceRef);
   if (cached) return cached;
   const selectedPod = /^pod\[label=([^=]+)=(.+)\]$/.exec(resourceRef);
+  const queriedPod = /^pod\/\*\?([^=]+)=(.+)$/.exec(resourceRef);
   const prefixedPod = /^pod\/([^*]+)\*$/.exec(resourceRef);
-  if (selectedPod || prefixedPod) {
+  if (selectedPod || queriedPod || prefixedPod) {
     if (!adapter.listResourceSnapshots) {
       throw new Error('cluster adapter cannot validate label-selected Pod predicates');
     }
@@ -441,11 +481,12 @@ async function snapshotFor(
         return typeof name === 'string' && name.startsWith(prefixedPod[1]!);
       }
       const labels = resolveFieldPath(pod, 'metadata.labels');
+      const selector = selectedPod ?? queriedPod;
       return (
         labels !== null &&
         typeof labels === 'object' &&
         !Array.isArray(labels) &&
-        labels[selectedPod![1]!] === selectedPod![2]
+        labels[selector![1]!] === selector![2]
       );
     });
     if (matching.length === 0) throw new Error(`expected at least one ${resourceRef}`);
@@ -481,7 +522,58 @@ async function observedFactValue(
   cache: Map<string, JsonValue>
 ): Promise<string> {
   if (fact.resource_ref.startsWith('metric/')) {
-    throw new Error(`metric evidence adapter unavailable for ${fact.resource_ref}`);
+    if (!adapter.ensureMetricsCollection || !adapter.queryPrometheus) {
+      throw new Error(`metric evidence adapter unavailable for ${fact.resource_ref}`);
+    }
+    await adapter.ensureMetricsCollection();
+    let expression: string;
+    let truthValued = true;
+    try {
+      expression = prometheusQueryForFact(fact, namespace);
+    } catch (error) {
+      if (!fact.fact_id.startsWith('invented-')) throw error;
+      expression = prometheusRawQueryForFact(fact, namespace);
+      truthValued = false;
+    }
+    if (
+      adapter.probeApiPath &&
+      (fact.fact_id === 'aggregated-api-error-ratio' || fact.fact_id === 'api-fast-burn')
+    ) {
+      const selector = fact.resource_ref.slice('metric/'.length);
+      const group = /group="([^"]+)"/.exec(selector)?.[1];
+      if (group) {
+        for (let request = 0; request < 5; request++) {
+          await adapter.probeApiPath(`/apis/${group}/v1alpha1`);
+        }
+      }
+    }
+    const samples = await adapter.queryPrometheus(expression);
+    if (truthValued && prometheusFactMatched(samples)) return fact.observed_value;
+    if (!truthValued && samples.length === 1) return String(samples[0]!.value);
+    if (
+      samples.length === 0 &&
+      adapter.queryPrometheus &&
+      (fact.fact_id === 'aggregated-api-error-ratio' || fact.fact_id === 'api-fast-burn')
+    ) {
+      const selector = fact.resource_ref.slice('metric/'.length);
+      const group = /group="([^"]+)"/.exec(selector)?.[1];
+      const diagnosticSamples = group
+        ? await adapter.queryPrometheus(
+            `sum by (group, code) (increase(apiserver_request_total{group=${JSON.stringify(
+              group
+            )}}[1m]))`
+          )
+        : [];
+      return JSON.stringify({ expression, samples, diagnosticSamples });
+    }
+    return JSON.stringify({ expression, samples });
+  }
+  if (fact.field_path === 'proxy/healthz' && fact.resource_ref.startsWith('node/')) {
+    if (!adapter.getNodeProxyHealth) {
+      throw new Error('cluster adapter cannot validate kubelet proxy health');
+    }
+    const health = await adapter.getNodeProxyHealth(fact.resource_ref.slice('node/'.length));
+    return health.reachable ? health.detail : '<connection failure>';
   }
   if (fact.resource_ref.includes(' + ')) {
     const refs = fact.resource_ref.split(' + ');
@@ -825,23 +917,23 @@ function supportsBoundedConvergence(scenario: LoadedScenario): boolean {
   const resourceRefs = scenario.evaluatorPacket.accepted_fact_sets.flatMap(facts =>
     facts.map(fact => fact.resource_ref)
   );
+  if (resourceRefs.some(resourceRef => resourceRef.startsWith('metric/'))) return true;
   return resourceRefs.every(
-    resourceRef =>
-      !resourceRef.startsWith('metric/') &&
-      !resourceRef.startsWith('node/') &&
-      !resourceRef.startsWith('lease/')
+    resourceRef => !resourceRef.startsWith('node/') && !resourceRef.startsWith('lease/')
   );
 }
 
 async function validateScenarioEventually(
   adapter: ClusterAdapter,
   namespace: string,
-  scenario: LoadedScenario
+  scenario: LoadedScenario,
+  manifestPath: string
 ): Promise<{ acceptedFactSet: number; observedFactCount: number }> {
   const attempts = supportsBoundedConvergence(scenario) ? 60 : 1;
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
+      await adapter.refreshManifestStatuses?.(namespace, manifestPath);
       return await validateScenario(adapter, namespace, scenario);
     } catch (error) {
       lastError = error;
@@ -867,27 +959,51 @@ function parseOptions(args: string[]): ValidationOptions {
   }
   const start = Number(values.get('--start') ?? activeScenarioCount + 1);
   const limit = Number(values.get('--limit') ?? 1);
+  const indices = values
+    .get('--indices')
+    ?.split(',')
+    .map(value => Number(value.trim()))
+    .filter(value => Number.isInteger(value));
   if (!Number.isInteger(start) || start <= activeScenarioCount) {
     throw new Error(`--start must be an integer greater than ${activeScenarioCount}`);
   }
   if (!Number.isInteger(limit) || limit < 1) throw new Error('--limit must be a positive integer');
-  return { profile, start, limit, output: values.get('--output') };
+  if (
+    indices &&
+    (indices.length === 0 ||
+      new Set(indices).size !== indices.length ||
+      indices.some(index => index <= activeScenarioCount || index > activeScenarioCount + 980))
+  ) {
+    throw new Error('--indices must contain unique draft portfolio indices');
+  }
+  return { profile, start, limit, indices, output: values.get('--output') };
 }
 
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const orderedIds = orderedDraftScenarioIds();
-  const offset = options.start - activeScenarioCount - 1;
-  const selectedIds = orderedIds.slice(offset, offset + options.limit);
-  if (selectedIds.length === 0) throw new Error(`no draft scenario exists at ${options.start}`);
+  const selected = options.indices
+    ? options.indices.map(portfolioIndex => ({
+        portfolioIndex,
+        scenarioId: orderedIds[portfolioIndex - activeScenarioCount - 1]!,
+      }))
+    : orderedIds
+        .slice(
+          options.start - activeScenarioCount - 1,
+          options.start - activeScenarioCount - 1 + options.limit
+        )
+        .map((scenarioId, selectionIndex) => ({
+          portfolioIndex: options.start + selectionIndex,
+          scenarioId,
+        }));
+  if (selected.length === 0) throw new Error(`no draft scenario exists at ${options.start}`);
   const adapter = createClusterAdapter(options.profile as ClusterProfileName, 'real');
   const results: ValidationResult[] = [];
   try {
     const preflight = await adapter.preflight();
     if (!preflight.supported)
       throw new Error(preflight.reason ?? `${options.profile} is unsupported`);
-    for (const [selectionIndex, scenarioId] of selectedIds.entries()) {
-      const portfolioIndex = options.start + selectionIndex;
+    for (const { portfolioIndex, scenarioId } of selected) {
       const scenario = loadScenario(scenarioId, draftRoot);
       if (sourceOnlyScenarioIds.has(scenarioId)) {
         results.push({
@@ -919,7 +1035,13 @@ async function main(): Promise<void> {
           namespace,
           path.join(scenario.directory, scenario.manifest.setup_manifest_path)
         );
-        const validation = await validateScenarioEventually(adapter, namespace, scenario);
+        const manifestPath = path.join(scenario.directory, scenario.manifest.setup_manifest_path);
+        const validation = await validateScenarioEventually(
+          adapter,
+          namespace,
+          scenario,
+          manifestPath
+        );
         results.push({
           portfolio_index: portfolioIndex,
           scenario_id: scenarioId,
@@ -973,8 +1095,8 @@ async function main(): Promise<void> {
   const report: ValidationReport = {
     schema_version: '1.0.0',
     profile: options.profile,
-    start: options.start,
-    limit: selectedIds.length,
+    start: selected[0]!.portfolioIndex,
+    limit: selected.length,
     qualification_status_changed: false,
     results,
   };

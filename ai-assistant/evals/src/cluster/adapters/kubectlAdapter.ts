@@ -29,6 +29,7 @@ import type {
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import yaml from 'js-yaml';
 import type { CommandRunner } from '../commandRunner.js';
 import type {
   ClusterAdapter,
@@ -196,6 +197,7 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
   async applyManifest(namespace: string, manifestYamlPath: string): Promise<void> {
     const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
     const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
+    const renderedSource = source.replaceAll('__EVAL_NAMESPACE__', namespace);
     const temporaryDirectory = hasNamespacePlaceholder
       ? mkdtempSync(path.join(tmpdir(), 'headlamp-eval-fixture-'))
       : undefined;
@@ -204,7 +206,7 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       : manifestYamlPath;
     try {
       if (temporaryDirectory) {
-        writeFileSync(appliedPath, source.replaceAll('__EVAL_NAMESPACE__', namespace), 'utf8');
+        writeFileSync(appliedPath, renderedSource, 'utf8');
       }
       const result = this.runner(
         'kubectl',
@@ -213,8 +215,68 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       if (result.status !== 0) {
         throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
       }
+      await this.refreshManifestStatuses(namespace, appliedPath);
     } finally {
       if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
+    }
+  }
+
+  /** Reapplies explicit fixture status through each resource's status subresource. */
+  async refreshManifestStatuses(namespace: string, manifestYamlPath: string): Promise<void> {
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const documents = yaml
+      .loadAll(source.replaceAll('__EVAL_NAMESPACE__', namespace))
+      .flatMap(document => {
+        const record = document as Record<string, unknown> | null;
+        if (
+          record !== null &&
+          typeof record === 'object' &&
+          !Array.isArray(document) &&
+          record.kind === 'List' &&
+          Array.isArray(record.items)
+        ) {
+          return record.items;
+        }
+        return [document];
+      })
+      .filter(
+        (document): document is Record<string, unknown> =>
+          document !== null && typeof document === 'object' && !Array.isArray(document)
+      );
+    for (const document of documents) {
+      const metadata = document.metadata as Record<string, unknown> | null;
+      if (
+        document.status === undefined ||
+        typeof document.kind !== 'string' ||
+        metadata === null ||
+        typeof metadata !== 'object' ||
+        Array.isArray(metadata) ||
+        typeof metadata.name !== 'string'
+      ) {
+        continue;
+      }
+      const statusNamespace =
+        typeof metadata.namespace === 'string' ? metadata.namespace : namespace;
+      const statusResult = this.runner(
+        'kubectl',
+        this.kubectl([
+          'patch',
+          `${document.kind.toLowerCase()}/${metadata.name}`,
+          '-n',
+          statusNamespace,
+          '--subresource=status',
+          '--type=merge',
+          '--patch',
+          JSON.stringify({ status: document.status }),
+        ])
+      );
+      if (statusResult.status !== 0) {
+        throw new Error(
+          `kubectl status patch failed for ${document.kind}/${metadata.name}: ${
+            statusResult.stderr || statusResult.stdout
+          }`
+        );
+      }
     }
   }
 
@@ -579,6 +641,21 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       throw new Error(`failed to read logs for pod/${podName}: ${result.stderr || result.stdout}`);
     }
     return result.stdout.trim();
+  }
+
+  async getNodeProxyHealth(nodeName: string): Promise<{ reachable: boolean; detail: string }> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', '--raw', `/api/v1/nodes/${encodeURIComponent(nodeName)}/proxy/healthz`])
+    );
+    return {
+      reachable: result.status === 0,
+      detail: (result.stderr || result.stdout).trim(),
+    };
+  }
+
+  async probeApiPath(apiPath: string): Promise<void> {
+    this.runner('kubectl', this.kubectl(['get', '--raw', apiPath]));
   }
 
   async applyJsonPatch(

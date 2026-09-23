@@ -128,3 +128,106 @@ test('MinikubeAdapter reuses a running profile and exports an isolated kubeconfi
     removeScratchDir(directory);
   }
 });
+
+test('MinikubeAdapter queries Prometheus through the trusted query sidecar', async () => {
+  const directory = makeScratchDir('minikube-prometheus-query');
+  const kubeconfigPath = path.join(directory, 'kubeconfig');
+  try {
+    const { runner, calls } = createFakeCommandRunner([
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'exec'],
+        result: {
+          status: 0,
+          stdout: JSON.stringify({
+            status: 'success',
+            data: {
+              result: [{ metric: { job: 'kube-state-metrics' }, value: [123, '1'] }],
+            },
+          }),
+          stderr: '',
+        },
+      },
+    ]);
+    const adapter = new MinikubeAdapter(runner, kubeconfigPath);
+    assert.deepEqual(await adapter.queryPrometheus('up{job="kube-state-metrics"}'), [
+      {
+        labels: { job: 'kube-state-metrics' },
+        timestamp: 123,
+        value: 1,
+      },
+    ]);
+    assert.ok(calls[0]?.args.includes('query=up{job="kube-state-metrics"}'));
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('MinikubeAdapter marks metrics ready only after all scrape jobs are up', async () => {
+  const directory = makeScratchDir('minikube-prometheus-ready');
+  const kubeconfigPath = path.join(directory, 'kubeconfig');
+  try {
+    const upResult = {
+      status: 'success',
+      data: {
+        result: ['apiserver', 'cadvisor', 'kube-state-metrics', 'kubelet'].map(job => ({
+          metric: { job },
+          value: [123, '1'],
+        })),
+      },
+    };
+    const { runner, calls } = createFakeCommandRunner([
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'apply', '-f'],
+        result: { status: 0, stdout: 'created', stderr: '' },
+      },
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'rollout', 'status'],
+        result: { status: 0, stdout: 'ready', stderr: '' },
+      },
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'exec'],
+        result: { status: 0, stdout: JSON.stringify(upResult), stderr: '' },
+      },
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'delete', '-f'],
+        result: { status: 0, stdout: 'deleted', stderr: '' },
+      },
+    ]);
+    const adapter = new MinikubeAdapter(runner, kubeconfigPath);
+    await adapter.ensureMetricsCollection();
+    const initializedCallCount = calls.length;
+    await adapter.ensureMetricsCollection();
+    assert.equal(calls.length, initializedCallCount);
+    await adapter.dispose();
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('MinikubeAdapter removes the complete metrics manifest after partial startup', async () => {
+  const directory = makeScratchDir('minikube-prometheus-cleanup');
+  const kubeconfigPath = path.join(directory, 'kubeconfig');
+  try {
+    const { runner, calls } = createFakeCommandRunner([
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'apply', '-f'],
+        result: { status: 0, stdout: 'created', stderr: '' },
+      },
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'rollout', 'status'],
+        result: { status: 1, stdout: '', stderr: 'timed out' },
+      },
+      {
+        match: ['kubectl', '--kubeconfig', kubeconfigPath, 'delete', '-f'],
+        result: { status: 0, stdout: 'deleted', stderr: '' },
+      },
+    ]);
+    const adapter = new MinikubeAdapter(runner, kubeconfigPath);
+    await assert.rejects(() => adapter.ensureMetricsCollection(), /was not ready/);
+    await adapter.dispose();
+    const cleanup = calls.find(call => call.args.includes('delete') && call.args.includes('-f'));
+    assert.ok(cleanup?.args.some(argument => argument.endsWith('minikube-metrics-stack.yaml')));
+  } finally {
+    removeScratchDir(directory);
+  }
+});

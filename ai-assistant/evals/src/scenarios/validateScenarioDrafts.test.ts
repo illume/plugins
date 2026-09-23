@@ -93,6 +93,31 @@ test('field resolver observes nested values, array elements, and absent fields',
   );
 });
 
+test('field resolver observes JSONPath-style named container predicates', () => {
+  const pod = {
+    status: {
+      containerStatuses: [
+        {
+          name: 'app',
+          state: { waiting: { reason: 'CrashLoopBackOff' } },
+          lastState: { terminated: { exitCode: 42 } },
+        },
+      ],
+    },
+  };
+  assert.equal(
+    resolveFieldPath(pod, 'status.containerStatuses[?(@.name=="app")].state.waiting.reason'),
+    'CrashLoopBackOff'
+  );
+  assert.equal(
+    resolveFieldPath(
+      pod,
+      'status.containerStatuses[?(@.name=="app")].lastState.terminated.exitCode'
+    ),
+    42
+  );
+});
+
 test('field resolver rejects malformed encoded predicates instead of claiming validation', () => {
   assert.throws(
     () => resolveFactField({ data: { 'config.yaml': 3 } }, 'data.config.yaml#spec.value'),
@@ -237,4 +262,10 @@ test('observed values use evaluator canonical strings', () => {
     ),
     true
   );
+});
+
+test('fact matcher evaluates numeric threshold predicates', () => {
+  assert.equal(factValueMatches(1, '> 0'), true);
+  assert.equal(factValueMatches(0, '> 0'), false);
+  assert.equal(factValueMatches(0.1, '<= 0.2'), true);
 });

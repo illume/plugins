@@ -588,7 +588,19 @@ async function observedFactValue(
       const group = /group="([^"]+)"/.exec(selector)?.[1];
       if (group) {
         for (let request = 0; request < 5; request++) {
-          await adapter.probeApiPath(`/apis/${group}/v1alpha1`);
+          if (fact.fact_id === 'api-fast-burn') {
+            await adapter.probeApiPath(
+              `/apis/${group}/v1alpha1/namespaces/${namespace}/burnprobes`,
+              {
+                apiVersion: `${group}/v1alpha1`,
+                kind: 'BurnProbe',
+                metadata: { name: 'bounded-burn-probe', namespace },
+                spec: {},
+              }
+            );
+          } else {
+            await adapter.probeApiPath(`/apis/${group}/v1alpha1`);
+          }
         }
       }
     }
@@ -985,7 +997,15 @@ async function validateScenarioEventually(
   scenario: LoadedScenario,
   manifestPath: string
 ): Promise<{ acceptedFactSet: number; observedFactCount: number }> {
-  const attempts = supportsBoundedConvergence(scenario) ? 60 : 1;
+  const attempts = [
+    'rule-gap-persistent-volume-phase-errors',
+    'rule-gap-persistent-volume-filling-up',
+    'rule-gap-persistent-volume-inodes-filling-up',
+  ].includes(scenario.manifest.scenario_id)
+    ? 180
+    : supportsBoundedConvergence(scenario)
+    ? 60
+    : 1;
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
@@ -1090,8 +1110,8 @@ async function main(): Promise<void> {
         .digest('hex')
         .slice(0, 16)}`;
       try {
-        await adapter.createNamespace(namespace);
         if (metricFacts) await adapter.ensureMetricsCollection?.();
+        await adapter.createNamespace(namespace);
         await adapter.applyManifest(
           namespace,
           path.join(scenario.directory, scenario.manifest.setup_manifest_path)

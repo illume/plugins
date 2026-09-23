@@ -177,6 +177,29 @@ test('MinikubeAdapter marks metrics ready only after all scrape jobs are up', as
     };
     const { runner, calls } = createFakeCommandRunner([
       {
+        match: ['minikube', 'addons', 'list'],
+        result: {
+          status: 0,
+          stdout: JSON.stringify({ 'csi-hostpath-driver': { Status: 'disabled' } }),
+          stderr: '',
+        },
+      },
+      {
+        match: ['minikube', 'addons', 'enable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'enabled', stderr: '' },
+      },
+      {
+        match: [
+          'kubectl',
+          '--kubeconfig',
+          kubeconfigPath,
+          'rollout',
+          'status',
+          'daemonset/csi-hostpathplugin',
+        ],
+        result: { status: 0, stdout: 'ready', stderr: '' },
+      },
+      {
         match: ['kubectl', '--kubeconfig', kubeconfigPath, 'apply', '-f'],
         result: { status: 0, stdout: 'created', stderr: '' },
       },
@@ -192,6 +215,10 @@ test('MinikubeAdapter marks metrics ready only after all scrape jobs are up', as
         match: ['kubectl', '--kubeconfig', kubeconfigPath, 'delete', '-f'],
         result: { status: 0, stdout: 'deleted', stderr: '' },
       },
+      {
+        match: ['minikube', 'addons', 'disable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'disabled', stderr: '' },
+      },
     ]);
     const adapter = new MinikubeAdapter(runner, kubeconfigPath);
     await adapter.ensureMetricsCollection();
@@ -199,6 +226,14 @@ test('MinikubeAdapter marks metrics ready only after all scrape jobs are up', as
     await adapter.ensureMetricsCollection();
     assert.equal(calls.length, initializedCallCount);
     await adapter.dispose();
+    assert.ok(
+      calls.some(
+        call =>
+          call.command === 'minikube' &&
+          call.args.includes('disable') &&
+          call.args.includes('csi-hostpath-driver')
+      )
+    );
   } finally {
     removeScratchDir(directory);
   }
@@ -209,6 +244,29 @@ test('MinikubeAdapter removes the complete metrics manifest after partial startu
   const kubeconfigPath = path.join(directory, 'kubeconfig');
   try {
     const { runner, calls } = createFakeCommandRunner([
+      {
+        match: ['minikube', 'addons', 'list'],
+        result: {
+          status: 0,
+          stdout: JSON.stringify({ 'csi-hostpath-driver': { Status: 'disabled' } }),
+          stderr: '',
+        },
+      },
+      {
+        match: ['minikube', 'addons', 'enable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'enabled', stderr: '' },
+      },
+      {
+        match: [
+          'kubectl',
+          '--kubeconfig',
+          kubeconfigPath,
+          'rollout',
+          'status',
+          'daemonset/csi-hostpathplugin',
+        ],
+        result: { status: 0, stdout: 'ready', stderr: '' },
+      },
       {
         match: ['kubectl', '--kubeconfig', kubeconfigPath, 'apply', '-f'],
         result: { status: 0, stdout: 'created', stderr: '' },
@@ -221,12 +279,68 @@ test('MinikubeAdapter removes the complete metrics manifest after partial startu
         match: ['kubectl', '--kubeconfig', kubeconfigPath, 'delete', '-f'],
         result: { status: 0, stdout: 'deleted', stderr: '' },
       },
+      {
+        match: ['minikube', 'addons', 'disable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'disabled', stderr: '' },
+      },
     ]);
     const adapter = new MinikubeAdapter(runner, kubeconfigPath);
     await assert.rejects(() => adapter.ensureMetricsCollection(), /was not ready/);
     await adapter.dispose();
     const cleanup = calls.find(call => call.args.includes('delete') && call.args.includes('-f'));
     assert.ok(cleanup?.args.some(argument => argument.endsWith('minikube-metrics-stack.yaml')));
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('MinikubeAdapter restores CSI addon state after a failed addon rollout', async () => {
+  const directory = makeScratchDir('minikube-csi-cleanup');
+  const kubeconfigPath = path.join(directory, 'kubeconfig');
+  try {
+    const { runner, calls } = createFakeCommandRunner([
+      {
+        match: ['minikube', 'addons', 'list'],
+        result: {
+          status: 0,
+          stdout: JSON.stringify({ 'csi-hostpath-driver': { Status: 'disabled' } }),
+          stderr: '',
+        },
+      },
+      {
+        match: ['minikube', 'addons', 'enable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'enabled', stderr: '' },
+      },
+      {
+        match: [
+          'kubectl',
+          '--kubeconfig',
+          kubeconfigPath,
+          'rollout',
+          'status',
+          'daemonset/csi-hostpathplugin',
+        ],
+        result: { status: 1, stdout: '', stderr: 'timed out' },
+      },
+      {
+        match: ['minikube', 'addons', 'disable', 'csi-hostpath-driver'],
+        result: { status: 0, stdout: 'disabled', stderr: '' },
+      },
+    ]);
+    const adapter = new MinikubeAdapter(runner, kubeconfigPath);
+    await assert.rejects(
+      () => adapter.ensureMetricsCollection(),
+      /CSI hostpath addon was not ready/
+    );
+    await adapter.dispose();
+    assert.ok(
+      calls.some(
+        call =>
+          call.command === 'minikube' &&
+          call.args.includes('disable') &&
+          call.args.includes('csi-hostpath-driver')
+      )
+    );
   } finally {
     removeScratchDir(directory);
   }

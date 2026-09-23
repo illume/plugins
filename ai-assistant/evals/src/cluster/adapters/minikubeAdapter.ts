@@ -45,8 +45,10 @@ function createDefaultKubeconfigPath(): string {
 /** Real Kubernetes adapter backed by a dedicated local Minikube profile. */
 export class MinikubeAdapter extends KubectlClusterAdapter {
   private readonly candidateDirectories = new Map<string, string>();
+  private csiAddonEnabledByAdapter = false;
   private metricsInstalled = false;
   private metricsReady = false;
+  private volumeMetricsReady = false;
 
   constructor(runner: CommandRunner, kubeconfigPath = createDefaultKubeconfigPath()) {
     super('local-minikube', runner, { clusterName: profileName, kubeconfigPath });
@@ -86,10 +88,10 @@ export class MinikubeAdapter extends KubectlClusterAdapter {
         reason: `failed to export Minikube kubeconfig: ${exported.stderr}`,
       };
     }
-    const config = JSON.parse(exported.stdout) as Record<string, unknown>;
-    config['current-context'] = profileName;
+    const exportedConfig = JSON.parse(exported.stdout) as Record<string, unknown>;
+    exportedConfig['current-context'] = profileName;
     mkdirSync(path.dirname(this.kubeconfigPath), { recursive: true });
-    writeFileSync(this.kubeconfigPath, JSON.stringify(config), {
+    writeFileSync(this.kubeconfigPath, JSON.stringify(exportedConfig), {
       encoding: 'utf8',
       mode: 0o600,
     });
@@ -216,6 +218,52 @@ export class MinikubeAdapter extends KubectlClusterAdapter {
 
   async ensureMetricsCollection(): Promise<void> {
     if (this.metricsReady) return;
+    if (!this.volumeMetricsReady) {
+      const addonList = this.runner('minikube', [
+        'addons',
+        'list',
+        '--profile',
+        profileName,
+        '--output=json',
+      ]);
+      if (addonList.status !== 0) {
+        throw new Error(
+          `failed to inspect Minikube addons: ${addonList.stderr || addonList.stdout}`
+        );
+      }
+      const addons = JSON.parse(addonList.stdout) as Record<string, { Status?: string }>;
+      const csiWasEnabled = addons['csi-hostpath-driver']?.Status === 'enabled';
+      if (!csiWasEnabled) {
+        const enable = this.runner('minikube', [
+          'addons',
+          'enable',
+          'csi-hostpath-driver',
+          '--profile',
+          profileName,
+        ]);
+        if (enable.status !== 0) {
+          throw new Error(`failed to enable CSI hostpath addon: ${enable.stderr || enable.stdout}`);
+        }
+        this.csiAddonEnabledByAdapter = true;
+      }
+      const csiRollout = this.runner(
+        'kubectl',
+        this.kubectl([
+          'rollout',
+          'status',
+          'daemonset/csi-hostpathplugin',
+          '-n',
+          'kube-system',
+          '--timeout=300s',
+        ])
+      );
+      if (csiRollout.status !== 0) {
+        throw new Error(
+          `CSI hostpath addon was not ready: ${csiRollout.stderr || csiRollout.stdout}`
+        );
+      }
+      this.volumeMetricsReady = true;
+    }
     if (!this.metricsInstalled) {
       const apply = this.runner('kubectl', this.kubectl(['apply', '-f', metricsManifest]));
       if (apply.status !== 0) {
@@ -340,6 +388,17 @@ export class MinikubeAdapter extends KubectlClusterAdapter {
       this.metricsInstalled = false;
       this.metricsReady = false;
     }
+    if (this.csiAddonEnabledByAdapter) {
+      this.runner('minikube', [
+        'addons',
+        'disable',
+        'csi-hostpath-driver',
+        '--profile',
+        profileName,
+      ]);
+      this.csiAddonEnabledByAdapter = false;
+    }
+    this.volumeMetricsReady = false;
     rmSync(this.kubeconfigPath, { force: true });
   }
 }

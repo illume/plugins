@@ -7,27 +7,12 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: telemetry-failed-csi
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: ''
   claimRef:
-    name: telemetry-failed-claim
-  csi:
-    driver: missing.telemetry.storage.example
-    volumeHandle: telemetry-failed-volume
-status:
-  phase: Failed
-  reason: VolumePluginUnavailable
-  message: CSI driver missing.telemetry.storage.example is unavailable
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: telemetry-failed-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: telemetry-failed-csi
-  volumeName: telemetry-failed-pv
-  resources:
-    requests:
-      storage: 1Gi
+    namespace: __EVAL_NAMESPACE__
+    name: deleted-claim
+    uid: 00000000-0000-0000-0000-000000000001
+  hostPath:
+    path: /dev/null
+    type: Socket

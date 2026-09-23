@@ -5,8 +5,8 @@ family: rule-gap-policy
 mode: diagnose_only
 title: PersistentVolume enters an error phase
 description: >-
-  A dedicated CSI PersistentVolume carries a terminal Failed phase, providing native object status
-  and volume-state telemetry without using a surveyed diagnostic tool.
+  A released hostPath PersistentVolume invokes the native recycler with an invalid volume type,
+  causing the controller to record a terminal Failed phase.
 provenance:
   owner: scenarios-goal-agents
   source: reference-implementation

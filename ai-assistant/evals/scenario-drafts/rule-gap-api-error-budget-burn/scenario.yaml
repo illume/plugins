@@ -5,8 +5,8 @@ family: rule-gap-policy
 mode: diagnose_only
 title: API server error budget burns too quickly
 description: >-
-  An unavailable aggregated API backend and a bounded request generator produce real API server 503
-  responses for an isolated API group.
+  A failing admission webhook and bounded create requests produce real API server 500 responses for
+  an isolated API group.
 provenance:
   owner: scenarios-goal-agents
   source: reference-implementation
@@ -41,8 +41,6 @@ supported_cluster_profiles:
   - aks
 required_mechanisms:
   - api-server
-  - endpointslice-controller
-  - cni
   - operator-reconciliation
 declared_kwok_compatible: false
 setup_manifest_path: setup.yaml

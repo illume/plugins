@@ -12,11 +12,11 @@
         "description": "The PersistentVolume is in the terminal Failed phase."
       },
       {
-        "fact_id": "persistent-volume-driver-unavailable",
+        "fact_id": "persistent-volume-recycle-failed",
         "resource_ref": "persistentvolume/telemetry-failed-pv",
-        "field_path": "status.reason",
-        "observed_value": "VolumePluginUnavailable",
-        "description": "The volume status identifies its unavailable CSI implementation."
+        "field_path": "status.message",
+        "observed_value": "<contains: Recycle failed>",
+        "description": "The volume status records the native recycler failure."
       },
       {
         "fact_id": "persistent-volume-failed-metric",
@@ -39,11 +39,11 @@
       "description": "The fixture volume is not healthy and Bound."
     },
     {
-      "fact_id": "invented-working-csi-driver",
+      "fact_id": "invented-volume-recycled",
       "resource_ref": "persistentvolume/telemetry-failed-pv",
-      "field_path": "spec.csi.driver",
-      "observed_value": "<registered CSI driver>",
-      "description": "The specified CSI driver is intentionally absent."
+      "field_path": "status.phase",
+      "observed_value": "Available",
+      "description": "The recycler fails instead of returning the volume to Available."
     }
   ],
   "expects_uncertainty": false,

@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: bytes-filling
 spec:
+  storageClassName: csi-hostpath-sc
   accessModes:
     - ReadWriteOnce
   resources:
@@ -17,15 +18,25 @@ spec:
   restartPolicy: Never
   containers:
     - name: writer
-      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      image: debian@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
+      securityContext:
+        privileged: true
       command:
         - /bin/sh
         - '-c'
-        - dd if=/dev/zero of=/data/fill bs=1M count=60 conv=fsync; sleep 3600
+        - >-
+          truncate -s 64M /work/bytes.img; mkfs.ext4 -F /work/bytes.img; mount -o loop
+          /work/bytes.img /data; i=0; while [ "$i" -lt 112 ]; do dd if=/dev/zero bs=256K count=2 >>
+          /data/fill; i=$((i+1)); sleep 1; done; sync; sleep 3600
       volumeMounts:
         - name: data
           mountPath: /data
+          mountPropagation: Bidirectional
+        - name: work
+          mountPath: /work
   volumes:
     - name: data
       persistentVolumeClaim:
         claimName: bytes-filling
+    - name: work
+      emptyDir: {}

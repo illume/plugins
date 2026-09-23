@@ -283,7 +283,7 @@ export interface ClusterAdapter {
   /** Probes one kubelet health endpoint through the API-server node proxy. */
   getNodeProxyHealth?(nodeName: string): Promise<{ reachable: boolean; detail: string }>;
   /** Sends one read-only request to an API-server path for bounded telemetry fixtures. */
-  probeApiPath?(apiPath: string): Promise<void>;
+  probeApiPath?(apiPath: string, body?: JsonValue): Promise<void>;
   /** Authenticates once with an issued fixture client certificate. */
   exerciseClientCertificate?(csrName: string, privateKeyPem: string): Promise<boolean>;
   /** Installs or verifies the profile's trusted metrics collection stack. */

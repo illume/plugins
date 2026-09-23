@@ -684,8 +684,19 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     };
   }
 
-  async probeApiPath(apiPath: string): Promise<void> {
-    this.runner('kubectl', this.kubectl(['get', '--raw', apiPath]));
+  async probeApiPath(apiPath: string, body?: JsonValue): Promise<void> {
+    if (body === undefined) {
+      this.runner('kubectl', this.kubectl(['get', '--raw', apiPath]));
+      return;
+    }
+    const directory = mkdtempSync(path.join(tmpdir(), 'headlamp-eval-api-probe-'));
+    try {
+      const bodyPath = path.join(directory, 'body.json');
+      writeFileSync(bodyPath, JSON.stringify(body), { mode: 0o600 });
+      this.runner('kubectl', this.kubectl(['create', '--raw', apiPath, '-f', bodyPath]));
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   }
 
   async exerciseClientCertificate(csrName: string, privateKeyPem: string): Promise<boolean> {

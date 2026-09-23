@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: inodes-filling
 spec:
+  storageClassName: csi-hostpath-sc
   accessModes:
     - ReadWriteOnce
   resources:
@@ -17,17 +18,26 @@ spec:
   restartPolicy: Never
   containers:
     - name: writer
-      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      image: debian@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
+      securityContext:
+        privileged: true
       command:
         - /bin/sh
         - '-c'
         - >-
-          i=0; while [ "$i" -lt 50000 ]; do : > "/data/file-$i" || break; i=$((i+1)); done; echo
-          "created=$i"; sleep 3600
+          truncate -s 32M /work/inodes.img; mkfs.ext4 -F -N 1000 /work/inodes.img; mount -o loop
+          /work/inodes.img /data; i=0; while [ "$i" -lt 896 ]; do end=$((i+8)); while [ "$i" -lt
+          "$end" ]; do : > "/data/file-$i" || break 2; i=$((i+1)); done; sleep 1; done; echo
+          "created=$i"; sync; sleep 3600
       volumeMounts:
         - name: data
           mountPath: /data
+          mountPropagation: Bidirectional
+        - name: work
+          mountPath: /work
   volumes:
     - name: data
       persistentVolumeClaim:
         claimName: inodes-filling
+    - name: work
+      emptyDir: {}

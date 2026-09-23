@@ -267,6 +267,25 @@ test('probeApiPath issues a read-only raw API-server request', async () => {
   ]);
 });
 
+test('probeApiPath writes a bounded resource body for raw create requests', async () => {
+  let body: unknown;
+  const runner: CommandRunner = (_command, args) => {
+    const fileIndex = args.indexOf('-f');
+    body = JSON.parse(readFileSync(args[fileIndex + 1]!, 'utf8'));
+    return { status: 1, stdout: '', stderr: 'webhook unavailable' };
+  };
+  await new TestKubectlAdapter(runner).probeApiPath('/apis/example/v1/widgets', {
+    apiVersion: 'example/v1',
+    kind: 'Widget',
+    metadata: { name: 'probe' },
+  });
+  assert.deepEqual(body, {
+    apiVersion: 'example/v1',
+    kind: 'Widget',
+    metadata: { name: 'probe' },
+  });
+});
+
 test('applyJsonPatch passes an exact RFC 6902 document and verifies target identity', async () => {
   let invokedArgs: string[] = [];
   const runner: CommandRunner = (_command, args) => {

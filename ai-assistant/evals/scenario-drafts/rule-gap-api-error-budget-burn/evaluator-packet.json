@@ -5,18 +5,18 @@
   "accepted_fact_sets": [
     [
       {
-        "fact_id": "aggregated-api-unavailable",
-        "resource_ref": "apiservice/v1alpha1.burn.telemetry.example",
-        "field_path": "status.conditions[?(@.type==\"Available\")].status",
-        "observed_value": "False",
-        "description": "The aggregated API backend is unavailable."
+        "fact_id": "burn-api-established",
+        "resource_ref": "customresourcedefinition/burnprobes.burn.telemetry.example",
+        "field_path": "status.conditions[?(@.type==\"Established\")].status",
+        "observed_value": "True",
+        "description": "The isolated API group is established and receives the bounded requests."
       },
       {
-        "fact_id": "aggregated-api-has-no-endpoints",
-        "resource_ref": "endpointslice/*?kubernetes.io/service-name=burn-api-backend",
-        "field_path": "endpoints[*].conditions.ready",
-        "observed_value": "<no ready endpoints>",
-        "description": "The APIService backend Service has no ready endpoint."
+        "fact_id": "burn-webhook-fails-closed",
+        "resource_ref": "validatingwebhookconfiguration/burn-telemetry-failure",
+        "field_path": "webhooks[0].failurePolicy",
+        "observed_value": "Fail",
+        "description": "The admission webhook fails requests closed when its backend is absent."
       },
       {
         "fact_id": "api-fast-burn",
@@ -32,11 +32,11 @@
   ],
   "contradiction_facts": [
     {
-      "fact_id": "invented-aggregated-api-available",
-      "resource_ref": "apiservice/v1alpha1.burn.telemetry.example",
-      "field_path": "status.conditions[?(@.type==\"Available\")].status",
-      "observed_value": "True",
-      "description": "The APIService has no serving backend."
+      "fact_id": "invented-burn-api-unestablished",
+      "resource_ref": "customresourcedefinition/burnprobes.burn.telemetry.example",
+      "field_path": "status.conditions[?(@.type==\"Established\")].status",
+      "observed_value": "False",
+      "description": "The CRD is established before requests are generated."
     },
     {
       "fact_id": "invented-api-errors-below-budget",

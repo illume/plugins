@@ -93,6 +93,7 @@ const persistentVolumeClaim = (name: string, storage = '64Mi') => ({
   kind: 'PersistentVolumeClaim',
   metadata: { name },
   spec: {
+    storageClassName: 'csi-hostpath-sc',
     accessModes: ['ReadWriteOnce'],
     resources: { requests: { storage } },
   },
@@ -534,18 +535,18 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
     scenarioId: 'rule-gap-persistent-volume-phase-errors',
     title: 'PersistentVolume enters an error phase',
     description:
-      'A dedicated CSI PersistentVolume carries a terminal Failed phase, providing native object status and volume-state telemetry without using a surveyed diagnostic tool.',
+      'A released hostPath PersistentVolume invokes the native recycler with an invalid volume type, causing the controller to record a terminal Failed phase.',
     taskPrompt:
-      'Diagnose the storage lifecycle failure for PersistentVolume `telemetry-failed-pv`. Correlate its phase, status message, claim reference, and native volume-phase telemetry. Distinguish the failure from a healthy Bound volume and do not mutate resources.',
+      'Diagnose the storage lifecycle failure for PersistentVolume `telemetry-failed-pv`. Correlate its phase, recycler status message, released claim reference, Events, and native volume-phase telemetry. Do not mutate resources.',
     visibleResourceRefs: [
       'persistentvolume/telemetry-failed-pv',
-      'persistentvolumeclaim/telemetry-failed-claim',
+      'event/*?involvedObject.name=telemetry-failed-pv',
       'metric/kube_persistentvolume_status_phase{persistentvolume="telemetry-failed-pv",phase="Failed"}',
     ],
     observationKinds: [
       'persistentvolume.spec',
       'persistentvolume.status',
-      'pvc.status',
+      'resource.events',
       'metric.range',
     ],
     setup: [
@@ -556,29 +557,14 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         spec: {
           capacity: { storage: '1Gi' },
           accessModes: ['ReadWriteOnce'],
-          persistentVolumeReclaimPolicy: 'Retain',
-          storageClassName: 'telemetry-failed-csi',
-          claimRef: { name: 'telemetry-failed-claim' },
-          csi: {
-            driver: 'missing.telemetry.storage.example',
-            volumeHandle: 'telemetry-failed-volume',
+          persistentVolumeReclaimPolicy: 'Recycle',
+          storageClassName: '',
+          claimRef: {
+            namespace: '__EVAL_NAMESPACE__',
+            name: 'deleted-claim',
+            uid: '00000000-0000-0000-0000-000000000001',
           },
-        },
-        status: {
-          phase: 'Failed',
-          reason: 'VolumePluginUnavailable',
-          message: 'CSI driver missing.telemetry.storage.example is unavailable',
-        },
-      },
-      {
-        apiVersion: 'v1',
-        kind: 'PersistentVolumeClaim',
-        metadata: { name: 'telemetry-failed-claim' },
-        spec: {
-          accessModes: ['ReadWriteOnce'],
-          storageClassName: 'telemetry-failed-csi',
-          volumeName: 'telemetry-failed-pv',
-          resources: { requests: { storage: '1Gi' } },
+          hostPath: { path: '/dev/null', type: 'Socket' },
         },
       },
     ],
@@ -591,11 +577,11 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'The PersistentVolume is in the terminal Failed phase.'
       ),
       fact(
-        'persistent-volume-driver-unavailable',
+        'persistent-volume-recycle-failed',
         'persistentvolume/telemetry-failed-pv',
-        'status.reason',
-        'VolumePluginUnavailable',
-        'The volume status identifies its unavailable CSI implementation.'
+        'status.message',
+        '<contains: Recycle failed>',
+        'The volume status records the native recycler failure.'
       ),
       fact(
         'persistent-volume-failed-metric',
@@ -614,11 +600,11 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'The fixture volume is not healthy and Bound.'
       ),
       fact(
-        'invented-working-csi-driver',
+        'invented-volume-recycled',
         'persistentvolume/telemetry-failed-pv',
-        'spec.csi.driver',
-        '<registered CSI driver>',
-        'The specified CSI driver is intentionally absent.'
+        'status.phase',
+        'Available',
+        'The recycler fails instead of returning the volume to Available.'
       ),
     ],
     requiredMechanisms: ['api-server', 'csi', 'operator-reconciliation'],
@@ -742,16 +728,24 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
           containers: [
             {
               name: 'writer',
-              image: busyboxImage,
+              image:
+                'debian@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251',
+              securityContext: { privileged: true },
               command: [
                 '/bin/sh',
                 '-c',
-                'dd if=/dev/zero of=/data/fill bs=1M count=60 conv=fsync; sleep 3600',
+                'truncate -s 64M /work/bytes.img; mkfs.ext4 -F /work/bytes.img; mount -o loop /work/bytes.img /data; i=0; while [ "$i" -lt 112 ]; do dd if=/dev/zero bs=256K count=2 >> /data/fill; i=$((i+1)); sleep 1; done; sync; sleep 3600',
               ],
-              volumeMounts: [{ name: 'data', mountPath: '/data' }],
+              volumeMounts: [
+                { name: 'data', mountPath: '/data', mountPropagation: 'Bidirectional' },
+                { name: 'work', mountPath: '/work' },
+              ],
             },
           ],
-          volumes: [{ name: 'data', persistentVolumeClaim: { claimName: 'bytes-filling' } }],
+          volumes: [
+            { name: 'data', persistentVolumeClaim: { claimName: 'bytes-filling' } },
+            { name: 'work', emptyDir: {} },
+          ],
         },
       },
     ],
@@ -827,16 +821,24 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
           containers: [
             {
               name: 'writer',
-              image: busyboxImage,
+              image:
+                'debian@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251',
+              securityContext: { privileged: true },
               command: [
                 '/bin/sh',
                 '-c',
-                'i=0; while [ "$i" -lt 50000 ]; do : > "/data/file-$i" || break; i=$((i+1)); done; echo "created=$i"; sleep 3600',
+                'truncate -s 32M /work/inodes.img; mkfs.ext4 -F -N 1000 /work/inodes.img; mount -o loop /work/inodes.img /data; i=0; while [ "$i" -lt 896 ]; do end=$((i+8)); while [ "$i" -lt "$end" ]; do : > "/data/file-$i" || break 2; i=$((i+1)); done; sleep 1; done; echo "created=$i"; sync; sleep 3600',
               ],
-              volumeMounts: [{ name: 'data', mountPath: '/data' }],
+              volumeMounts: [
+                { name: 'data', mountPath: '/data', mountPropagation: 'Bidirectional' },
+                { name: 'work', mountPath: '/work' },
+              ],
             },
           ],
-          volumes: [{ name: 'data', persistentVolumeClaim: { claimName: 'inodes-filling' } }],
+          volumes: [
+            { name: 'data', persistentVolumeClaim: { claimName: 'inodes-filling' } },
+            { name: 'work', emptyDir: {} },
+          ],
         },
       },
     ],
@@ -1050,91 +1052,92 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
     scenarioId: 'rule-gap-api-error-budget-burn',
     title: 'API server error budget burns too quickly',
     description:
-      'An unavailable aggregated API backend and a bounded request generator produce real API server 503 responses for an isolated API group.',
+      'A failing admission webhook and bounded create requests produce real API server 500 responses for an isolated API group.',
     taskPrompt:
-      'Diagnose the fast API availability burn caused by requests to `v1alpha1.burn.telemetry.example`. Correlate APIService availability, Service endpoints, request status codes, and short- and long-window API error ratios. Do not mutate resources.',
+      'Diagnose the fast API availability burn affecting `burnprobes.burn.telemetry.example`. Correlate CRD availability, the fail-closed webhook, request status codes, and short- and long-window API error ratios. Do not mutate resources.',
     visibleResourceRefs: [
-      'apiservice/v1alpha1.burn.telemetry.example',
-      'service/burn-api-backend',
-      'endpointslice/*?kubernetes.io/service-name=burn-api-backend',
-      'deployment/api-error-generator',
+      'customresourcedefinition/burnprobes.burn.telemetry.example',
+      'validatingwebhookconfiguration/burn-telemetry-failure',
       'metric/apiserver_request_total{group="burn.telemetry.example"}',
     ],
     observationKinds: [
-      'apiservice.status',
-      'service.spec',
-      'endpointslice.list',
-      'pod.logs',
+      'customresourcedefinition.status',
+      'validatingwebhookconfiguration.spec',
       'metric.range',
       'metric.ratio',
     ],
     setup: [
       {
-        apiVersion: 'v1',
-        kind: 'Service',
-        metadata: { name: 'burn-api-backend' },
-        spec: {
-          selector: { app: 'intentionally-absent-api-backend' },
-          ports: [{ name: 'https', port: 443, targetPort: 8443 }],
-        },
-      },
-      {
-        apiVersion: 'apiregistration.k8s.io/v1',
-        kind: 'APIService',
-        metadata: { name: 'v1alpha1.burn.telemetry.example' },
+        apiVersion: 'apiextensions.k8s.io/v1',
+        kind: 'CustomResourceDefinition',
+        metadata: { name: 'burnprobes.burn.telemetry.example' },
         spec: {
           group: 'burn.telemetry.example',
-          version: 'v1alpha1',
-          groupPriorityMinimum: 100,
-          versionPriority: 100,
-          insecureSkipTLSVerify: true,
-          service: {
-            namespace: '__EVAL_NAMESPACE__',
-            name: 'burn-api-backend',
-            port: 443,
-          },
+          scope: 'Namespaced',
+          names: { plural: 'burnprobes', singular: 'burnprobe', kind: 'BurnProbe' },
+          versions: [
+            {
+              name: 'v1alpha1',
+              served: true,
+              storage: true,
+              schema: {
+                openAPIV3Schema: {
+                  type: 'object',
+                  properties: {
+                    spec: { type: 'object', 'x-kubernetes-preserve-unknown-fields': true },
+                  },
+                },
+              },
+            },
+          ],
         },
       },
       {
-        apiVersion: 'apps/v1',
-        kind: 'Deployment',
-        metadata: { name: 'api-error-generator' },
-        spec: {
-          replicas: 1,
-          selector: { matchLabels: { app: 'api-error-generator' } },
-          template: {
-            metadata: { labels: { app: 'api-error-generator' } },
-            spec: {
-              containers: [
-                {
-                  name: 'requester',
-                  image: busyboxImage,
-                  command: [
-                    '/bin/sh',
-                    '-c',
-                    'TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token); while true; do wget -q -O /dev/null --no-check-certificate --header="Authorization: Bearer $TOKEN" https://kubernetes.default.svc/apis/burn.telemetry.example/v1alpha1 || true; sleep 1; done',
-                  ],
-                },
-              ],
+        apiVersion: 'admissionregistration.k8s.io/v1',
+        kind: 'ValidatingWebhookConfiguration',
+        metadata: { name: 'burn-telemetry-failure' },
+        webhooks: [
+          {
+            name: 'burn.telemetry.example',
+            admissionReviewVersions: ['v1'],
+            sideEffects: 'None',
+            failurePolicy: 'Fail',
+            timeoutSeconds: 2,
+            clientConfig: {
+              service: {
+                namespace: '__EVAL_NAMESPACE__',
+                name: 'absent-webhook',
+                path: '/validate',
+                port: 443,
+              },
             },
+            rules: [
+              {
+                apiGroups: ['burn.telemetry.example'],
+                apiVersions: ['v1alpha1'],
+                operations: ['CREATE'],
+                resources: ['burnprobes'],
+                scope: 'Namespaced',
+              },
+            ],
           },
-        },
+        ],
       },
     ],
     acceptedFacts: [
       fact(
-        'aggregated-api-unavailable',
-        'apiservice/v1alpha1.burn.telemetry.example',
-        'status.conditions[?(@.type=="Available")].status',
-        'False',
-        'The aggregated API backend is unavailable.'
+        'burn-api-established',
+        'customresourcedefinition/burnprobes.burn.telemetry.example',
+        'status.conditions[?(@.type=="Established")].status',
+        'True',
+        'The isolated API group is established and receives the bounded requests.'
       ),
       fact(
-        'aggregated-api-has-no-endpoints',
-        'endpointslice/*?kubernetes.io/service-name=burn-api-backend',
-        'endpoints[*].conditions.ready',
-        '<no ready endpoints>',
-        'The APIService backend Service has no ready endpoint.'
+        'burn-webhook-fails-closed',
+        'validatingwebhookconfiguration/burn-telemetry-failure',
+        'webhooks[0].failurePolicy',
+        'Fail',
+        'The admission webhook fails requests closed when its backend is absent.'
       ),
       fact(
         'api-fast-burn',
@@ -1146,11 +1149,11 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
     ],
     contradictionFacts: [
       fact(
-        'invented-aggregated-api-available',
-        'apiservice/v1alpha1.burn.telemetry.example',
-        'status.conditions[?(@.type=="Available")].status',
-        'True',
-        'The APIService has no serving backend.'
+        'invented-burn-api-unestablished',
+        'customresourcedefinition/burnprobes.burn.telemetry.example',
+        'status.conditions[?(@.type=="Established")].status',
+        'False',
+        'The CRD is established before requests are generated.'
       ),
       fact(
         'invented-api-errors-below-budget',
@@ -1160,12 +1163,7 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'The bounded request stream produces sustained 503 responses.'
       ),
     ],
-    requiredMechanisms: [
-      'api-server',
-      'endpointslice-controller',
-      'cni',
-      'operator-reconciliation',
-    ],
+    requiredMechanisms: ['api-server', 'operator-reconciliation'],
   }),
   liveDefinition({
     scenarioId: 'rule-gap-cluster-certificate-expiration',

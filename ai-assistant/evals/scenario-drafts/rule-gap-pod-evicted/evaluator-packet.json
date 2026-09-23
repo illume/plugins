@@ -15,15 +15,15 @@
         "fact_id": "ephemeral-storage-limit-exceeded",
         "resource_ref": "pod/storage-pressure",
         "field_path": "status.message",
-        "observed_value": "<contains: ephemeral-storage>",
+        "observed_value": "<contains: ephemeral local storage>",
         "description": "The terminal message attributes eviction to local ephemeral-storage usage."
       },
       {
-        "fact_id": "eviction-counter-increase",
-        "resource_ref": "metric/kubelet_evictions{eviction_signal=\"ephemeral_storage\"}",
-        "field_path": "increase[10m]",
-        "observed_value": "> 0",
-        "description": "The kubelet eviction counter increases in the same observation window."
+        "fact_id": "evicted-status-sustained",
+        "resource_ref": "metric/kube_pod_status_reason{pod=\"storage-pressure\",reason=\"Evicted\"}",
+        "field_path": "max_over_time[2m]",
+        "observed_value": "1",
+        "description": "Native Pod status telemetry records the Evicted reason in the same observation window."
       }
     ]
   ],

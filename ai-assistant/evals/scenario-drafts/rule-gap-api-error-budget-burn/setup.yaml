@@ -21,6 +21,7 @@ spec:
   versionPriority: 100
   insecureSkipTLSVerify: true
   service:
+    namespace: __EVAL_NAMESPACE__
     name: burn-api-backend
     port: 443
 ---

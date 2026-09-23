@@ -19,18 +19,11 @@
         "description": "The serving certificate renewal request is denied."
       },
       {
-        "fact_id": "client-renewal-errors-increase",
-        "resource_ref": "metric/kubelet_certificate_manager_client_expiration_renew_errors",
-        "field_path": "increase[10m]",
-        "observed_value": "> 0",
-        "description": "The kubelet client renewal error counter increases during the observation window."
-      },
-      {
-        "fact_id": "server-renewal-errors-increase",
-        "resource_ref": "metric/kubelet_server_expiration_renew_errors",
-        "field_path": "increase[10m]",
-        "observed_value": "> 0",
-        "description": "The kubelet serving renewal error counter increases during the observation window."
+        "fact_id": "renewal-denials-recorded",
+        "resource_ref": "metric/apiserver_request_total{group=\"certificates.k8s.io\",resource=\"certificatesigningrequests\",subresource=\"approval\",verb=\"PUT\",code=\"200\"}",
+        "field_path": "increase[2m]",
+        "observed_value": ">= 2",
+        "description": "Native API server telemetry records both renewal denial writes during the observation window."
       }
     ]
   ],
@@ -42,8 +35,8 @@
       "fact_id": "healthy-or-confounding-state",
       "resource_ref": "certificatesigningrequest/node-client-renewal-denied",
       "field_path": "spec.signerName + status.conditions[type=Denied]",
-      "observed_value": "Approved=True; renewal error counter increase=0",
-      "description": "A healthy node obtains approval without client or server renewal errors."
+      "observed_value": "Approved=True; no denial writes",
+      "description": "A healthy node obtains approval without client or server renewal denial."
     }
   ],
   "expects_uncertainty": false,

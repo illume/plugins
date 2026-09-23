@@ -6,8 +6,7 @@
   "visible_resource_refs": [
     "certificatesigningrequest/node-client-renewal-denied",
     "certificatesigningrequest/node-server-renewal-denied",
-    "metric/kubelet_certificate_manager_client_expiration_renew_errors",
-    "metric/kubelet_server_expiration_renew_errors"
+    "metric/apiserver_request_total{group=\"certificates.k8s.io\",resource=\"certificatesigningrequests\",subresource=\"approval\",verb=\"PUT\",code=\"200\"}"
   ],
   "allowed_observation_kinds": [
     "certificatesigningrequest.spec",

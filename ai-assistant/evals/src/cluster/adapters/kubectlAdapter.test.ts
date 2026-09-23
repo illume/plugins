@@ -23,10 +23,10 @@ import { makeScratchDir, removeScratchDir } from '../../test-helpers/scratchDir.
 import { KubectlClusterAdapter } from './kubectlAdapter.js';
 
 class TestKubectlAdapter extends KubectlClusterAdapter {
-  constructor(runner: CommandRunner) {
+  constructor(runner: CommandRunner, kubeconfigPath = '/tmp/test-kubeconfig') {
     super('local-minikube', runner, {
       clusterName: 'test',
-      kubeconfigPath: '/tmp/test-kubeconfig',
+      kubeconfigPath,
     });
   }
 
@@ -93,6 +93,80 @@ test('applyManifest patches fixture-authored status through the status subresour
       calls[1]?.at(-1),
       JSON.stringify({ status: { conditions: [{ type: 'Ready', status: 'False' }] } })
     );
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('applyManifest denies authored CSRs through the approval subresource', async () => {
+  const directory = makeScratchDir('kubectl-csr-fixture');
+  const fixturePath = path.join(directory, 'setup.yaml');
+  writeFileSync(
+    fixturePath,
+    [
+      'apiVersion: certificates.k8s.io/v1',
+      'kind: CertificateSigningRequest',
+      'metadata:',
+      '  name: denied-renewal',
+      'spec:',
+      '  request: request',
+      'status:',
+      '  conditions:',
+      '    - type: Denied',
+      '      status: "True"',
+      '      reason: FixtureRenewalDenied',
+      '      message: controlled denial',
+      '',
+    ].join('\n')
+  );
+  const calls: string[][] = [];
+  const runner: CommandRunner = (_command, args) => {
+    calls.push(args);
+    return { status: 0, stdout: '', stderr: '' };
+  };
+  try {
+    await new TestKubectlAdapter(runner).applyManifest('trial', fixturePath);
+    assert.deepEqual(calls[1]?.slice(2), ['certificate', 'deny', 'denied-renewal']);
+  } finally {
+    removeScratchDir(directory);
+  }
+});
+
+test('exerciseClientCertificate uses the issued certificate with its matching key', async () => {
+  const directory = makeScratchDir('kubectl-client-certificate');
+  const kubeconfigPath = path.join(directory, 'source-kubeconfig.json');
+  writeFileSync(
+    kubeconfigPath,
+    JSON.stringify({
+      'current-context': 'test',
+      clusters: [{ name: 'cluster', cluster: { server: 'https://cluster.example' } }],
+      contexts: [{ name: 'test', context: { cluster: 'cluster' } }],
+    })
+  );
+  const calls: string[][] = [];
+  const runner: CommandRunner = (_command, args) => {
+    calls.push(args);
+    if (args.includes('certificatesigningrequest')) {
+      return {
+        status: 0,
+        stdout: JSON.stringify({
+          status: { certificate: Buffer.from('certificate').toString('base64') },
+        }),
+        stderr: '',
+      };
+    }
+    return { status: 0, stdout: '{}', stderr: '' };
+  };
+  try {
+    assert.equal(
+      await new TestKubectlAdapter(runner, kubeconfigPath).exerciseClientCertificate(
+        'short-lived',
+        'private-key'
+      ),
+      true
+    );
+    const exercise = calls.find(call => call.includes('/version'));
+    assert.ok(exercise?.[1]?.endsWith('kubeconfig.json'));
   } finally {
     removeScratchDir(directory);
   }

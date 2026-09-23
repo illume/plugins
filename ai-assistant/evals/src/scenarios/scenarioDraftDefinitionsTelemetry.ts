@@ -15,6 +15,7 @@
  */
 
 import type { ScenarioDraftDefinition } from './scenarioDraftDefinition.js';
+import { fixtureCsrRequest } from './scenarioFixtureCrypto.js';
 
 const busyboxImage = 'registry.k8s.io/e2e-test-images/busybox:1.29-4';
 const pauseImage = 'registry.k8s.io/pause:3.10';
@@ -249,11 +250,11 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
     description:
       'A writer exceeds its container ephemeral-storage limit, causing kubelet to evict the Pod and publish the native terminal status and eviction telemetry.',
     taskPrompt:
-      'Diagnose why Pod `storage-pressure` terminated. Correlate its resource limit, terminal reason and message, eviction Event, and eviction-count change. Distinguish eviction from an application crash and do not mutate resources.',
+      'Diagnose why Pod `storage-pressure` terminated. Correlate its resource limit, terminal reason and message, eviction Event, and native eviction-status telemetry. Distinguish eviction from an application crash and do not mutate resources.',
     visibleResourceRefs: [
       'pod/storage-pressure',
       'event/*?involvedObject.kind=Pod&involvedObject.name=storage-pressure',
-      'metric/kubelet_evictions{eviction_signal="ephemeral_storage"}',
+      'metric/kube_pod_status_reason{pod="storage-pressure",reason="Evicted"}',
     ],
     observationKinds: ['pod.spec', 'pod.status', 'pod.events', 'metric.range'],
     setup: [
@@ -295,15 +296,15 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         'ephemeral-storage-limit-exceeded',
         'pod/storage-pressure',
         'status.message',
-        '<contains: ephemeral-storage>',
+        '<contains: ephemeral local storage>',
         'The terminal message attributes eviction to local ephemeral-storage usage.'
       ),
       fact(
-        'eviction-counter-increase',
-        'metric/kubelet_evictions{eviction_signal="ephemeral_storage"}',
-        'increase[10m]',
-        '> 0',
-        'The kubelet eviction counter increases in the same observation window.'
+        'evicted-status-sustained',
+        'metric/kube_pod_status_reason{pod="storage-pressure",reason="Evicted"}',
+        'max_over_time[2m]',
+        '1',
+        'Native Pod status telemetry records the Evicted reason in the same observation window.'
       ),
     ],
     contradictionFacts: [
@@ -1087,7 +1088,11 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
           groupPriorityMinimum: 100,
           versionPriority: 100,
           insecureSkipTLSVerify: true,
-          service: { name: 'burn-api-backend', port: 443 },
+          service: {
+            namespace: '__EVAL_NAMESPACE__',
+            name: 'burn-api-backend',
+            port: 443,
+          },
         },
       },
       {
@@ -1180,11 +1185,20 @@ export const telemetryScenarioDraftDefinitions: ScenarioDraftDefinition[] = [
         kind: 'CertificateSigningRequest',
         metadata: { name: 'telemetry-expiring-client' },
         spec: {
-          request:
-            'MIH+MIGlAgEAMEMxIjAgBgNVBAMMGXRlbGVtZXRyeS1leHBpcmluZy1jbGllbnQxHTAbBgNVBAoMFHN5c3RlbTphdXRoZW50aWNhdGVkMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbFsma15xaWVy0yRlOxYaYwNZsMRCdPkHqLCu9N3xjQZLPAvGXqOtGWVIJ6WuDzTrNBereOxKToRuVlG+5TgoIKAAMAoGCCqGSM49BAMCA0gAMEUCIQDwL5SBnYrdkDewm05vcvESAu0BtpQfak76oORw2c86IAIgfCxviNKGxFEs84mOSR4Bj0E6p2tVcPnUDQASOFVP6Dw=',
+          request: fixtureCsrRequest,
           signerName: 'kubernetes.io/kube-apiserver-client',
           expirationSeconds: 600,
           usages: ['client auth'],
+        },
+        status: {
+          conditions: [
+            {
+              type: 'Approved',
+              status: 'True',
+              reason: 'FixtureCertificateApproved',
+              message: 'Issue the bounded short-lived client certificate.',
+            },
+          ],
         },
       },
     ],

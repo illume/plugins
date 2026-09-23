@@ -284,6 +284,8 @@ export interface ClusterAdapter {
   getNodeProxyHealth?(nodeName: string): Promise<{ reachable: boolean; detail: string }>;
   /** Sends one read-only request to an API-server path for bounded telemetry fixtures. */
   probeApiPath?(apiPath: string): Promise<void>;
+  /** Authenticates once with an issued fixture client certificate. */
+  exerciseClientCertificate?(csrName: string, privateKeyPem: string): Promise<boolean>;
   /** Installs or verifies the profile's trusted metrics collection stack. */
   ensureMetricsCollection?(): Promise<void>;
   /** Runs one Prometheus instant query through the trusted harness boundary. */

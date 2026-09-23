@@ -118,6 +118,11 @@ test('field resolver observes JSONPath-style named container predicates', () => 
   );
 });
 
+test('field resolver defaults Kubernetes condition selectors to status', () => {
+  const resource = { status: { conditions: [{ type: 'Denied', status: 'True' }] } };
+  assert.equal(resolveFieldPath(resource, 'status.conditions[type=Denied]'), 'True');
+});
+
 test('field resolver rejects malformed encoded predicates instead of claiming validation', () => {
   assert.throws(
     () => resolveFactField({ data: { 'config.yaml': 3 } }, 'data.config.yaml#spec.value'),
@@ -268,4 +273,8 @@ test('fact matcher evaluates numeric threshold predicates', () => {
   assert.equal(factValueMatches(1, '> 0'), true);
   assert.equal(factValueMatches(0, '> 0'), false);
   assert.equal(factValueMatches(0.1, '<= 0.2'), true);
+});
+
+test('fact matcher accepts an empty endpoint inventory as no ready endpoints', () => {
+  assert.equal(factValueMatches([], '<no ready endpoints>'), true);
 });

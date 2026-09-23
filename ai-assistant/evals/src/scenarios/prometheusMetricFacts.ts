@@ -66,6 +66,8 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
       return `max_over_time(${addNamespace(selector, namespace)}[2m]) == 0`;
     case 'eviction-counter-increase':
       return `increase(${selector}[2m]) > 0`;
+    case 'evicted-status-sustained':
+      return `max_over_time(${addNamespace(selector, namespace)}[30s]) == 1`;
     case 'node-not-ready-metric':
     case 'memory-pressure-sustained':
     case 'persistent-volume-failed-metric':
@@ -93,7 +95,7 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
     case 'api-fast-burn':
       return `sum(increase(apiserver_request_total{group="burn.telemetry.example",code=~"5.."}[1m])) / clamp_min(sum(increase(apiserver_request_total{group="burn.telemetry.example"}[1m])), 1) > 0.05`;
     case 'certificate-warning-horizon-crossed':
-      return `min_over_time(${selector}[2m]) < 604800`;
+      return `histogram_quantile(0.01, sum by (le) (rate(${selector}_bucket[2m]))) < 604800`;
     case 'daemonset-unavailable-sustained':
       return `min_over_time(${addNamespace(selector, namespace)}[2m]) > 0`;
     case 'statefulset-ready-mismatch-sustained':
@@ -112,10 +114,10 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
     case 'trigger-evidence':
       if (selector.startsWith('container_cpu_cfs_throttled_periods_total')) {
         return `sum(rate(${addNamespace(
-          addContainer(selector, 'worker'),
+          addContainer(selector, ''),
           namespace
         )}[2m])) / clamp_min(sum(rate(${addNamespace(
-          'container_cpu_cfs_periods_total{pod="cpu-throttle-probe",container="worker"}',
+          'container_cpu_cfs_periods_total{pod="cpu-throttle-probe",container=""}',
           namespace
         )}[2m])), 0.001) > 0.8`;
       }
@@ -129,10 +131,10 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
     case 'healthy-or-confounding-state':
       if (selector.startsWith('container_cpu_cfs_throttled_periods_total')) {
         return `sum(rate(${addNamespace(
-          addContainer(selector, 'worker'),
+          addContainer(selector, ''),
           namespace
         )}[2m])) / clamp_min(sum(rate(${addNamespace(
-          'container_cpu_cfs_periods_total{pod="cpu-throttle-probe",container="worker"}',
+          'container_cpu_cfs_periods_total{pod="cpu-throttle-probe",container=""}',
           namespace
         )}[2m])), 0.001) < 0.2`;
       }
@@ -143,11 +145,13 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
         return `histogram_quantile(0.99, sum by (le) (rate(${selector}[2m]))) < 5`;
       }
       break;
-    case 'aggregated-api-error-ratio':
-      return `sum(increase(apiserver_request_total{group="unavailable.example.test",code=~"5.."}[1m])) / clamp_min(sum(increase(apiserver_request_total{group="unavailable.example.test"}[1m])), 1) > 0.05`;
+    case 'aggregated-api-unavailable-metric':
+      return `max_over_time(${selector}[30s]) == 1`;
     case 'client-renewal-errors-increase':
     case 'server-renewal-errors-increase':
       return `increase(${selector}[2m]) > 0`;
+    case 'renewal-denials-recorded':
+      return `increase(${selector}[2m]) >= 2`;
   }
   throw new Error(`no Prometheus query mapping for ${fact.fact_id}: ${fact.resource_ref}`);
 }
@@ -155,6 +159,33 @@ export function prometheusQueryForFact(fact: AcceptedFact, namespace: string): s
 /** Filtered PromQL returns at least one finite sample only when its predicate is true. */
 export function prometheusFactMatched(samples: PrometheusSample[]): boolean {
   return samples.some(sample => Number.isFinite(sample.value));
+}
+
+/** Builds an unfiltered query for threshold diagnostics when the predicate is false. */
+export function prometheusDiagnosticQueryForFact(
+  fact: AcceptedFact,
+  namespace: string
+): string | undefined {
+  const selector = fact.resource_ref.slice('metric/'.length);
+  if (
+    fact.fact_id === 'trigger-evidence' &&
+    selector.startsWith('container_cpu_cfs_throttled_periods_total')
+  ) {
+    return `sum(rate(${addNamespace(
+      addContainer(selector, ''),
+      namespace
+    )}[2m])) / clamp_min(sum(rate(${addNamespace(
+      'container_cpu_cfs_periods_total{pod="cpu-throttle-probe",container=""}',
+      namespace
+    )}[2m])), 0.001)`;
+  }
+  if (
+    fact.fact_id === 'trigger-evidence' &&
+    selector.startsWith('kubelet_pleg_relist_duration_seconds_bucket')
+  ) {
+    return `histogram_quantile(0.99, sum by (le) (rate(${selector}[2m])))`;
+  }
+  return undefined;
 }
 
 /** Builds a raw selector query for contradiction facts without a predicate mapping. */

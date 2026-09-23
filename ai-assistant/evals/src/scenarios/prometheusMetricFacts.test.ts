@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { AcceptedFact } from '../contracts/evaluationContracts.js';
 import {
+  prometheusDiagnosticQueryForFact,
   prometheusFactMatched,
   prometheusQueryForFact,
   prometheusRawQueryForFact,
@@ -73,4 +74,43 @@ test('filtered Prometheus results require a finite sample, including retained ze
   assert.equal(prometheusFactMatched([]), false);
   assert.equal(prometheusFactMatched([{ labels: {}, timestamp: 1, value: 0 }]), true);
   assert.equal(prometheusFactMatched([{ labels: {}, timestamp: 1, value: 1 }]), true);
+});
+
+test('Prometheus diagnostics expose the unfiltered CPU ratio', () => {
+  const query = prometheusDiagnosticQueryForFact(
+    fact({
+      fact_id: 'trigger-evidence',
+      resource_ref: 'metric/container_cpu_cfs_throttled_periods_total{pod="cpu-throttle-probe"}',
+    }),
+    'trial'
+  );
+  assert.match(query ?? '', /container=""/);
+  assert.doesNotMatch(query ?? '', /> 0\.8/);
+});
+
+test('certificate expiration uses the native API-server histogram', () => {
+  assert.match(
+    prometheusQueryForFact(
+      fact({
+        fact_id: 'certificate-warning-horizon-crossed',
+        resource_ref: 'metric/apiserver_client_certificate_expiration_seconds',
+      }),
+      'trial'
+    ),
+    /histogram_quantile\(0\.01.*_bucket\[2m\].*< 604800/
+  );
+});
+
+test('CSR renewal denial counts both approval-subresource writes', () => {
+  assert.match(
+    prometheusQueryForFact(
+      fact({
+        fact_id: 'renewal-denials-recorded',
+        resource_ref:
+          'metric/apiserver_request_total{group="certificates.k8s.io",resource="certificatesigningrequests",subresource="approval",verb="PUT",code="200"}',
+      }),
+      'trial'
+    ),
+    /increase\(apiserver_request_total.*\[2m\]\) >= 2/
+  );
 });

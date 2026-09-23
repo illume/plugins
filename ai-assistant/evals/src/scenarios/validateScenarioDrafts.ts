@@ -25,7 +25,9 @@ import { createClusterAdapter } from '../cluster/adapterFactory.js';
 import type { ClusterAdapter } from '../cluster/clusterAdapter.js';
 import type { AcceptedFact, ClusterProfileName } from '../contracts/evaluationContracts.js';
 import { loadScenario, type LoadedScenario } from './loader.js';
+import { fixtureCsrPrivateKey } from './scenarioFixtureCrypto.js';
 import {
+  prometheusDiagnosticQueryForFact,
   prometheusFactMatched,
   prometheusQueryForFact,
   prometheusRawQueryForFact,
@@ -127,6 +129,19 @@ export function resolveFieldPath(resource: JsonValue, fieldPath: string): JsonVa
     const values = matches.map(item => resolveFieldPath(item, jsonPathFiltered[4]!) ?? '<absent>');
     return values.length === 1 ? values[0] : values;
   }
+  const condition = /^(.*?)\[\??(?:@\.)?type(?:==)?=?["']?([^\]"']+)["']?\](?:\.(.+))?$/.exec(
+    fieldPath
+  );
+  if (condition) {
+    const conditions = resolveFieldPath(resource, condition[1]!);
+    if (!Array.isArray(conditions)) return undefined;
+    const match = conditions.find(item => {
+      if (item === null || typeof item !== 'object' || Array.isArray(item)) return false;
+      return item.type === condition[2];
+    });
+    if (match === undefined) return undefined;
+    return resolveFieldPath(match, condition[3] ?? 'status');
+  }
   const filtered = /^(.*?)\[\??([A-Za-z0-9_.]+)=([^\]]+)\](?:\.(.*))?$/.exec(fieldPath);
   if (filtered) {
     const items = resolveFieldPath(resource, filtered[1]!);
@@ -137,16 +152,6 @@ export function resolveFieldPath(resource: JsonValue, fieldPath: string): JsonVa
     if (!filtered[4]) return matches;
     const values = matches.map(item => resolveFieldPath(item, filtered[4]!) ?? '<absent>');
     return values.length === 1 ? values[0] : values;
-  }
-  const condition = /^(.*?)\[\??(?:@\.)?type(?:==)?=?["']?([^\]"']+)["']?\]\.(.+)$/.exec(fieldPath);
-  if (condition) {
-    const conditions = resolveFieldPath(resource, condition[1]!);
-    if (!Array.isArray(conditions)) return undefined;
-    const match = conditions.find(item => {
-      if (item === null || typeof item !== 'object' || Array.isArray(item)) return false;
-      return item.type === condition[2];
-    });
-    return match === undefined ? undefined : resolveFieldPath(match, condition[3]!);
   }
   const namedItems = /^(.*?)\[metadata\.name=([^\]]+)\](?:\.(.*))?$/.exec(fieldPath);
   if (namedItems) {
@@ -287,6 +292,18 @@ export function observedValueMatches(observed: string, expected: string): boolea
 }
 
 export function factValueMatches(observedValue: JsonValue | undefined, expected: string): boolean {
+  const contains = /^<contains: (.+)>$/.exec(expected);
+  if (contains && typeof observedValue === 'string') {
+    return observedValue.includes(contains[1]!);
+  }
+  if (
+    expected === '<no ready endpoints>' &&
+    (observedValue === undefined ||
+      (Array.isArray(observedValue) &&
+        !observedValue.some(endpoint => resolveFieldPath(endpoint, 'conditions.ready') === true)))
+  ) {
+    return true;
+  }
   if (
     (observedValue === undefined || observedValue === '<absent>') &&
     expected.endsWith(' absent')
@@ -469,6 +486,7 @@ async function snapshotFor(
   if (cached) return cached;
   const selectedPod = /^pod\[label=([^=]+)=(.+)\]$/.exec(resourceRef);
   const queriedPod = /^pod\/\*\?([^=]+)=(.+)$/.exec(resourceRef);
+  const queriedInventory = /^([^/]+)\/\*\?([^=]+)=(.+)$/.exec(resourceRef);
   const prefixedPod = /^pod\/([^*]+)\*$/.exec(resourceRef);
   if (selectedPod || queriedPod || prefixedPod) {
     if (!adapter.listResourceSnapshots) {
@@ -497,6 +515,33 @@ async function snapshotFor(
     })[0]!;
     cache.set(resourceRef, newest);
     return newest;
+  }
+  if (queriedInventory) {
+    if (!adapter.listResourceSnapshots) {
+      throw new Error('cluster adapter cannot validate label-selected resource predicates');
+    }
+    const items = (await adapter.listResourceSnapshots(namespace, queriedInventory[1]!)).filter(
+      item => {
+        const labels = resolveFieldPath(item, 'metadata.labels');
+        return (
+          labels !== null &&
+          typeof labels === 'object' &&
+          !Array.isArray(labels) &&
+          labels[queriedInventory[2]!] === queriedInventory[3]
+        );
+      }
+    );
+    const snapshot: JsonValue =
+      queriedInventory[1] === 'endpointslice'
+        ? {
+            endpoints: items.flatMap(item => {
+              const endpoints = resolveFieldPath(item, 'endpoints');
+              return Array.isArray(endpoints) ? endpoints : [];
+            }),
+          }
+        : { items };
+    cache.set(resourceRef, snapshot);
+    return snapshot;
   }
   if (resourceRef.endsWith('/*')) {
     if (!adapter.listResourceSnapshots) {
@@ -547,9 +592,20 @@ async function observedFactValue(
         }
       }
     }
+    if (
+      fact.fact_id === 'certificate-warning-horizon-crossed' &&
+      adapter.exerciseClientCertificate
+    ) {
+      await adapter.exerciseClientCertificate('telemetry-expiring-client', fixtureCsrPrivateKey);
+    }
     const samples = await adapter.queryPrometheus(expression);
     if (truthValued && prometheusFactMatched(samples)) return fact.observed_value;
     if (!truthValued && samples.length === 1) return String(samples[0]!.value);
+    const diagnosticExpression = prometheusDiagnosticQueryForFact(fact, namespace);
+    if (samples.length === 0 && diagnosticExpression) {
+      const diagnosticSamples = await adapter.queryPrometheus(diagnosticExpression);
+      return JSON.stringify({ expression, samples, diagnosticExpression, diagnosticSamples });
+    }
     if (
       samples.length === 0 &&
       adapter.queryPrometheus &&
@@ -1025,12 +1081,17 @@ async function main(): Promise<void> {
         console.log(`[${portfolioIndex}] ${scenarioId}: skipped (${options.profile} unsupported)`);
         continue;
       }
+      const metricFacts = [
+        ...scenario.evaluatorPacket.accepted_fact_sets.flat(),
+        ...scenario.evaluatorPacket.contradiction_facts,
+      ].some(fact => fact.resource_ref.startsWith('metric/'));
       const namespace = `eval-draft-${createHash('sha256')
         .update(scenarioId)
         .digest('hex')
         .slice(0, 16)}`;
       try {
         await adapter.createNamespace(namespace);
+        if (metricFacts) await adapter.ensureMetricsCollection?.();
         await adapter.applyManifest(
           namespace,
           path.join(scenario.directory, scenario.manifest.setup_manifest_path)

@@ -11,13 +11,13 @@ Validation does not promote a draft or change canonical qualification coverage.
 The `local-minikube` validator executed portfolio scenarios 276 through 1255,
 covering all 980 draft scenarios:
 
-- 655 scenarios passed fixture application, trusted Kubernetes API, Prometheus,
+- 660 scenarios passed fixture application, trusted Kubernetes API, Prometheus,
   or decoded
   ConfigMap observation, accepted-fact matching, contradiction rejection, and
   fixture plus namespace cleanup;
 - 301 scenarios were skipped because they require another profile, a missing CRD
   or removed API, or source-manifest evidence erased by API defaulting;
-- 24 scenarios remain failed, concentrated in temporal metrics, scheduler,
+- 19 scenarios remain failed, concentrated in temporal metrics, scheduler,
   node, storage-controller, and admission-invalid fixture evidence;
 - all validated scenarios retain `qualification_status: pending`.
 
@@ -49,19 +49,21 @@ The final 124-scenario batch from 1132 through 1255 produced 91 passes, 33 skips
 and no failures. Every authored draft has now received a first-pass validation
 disposition on local Minikube.
 
-There is no remaining sequential draft range. The 24 failed scenarios should be
+There is no remaining sequential draft range. The 19 failed scenarios should be
 revisited by mechanism rather than hidden by passing later scenarios: runtime
 convergence and metrics begin at 331, storage/controller evidence at 365, and the
 next telemetry-heavy block begins at 450.
 
 The metrics follow-up installed an isolated Prometheus-compatible collector with
 kube-state-metrics plus API-server, kubelet, and cAdvisor scraping. Bounded PromQL
-queries revalidated all 23 metric-backed failures: 13 now pass and 10 remain
-failed. The remaining metric-backed failures are evidence-specific: one kubelet
-eviction counter does not increase, one PersistentVolume status is overwritten
-by its controller, two local volumes expose no kubelet volume-stat series, two
-runtime thresholds are not reached, one API group exposes no request-counter
-series, and three setup manifests are rejected by Kubernetes admission.
+queries revalidated all 23 metric-backed failures: 18 now pass and five remain
+failed. The follow-up repaired eviction telemetry, CPU workload execution,
+APIService availability telemetry, short-lived client certificate observation,
+and renewal-denial telemetry. The five remaining failures are profile-specific:
+one PersistentVolume phase is controller-owned, two local volumes expose no
+kubelet volume-stat series even with the Minikube CSI addon, aggregated API proxy
+failures do not enter the group-scoped request counter, and bounded container
+churn produces a measured PLEG p99 of 230 ms rather than the required 10 seconds.
 
 Validation now supports typed YAML and JSON data decoding, dotted Kubernetes map
 keys, exact related-resource inventories, generated Job Pod selection, Pod logs,

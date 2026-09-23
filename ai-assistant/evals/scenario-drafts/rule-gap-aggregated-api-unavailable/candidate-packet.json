@@ -6,7 +6,7 @@
   "visible_resource_refs": [
     "apiservice/v1alpha1.unavailable.example.test",
     "service/*",
-    "metric/apiserver_request_total"
+    "metric/aggregator_unavailable_apiservice{name=\"v1alpha1.unavailable.example.test\"}"
   ],
   "allowed_observation_kinds": [
     "apiservice.spec",

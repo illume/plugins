@@ -15,6 +15,7 @@
  */
 
 import type { ScenarioDraftDefinition } from './scenarioDraftDefinition.js';
+import { fixtureCsrRequest } from './scenarioFixtureCrypto.js';
 
 type Profiles = NonNullable<ScenarioDraftDefinition['supportedClusterProfiles']>;
 type Mechanisms = NonNullable<ScenarioDraftDefinition['requiredMechanisms']>;
@@ -868,11 +869,7 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
           {
             name: 'worker',
             image: busyboxImage,
-            command: [
-              '/bin/sh',
-              '-c',
-              'end=$((SECONDS+360)); while [ "$SECONDS" -lt "$end" ]; do :; done',
-            ],
+            command: ['/bin/sh', '-c', 'exec yes > /dev/null'],
             resources: { requests: { cpu: '10m' }, limits: { cpu: '10m', memory: '16Mi' } },
             securityContext: {
               allowPrivilegeEscalation: false,
@@ -902,7 +899,7 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
     resourceRefs: [
       'apiservice/v1alpha1.unavailable.example.test',
       'service/*',
-      'metric/apiserver_request_total',
+      'metric/aggregator_unavailable_apiservice{name="v1alpha1.unavailable.example.test"}',
     ],
     setup: [
       {
@@ -924,19 +921,19 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
     brokenValue: 'False; service/default/missing-aggregated-api absent',
     finding:
       'The aggregation controller cannot resolve the APIService backend and marks it unavailable.',
-    healthyValue: 'True; backend error ratio below 0.05',
+    healthyValue: 'True; aggregator unavailable gauge=0',
     healthyDescription:
-      'A healthy APIService has an available backend without an elevated error ratio.',
+      'A healthy APIService has an available backend and a cleared unavailable gauge.',
     observationKinds: ['apiservice.spec', 'apiservice.status', 'service.list', 'metric.range'],
     mechanisms: ['api-server', 'operator-reconciliation'],
     profiles: runtimeProfiles,
     additionalAcceptedFacts: [
       fact(
-        'aggregated-api-error-ratio',
-        'metric/apiserver_request_total',
-        '5xx responses / all responses for group unavailable.example.test over 5m',
-        '> 0.05',
-        'Aggregated API error responses exceed the pinned five-percent ratio in the same window.'
+        'aggregated-api-unavailable-metric',
+        'metric/aggregator_unavailable_apiservice{name="v1alpha1.unavailable.example.test"}',
+        'max_over_time[2m]',
+        '1',
+        'Native API aggregation telemetry reports the APIService unavailable in the same window.'
       ),
     ],
   }),
@@ -968,8 +965,7 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
     resourceRefs: [
       'certificatesigningrequest/node-client-renewal-denied',
       'certificatesigningrequest/node-server-renewal-denied',
-      'metric/kubelet_certificate_manager_client_expiration_renew_errors',
-      'metric/kubelet_server_expiration_renew_errors',
+      'metric/apiserver_request_total{group="certificates.k8s.io",resource="certificatesigningrequests",subresource="approval",verb="PUT",code="200"}',
     ],
     setup: [
       {
@@ -977,7 +973,7 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
         kind: 'CertificateSigningRequest',
         metadata: { name: 'node-client-renewal-denied' },
         spec: {
-          request: 'Y29udHJvbGxlZC1rdWJlbGV0ZS1yZW5ld2FsLXJlcXVlc3Q=',
+          request: fixtureCsrRequest,
           signerName: 'kubernetes.io/kube-apiserver-client-kubelet',
           usages: ['digital signature', 'key encipherment', 'client auth'],
           username: 'system:node:fixture-node',
@@ -1000,7 +996,7 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
         kind: 'CertificateSigningRequest',
         metadata: { name: 'node-server-renewal-denied' },
         spec: {
-          request: 'Y29udHJvbGxlZC1rdWJlbGV0ZS1zZXJ2aW5nLXJlbmV3YWwtcmVxdWVzdA==',
+          request: fixtureCsrRequest,
           signerName: 'kubernetes.io/kubelet-serving',
           usages: ['digital signature', 'key encipherment', 'server auth'],
           username: 'system:node:fixture-node',
@@ -1023,8 +1019,8 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
     fieldPath: 'spec.signerName + status.conditions[type=Denied]',
     brokenValue: 'kubernetes.io/kube-apiserver-client-kubelet; True',
     finding: 'Kubelet client and serving renewal requests are explicitly denied.',
-    healthyValue: 'Approved=True; renewal error counter increase=0',
-    healthyDescription: 'A healthy node obtains approval without client or server renewal errors.',
+    healthyValue: 'Approved=True; no denial writes',
+    healthyDescription: 'A healthy node obtains approval without client or server renewal denial.',
     observationKinds: [
       'certificatesigningrequest.spec',
       'certificatesigningrequest.status',
@@ -1041,18 +1037,11 @@ const telemetryDefinitions: ScenarioDraftDefinition[] = [
         'The serving certificate renewal request is denied.'
       ),
       fact(
-        'client-renewal-errors-increase',
-        'metric/kubelet_certificate_manager_client_expiration_renew_errors',
-        'increase[10m]',
-        '> 0',
-        'The kubelet client renewal error counter increases during the observation window.'
-      ),
-      fact(
-        'server-renewal-errors-increase',
-        'metric/kubelet_server_expiration_renew_errors',
-        'increase[10m]',
-        '> 0',
-        'The kubelet serving renewal error counter increases during the observation window.'
+        'renewal-denials-recorded',
+        'metric/apiserver_request_total{group="certificates.k8s.io",resource="certificatesigningrequests",subresource="approval",verb="PUT",code="200"}',
+        'increase[2m]',
+        '>= 2',
+        'Native API server telemetry records both renewal denial writes during the observation window.'
       ),
     ],
   }),

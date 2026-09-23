@@ -255,6 +255,36 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       ) {
         continue;
       }
+      if (document.kind === 'CertificateSigningRequest') {
+        const status = document.status as Record<string, unknown>;
+        const conditions = Array.isArray(status.conditions) ? status.conditions : [];
+        const certificateAction = conditions.find(condition => {
+          const record = condition as Record<string, unknown> | null;
+          return (
+            (record?.type === 'Approved' || record?.type === 'Denied') && record.status === 'True'
+          );
+        }) as Record<string, unknown> | undefined;
+        if (certificateAction) {
+          const action = certificateAction.type === 'Approved' ? 'approve' : 'deny';
+          const actionResult = this.runner(
+            'kubectl',
+            this.kubectl(['certificate', action, metadata.name])
+          );
+          if (
+            actionResult.status !== 0 &&
+            !/already (?:approved|denied)|has already been denied/i.test(
+              actionResult.stderr || actionResult.stdout
+            )
+          ) {
+            throw new Error(
+              `kubectl certificate ${action} failed for ${metadata.name}: ${
+                actionResult.stderr || actionResult.stdout
+              }`
+            );
+          }
+          continue;
+        }
+      }
       const statusNamespace =
         typeof metadata.namespace === 'string' ? metadata.namespace : namespace;
       const statusResult = this.runner(
@@ -656,6 +686,70 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
 
   async probeApiPath(apiPath: string): Promise<void> {
     this.runner('kubectl', this.kubectl(['get', '--raw', apiPath]));
+  }
+
+  async exerciseClientCertificate(csrName: string, privateKeyPem: string): Promise<boolean> {
+    const csr = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'certificatesigningrequest', csrName, '-o', 'json'])
+    );
+    if (csr.status !== 0) return false;
+    const certificate = (JSON.parse(csr.stdout) as { status?: { certificate?: string } }).status
+      ?.certificate;
+    if (!certificate) return false;
+    const sourceConfig = JSON.parse(readFileSync(this.kubeconfigPath, 'utf8')) as {
+      clusters?: Array<{ name: string; cluster: Record<string, unknown> }>;
+      contexts?: Array<{ name: string; context: { cluster: string } }>;
+      'current-context'?: string;
+    };
+    const context = sourceConfig.contexts?.find(
+      entry => entry.name === sourceConfig['current-context']
+    );
+    const cluster = sourceConfig.clusters?.find(entry => entry.name === context?.context.cluster);
+    if (!cluster) throw new Error('isolated kubeconfig has no active cluster for client exercise');
+    const directory = mkdtempSync(path.join(tmpdir(), 'headlamp-eval-client-cert-'));
+    try {
+      const certificatePath = path.join(directory, 'client.crt');
+      const privateKeyPath = path.join(directory, 'client.key');
+      const kubeconfigPath = path.join(directory, 'kubeconfig.json');
+      writeFileSync(certificatePath, Buffer.from(certificate, 'base64'), { mode: 0o600 });
+      writeFileSync(privateKeyPath, privateKeyPem, { mode: 0o600 });
+      writeFileSync(
+        kubeconfigPath,
+        JSON.stringify({
+          apiVersion: 'v1',
+          kind: 'Config',
+          'current-context': 'fixture-client',
+          clusters: [cluster],
+          contexts: [
+            {
+              name: 'fixture-client',
+              context: { cluster: cluster.name, user: 'fixture-client' },
+            },
+          ],
+          users: [
+            {
+              name: 'fixture-client',
+              user: {
+                'client-certificate': certificatePath,
+                'client-key': privateKeyPath,
+              },
+            },
+          ],
+        }),
+        { mode: 0o600 }
+      );
+      const exercise = this.runner('kubectl', [
+        '--kubeconfig',
+        kubeconfigPath,
+        'get',
+        '--raw',
+        '/version',
+      ]);
+      return exercise.status === 0;
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   }
 
   async applyJsonPatch(

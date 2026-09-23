@@ -13,7 +13,7 @@ spec:
       command:
         - /bin/sh
         - '-c'
-        - end=$((SECONDS+360)); while [ "$SECONDS" -lt "$end" ]; do :; done
+        - exec yes > /dev/null
       resources:
         requests:
           cpu: 10m

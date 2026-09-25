@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "generated_at": "2026-09-20",
+  "schema_version": "1.1.0",
+  "generated_at": "2026-09-25",
   "review_status": "provisional",
   "inventory_path": "registrations/tool-rule-inventory-v1.json",
   "methodology": {
@@ -9,11 +9,20 @@
     "unsure": "Source or fixture ambiguity prevents a decision, including inventory units that still require predicate decomposition.",
     "uncovered": "A reviewed rule is related but misses required behavior, or no current scenario covers that inventory rule.",
     "no_applicable_rule": "The tool has no inventoried rule targeting the contract behavior.",
+    "combined_coverage": "A scenario is covered when at least one tool is covered. Tool percentages are not added because tools overlap on scenarios.",
     "generated_variants": "Generated descendants inherit their parent evaluator contract; row percentages weight every active scenario equally."
   },
   "total_tools": 23,
   "total_scenarios": 275,
   "total_contracts": 12,
+  "combined_summary": {
+    "covered_by_any_tool_count": 103,
+    "covered_by_any_tool_percentage": 37.5,
+    "unsure_only_count": 90,
+    "unsure_only_percentage": 32.7,
+    "no_covered_or_unsure_count": 82,
+    "no_covered_or_unsure_percentage": 29.8
+  },
   "contracts": [
     {
       "contract_id": "pending-underdetermined",
@@ -2480,6 +2489,9 @@
     {
       "scenario_id": "core-annotation-benign-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -2509,6 +2521,9 @@
     {
       "scenario_id": "core-annotation-injection-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -2538,6 +2553,9 @@
     {
       "scenario_id": "core-pending-underdetermined-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2567,6 +2585,9 @@
     {
       "scenario_id": "core-pvc-storageclass-healthy-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2596,6 +2617,9 @@
     {
       "scenario_id": "core-pvc-storageclass-missing-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2625,6 +2649,9 @@
     {
       "scenario_id": "core-rollout-stale-event-healthy-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2654,6 +2681,9 @@
     {
       "scenario_id": "core-service-selector-fault-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2683,6 +2713,9 @@
     {
       "scenario_id": "core-service-selector-healthy-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2712,6 +2745,9 @@
     {
       "scenario_id": "core-service-selector-repair-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2741,6 +2777,9 @@
     {
       "scenario_id": "core-unschedulable-capacity-repair-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2770,6 +2809,9 @@
     {
       "scenario_id": "core-unschedulable-capacity-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2799,6 +2841,9 @@
     {
       "scenario_id": "core-workload-rbac-denied-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -2828,6 +2873,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-01-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2857,6 +2905,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-02-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2886,6 +2937,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-03-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2915,6 +2969,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-04-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2944,6 +3001,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-05-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -2973,6 +3033,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-06-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3002,6 +3065,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-07-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3031,6 +3097,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-08-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3060,6 +3129,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-09-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3089,6 +3161,9 @@
     {
       "scenario_id": "phase2-capacity-repair-safety-10-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3118,6 +3193,9 @@
     {
       "scenario_id": "phase2-controller-convergence-01-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3147,6 +3225,9 @@
     {
       "scenario_id": "phase2-controller-convergence-02-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3176,6 +3257,9 @@
     {
       "scenario_id": "phase2-controller-convergence-03-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3205,6 +3289,9 @@
     {
       "scenario_id": "phase2-controller-convergence-04-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3234,6 +3321,9 @@
     {
       "scenario_id": "phase2-controller-convergence-05-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3263,6 +3353,9 @@
     {
       "scenario_id": "phase2-controller-convergence-06-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3292,6 +3385,9 @@
     {
       "scenario_id": "phase2-controller-convergence-07-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3321,6 +3417,9 @@
     {
       "scenario_id": "phase2-controller-convergence-08-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3350,6 +3449,9 @@
     {
       "scenario_id": "phase2-controller-convergence-09-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3379,6 +3481,9 @@
     {
       "scenario_id": "phase2-controller-convergence-10-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3408,6 +3513,9 @@
     {
       "scenario_id": "phase2-controller-convergence-11-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3437,6 +3545,9 @@
     {
       "scenario_id": "phase2-controller-convergence-12-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3466,6 +3577,9 @@
     {
       "scenario_id": "phase2-deployment-availability-01-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3495,6 +3609,9 @@
     {
       "scenario_id": "phase2-deployment-availability-02-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3524,6 +3641,9 @@
     {
       "scenario_id": "phase2-deployment-availability-03-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3553,6 +3673,9 @@
     {
       "scenario_id": "phase2-deployment-availability-04-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3582,6 +3705,9 @@
     {
       "scenario_id": "phase2-deployment-availability-05-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3611,6 +3737,9 @@
     {
       "scenario_id": "phase2-deployment-availability-06-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3640,6 +3769,9 @@
     {
       "scenario_id": "phase2-deployment-availability-07-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3669,6 +3801,9 @@
     {
       "scenario_id": "phase2-deployment-availability-08-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3698,6 +3833,9 @@
     {
       "scenario_id": "phase2-deployment-availability-09-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3727,6 +3865,9 @@
     {
       "scenario_id": "phase2-deployment-availability-10-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -3756,6 +3897,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-01-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3785,6 +3929,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-02-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3814,6 +3961,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-03-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3843,6 +3993,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-04-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3872,6 +4025,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-05-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3901,6 +4057,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-06-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3930,6 +4089,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-07-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3959,6 +4121,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-08-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -3988,6 +4153,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-09-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -4017,6 +4185,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-10-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -4046,6 +4217,9 @@
     {
       "scenario_id": "phase2-evidence-freshness-11-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -4075,6 +4249,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-01-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4104,6 +4281,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-02-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4133,6 +4313,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-03-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4162,6 +4345,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-04-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4191,6 +4377,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-05-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4220,6 +4409,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-06-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4249,6 +4441,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-07-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4278,6 +4473,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-08-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4307,6 +4505,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-09-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4336,6 +4537,9 @@
     {
       "scenario_id": "phase2-health-probe-readiness-10-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4365,6 +4569,9 @@
     {
       "scenario_id": "phase2-image-resolution-01-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4394,6 +4601,9 @@
     {
       "scenario_id": "phase2-image-resolution-02-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4423,6 +4633,9 @@
     {
       "scenario_id": "phase2-image-resolution-03-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4452,6 +4665,9 @@
     {
       "scenario_id": "phase2-image-resolution-04-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4481,6 +4697,9 @@
     {
       "scenario_id": "phase2-image-resolution-05-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4510,6 +4729,9 @@
     {
       "scenario_id": "phase2-image-resolution-06-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4539,6 +4761,9 @@
     {
       "scenario_id": "phase2-image-resolution-07-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4568,6 +4793,9 @@
     {
       "scenario_id": "phase2-image-resolution-08-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4597,6 +4825,9 @@
     {
       "scenario_id": "phase2-image-resolution-09-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4626,6 +4857,9 @@
     {
       "scenario_id": "phase2-image-resolution-10-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4655,6 +4889,9 @@
     {
       "scenario_id": "phase2-image-resolution-11-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -4684,6 +4921,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-01-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4713,6 +4953,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-02-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4742,6 +4985,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-03-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4771,6 +5017,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-04-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4800,6 +5049,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-05-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4829,6 +5081,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-06-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4858,6 +5113,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-07-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4887,6 +5145,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-08-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4916,6 +5177,9 @@
     {
       "scenario_id": "phase2-least-privilege-boundary-09-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -4945,6 +5209,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-01-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -4974,6 +5241,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-02-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5003,6 +5273,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-03-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5032,6 +5305,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-04-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5061,6 +5337,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-05-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5090,6 +5369,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-06-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5119,6 +5401,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-07-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5148,6 +5433,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-08-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5177,6 +5465,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-09-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5206,6 +5497,9 @@
     {
       "scenario_id": "phase2-malformed-tool-result-10-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5235,6 +5529,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-01-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5264,6 +5561,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-02-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5293,6 +5593,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-03-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5322,6 +5625,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-04-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5351,6 +5657,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-05-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5380,6 +5689,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-06-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5409,6 +5721,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-07-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5438,6 +5753,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-08-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5467,6 +5785,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-09-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5496,6 +5817,9 @@
     {
       "scenario_id": "phase2-node-placement-constraints-10-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5525,6 +5849,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-01-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5554,6 +5881,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-02-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5583,6 +5913,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-03-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5612,6 +5945,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-04-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5641,6 +5977,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-05-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5670,6 +6009,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-06-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5699,6 +6041,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-07-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5728,6 +6073,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-08-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5757,6 +6105,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-09-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5786,6 +6137,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-10-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5815,6 +6169,9 @@
     {
       "scenario_id": "phase2-partial-tool-observation-11-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5844,6 +6201,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-01-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5873,6 +6233,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-02-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5902,6 +6265,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-03-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5931,6 +6297,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-04-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5960,6 +6329,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-05-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -5989,6 +6361,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-06-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6018,6 +6393,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-07-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6047,6 +6425,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-08-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6076,6 +6457,9 @@
     {
       "scenario_id": "phase2-rollout-repair-safety-09-v1",
       "contract_id": "unschedulable-capacity-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6105,6 +6489,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-01-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6134,6 +6521,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-02-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6163,6 +6553,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-03-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6192,6 +6585,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-04-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6221,6 +6617,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-05-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6250,6 +6649,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-06-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6279,6 +6681,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-07-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6308,6 +6713,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-08-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6337,6 +6745,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-09-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6366,6 +6777,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-10-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6395,6 +6809,9 @@
     {
       "scenario_id": "phase2-scheduling-capacity-11-v1",
       "contract_id": "unschedulable-capacity",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6424,6 +6841,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-01-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6453,6 +6873,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-02-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6482,6 +6905,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-03-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6511,6 +6937,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-04-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6540,6 +6969,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-05-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6569,6 +7001,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-06-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6598,6 +7033,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-07-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6627,6 +7065,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-08-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6656,6 +7097,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-09-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6685,6 +7129,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-10-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6714,6 +7161,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-11-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6743,6 +7193,9 @@
     {
       "scenario_id": "phase2-scheduling-uncertainty-12-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -6772,6 +7225,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-01-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6801,6 +7257,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-02-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6830,6 +7289,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-03-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6859,6 +7321,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-04-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6888,6 +7353,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-05-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6917,6 +7385,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-06-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6946,6 +7417,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-07-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -6975,6 +7449,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-08-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7004,6 +7481,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-09-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7033,6 +7513,9 @@
     {
       "scenario_id": "phase2-selector-repair-safety-10-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7062,6 +7545,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-01-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7091,6 +7577,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-02-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7120,6 +7609,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-03-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7149,6 +7641,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-04-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7178,6 +7673,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-05-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7207,6 +7705,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-06-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7236,6 +7737,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-07-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7265,6 +7769,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-08-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7294,6 +7801,9 @@
     {
       "scenario_id": "phase2-sensitive-data-disclosure-09-v1",
       "contract_id": "annotation-benign",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -7323,6 +7833,9 @@
     {
       "scenario_id": "phase2-service-discovery-01-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7352,6 +7865,9 @@
     {
       "scenario_id": "phase2-service-discovery-02-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7381,6 +7897,9 @@
     {
       "scenario_id": "phase2-service-discovery-03-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7410,6 +7929,9 @@
     {
       "scenario_id": "phase2-service-discovery-04-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7439,6 +7961,9 @@
     {
       "scenario_id": "phase2-service-discovery-05-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7468,6 +7993,9 @@
     {
       "scenario_id": "phase2-service-discovery-06-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7497,6 +8025,9 @@
     {
       "scenario_id": "phase2-service-discovery-07-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7526,6 +8057,9 @@
     {
       "scenario_id": "phase2-service-discovery-08-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7555,6 +8089,9 @@
     {
       "scenario_id": "phase2-service-discovery-09-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7584,6 +8121,9 @@
     {
       "scenario_id": "phase2-service-discovery-10-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7613,6 +8153,9 @@
     {
       "scenario_id": "phase2-service-discovery-11-v1",
       "contract_id": "service-selector-fault",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kube-linter", "kube-score", "kubevious", "popeye", "kubescape"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7642,6 +8185,9 @@
     {
       "scenario_id": "phase2-service-routing-health-01-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7671,6 +8217,9 @@
     {
       "scenario_id": "phase2-service-routing-health-02-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7700,6 +8249,9 @@
     {
       "scenario_id": "phase2-service-routing-health-03-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7729,6 +8281,9 @@
     {
       "scenario_id": "phase2-service-routing-health-04-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7758,6 +8313,9 @@
     {
       "scenario_id": "phase2-service-routing-health-05-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7787,6 +8345,9 @@
     {
       "scenario_id": "phase2-service-routing-health-06-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7816,6 +8377,9 @@
     {
       "scenario_id": "phase2-service-routing-health-07-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7845,6 +8409,9 @@
     {
       "scenario_id": "phase2-service-routing-health-08-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7874,6 +8441,9 @@
     {
       "scenario_id": "phase2-service-routing-health-09-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7903,6 +8473,9 @@
     {
       "scenario_id": "phase2-service-routing-health-10-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7932,6 +8505,9 @@
     {
       "scenario_id": "phase2-service-routing-health-11-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7961,6 +8537,9 @@
     {
       "scenario_id": "phase2-service-routing-health-12-v1",
       "contract_id": "service-selector-healthy",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -7990,6 +8569,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-01-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8019,6 +8601,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-02-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8048,6 +8633,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-03-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8077,6 +8665,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-04-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8106,6 +8697,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-05-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8135,6 +8729,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-06-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8164,6 +8761,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-07-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8193,6 +8793,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-08-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8222,6 +8825,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-09-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8251,6 +8857,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-10-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8280,6 +8889,9 @@
     {
       "scenario_id": "phase2-storage-binding-health-11-v1",
       "contract_id": "pvc-bound-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8309,6 +8921,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-01-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8338,6 +8953,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-02-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8367,6 +8985,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-03-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8396,6 +9017,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-04-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8425,6 +9049,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-05-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8454,6 +9081,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-06-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8483,6 +9113,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-07-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8512,6 +9145,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-08-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8541,6 +9177,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-09-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8570,6 +9209,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-10-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8599,6 +9241,9 @@
     {
       "scenario_id": "phase2-storage-provisioning-11-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8628,6 +9273,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-01-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8657,6 +9305,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-02-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8686,6 +9337,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-03-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8715,6 +9369,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-04-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8744,6 +9401,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-05-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8773,6 +9433,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-06-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8802,6 +9465,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-07-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8831,6 +9497,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-08-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8860,6 +9529,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-09-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8889,6 +9561,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-10-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8918,6 +9593,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-11-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8947,6 +9625,9 @@
     {
       "scenario_id": "phase2-temporal-reconciliation-12-v1",
       "contract_id": "rollout-stale-event-healthy",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["kstatus"],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -8976,6 +9657,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-01-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9005,6 +9689,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-02-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9034,6 +9721,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-03-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9063,6 +9753,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-04-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9092,6 +9785,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-05-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9121,6 +9817,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-06-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9150,6 +9849,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-07-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9179,6 +9881,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-08-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9208,6 +9913,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-09-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9237,6 +9945,9 @@
     {
       "scenario_id": "phase2-transient-tool-recovery-10-v1",
       "contract_id": "pending-underdetermined",
+      "combined_status": "unsure",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": ["kuberhealthy"],
       "tool_statuses": {
         "headlamp": "uncovered",
         "k8sgpt": "uncovered",
@@ -9266,6 +9977,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-01-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9295,6 +10009,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-02-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9324,6 +10041,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-03-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9353,6 +10073,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-04-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9382,6 +10105,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-05-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9411,6 +10137,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-06-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9440,6 +10169,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-07-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9469,6 +10201,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-08-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9498,6 +10233,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-09-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9527,6 +10265,9 @@
     {
       "scenario_id": "phase2-untrusted-resource-content-10-v1",
       "contract_id": "annotation-injection",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "no_applicable_rule",
@@ -9556,6 +10297,9 @@
     {
       "scenario_id": "phase2-workload-authorization-01-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9585,6 +10329,9 @@
     {
       "scenario_id": "phase2-workload-authorization-02-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9614,6 +10361,9 @@
     {
       "scenario_id": "phase2-workload-authorization-03-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9643,6 +10393,9 @@
     {
       "scenario_id": "phase2-workload-authorization-04-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9672,6 +10425,9 @@
     {
       "scenario_id": "phase2-workload-authorization-05-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9701,6 +10457,9 @@
     {
       "scenario_id": "phase2-workload-authorization-06-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9730,6 +10489,9 @@
     {
       "scenario_id": "phase2-workload-authorization-07-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9759,6 +10521,9 @@
     {
       "scenario_id": "phase2-workload-authorization-08-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9788,6 +10553,9 @@
     {
       "scenario_id": "phase2-workload-authorization-09-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9817,6 +10585,9 @@
     {
       "scenario_id": "phase2-workload-authorization-10-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9846,6 +10617,9 @@
     {
       "scenario_id": "phase2-workload-authorization-11-v1",
       "contract_id": "workload-rbac-denied",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9875,6 +10649,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-01-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9904,6 +10681,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-02-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9933,6 +10713,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-03-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9962,6 +10745,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-04-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -9991,6 +10777,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-05-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10020,6 +10809,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-06-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10049,6 +10841,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-07-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10078,6 +10873,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-08-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10107,6 +10905,9 @@
     {
       "scenario_id": "phase2-workload-config-repair-09-v1",
       "contract_id": "service-selector-repair",
+      "combined_status": "uncovered",
+      "covered_by_tool_ids": [],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10136,6 +10937,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-01-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10165,6 +10969,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-02-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10194,6 +11001,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-03-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10223,6 +11033,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-04-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10252,6 +11065,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-05-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10281,6 +11097,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-06-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10310,6 +11129,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-07-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10339,6 +11161,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-08-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10368,6 +11193,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-09-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10397,6 +11225,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-10-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",
@@ -10426,6 +11257,9 @@
     {
       "scenario_id": "phase2-workload-configuration-reference-11-v1",
       "contract_id": "pvc-storageclass-missing",
+      "combined_status": "covered",
+      "covered_by_tool_ids": ["gatekeeper"],
+      "unsure_tool_ids": [],
       "tool_statuses": {
         "headlamp": "no_applicable_rule",
         "k8sgpt": "uncovered",

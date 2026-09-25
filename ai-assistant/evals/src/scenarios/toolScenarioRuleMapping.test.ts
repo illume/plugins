@@ -34,6 +34,14 @@ interface Mapping {
   total_tools: number;
   total_scenarios: number;
   total_contracts: number;
+  combined_summary: {
+    covered_by_any_tool_count: number;
+    covered_by_any_tool_percentage: number;
+    unsure_only_count: number;
+    unsure_only_percentage: number;
+    no_covered_or_unsure_count: number;
+    no_covered_or_unsure_percentage: number;
+  };
   contracts: Array<{
     contract_id: string;
     scenario_count: number;
@@ -43,6 +51,9 @@ interface Mapping {
   scenarios: Array<{
     scenario_id: string;
     contract_id: string;
+    combined_status: Exclude<CoverageStatus, 'no_applicable_rule'>;
+    covered_by_tool_ids: string[];
+    unsure_tool_ids: string[];
     tool_statuses: Record<string, CoverageStatus>;
   }>;
   tool_summaries: Array<{
@@ -125,7 +136,39 @@ test('tool-scenario mapping is complete and internally consistent', () => {
   for (const scenario of mapping.scenarios) {
     assert.ok(contractIds.has(scenario.contract_id), scenario.scenario_id);
     assert.deepEqual(Object.keys(scenario.tool_statuses).sort(), toolIds);
+    assert.deepEqual(
+      [...scenario.covered_by_tool_ids].sort(),
+      toolIds.filter(toolId => scenario.tool_statuses[toolId] === 'covered')
+    );
+    assert.deepEqual(
+      [...scenario.unsure_tool_ids].sort(),
+      toolIds.filter(toolId => scenario.tool_statuses[toolId] === 'unsure')
+    );
+    assert.equal(
+      scenario.combined_status,
+      scenario.covered_by_tool_ids.length
+        ? 'covered'
+        : scenario.unsure_tool_ids.length
+        ? 'unsure'
+        : 'uncovered'
+    );
   }
+
+  const combinedCounts = {
+    covered: mapping.scenarios.filter(scenario => scenario.combined_status === 'covered').length,
+    unsure: mapping.scenarios.filter(scenario => scenario.combined_status === 'unsure').length,
+    uncovered: mapping.scenarios.filter(scenario => scenario.combined_status === 'uncovered')
+      .length,
+  };
+  assert.deepEqual(combinedCounts, { covered: 103, unsure: 90, uncovered: 82 });
+  assert.deepEqual(mapping.combined_summary, {
+    covered_by_any_tool_count: 103,
+    covered_by_any_tool_percentage: 37.5,
+    unsure_only_count: 90,
+    unsure_only_percentage: 32.7,
+    no_covered_or_unsure_count: 82,
+    no_covered_or_unsure_percentage: 29.8,
+  });
 
   assert.deepEqual(mapping.tool_summaries.map(tool => tool.tool_id).sort(), toolIds);
   for (const summary of mapping.tool_summaries) {
@@ -197,6 +240,20 @@ test('tool-scenario mapping is complete and internally consistent', () => {
     }|${counts.uncovered}|${counts.no_applicable_rule}|`;
     assert.ok(normalizedReportRows.has(row), `${summary.tool_id} report summary is stale`);
   }
+
+  const scenarioReport = readFileSync(
+    path.resolve(evalRoot, '..', 'docs', 'kubernetes-tool-scenario-detection-report.md'),
+    'utf8'
+  );
+  assert.match(scenarioReport, /103\/275 scenarios \(37\.5%\)/);
+  assert.equal(scenarioReport.split('\n').filter(line => line.startsWith('| `')).length, 275);
+  const scenarioMatrix = readFileSync(
+    path.resolve(evalRoot, '..', 'docs', 'kubernetes-tool-scenario-detection-matrix.csv'),
+    'utf8'
+  );
+  const matrixLines = scenarioMatrix.trimEnd().split('\n');
+  assert.equal(matrixLines.length, 276);
+  assert.equal(matrixLines[0]?.split(',').length, 28);
 });
 
 test('known direct predicates retain conservative contract mappings', () => {

@@ -11,13 +11,14 @@
     "total_tools",
     "total_scenarios",
     "total_contracts",
+    "combined_summary",
     "contracts",
     "scenarios",
     "tool_summaries",
     "rule_mappings"
   ],
   "properties": {
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "const": "1.1.0" },
     "generated_at": { "type": "string", "format": "date" },
     "review_status": { "enum": ["provisional", "reviewed"] },
     "inventory_path": { "type": "string", "minLength": 1 },
@@ -29,6 +30,7 @@
         "unsure",
         "uncovered",
         "no_applicable_rule",
+        "combined_coverage",
         "generated_variants"
       ],
       "additionalProperties": { "type": "string", "minLength": 1 }
@@ -36,6 +38,30 @@
     "total_tools": { "const": 23 },
     "total_scenarios": { "const": 275 },
     "total_contracts": { "const": 12 },
+    "combined_summary": {
+      "type": "object",
+      "required": [
+        "covered_by_any_tool_count",
+        "covered_by_any_tool_percentage",
+        "unsure_only_count",
+        "unsure_only_percentage",
+        "no_covered_or_unsure_count",
+        "no_covered_or_unsure_percentage"
+      ],
+      "properties": {
+        "covered_by_any_tool_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "covered_by_any_tool_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "unsure_only_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "unsure_only_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "no_covered_or_unsure_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "no_covered_or_unsure_percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    },
     "contracts": {
       "type": "array",
       "minItems": 12,
@@ -79,10 +105,28 @@
       "maxItems": 275,
       "items": {
         "type": "object",
-        "required": ["scenario_id", "contract_id", "tool_statuses"],
+        "required": [
+          "scenario_id",
+          "contract_id",
+          "combined_status",
+          "covered_by_tool_ids",
+          "unsure_tool_ids",
+          "tool_statuses"
+        ],
         "properties": {
           "scenario_id": { "type": "string", "minLength": 1 },
           "contract_id": { "type": "string", "minLength": 1 },
+          "combined_status": { "enum": ["covered", "unsure", "uncovered"] },
+          "covered_by_tool_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "unsure_tool_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
           "tool_statuses": {
             "type": "object",
             "minProperties": 23,

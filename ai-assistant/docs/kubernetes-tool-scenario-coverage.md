@@ -56,6 +56,37 @@ surveyed tools because none combines these predicates with the evaluator's
 required evidence transport, prompt-safety behavior, and both approval-bound
 repair lifecycles.
 
+## Combined coverage
+
+The union across all 23 surveyed tools covers **103/275 scenarios (37.5%)**.
+This is the number of scenarios marked `covered` by at least one tool; overlapping
+tool results are counted once. Another 90/275 (32.7%) are not covered but have an
+`unsure` mapping, and 82/275 (29.8%) have neither a covered nor an unsure mapping.
+
+The [per-scenario detection report](kubernetes-tool-scenario-detection-report.md)
+lists the tools credited for every scenario. The full
+[scenario-by-tool CSV matrix](kubernetes-tool-scenario-detection-matrix.csv)
+contains all 6,325 statuses, including `uncovered` and `no_applicable_rule` cells.
+
+### Comparison with AI Assistant
+
+The qualified GPT-5.4 AI Assistant run passed all 275 scenarios. Intersecting
+that result with the strict combined rules mapping gives:
+
+| Result                                                     | Scenarios |
+| ---------------------------------------------------------- | --------: |
+| Reviewed rule predicate covered and AI Assistant passed    |       103 |
+| Reviewed rule predicate covered and AI Assistant did not pass |         0 |
+| AI Assistant passed without strict reviewed rule coverage  |       172 |
+| Neither                                                     |         0 |
+
+This is not a same-mode execution comparison. Rules coverage is based on pinned
+source predicate review; the AI Assistant result is a valid end-to-end run. The
+comparison shows no rules-only win in this qualified run, while the AI Assistant
+passed 172 scenarios beyond strict reviewed rule coverage. See
+[Agent harness research](agent-harness-research.md#gpt-54-full-qualification-and-preference-decision)
+for the run provenance and validity checks.
+
 ## Normalized contracts
 
 | Contract                         | Rows | Required behavior                                                                              |

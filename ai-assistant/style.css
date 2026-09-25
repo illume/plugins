@@ -1,0 +1,42 @@
+.section-letter {
+  --section-underline: currentColor;
+  display: inline-block;
+  padding-bottom: 2px;
+  border-bottom: 7px solid var(--section-underline);
+  color: inherit !important;
+  font-weight: 700;
+  line-height: 0.9;
+  text-decoration: none !important;
+}
+
+.letter-a {
+  --section-underline: #f6a6b2;
+}
+
+.letter-b {
+  --section-underline: #f7c59f;
+}
+
+.letter-c {
+  --section-underline: #f6e7a1;
+}
+
+.letter-d {
+  --section-underline: #a8e6cf;
+}
+
+.letter-e {
+  --section-underline: #a7d8de;
+}
+
+.letter-f {
+  --section-underline: #afcbff;
+}
+
+.letter-g {
+  --section-underline: #cdb4db;
+}
+
+.letter-h {
+  --section-underline: #d0bfff;
+}

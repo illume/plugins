@@ -280,8 +280,9 @@ was kstatus at **47/275 (17.1%)**.
 
 Against the qualified GPT-5.4 AI Assistant run:
 
-- **103** both covered/passed; **0** rules-covered scenarios failed AI Assistant
-- AI Assistant passed **172** more scenarios without strict reviewed rule coverage
+- **103**: rules covered and AI Assistant passed
+- **0**: rules covered but AI Assistant failed
+- **172**: AI Assistant passed without strict reviewed rule coverage
 
 ```text
 collectors -> relationships -> deterministic findings -> LLM investigation

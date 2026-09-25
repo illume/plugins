@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-verify-that-if-defined-the-read-only-port-argument-is-set-to-0-m-e6406846",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-11-node-4-2-4-verify-that-if-defined-the-read-only-port-argument-i:eac01e8a5bf2",
+    "kube-bench:source:cis-1-12-node-4-2-4-verify-that-if-defined-the-read-only-port-argument-i:03adeb299589",
+    "kube-bench:source:cis-2-0-node-4-2-4-verify-that-if-defined-the-read-only-port-argument-is:ca4122cc61fb"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:verify-that-if-defined-the-read-only-port-argument-is-set-to-0:26f9c9ee3b63"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:verify-that-if-defined-the-read-only-port-argument-is-set-to-0-m:e6406846892e"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/node.yaml"
+  ]
+}

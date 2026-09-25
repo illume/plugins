@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-external-secret-storage-7cceabdd",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "direct-secret-dependency",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name",
+        "observed_value": "app-db",
+        "description": "Consider the use of an external secrets storage and management system, instead of using Kubernetes Secrets directly, if you have more complex secret management needs. Ensure the solution requires authentication to access secrets, has auditing of access to and use of secrets, and encrypts secrets. Some solutions also make it easier to rotate secrets."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].env[0].value",
+      "observed_value": "vault://apps/app-db/password",
+      "description": "The healthy control would reference an external secret system instead."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-79a51fffa56c76dd"
+}

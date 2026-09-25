@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-minimize-access-to-webhook-configuration-objects-manual-79f1836f",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-8-policies-4-1-11-minimize-access-to-webhook-configuration-objects:9d3c700888aa",
+    "kube-bench:source:cis-1-10-policies-5-1-12-minimize-access-to-webhook-configuration-object:8a2cab67a269",
+    "kube-bench:source:cis-1-11-policies-5-1-12-minimize-access-to-webhook-configuration-object:0fee43ca4972",
+    "kube-bench:source:cis-1-12-policies-5-1-12-minimize-access-to-webhook-configuration-object:6c0103a976a8",
+    "kube-bench:source:cis-1-7-policies-5-1-12-minimize-access-to-webhook-configuration-objects:d2f0c908e51e",
+    "kube-bench:source:cis-1-8-policies-5-1-12-minimize-access-to-webhook-configuration-objects:5dfaa34f8a40",
+    "kube-bench:source:cis-1-9-policies-5-1-12-minimize-access-to-webhook-configuration-objects:ba107823f7f7",
+    "kube-bench:source:cis-2-0-policies-5-1-12-minimize-access-to-webhook-configuration-objects:70597a72ec12",
+    "kube-bench:source:eks-1-8-0-policies-4-1-11-minimize-access-to-webhook-configuration-objec:4f35645dc3cb",
+    "kube-bench:source:k3s-cis-1-7-policies-5-1-12-minimize-access-to-webhook-configuration-obj:14344f32d42e",
+    "kube-bench:source:k3s-cis-1-8-policies-5-1-12-minimize-access-to-webhook-configuration-obj:3af0e531f8b5",
+    "kube-bench:source:k3s-cis-1-9-policies-5-1-12-minimize-access-to-webhook-configuration-obj:0bba96f6ae52",
+    "kube-bench:source:rke-cis-1-7-policies-5-1-12-minimize-access-to-webhook-configuration-obj:f35f51140100",
+    "kube-bench:source:rke2-cis-1-7-policies-5-1-12-minimize-access-to-webhook-configuration-ob:313281ad4fc6",
+    "kube-bench:source:rke2-cis-1-8-policies-5-1-12-minimize-access-to-webhook-configuration-ob:80c8a03714be",
+    "kube-bench:source:rke2-cis-1-9-policies-5-1-12-minimize-access-to-webhook-configuration-ob:30163d929eeb"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:minimize-access-to-webhook-configuration-objects:a36157fb0408"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:minimize-access-to-webhook-configuration-objects-manual:79f1836f14b3"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 16,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml"
+  ]
+}

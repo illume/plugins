@@ -14,6 +14,18 @@
  * limitations under the License.
  */
 
+/** Sanitized stages measured with a monotonic clock. */
+export type AssistantTelemetryStage =
+  | 'turn_preparation'
+  | 'tool_adaptation'
+  | 'agent_construction'
+  | 'history_preparation'
+  | 'model_request'
+  | 'agent_stream_processing'
+  | 'structured_validation'
+  | 'structured_repair'
+  | 'turn_total';
+
 /** Sanitized runtime events exposed to trusted CLI callers. */
 export type AssistantTelemetryEvent =
   | {
@@ -43,6 +55,13 @@ export type AssistantTelemetryEvent =
       mutating: boolean;
       status: 'success' | 'error' | 'denied';
       duration_ns: string;
+    }
+  | {
+      type: 'stage_timing';
+      stage: AssistantTelemetryStage;
+      outcome: 'success' | 'error';
+      duration_ns: string;
+      time_to_first_token_ns?: string;
     };
 
 /** Optional observer invoked synchronously after sanitized runtime events. */

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-policy-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "minimum-absent",
+        "resource_ref": "poddisruptionbudget/app-budget",
+        "field_path": "spec.minAvailable",
+        "observed_value": "absent",
+        "description": "The budget does not define minAvailable."
+      },
+      {
+        "fact_id": "maximum-absent",
+        "resource_ref": "poddisruptionbudget/app-budget",
+        "field_path": "spec.maxUnavailable",
+        "observed_value": "absent",
+        "description": "The budget does not define maxUnavailable."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-availability-policy",
+      "resource_ref": "poddisruptionbudget/app-budget",
+      "field_path": "spec.maxUnavailable",
+      "observed_value": "1",
+      "description": "The fixture does not set a maximum unavailable count."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9446675c8ce381c6"
+}

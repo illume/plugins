@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-statefulset-service-is-not-headless",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "statefulset/stateful-address",
+        "field_path": "spec.serviceName + service/stateful-address.spec.clusterIP",
+        "observed_value": "stateful-address; 10.96.0.44",
+        "description": "The governing Service has a cluster IP instead of headless discovery."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "statefulset/stateful-address",
+      "field_path": "spec.serviceName + service/stateful-address.spec.clusterIP",
+      "observed_value": "stateful-address; None",
+      "description": "The healthy governing Service sets clusterIP to None."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f2036f2df0609bd5"
+}

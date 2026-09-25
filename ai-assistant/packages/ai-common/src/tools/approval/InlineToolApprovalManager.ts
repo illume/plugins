@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage } from '../../conversation/types';
-import type { KubernetesAssistantContext } from '../../kubernetes/types';
-import type { UserContext } from '../../mcp/tools/types';
-import type { MCPServer } from '../../mcp/types';
-import type { ToolCall } from '../types';
-import { EventEmitter } from './events';
-import { ToolApprovalHandler } from './ToolApprovalManager';
+import type { ConversationMessage } from '../../conversation/types.ts';
+import type { KubernetesAssistantContext } from '../../kubernetes/types.ts';
+import type { UserContext } from '../../mcp/tools/types.ts';
+import type { MCPServer } from '../../mcp/types.ts';
+import type { ToolCall } from '../types.ts';
+import { EventEmitter } from './events.ts';
+import type { ToolApprovalHandler } from './ToolApprovalManager.ts';
 
 /** Tracks a pending inline approval request for tool execution. */
 export interface InlineToolApprovalRequest {

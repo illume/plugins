@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-npd-cper-corrected",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:kernel-monitor-cperhardwareerrorcorrected:791a13e1109d"
+  ],
+  "target_semantic_group_ids": [
+    "node-problem-detector:semantic:cperhardwareerrorcorrected:a3543b779010"
+  ],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor.json"
+  ]
+}

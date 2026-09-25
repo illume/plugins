@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-extension-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-extension-deployment
+  template:
+    metadata:
+      labels:
+        app: legacy-extension-deployment
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532

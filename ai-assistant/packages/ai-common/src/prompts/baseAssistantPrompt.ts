@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { resourceLinkInstructions } from './resourceLinkInstructions';
+import { resourceLinkInstructions } from './resourceLinkInstructions.ts';
 
 /** Stable guidance kept before request-specific context so provider prompt caches can reuse it. */
 export const cacheableReasoningInstructions = `

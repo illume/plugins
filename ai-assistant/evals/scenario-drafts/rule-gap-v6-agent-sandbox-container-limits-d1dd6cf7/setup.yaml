@@ -1,0 +1,12 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: Sandbox
+metadata:
+  name: unbounded-sandbox
+spec:
+  containers:
+    - name: runner
+      image: registry.k8s.io/pause:3.10
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi

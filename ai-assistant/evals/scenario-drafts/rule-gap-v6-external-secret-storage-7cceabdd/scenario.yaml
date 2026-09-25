@@ -1,0 +1,50 @@
+schema_version: 1.0.0
+scenario_id: rule-gap-v6-external-secret-storage-7cceabdd
+scenario_version: 0.1.0
+family: rule-gap-policy
+mode: diagnose_only
+title: Application stores a database password directly in a Secret
+description: >-
+  Consider the use of an external secrets storage and management system, instead of using Kubernetes
+  Secrets directly, if you have more complex secret management needs. Ensure the solution requires
+  authentication to access secrets, has auditing of access to and use of secrets, and encrypts
+  secrets. Some solutions also make it easier to rotate secrets. The workload relies on a namespace
+  Secret rather than an external secret manager.
+provenance:
+  owner: scenarios-goal-agents
+  source: reference-implementation
+  license: Apache-2.0
+  admission_date: '2026-09-20'
+  last_review: '2026-09-20'
+  review_due: '2026-12-19'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: rule-gap-policy
+  lineage_id: rule-gap-v6-external-secret-storage-7cceabdd
+  variant_kind: anchor
+  splits:
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-kwok
+required_mechanisms:
+  - api-server
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-79a51fffa56c
+artifact_policy:
+  retain_raw_tool_output: true

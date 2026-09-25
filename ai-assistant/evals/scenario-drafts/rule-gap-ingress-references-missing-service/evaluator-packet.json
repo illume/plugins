@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-ingress-references-missing-service",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingress/orphan-route",
+        "field_path": "spec.rules[0].http.paths[0].backend.service + matching Service inventory",
+        "observed_value": "{\"name\":\"missing-web\",\"port\":{\"number\":80}}; 0",
+        "description": "The Ingress backend Service does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "ingress/orphan-route",
+      "field_path": "spec.rules[0].http.paths[0].backend.service + matching Service inventory",
+      "observed_value": "missing-web port 80; 1 match",
+      "description": "A healthy backend resolves to an existing Service port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1e233fbd180e0223"
+}

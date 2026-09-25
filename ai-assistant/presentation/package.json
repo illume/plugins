@@ -1,0 +1,13 @@
+{
+  "name": "@headlamp-k8s/ai-assistant-show-and-tell",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "slidev ../show-and-tell.md --open --port 3030",
+    "build": "slidev build ../show-and-tell.md --base ./ --out ./presentation/dist/show-and-tell"
+  },
+  "devDependencies": {
+    "@slidev/cli": "53.0.0",
+    "@slidev/theme-default": "0.25.0"
+  }
+}

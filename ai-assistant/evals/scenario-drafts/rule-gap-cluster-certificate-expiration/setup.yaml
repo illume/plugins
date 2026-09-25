@@ -1,0 +1,17 @@
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: telemetry-expiring-client
+spec:
+  request: >-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlIL01JR2xBZ0VBTUVNeElqQWdCZ05WQkFNTUdYUmxiR1Z0WlhSeWVTMWxlSEJwY21sdVp5MWpiR2xsYm5ReApIVEFiQmdOVkJBb01GSE41YzNSbGJUcGhkWFJvWlc1MGFXTmhkR1ZrTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJCnpqMERBUWNEUWdBRTA0aGZtdzlBejBZZVJ1T0ZVMnI2THpUUkRvRExWUnM5VHdQN3c2ZDhPNFp5OEZqQnNzc0UKNEU5SHpxQUJLa205QkUyRG52Mk1aU3NPSURvMGZpV2dRNkFBTUFvR0NDcUdTTTQ5QkFNQ0Ewa0FNRVlDSVFETQpPWFBFdXZrZWZuM3NpZ3BGWmtZN2xTek4yU0lSTEI3RWlndW5KY1AwTUFJaEFMMCsrVkRCTVRvYUtuV05NaWlrCnVIWTRqRHpUMGxVNG5IdkI5U0p6VUx1MQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 600
+  usages:
+    - client auth
+status:
+  conditions:
+    - type: Approved
+      status: 'True'
+      reason: FixtureCertificateApproved
+      message: Issue the bounded short-lived client certificate.

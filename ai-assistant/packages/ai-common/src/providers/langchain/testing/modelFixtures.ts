@@ -22,7 +22,7 @@
  * update them and regenerate this file if fixtures change.
  */
 
-import type { FixtureEntry, FixtureSequence } from './FixtureChatModel';
+import type { FixtureEntry, FixtureSequence } from './FixtureChatModel.ts';
 
 /** Built-in prompt and response fixtures used by the mock testing model. */
 export const GENERAL_FIXTURES: FixtureEntry[] = [

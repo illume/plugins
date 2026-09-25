@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-found-taint-s-but-no-pod-can-tolerate-8bfaa499",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "untolerated-taint",
+        "resource_ref": "node/worker-a",
+        "field_path": "spec.taints[0]",
+        "observed_value": "{\"key\":\"dedicated\",\"value\":\"infra\",\"effect\":\"NoSchedule\"}",
+        "description": "Emitted by checkTaints when the pinned source predicate for issue 700 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/workload",
+      "field_path": "spec.template.spec.tolerations[0].key",
+      "observed_value": "dedicated",
+      "description": "The healthy control would add a matching toleration."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0745c985622ac6de"
+}

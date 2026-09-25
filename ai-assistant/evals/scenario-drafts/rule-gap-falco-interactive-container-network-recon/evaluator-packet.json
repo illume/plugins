@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-interactive-container-network-recon",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "interactive-terminal-enabled",
+        "resource_ref": "pod/interactive-recon",
+        "field_path": "spec.containers[0].tty",
+        "observed_value": "true",
+        "description": "The scanner container has an interactive terminal enabled."
+      },
+      {
+        "fact_id": "packet-socket-opened",
+        "resource_ref": "pod/interactive-recon",
+        "field_path": "logs[scanner]",
+        "observed_value": "af_packet_opened",
+        "description": "The Python scanner successfully creates an AF_PACKET raw socket."
+      },
+      {
+        "fact_id": "cluster-and-nodeport-probes",
+        "resource_ref": "pod/interactive-recon",
+        "field_path": "spec.containers[0].command[2]",
+        "observed_value": "recon-responder\",9999; os.environ[\"NODE_IP\"],30099",
+        "description": "The interpreted scanner probes both controlled Service and NodePort paths."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-internet-target",
+      "resource_ref": "pod/interactive-recon",
+      "field_path": "spec.containers[0].command[2]",
+      "observed_value": "public IP address",
+      "description": "No public or Internet destination occurs in the scanner command."
+    },
+    {
+      "fact_id": "invented-host-network",
+      "resource_ref": "pod/interactive-recon",
+      "field_path": "spec.hostNetwork",
+      "observed_value": "true",
+      "description": "The scanner remains in the Pod network namespace."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0d376bedbbac5e22"
+}

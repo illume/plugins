@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-cni-in-use-supports-network-policies-17cf1661-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/cni/net.d/00-cluster.conflist
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cluster-network-configuration",
+      "field": "cni.capabilities.networkPolicy",
+      "observedValue": "false",
+      "triggerPredicate": "There are a variety of CNI plugins available for Kubernetes. If the CNI in use does not support Network Policies it may not be possible to effectively restrict traffic in the cluster."
+    }
+  predicate-summary.txt: >-
+    There are a variety of CNI plugins available for Kubernetes. If the CNI in use does not support
+    Network Policies it may not be possible to effectively restrict traffic in the cluster.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cluster-network-configuration",
+      "field": "cni.capabilities.networkPolicy",
+      "observedValue": "true"
+    }

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: worker-a
+  labels:
+    disk: hdd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-app
+  labels:
+    app: storage-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storage-app
+  template:
+    metadata:
+      labels:
+        app: storage-app
+    spec:
+      nodeSelector:
+        disk: ssd
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532

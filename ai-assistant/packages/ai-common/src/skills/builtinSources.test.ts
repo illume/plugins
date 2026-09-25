@@ -23,7 +23,8 @@ import {
   createAksSkillsSource,
   reconcileBuiltinSkillSources,
 } from './builtinSources';
-import { DEFAULT_SKILLS_CONFIG, getSkillSourceIdentity, SkillsConfig } from './config';
+import type { SkillsConfig } from './config';
+import { DEFAULT_SKILLS_CONFIG, getSkillSourceIdentity } from './config';
 import { isPinnedRef, isValidGitUrl } from './SkillLoader';
 
 const IDENTITY = getSkillSourceIdentity({

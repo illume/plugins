@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-ingress-without-valid-tls",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "routed-host",
+        "resource_ref": "ingress/web",
+        "field_path": "spec.rules[0].host",
+        "observed_value": "app.example.test",
+        "description": "The Ingress routes app.example.test."
+      },
+      {
+        "fact_id": "tls-hosts",
+        "resource_ref": "ingress/web",
+        "field_path": "spec.tls[0].hosts",
+        "observed_value": "[\"internal.example.test\"]",
+        "description": "TLS coverage names only internal.example.test and omits the routed host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-route-coverage",
+      "resource_ref": "ingress/web",
+      "field_path": "spec.tls[*].hosts",
+      "observed_value": "[\"app.example.test\"]",
+      "description": "No TLS hosts entry covers app.example.test."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c646c7182f975cf3"
+}

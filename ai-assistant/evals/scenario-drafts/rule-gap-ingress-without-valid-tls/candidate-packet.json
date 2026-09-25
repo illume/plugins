@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-ingress-without-valid-tls",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Compare routed hosts with TLS coverage on the `web` Ingress. Cite the exact rule and TLS host values; do not mutate resources.",
+  "visible_resource_refs": ["ingress/web", "service/web", "secret/web-tls"],
+  "allowed_observation_kinds": ["ingress.rules", "ingress.tls", "service.ports", "secret.metadata"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

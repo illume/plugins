@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-container-allows-privilege-escalation",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:privilege-escalation-container",
+    "kubescape:rule:rule-allow-privilege-escalation",
+    "polaris:check:privilegeEscalationAllowed"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-privilege-escalation-container:4e78b41ca0a5",
+    "kubescape:semantic:kubescape-rule-rule-allow-privilege-escalation:f8bcc2f0caca",
+    "polaris:semantic:polaris-check-privilegeescalationallowed:d091798dbed2"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape", "polaris"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/privilegeEscalationAllowed.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0016-allowprivilegeescalation.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/privilege-escalation.yaml"
+  ]
+}

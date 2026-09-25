@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-deployment-uses-extensions-v1beta1",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-linter:check:no-extensions-v1beta", "kube-score:check:stable-version"],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-no-extensions-v1beta:620881d8f6c3",
+    "kube-score:semantic:kube-score-check-stable-version:976bc19fbb4c"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/no-extensions-v1beta.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

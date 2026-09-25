@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-kernel-divide-error",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-kernel-divide-error-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "divide error: 0000 [#1] SMP",
+        "description": "The normalized kernel line is an exact divide-error signature for fault sequence 1."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-kernel-divide-error-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"kernel-monitor\",\"regex\":\"divide error: 0000 \\\\[#\\\\d+\\\\] SMP\",\"requiredMatches\":1}",
+        "description": "The local oracle requires 1 match(es) for divide error: 0000 \\[#\\d+\\] SMP."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-kernel-divide-error-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-kernel-divide-error-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "kernel: arithmetic self-test passed",
+      "description": "The failing source is not the nonmatching healthy control: kernel: arithmetic self-test passed"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-aa21378fbc70078e"
+}

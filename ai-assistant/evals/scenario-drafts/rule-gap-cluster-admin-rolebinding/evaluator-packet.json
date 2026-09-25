@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-admin-rolebinding",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "cluster-admin-reference",
+        "resource_ref": "rolebinding/app-admin",
+        "field_path": "roleRef.name",
+        "observed_value": "cluster-admin",
+        "description": "The RoleBinding references the built-in cluster-admin ClusterRole."
+      },
+      {
+        "fact_id": "application-subject",
+        "resource_ref": "rolebinding/app-admin",
+        "field_path": "subjects[0]",
+        "observed_value": "{\"kind\":\"ServiceAccount\",\"name\":\"app\"}",
+        "description": "The excessive grant applies to the application ServiceAccount."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-least-privilege-role",
+      "resource_ref": "rolebinding/app-admin",
+      "field_path": "roleRef.name",
+      "observed_value": "app-reader",
+      "description": "The binding references cluster-admin, not a least-privilege application role."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f7336b625e202a07"
+}

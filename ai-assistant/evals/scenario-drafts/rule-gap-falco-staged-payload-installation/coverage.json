@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-staged-payload-installation",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:container-drift-detected-chmod:3a4856596f35",
+    "falco:rule:container-drift-detected-open-create:de420a538b7c",
+    "falco:rule:create-hidden-files-or-directories:b7e28e6ea4c1",
+    "falco:rule:decoding-payload-in-container:70c0494f20e6",
+    "falco:rule:drop-and-execute-new-binary-in-container:5be09274e133",
+    "falco:rule:execution-from-dev-shm:5d39e529b6c0",
+    "falco:rule:launch-ingress-remote-file-copy-tools-in-container:d97a598d969b",
+    "falco:rule:mkdir-binary-dirs:058ac83c000e",
+    "falco:rule:modify-binary-dirs:4f3667d0a033",
+    "falco:rule:write-below-binary-dir:25d3b0fd8a70"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-container-drift-detected-chmod-3a4856596f35:51b55c6dc133",
+    "falco:semantic:falco-rule-container-drift-detected-open-create-de420a538b7c:5c6cb8ed6316",
+    "falco:semantic:falco-rule-create-hidden-files-or-directories-b7e28e6ea4c1:8a13494264b3",
+    "falco:semantic:falco-rule-decoding-payload-in-container-70c0494f20e6:3d2cd26e4f6d",
+    "falco:semantic:falco-rule-drop-and-execute-new-binary-in-container-5be09274e133:9279a3d447b4",
+    "falco:semantic:falco-rule-execution-from-dev-shm-5d39e529b6c0:34c649c1c966",
+    "falco:semantic:falco-rule-launch-ingress-remote-file-copy-tools-in-container-d97a598d969b:15ac2d39d791",
+    "falco:semantic:falco-rule-mkdir-binary-dirs-058ac83c000e:1e298c8edda7",
+    "falco:semantic:falco-rule-modify-binary-dirs-4f3667d0a033:331dc5cf8302",
+    "falco:semantic:falco-rule-write-below-binary-dir-25d3b0fd8a70:7aa4b45d3430"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 10,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

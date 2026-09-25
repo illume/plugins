@@ -24,14 +24,14 @@
  * cycles, and final answer extraction.
  */
 
-import type { AgentProgressCallback, AgentThinkingStep } from '../types';
-import { BUILTIN_SESSIONS } from './fixtures';
+import type { AgentProgressCallback, AgentThinkingStep } from '../types.ts';
+import { BUILTIN_SESSIONS } from './fixtures.ts';
 import type {
   ScriptedAgent,
   ScriptedAgentOptions,
   ScriptedAgentResult,
   ScriptedAgentSession,
-} from './types';
+} from './types.ts';
 
 // ── Implementation ───────────────────────────────────────────────────────────
 

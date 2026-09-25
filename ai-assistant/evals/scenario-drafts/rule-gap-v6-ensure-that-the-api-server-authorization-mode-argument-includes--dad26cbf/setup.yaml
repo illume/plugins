@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-authorization-mode-argument-includes--dad26cbf-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--authorization-mode",
+      "observedValue": "RBAC",
+      "triggerPredicate": "Restrict kubelet nodes to reading only objects associated with them."
+    }
+  predicate-summary.txt: Restrict kubelet nodes to reading only objects associated with them.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--authorization-mode",
+      "observedValue": "Node,RBAC"
+    }

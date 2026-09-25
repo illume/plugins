@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-restriction-admission-missing",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/node-restriction-admission-missing-fixture component fixture. The effective admission chain explicitly disables NodeRestriction. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/node-restriction-admission-missing-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

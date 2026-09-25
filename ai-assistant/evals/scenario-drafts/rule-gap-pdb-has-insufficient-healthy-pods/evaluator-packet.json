@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-has-insufficient-healthy-pods",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "poddisruptionbudget/underhealthy-pdb",
+        "field_path": "status.currentHealthy + status.desiredHealthy",
+        "observed_value": "1; 2",
+        "description": "PodDisruptionBudget has insufficient healthy Pods for the pinned observation window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "poddisruptionbudget/underhealthy-pdb",
+      "field_path": "status.currentHealthy + status.desiredHealthy",
+      "observed_value": "2; 2 for 15m",
+      "description": "The healthy control remains outside the threshold for the full window."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-34d127b623a1a557"
+}

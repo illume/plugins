@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-ec2-metadata-access",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `metadata-address-action` and its logs. Identify the link-local destination and prove whether it is real metadata or a controlled Pod-local endpoint.",
+  "visible_resource_refs": ["job/metadata-address-action", "pod/metadata-address-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.network", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

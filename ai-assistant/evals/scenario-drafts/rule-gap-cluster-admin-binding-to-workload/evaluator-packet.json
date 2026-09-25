@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-admin-binding-to-workload",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "clusterrolebinding/workload-cluster-admin",
+        "field_path": "roleRef.name + subjects[0]",
+        "observed_value": "cluster-admin; {\"kind\":\"ServiceAccount\",\"name\":\"overprivileged-workload\",\"namespace\":\"default\"}",
+        "description": "A namespaced workload account receives cluster-admin."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "clusterrolebinding/workload-cluster-admin",
+      "field_path": "roleRef.name + subjects[0]",
+      "observed_value": "view; ServiceAccount/default/overprivileged-workload",
+      "description": "The healthy binding grants a reviewed least-privilege role."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b17eff38b4b12508"
+}

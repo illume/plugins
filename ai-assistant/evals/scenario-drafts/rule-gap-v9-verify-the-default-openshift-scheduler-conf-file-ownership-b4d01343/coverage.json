@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-verify-the-default-openshift-scheduler-conf-file-ownership-b4d01343",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-0-7-master-4-16-verify-the-default-openshift-scheduler-conf-file-owne:56c9de0a0807"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:verify-the-default-openshift-scheduler-conf-file-ownership:4aa5033041ae"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:verify-the-default-openshift-scheduler-conf-file-ownership:b4d01343b411"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-0.7/master.yaml"
+  ]
+}

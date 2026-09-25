@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-certificate-renewal-fails",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "certificatesigningrequest/node-client-renewal-denied",
+        "field_path": "spec.signerName + status.conditions[type=Denied]",
+        "observed_value": "kubernetes.io/kube-apiserver-client-kubelet; True",
+        "description": "Kubelet client and serving renewal requests are explicitly denied."
+      },
+      {
+        "fact_id": "server-renewal-denied",
+        "resource_ref": "certificatesigningrequest/node-server-renewal-denied",
+        "field_path": "spec.signerName + status.conditions[type=Denied]",
+        "observed_value": "kubernetes.io/kubelet-serving; True",
+        "description": "The serving certificate renewal request is denied."
+      },
+      {
+        "fact_id": "renewal-denials-recorded",
+        "resource_ref": "metric/apiserver_request_total{group=\"certificates.k8s.io\",resource=\"certificatesigningrequests\",subresource=\"approval\",verb=\"PUT\",code=\"200\"}",
+        "field_path": "increase[2m]",
+        "observed_value": ">= 2",
+        "description": "Native API server telemetry records both renewal denial writes during the observation window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "certificatesigningrequest/node-client-renewal-denied",
+      "field_path": "spec.signerName + status.conditions[type=Denied]",
+      "observed_value": "Approved=True; no denial writes",
+      "description": "A healthy node obtains approval without client or server renewal denial."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c5094b64e0bd79d2"
+}

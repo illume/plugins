@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-unhealthy",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "kubelet-target-down",
+        "resource_ref": "metric/up{job=\"kubelet\",node=\"telemetry-kubelet-down\"}",
+        "field_path": "max_over_time[15m]",
+        "observed_value": "0",
+        "description": "The native kubelet scrape target is continuously unavailable."
+      },
+      {
+        "fact_id": "kubelet-health-fails",
+        "resource_ref": "node/telemetry-kubelet-down",
+        "field_path": "proxy/healthz",
+        "observed_value": "<connection failure>",
+        "description": "The synthetic Node has no serving kubelet health endpoint."
+      },
+      {
+        "fact_id": "kubelet-node-status-unknown",
+        "resource_ref": "node/telemetry-kubelet-down",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].reason",
+        "observed_value": "NodeStatusUnknown",
+        "description": "Missing kubelet status updates make the Node unreachable."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-kubelet-up",
+      "resource_ref": "metric/up{job=\"kubelet\",node=\"telemetry-kubelet-down\"}",
+      "field_path": "min_over_time[15m]",
+      "observed_value": "1",
+      "description": "The kubelet target is not healthy during the window."
+    },
+    {
+      "fact_id": "invented-current-kubelet-lease",
+      "resource_ref": "lease/telemetry-kubelet-down",
+      "field_path": "spec.renewTime",
+      "observed_value": "<within node-monitor-grace-period>",
+      "description": "No kubelet renews the synthetic Node Lease."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c779d26dc698475e"
+}

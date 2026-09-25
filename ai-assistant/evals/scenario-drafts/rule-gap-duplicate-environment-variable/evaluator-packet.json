@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-duplicate-environment-variable",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "duplicate-environment-name",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].env",
+        "observed_value": "[{\"name\":\"LOG_LEVEL\",\"value\":\"info\"},{\"name\":\"LOG_LEVEL\",\"value\":\"debug\"}]",
+        "description": "LOG_LEVEL appears twice with conflicting values."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-unique-environment",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].env",
+      "observed_value": "[{\"name\":\"LOG_LEVEL\",\"value\":\"info\"}]",
+      "description": "The fixture contains two LOG_LEVEL entries."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4a8d961dad62ed2c"
+}

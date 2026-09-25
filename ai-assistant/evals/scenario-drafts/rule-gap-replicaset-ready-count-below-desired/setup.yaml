@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: underready-replicaset
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: underready-replicaset
+  template:
+    metadata:
+      labels:
+        app: underready-replicaset
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+          command:
+            - /bin/sh
+            - '-c'
+            - exit 1

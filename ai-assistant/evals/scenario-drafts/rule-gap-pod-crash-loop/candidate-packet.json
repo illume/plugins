@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-crash-loop",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why Pod `crash-loop` cannot remain available. Correlate its current waiting reason, last termination, restart-count change, and recent Events over the observation window. Do not mutate resources.",
+  "visible_resource_refs": [
+    "pod/crash-loop",
+    "event/*?involvedObject.kind=Pod&involvedObject.name=crash-loop",
+    "metric/kube_pod_container_status_restarts_total{pod=\"crash-loop\",container=\"app\"}"
+  ],
+  "allowed_observation_kinds": [
+    "pod.status",
+    "pod.events",
+    "container.logs.previous",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

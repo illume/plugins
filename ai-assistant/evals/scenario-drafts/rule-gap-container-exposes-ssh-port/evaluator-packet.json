@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-exposes-ssh-port",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/ssh-port",
+        "field_path": "spec.template.spec.containers[0].ports[0].containerPort",
+        "observed_value": "22",
+        "description": "The workload declares the conventional SSH port."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/ssh-port",
+      "field_path": "spec.template.spec.containers[0].ports[0].containerPort",
+      "observed_value": "8080",
+      "description": "The healthy workload exposes only its application port."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e32ce78e4cc9e773"
+}

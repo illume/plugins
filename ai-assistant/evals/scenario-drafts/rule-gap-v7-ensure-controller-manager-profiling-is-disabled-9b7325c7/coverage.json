@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-controller-manager-profiling-is-disabled-9b7325c7",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:tkgi-1-2-53-master-1-3-2-ensure-controller-manager-profiling-is-disabled:7a1965d0b688"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-controller-manager-profiling-is-disabled:99532abba237"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-controller-manager-profiling-is-disabled:9b7325c7a738"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/master.yaml"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-manage-kubernetes-rbac-users-with-aws-iam-authenticator-for-kube-918a4054",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-manage-kubernetes-rbac-users-with-aws-iam-authenticator-for-kube-918a4054",
+        "field_path": "data.evidence.json#accessConfig.authenticationMode",
+        "observed_value": "CONFIG_MAP",
+        "description": "Manage Kubernetes RBAC users with AWS IAM Authenticator for Kubernetes or Upgrade to AWS CLI v1.16.156 or greater (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-manage-kubernetes-rbac-users-with-aws-iam-authenticator-for-kube-918a4054",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-manage-kubernetes-rbac-users-with-aws-iam-authenticator-for-kube-918a4054",
+      "field_path": "data.healthy-control.json#accessConfig.authenticationMode",
+      "observed_value": "API",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e701a244a4745378"
+}

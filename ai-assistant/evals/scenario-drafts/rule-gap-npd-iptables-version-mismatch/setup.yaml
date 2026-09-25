@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-iptables-mode-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: /var/log/node-monitor/network.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.txt: >-
+    2026-09-20T00:01:00Z health=failed condition=IPTablesVersionsMismatch kube-proxy=legacy
+    kubelet=nft
+  predicate.json: >-
+    {"condition":"IPTablesVersionsMismatch","kubeProxyMode":"legacy","kubeletMode":"nft","requiredMatches":1}
+  healthy-control.txt: 2026-09-20T00:01:00Z health=ok condition=IPTablesVersionsMismatch kube-proxy=nft kubelet=nft

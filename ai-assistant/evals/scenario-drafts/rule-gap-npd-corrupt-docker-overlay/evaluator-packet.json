@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-corrupt-docker-overlay",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-corrupt-docker-overlay-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "returned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument\nreturned error: readlink /var/lib/docker/overlay2/abc/merged: invalid argument",
+        "description": "Ten identical overlay2 readlink failures occur inside the 5-minute counter window."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-corrupt-docker-overlay-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"docker-monitor\",\"regex\":\"returned error: readlink /var/lib/docker/overlay2.*: invalid argument.*\",\"requiredMatches\":10,\"lookback\":\"5m\"}",
+        "description": "The local oracle requires 10 match(es) for returned error: readlink /var/lib/docker/overlay2.*: invalid argument.*."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-corrupt-docker-overlay-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-corrupt-docker-overlay-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "overlay2: mounted /var/lib/docker/overlay2/abc/merged",
+      "description": "The failing source is not the nonmatching healthy control: overlay2: mounted /var/lib/docker/overlay2/abc/merged"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-23562072f38df944"
+}

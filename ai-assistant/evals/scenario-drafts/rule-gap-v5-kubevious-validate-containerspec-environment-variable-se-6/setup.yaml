@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: missing-reference-6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: missing-reference-6
+  template:
+    metadata:
+      labels:
+        app: missing-reference-6
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          env:
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: absent-token
+                  key: token

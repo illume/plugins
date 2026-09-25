@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-container-network-interface-file-permissions-are-ad5d9ea6",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-master-1-1-9-ensure-that-the-container-network-interface-file-pe:4b0e74903e24",
+    "kube-bench:source:gke-1-0-master-1-1-9-ensure-that-the-container-network-interface-file-pe:c5da3ffd29b5"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-container-network-interface-file-permissions-are-set-to-644-or-m:3cb0451444e5"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-container-network-interface-file-permissions-are:ad5d9ea6f35b"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/master.yaml"
+  ]
+}

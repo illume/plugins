@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cpu-requirements-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "cpu-request-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].resources.requests.cpu",
+        "observed_value": "<absent>",
+        "description": "The container has no CPU request."
+      },
+      {
+        "fact_id": "cpu-limit-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].resources.limits.cpu",
+        "observed_value": "<absent>",
+        "description": "The container has no CPU limit."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-cpu-request",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].resources.requests.cpu",
+      "observed_value": "100m",
+      "description": "No CPU request exists in the fixture."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-5e94c40b5eec9db5"
+}

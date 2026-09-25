@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-phase-errors",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the storage lifecycle failure for PersistentVolume `telemetry-failed-pv`. Correlate its phase, recycler status message, released claim reference, Events, and native volume-phase telemetry. Do not mutate resources.",
+  "visible_resource_refs": [
+    "persistentvolume/telemetry-failed-pv",
+    "event/*?involvedObject.name=telemetry-failed-pv",
+    "metric/kube_persistentvolume_status_phase{persistentvolume=\"telemetry-failed-pv\",phase=\"Failed\"}"
+  ],
+  "allowed_observation_kinds": [
+    "persistentvolume.spec",
+    "persistentvolume.status",
+    "resource.events",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

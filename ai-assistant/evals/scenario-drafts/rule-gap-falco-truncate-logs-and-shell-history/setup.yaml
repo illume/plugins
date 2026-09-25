@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: truncate-history-action
+  labels:
+    evals.kubernetes.io/controlled-action: truncate-history-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: truncate-history-action
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: seed
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              mkdir -p /fixture/var/log /fixture/root; printf "GET /controlled 200\n" >
+              /fixture/var/log/access.log; printf "echo controlled\n" > /fixture/root/.bash_history
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+      volumes:
+        - name: fixture
+          emptyDir: {}
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              wc -c /fixture/var/log/access.log /fixture/root/.bash_history
+              : > /fixture/var/log/access.log
+              : > /fixture/root/.bash_history
+              wc -c /fixture/var/log/access.log /fixture/root/.bash_history
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

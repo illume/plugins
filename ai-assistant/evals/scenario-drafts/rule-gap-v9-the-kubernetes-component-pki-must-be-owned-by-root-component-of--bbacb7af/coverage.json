@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-the-kubernetes-component-pki-must-be-owned-by-root-component-of--bbacb7af",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242451-the-kubernetes-compone:50b6e4650753"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:the-kubernetes-component-pki-must-be-owned-by-root-component-of-eks-control-plan:66a174b564c5"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:the-kubernetes-component-pki-must-be-owned-by-root-component-of-:bbacb7af88e7"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/managedservices.yaml"
+  ]
+}

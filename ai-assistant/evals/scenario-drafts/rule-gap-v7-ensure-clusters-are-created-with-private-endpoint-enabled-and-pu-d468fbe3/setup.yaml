@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-clusters-are-created-with-private-endpoint-enabled-and-pu-d468fbe3-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/managed-cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "node",
+      "evidenceKind": "cloud-cluster-configuration",
+      "exactField": "managedCluster.apiServerAccessProfile.enablePrivateCluster",
+      "brokenValue": "false",
+      "targetPath": "/var/lib/evals/managed-cluster.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Disable access to the Kubernetes API from outside the node network if it is not required."
+    }
+  healthy-control.json: |-
+    {
+      "component": "node",
+      "evidenceKind": "cloud-cluster-configuration",
+      "exactField": "managedCluster.apiServerAccessProfile.enablePrivateCluster",
+      "healthyValue": "true",
+      "targetPath": "/var/lib/evals/managed-cluster.json",
+      "applicability": "inert-review-only"
+    }

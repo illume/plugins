@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-at-current-load-memory-under-allocated-current-s-vs-requested-s--a87bda82-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/cluster-capacity.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-capacity",
+      "exactField": "cluster.capacity.memory.currentVsRequested",
+      "brokenValue": "4Gi << 16Gi",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkMEM when the pinned source predicate for issue 505 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cluster-capacity",
+      "exactField": "cluster.capacity.memory.currentVsRequested",
+      "healthyValue": "14Gi ~= 16Gi",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only"
+    }

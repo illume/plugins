@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-namespace-breakout",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the `namespace-action` Job and logs. Explain the namespace-changing operations and their boundary, citing the relevant Pod fields and command output.",
+  "visible_resource_refs": ["job/namespace-action", "pod/namespace-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.process-namespace", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-flowcontrol-apiserver-k8s-io-v1beta1-flowcontrol-removed-in-v1-2-50f320e3",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-flowcontrol-flowcontrol-apiserver-k8s-io-v1beta1-removed-v1-26-0:538b1bc3d3b8"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-flowcontrol-apiserver-k8s-io-v1beta1-flowcontrol-removed-in-v1-26-0:5392ce9ce5ac"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:flowcontrol-apiserver-k8s-io-v1beta1-flowcontrol-removed-in-v1-2:50f320e30aa2"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

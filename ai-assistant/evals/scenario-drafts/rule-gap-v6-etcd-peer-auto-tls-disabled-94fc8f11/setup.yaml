@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-etcd-peer-auto-tls-disabled-94fc8f11-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--peer-auto-tls",
+      "observedValue": "true",
+      "triggerPredicate": "Do not use automatically generated self-signed certificates for TLS connections between peers."
+    }
+  predicate-summary.txt: Do not use automatically generated self-signed certificates for TLS connections between peers.
+  healthy-control.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--peer-auto-tls",
+      "observedValue": "false"
+    }

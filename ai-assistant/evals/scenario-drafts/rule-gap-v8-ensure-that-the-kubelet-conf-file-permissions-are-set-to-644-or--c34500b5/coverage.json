@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-kubelet-conf-file-permissions-are-set-to-644-or--c34500b5",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-node-4-1-5-ensure-that-the-kubelet-conf-file-permissions-are-set:0dd7f5f73583",
+    "kube-bench:source:tkgi-1-2-53-node-4-1-5-ensure-that-the-kubelet-conf-file-permissions-are:715f27f91248"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-conf-file-permissions-are-set-to-644-or-more-restrictive:86908301ce6d"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-conf-file-permissions-are-set-to-644-or-:c34500b58fc3"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+  ]
+}

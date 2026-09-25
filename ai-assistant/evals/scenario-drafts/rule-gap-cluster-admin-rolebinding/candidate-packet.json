@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-admin-rolebinding",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the `app-admin` RoleBinding and explain any material authorization risk to the `app` ServiceAccount. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["rolebinding/app-admin", "serviceaccount/app"],
+  "allowed_observation_kinds": ["rolebinding.role-ref", "rolebinding.subjects"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

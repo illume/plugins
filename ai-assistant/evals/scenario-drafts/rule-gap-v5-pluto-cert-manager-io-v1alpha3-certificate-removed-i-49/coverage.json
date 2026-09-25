@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v5.json",
+  "scenario_id": "rule-gap-v5-pluto-cert-manager-io-v1alpha3-certificate-removed-i-49",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:cert-manager-certificate-cert-manager-io-v1alpha3-removed-v1-6-0:d398262ef499"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:cert-manager-cert-manager-io-v1alpha3-certificate-removed-in-v1-6-0:9eb7fcc49f6e"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

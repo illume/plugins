@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-nodes-matched-node-selector-879e8774",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the node selector and available node labels. Explain why no nodes match, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["node/worker-a", "deployment/storage-app"],
+  "allowed_observation_kinds": ["node.metadata", "deployment.pod-template"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

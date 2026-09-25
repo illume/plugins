@@ -1,0 +1,8 @@
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta1
+kind: FlowSchema
+metadata:
+  name: legacy-flow
+spec:
+  matchingPrecedence: 1000
+  distinguisherMethod:
+    type: ByUser

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-unnamed-port-d-22",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/object-finding-22",
+        "field_path": "spec.template.spec.containers[0].ports[0].name",
+        "observed_value": "field absent",
+        "description": "The controlled object satisfies the exact 108 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/object-finding-22",
+      "field_path": "spec.template.spec.containers[0].ports[0].name",
+      "observed_value": "http",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].ports[0].name."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-871889488f285bf8"
+}

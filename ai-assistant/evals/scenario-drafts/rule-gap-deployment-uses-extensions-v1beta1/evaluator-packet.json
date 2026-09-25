@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deployment-uses-extensions-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/deployment/legacy-extension-deployment",
+        "field_path": "apiVersion",
+        "observed_value": "extensions/v1beta1",
+        "description": "The Deployment manifest uses an API removed from current Kubernetes releases."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/deployment/legacy-extension-deployment",
+      "field_path": "apiVersion",
+      "observed_value": "apps/v1",
+      "description": "The healthy Deployment uses apps/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-27ef5c07e2f8d8ec"
+}

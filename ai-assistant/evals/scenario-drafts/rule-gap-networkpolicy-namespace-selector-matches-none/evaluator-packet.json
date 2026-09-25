@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-networkpolicy-namespace-selector-matches-none",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "networkpolicy/orphan-namespace-peer",
+        "field_path": "spec.ingress[0].from[0].namespaceSelector + Namespace inventory",
+        "observed_value": "{\"matchLabels\":{\"tenant\":\"missing-tenant\"}}; 0",
+        "description": "The ingress namespace selector resolves to no namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/orphan-namespace-peer",
+      "field_path": "spec.ingress[0].from[0].namespaceSelector + Namespace inventory",
+      "observed_value": "{tenant:team-a}; 1 match",
+      "description": "The healthy peer selector resolves to its intended namespace."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f6e9453fe6f30863"
+}

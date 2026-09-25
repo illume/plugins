@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: memory-execution-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: memory-execution-action
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: python:3.12-alpine
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              python3 - <<'PY'
+              import os, subprocess
+              fd = os.memfd_create('controlled-action', os.MFD_CLOEXEC)
+              os.write(fd, b'#!/bin/sh\necho memory-descriptor-executed\n')
+              os.fchmod(fd, 0o700)
+              subprocess.run([f'/proc/self/fd/{fd}'], pass_fds=(fd,), check=True)
+              PY
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000

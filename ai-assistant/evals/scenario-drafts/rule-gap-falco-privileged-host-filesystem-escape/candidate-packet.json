@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-privileged-host-filesystem-escape",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the `privileged-storage-action` Job specification and logs. Identify the privilege, mount, and filesystem-inspection chain, and cite the exact evidence without changing resources.",
+  "visible_resource_refs": ["job/privileged-storage-action", "pod/privileged-storage-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.security-context", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: object-finding-30
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app: object-finding-30
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-loads-kernel-module",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=module-syscall-action]",
+        "field_path": "logs",
+        "observed_value": "<one of: finit_module result=-1 errno=1, finit_module result=-1 errno=8, finit_module result=-1 errno=22>",
+        "description": "The helper invokes finit_module with SYS_MODULE against an empty Pod-local test file; the kernel rejects it and no module loads."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod[label=job-name=module-syscall-action]",
+      "field_path": "logs",
+      "observed_value": "<finit_module invocation absent>",
+      "description": "A healthy container lacks SYS_MODULE and never invokes a module-loading syscall."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0934c8bf460f1c25"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-sensitive-file-read-after-startup",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=sensitive-file-read-after-startup]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "printf controlled > /fixture/shadow; sleep 2; cat /fixture/shadow; controlled",
+        "description": "Process reads a sensitive fixture after startup inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=sensitive-file-read-after-startup]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1a4e3fb8ec61fe32"
+}

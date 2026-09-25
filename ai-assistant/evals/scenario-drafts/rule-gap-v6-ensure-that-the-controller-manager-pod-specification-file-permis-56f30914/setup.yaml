@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-controller-manager-pod-specification-file-permis-56f30914-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0644",
+      "triggerPredicate": "Ensure that the controller manager pod specification file has permissions of `600` or more restrictive."
+    }
+  predicate-summary.txt: >-
+    Ensure that the controller manager pod specification file has permissions of `600` or more
+    restrictive.
+  healthy-control.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0600"
+    }

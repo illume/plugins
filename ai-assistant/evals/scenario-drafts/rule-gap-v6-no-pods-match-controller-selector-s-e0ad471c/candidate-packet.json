@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-pods-match-controller-selector-s-e0ad471c",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the controller selector and template labels. Explain why no Pods match, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["deployment/mismatch"],
+  "allowed_observation_kinds": ["deployment.selector", "deployment.pod-template-labels"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-service-account-token-lookup-disabled",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/service-account-token-lookup-disabled-fixture component fixture. The API server explicitly disables lookup of deleted service account tokens. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/service-account-token-lookup-disabled-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

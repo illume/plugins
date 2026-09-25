@@ -1,0 +1,7 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongConsumer
+metadata:
+  name: missing-reference-12
+username: fixture-user
+credentials:
+  - absent-credential

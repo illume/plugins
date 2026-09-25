@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-etcd-auto-tls-disabled-08158319-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--auto-tls",
+      "observedValue": "true",
+      "triggerPredicate": "Do not use self-signed certificates for TLS."
+    }
+  predicate-summary.txt: Do not use self-signed certificates for TLS.
+  healthy-control.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--auto-tls",
+      "observedValue": "false"
+    }

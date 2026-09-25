@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ingress-and-egress-blocked-140895e3",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deny-both-directions",
+        "resource_ref": "networkpolicy/default-deny-all",
+        "field_path": "spec.policyTypes",
+        "observed_value": "[\"Ingress\",\"Egress\"]",
+        "description": "fails if there are no ingress and egress defined for pod"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/default-deny-all",
+      "field_path": "spec.egress[0].to[0].namespaceSelector",
+      "observed_value": "{\"matchLabels\":{\"name\":\"monitoring\"}}",
+      "description": "The healthy control would include explicit allow rules."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-55e10946dbf2eae3"
+}

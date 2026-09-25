@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-no-pods-match-s-pod-selector-s-33",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "networkpolicy/object-finding-33",
+        "field_path": "spec.egress[0].to[0] + namespace and Pod inventory",
+        "observed_value": "{\"namespaceSelector\":{\"matchLabels\":{\"tenant\":\"absent\"}},\"podSelector\":{\"matchLabels\":{\"app\":\"absent\"}}}; 0",
+        "description": "The controlled object satisfies the exact 1202 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/object-finding-33",
+      "field_path": "spec.egress[0].to[0] + namespace and Pod inventory",
+      "observed_value": "peer matches one controlled destination",
+      "description": "The healthy control differs only at spec.egress[0].to[0] + namespace and Pod inventory."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3fc913fcebdecb05"
+}

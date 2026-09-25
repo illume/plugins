@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-kubelet-rotate-kubelet-server-certificate-9f36ce83",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:kubelet-rotate-kubelet-server-certificate"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-kubelet-rotate-kubelet-server-certificate:56e90af3526e"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:kubelet-rotate-kubelet-server-certificate:9f36ce834f9c"
+  ],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0183-verifythattherotatekubeletservercertificateargumentissettotrue.json"
+  ]
+}

@@ -15,10 +15,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { ParsedSkill } from './parseSkill';
 import {
   formatSkillsForPrompt,
   parseCopilotInstructionsFile,
-  ParsedSkill,
   parseFrontMatter,
   parseSimpleYaml,
   parseSkillFile,

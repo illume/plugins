@@ -200,7 +200,7 @@ export function buildReport(input: ReportInput, generatedAt: Date = new Date()):
     input.trials.map(trial => `bundle/trials/${trial.trial_id}/${fileName}`);
   const hasRealProductExecution = input.trials.some(
     trial =>
-      trial.candidate_kind === 'headlamp-cli' &&
+      (trial.candidate_kind === 'headlamp-cli' || trial.candidate_kind === 'headlamp-plugin') &&
       trial.execution_mode === 'real' &&
       trial.run_eligibility === 'valid' &&
       trial.stage_status.candidate === 'ok'

@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-dangling-network-policy-selector",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:dangling-networkpolicy",
+    "kube-score:check:networkpolicy-targets-pod",
+    "kubescape:rule:dangling-networkpolicy",
+    "kubevious:rule:network-policy-pod-selector-ref",
+    "popeye:code:1200"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-dangling-networkpolicy:51c2b7f594a7",
+    "kube-score:semantic:kube-score-check-networkpolicy-targets-pod:ac6b85343bc5",
+    "kubescape:semantic:kubescape-rule-dangling-networkpolicy:6ec7f2d90e7b",
+    "kubevious:semantic:kubevious-rule-network-policy-pod-selector-ref:b1e261452a19",
+    "popeye:semantic:popeye-code-1200:0a16df2a720e"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubescape", "kubevious", "popeye"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0299-danglingnetworkpolicy.json",
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/network-policy/network-policy-pod-selector-ref.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/dangling-networkpolicy.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

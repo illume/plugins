@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-that-the-etcd-pod-specification-file-permissions-are-set--af7413ac
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/manifests/etcd.yaml].mode",
+      "brokenValue": "0666",
+      "targetPath": "/etc/kubernetes/manifests/etcd.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/manifests/etcd.yaml].mode",
+      "healthyValue": "0644",
+      "targetPath": "/etc/kubernetes/manifests/etcd.yaml",
+      "applicability": "inert-review-only"
+    }

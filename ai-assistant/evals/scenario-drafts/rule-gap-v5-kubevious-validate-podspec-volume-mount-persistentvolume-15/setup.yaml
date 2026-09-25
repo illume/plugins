@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: missing-reference-15
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: missing-reference-15
+  template:
+    metadata:
+      labels:
+        app: missing-reference-15
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: absent-claim

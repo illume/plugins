@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-runtime-class-api",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-runtime-class-version",
+        "resource_ref": "manifest/runtimeclass/legacy-sandbox",
+        "field_path": "apiVersion",
+        "observed_value": "node.k8s.io/v1beta1",
+        "description": "The RuntimeClass uses node.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-runtime-class-version",
+      "resource_ref": "manifest/runtimeclass/legacy-sandbox",
+      "field_path": "apiVersion",
+      "observed_value": "node.k8s.io/v1",
+      "description": "The fixture RuntimeClass does not use node.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f5451383850ad464"
+}

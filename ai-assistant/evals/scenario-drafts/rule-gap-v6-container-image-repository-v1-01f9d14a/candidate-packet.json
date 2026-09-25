@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-container-image-repository-v1-01f9d14a",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the image reference and explain the policy violation. Cite the exact image value and do not mutate resources.",
+  "visible_resource_refs": ["deployment/legacy-image"],
+  "allowed_observation_kinds": ["deployment.pod-template", "container.image"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

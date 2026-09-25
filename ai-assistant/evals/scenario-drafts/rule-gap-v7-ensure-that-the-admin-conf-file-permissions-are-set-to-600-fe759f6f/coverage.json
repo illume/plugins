@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-the-admin-conf-file-permissions-are-set-to-600-fe759f6f",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-23-master-1-1-13-ensure-that-the-admin-conf-file-permissions-are-s:118b837e7703",
+    "kube-bench:source:cis-1-24-master-1-1-13-ensure-that-the-admin-conf-file-permissions-are-s:12862afac82b",
+    "kube-bench:source:cis-1-24-microk8s-master-1-1-13-ensure-that-the-admin-conf-file-permissi:f36d514eef9b",
+    "kube-bench:source:cis-1-7-master-1-1-13-ensure-that-the-admin-conf-file-permissions-are-se:1c3598a72b21",
+    "kube-bench:source:cis-1-8-master-1-1-13-ensure-that-the-admin-conf-file-permissions-are-se:164fd1273557",
+    "kube-bench:source:k3s-cis-1-23-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:8bab2664fee4",
+    "kube-bench:source:k3s-cis-1-24-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:b4bc35920cd9",
+    "kube-bench:source:k3s-cis-1-7-master-1-1-13-ensure-that-the-admin-conf-file-permissions-ar:e5a94a47bdad",
+    "kube-bench:source:k3s-cis-1-8-master-1-1-13-ensure-that-the-admin-conf-file-permissions-ar:fa8e294f399f",
+    "kube-bench:source:k3s-cis-1-9-master-1-1-13-ensure-that-the-admin-conf-file-permissions-ar:a697eae5670b",
+    "kube-bench:source:rh-0-7-master-4-13-verify-the-default-openshift-admin-conf-file-permissi:e7877c72a95c",
+    "kube-bench:source:rke-cis-1-23-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:8c08210525fc",
+    "kube-bench:source:rke-cis-1-24-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:cf4800cc1a3e",
+    "kube-bench:source:rke-cis-1-7-master-1-1-13-ensure-that-the-admin-conf-file-permissions-ar:998c677d9c38",
+    "kube-bench:source:rke2-cis-1-24-master-1-1-13-ensure-that-the-admin-conf-file-permissions-:8b6827e8e9d6",
+    "kube-bench:source:rke2-cis-1-7-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:273aa8bf3bbe",
+    "kube-bench:source:rke2-cis-1-8-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:f1b1a96299c7",
+    "kube-bench:source:rke2-cis-1-9-master-1-1-13-ensure-that-the-admin-conf-file-permissions-a:5d78689b7a9a",
+    "kubescape:rule:ensure-that-the-admin.conf-file-permissions-are-set-to-600"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-admin-conf-file-permissions-are-set-to-600-or-more-restrictive:c699a23b7b44",
+    "kube-bench:semantic:verify-the-default-openshift-admin-conf-file-permissions:23e0b9460168",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-admin-conf-file-permissions-are-set-to-600:269c61444360"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-admin-conf-file-permissions-are-set-to-600:fe759f6fbb6b"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 19,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24-microk8s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-0.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/master.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0104-ensurethattheadminconffilepermissionsaresetto600.json"
+  ]
+}

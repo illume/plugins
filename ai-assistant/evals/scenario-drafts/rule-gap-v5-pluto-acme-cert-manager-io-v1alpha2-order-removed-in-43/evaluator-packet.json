@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-acme-cert-manager-io-v1alpha2-order-removed-in-43",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "order/deprecated-api-43",
+        "field_path": "apiVersion",
+        "observed_value": "acme.cert-manager.io/v1alpha2",
+        "description": "Order uses acme.cert-manager.io/v1alpha2, which was removed in v1.6.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "order/deprecated-api-43",
+      "field_path": "apiVersion",
+      "observed_value": "acme.cert-manager.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-09ac480c128f18ba"
+}

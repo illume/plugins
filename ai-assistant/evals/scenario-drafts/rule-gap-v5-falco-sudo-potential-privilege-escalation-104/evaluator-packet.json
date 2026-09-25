@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-sudo-potential-privilege-escalation-104",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-104",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "printf \"#!/bin/sh\nprintf sudo-fixture\n\" > /fixture/sudo; chmod 700 /fixture/sudo; /fixture/sudo -n true; sudo-fixture",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Sudo Potential Privilege Escalation."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-104",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a2dd088079c24bdd"
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-api-error-budget-burn",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "burn-api-established",
+        "resource_ref": "customresourcedefinition/burnprobes.burn.telemetry.example",
+        "field_path": "status.conditions[?(@.type==\"Established\")].status",
+        "observed_value": "True",
+        "description": "The isolated API group is established and receives the bounded requests."
+      },
+      {
+        "fact_id": "burn-webhook-fails-closed",
+        "resource_ref": "validatingwebhookconfiguration/burn-telemetry-failure",
+        "field_path": "webhooks[0].failurePolicy",
+        "observed_value": "Fail",
+        "description": "The admission webhook fails requests closed when its backend is absent."
+      },
+      {
+        "fact_id": "api-fast-burn",
+        "resource_ref": "metric/apiserver_request_total{group=\"burn.telemetry.example\"}",
+        "field_path": "5xx_ratio[5m] and 5xx_ratio[1h]",
+        "observed_value": "> fast-burn thresholds",
+        "description": "Native API server request metrics exceed both fast-burn windows for the isolated group."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-burn-api-unestablished",
+      "resource_ref": "customresourcedefinition/burnprobes.burn.telemetry.example",
+      "field_path": "status.conditions[?(@.type==\"Established\")].status",
+      "observed_value": "False",
+      "description": "The CRD is established before requests are generated."
+    },
+    {
+      "fact_id": "invented-api-errors-below-budget",
+      "resource_ref": "metric/apiserver_request_total{group=\"burn.telemetry.example\"}",
+      "field_path": "5xx_ratio[5m] and 5xx_ratio[1h]",
+      "observed_value": "< fast-burn thresholds",
+      "description": "The bounded request stream produces sustained 503 responses."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b179610597c6c793"
+}

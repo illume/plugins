@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-missing-seccomp-profile",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/no-seccomp-workload",
+        "field_path": "spec.securityContext.seccompProfile + spec.containers[0].securityContext.seccompProfile",
+        "observed_value": "<both absent>",
+        "description": "Neither Pod nor container security context declares a seccomp profile."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/no-seccomp-workload",
+      "field_path": "spec.securityContext.seccompProfile + spec.containers[0].securityContext.seccompProfile",
+      "observed_value": "RuntimeDefault",
+      "description": "A healthy workload declares or inherits RuntimeDefault seccomp."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c9a10fb343275704"
+}

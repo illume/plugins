@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-filling-up",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Assess capacity risk for PersistentVolumeClaim `bytes-filling`. Correlate claim binding, filesystem capacity and available-byte trends, and the writer Pod. Report whether predicted free bytes cross the exhaustion threshold; do not mutate resources.",
+  "visible_resource_refs": [
+    "persistentvolumeclaim/bytes-filling",
+    "pod/bytes-filler",
+    "metric/kubelet_volume_stats_available_bytes{persistentvolumeclaim=\"bytes-filling\"}",
+    "metric/kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=\"bytes-filling\"}"
+  ],
+  "allowed_observation_kinds": [
+    "pvc.status",
+    "pod.status",
+    "pod.logs",
+    "metric.range",
+    "metric.predict_linear"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

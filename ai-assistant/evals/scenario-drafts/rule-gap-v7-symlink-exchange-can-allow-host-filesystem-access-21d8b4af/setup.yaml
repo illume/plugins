@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-symlink-exchange-can-allow-host-filesystem-access-21d8b4af-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/pod-volume-mount.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "filesystem-exposure",
+      "exactField": "volumeMounts[0].mountPath",
+      "brokenValue": "/hostpath/shared",
+      "targetPath": "/manifests/pod-volume-mount.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "A user may be able to create a container with subPath volume mounts to access files & directories outside of the volume, including on the host filesystem. This was affected at the following versions: v1.22.0 - v1.22.1, v1.21.0 - v1.21.4, v1.20.0 - v1.20.10, version v1.19.14 and lower."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "filesystem-exposure",
+      "exactField": "volumeMounts[0].mountPath",
+      "healthyValue": "/workspace/data",
+      "targetPath": "/manifests/pod-volume-mount.yaml",
+      "applicability": "inert-review-only"
+    }

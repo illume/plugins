@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-ingress-has-no-tls",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubescape:rule:encrypt-traffic-to-https-load-balancers-with-tls-certificates",
+    "polaris:check:tlsSettingsMissing"
+  ],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-encrypt-traffic-to-https-load-balancers-with-tls-certificates:d5c94750a025",
+    "polaris:semantic:polaris-check-tlssettingsmissing:b4c5202eeb5b"
+  ],
+  "target_tool_ids": ["kubescape", "polaris"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/tlsSettingsMissing.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0245-encrypttraffictohttpsloadbalancerswithtlscertificates.json"
+  ]
+}

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-kubernetes-api-server-audit-logs-must-be-enabled-manual-354a0301
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--audit-log-path",
+      "brokenValue": "absent",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--audit-log-path",
+      "healthyValue": "/var/log/kubernetes/audit.log",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }

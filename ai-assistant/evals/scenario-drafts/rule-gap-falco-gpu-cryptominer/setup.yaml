@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: miner-pool
+spec:
+  selector:
+    app: miner-pool
+  ports:
+    - name: action
+      port: 3333
+      targetPort: 3333
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miner-pool
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miner-pool
+  template:
+    metadata:
+      labels:
+        app: miner-pool
+    spec:
+      containers:
+        - name: sink
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - while true; do printf 'controlled-stratum-response\n' | nc -l -p 3333; done
+          ports:
+            - name: action
+              containerPort: 3333
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-tools
+data:
+  nvidia-smi: |
+    #!/bin/sh
+    cat /controlled-dev/nvidia0
+  xmrig: |
+    #!/bin/sh
+    printf "{\"method\":\"mining.subscribe\"}\n" | nc miner-pool 3333
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-miner-action
+  labels:
+    evals.kubernetes.io/controlled-action: gpu-miner-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: gpu-miner-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: tools
+          configMap:
+            name: gpu-tools
+            defaultMode: 493
+        - name: controlled-dev
+          emptyDir: {}
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              printf "controlled-gpu-device\n" > /controlled-dev/nvidia0
+              /tools/nvidia-smi
+              /tools/xmrig --url stratum+tcp://miner-pool:3333
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+            - name: controlled-dev
+              mountPath: /controlled-dev

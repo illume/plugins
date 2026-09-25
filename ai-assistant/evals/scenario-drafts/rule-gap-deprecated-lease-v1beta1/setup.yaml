@@ -1,0 +1,7 @@
+apiVersion: coordination.k8s.io/v1beta1
+kind: Lease
+metadata:
+  name: lease-v1beta1
+spec:
+  holderIdentity: fixture-holder
+  leaseDurationSeconds: 15

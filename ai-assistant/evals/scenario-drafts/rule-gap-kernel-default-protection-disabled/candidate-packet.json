@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kernel-default-protection-disabled",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/kernel-default-protection-disabled-fixture component fixture. The kubelet explicitly permits startup when protected kernel tunables differ from defaults. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/kernel-default-protection-disabled-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kubelet"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

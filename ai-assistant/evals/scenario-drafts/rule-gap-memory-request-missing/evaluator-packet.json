@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-memory-request-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "memory-request-absent",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].resources.requests.memory",
+        "observed_value": "<absent>",
+        "description": "The application container does not declare a memory request."
+      },
+      {
+        "fact_id": "memory-limit-present",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].resources.limits.memory",
+        "observed_value": "256Mi",
+        "description": "A memory limit is present, isolating the missing request predicate."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-memory-request",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].resources.requests.memory",
+      "observed_value": "128Mi",
+      "description": "The fixture does not declare this memory request."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e6bc661aa429eb7f"
+}

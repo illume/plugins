@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1. Explain the concrete configuration defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

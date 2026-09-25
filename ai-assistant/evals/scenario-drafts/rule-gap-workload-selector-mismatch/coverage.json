@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-workload-selector-mismatch",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:mismatching-selector",
+    "kube-score:check:deployment-pod-selector-labels-match-template-metadata-labels",
+    "kubescape:rule:mismatching-selector"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-mismatching-selector:d0f3c4574af4",
+    "kube-score:semantic:kube-score-check-deployment-pod-selector-labels-match-template-metadata-labels:b17b6b6acf8a",
+    "kubescape:semantic:kubescape-rule-mismatching-selector:c5abeb5f2a59"
+  ],
+  "target_tool_ids": ["kube-linter", "kube-score", "kubescape"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0296-mismatchingselector.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/mismatching-selector.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

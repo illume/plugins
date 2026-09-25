@@ -1,0 +1,237 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/tool-scenario-rule-mapping.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "review_status",
+    "inventory_path",
+    "methodology",
+    "total_tools",
+    "total_scenarios",
+    "total_contracts",
+    "combined_summary",
+    "contracts",
+    "scenarios",
+    "tool_summaries",
+    "rule_mappings"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.1.0" },
+    "generated_at": { "type": "string", "format": "date" },
+    "review_status": { "enum": ["provisional", "reviewed"] },
+    "inventory_path": { "type": "string", "minLength": 1 },
+    "methodology": {
+      "type": "object",
+      "required": [
+        "coverage_unit",
+        "coverage_limit",
+        "unsure",
+        "uncovered",
+        "no_applicable_rule",
+        "combined_coverage",
+        "generated_variants"
+      ],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "total_tools": { "const": 23 },
+    "total_scenarios": { "const": 275 },
+    "total_contracts": { "const": 12 },
+    "combined_summary": {
+      "type": "object",
+      "required": [
+        "covered_by_any_tool_count",
+        "covered_by_any_tool_percentage",
+        "unsure_only_count",
+        "unsure_only_percentage",
+        "no_covered_or_unsure_count",
+        "no_covered_or_unsure_percentage"
+      ],
+      "properties": {
+        "covered_by_any_tool_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "covered_by_any_tool_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "unsure_only_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "unsure_only_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "no_covered_or_unsure_count": { "type": "integer", "minimum": 0, "maximum": 275 },
+        "no_covered_or_unsure_percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "contracts": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": [
+          "contract_id",
+          "anchor_scenario_id",
+          "behavior",
+          "scenario_count",
+          "scenario_ids",
+          "evaluator_packet",
+          "tool_mappings"
+        ],
+        "properties": {
+          "contract_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "anchor_scenario_id": { "type": "string", "minLength": 1 },
+          "behavior": { "type": "string", "minLength": 3 },
+          "scenario_count": { "type": "integer", "minimum": 1 },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "evaluator_packet": { "type": "string", "minLength": 1 },
+          "tool_mappings": {
+            "type": "array",
+            "minItems": 23,
+            "maxItems": 23,
+            "items": { "$ref": "#/$defs/toolMapping" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 275,
+      "maxItems": 275,
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "contract_id",
+          "combined_status",
+          "covered_by_tool_ids",
+          "unsure_tool_ids",
+          "tool_statuses"
+        ],
+        "properties": {
+          "scenario_id": { "type": "string", "minLength": 1 },
+          "contract_id": { "type": "string", "minLength": 1 },
+          "combined_status": { "enum": ["covered", "unsure", "uncovered"] },
+          "covered_by_tool_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "unsure_tool_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "tool_statuses": {
+            "type": "object",
+            "minProperties": 23,
+            "maxProperties": 23,
+            "additionalProperties": { "$ref": "#/$defs/coverageStatus" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tool_summaries": {
+      "type": "array",
+      "minItems": 23,
+      "maxItems": 23,
+      "items": {
+        "type": "object",
+        "required": [
+          "tool_id",
+          "scenario_counts",
+          "covered_percentage",
+          "unsure_percentage",
+          "standalone_end_to_end_covered_count",
+          "standalone_end_to_end_covered_percentage"
+        ],
+        "properties": {
+          "tool_id": { "type": "string", "minLength": 1 },
+          "scenario_counts": {
+            "type": "object",
+            "required": ["covered", "unsure", "uncovered", "no_applicable_rule"],
+            "properties": {
+              "covered": { "type": "integer", "minimum": 0 },
+              "unsure": { "type": "integer", "minimum": 0 },
+              "uncovered": { "type": "integer", "minimum": 0 },
+              "no_applicable_rule": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+          "covered_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "unsure_percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "standalone_end_to_end_covered_count": { "const": 0 },
+          "standalone_end_to_end_covered_percentage": { "const": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rule_mappings": {
+      "type": "array",
+      "minItems": 23,
+      "maxItems": 23,
+      "items": {
+        "type": "object",
+        "required": ["tool_id", "rules"],
+        "properties": {
+          "tool_id": { "type": "string", "minLength": 1 },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["rule_id", "status", "covered_contract_ids", "related_contract_ids"],
+              "properties": {
+                "rule_id": { "type": "string", "minLength": 3 },
+                "status": { "enum": ["covered", "unsure", "uncovered"] },
+                "covered_contract_ids": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "related_contract_ids": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "coverageStatus": {
+      "enum": ["covered", "unsure", "uncovered", "no_applicable_rule"]
+    },
+    "toolMapping": {
+      "type": "object",
+      "required": ["tool_id", "status", "rule_ids", "rationale", "evidence_urls"],
+      "properties": {
+        "tool_id": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/coverageStatus" },
+        "rule_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 3 }
+        },
+        "rationale": { "type": "string", "minLength": 3, "maxLength": 500 },
+        "evidence_urls": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "format": "uri" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

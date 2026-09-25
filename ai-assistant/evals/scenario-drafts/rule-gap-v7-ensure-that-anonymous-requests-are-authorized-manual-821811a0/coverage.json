@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-anonymous-requests-are-authorized-manual-821811a0",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-0-master-1-2-1-ensure-that-anonymous-requests-are-authorized-manual:a107a6f01557",
+    "kube-bench:source:rh-1-4-master-1-2-1-ensure-that-anonymous-requests-are-authorized-manual:2fd56274cdde",
+    "kube-bench:source:rh-1-8-master-1-2-1-ensure-that-anonymous-requests-are-authorized-manual:7a146fb04a78",
+    "kube-bench:source:rh-1-9-master-1-2-1-ensure-that-anonymous-requests-are-authorized-manual:b088988ca0cf"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-anonymous-requests-are-authorized:f09cfbb73f27"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-anonymous-requests-are-authorized-manual:821811a013d7"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

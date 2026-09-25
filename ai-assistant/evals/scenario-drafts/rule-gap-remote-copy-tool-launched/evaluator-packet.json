@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-remote-copy-tool-launched",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=remote-copy-tool-launched]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "mkdir -p /fixture/bin; printf \"#!/bin/sh\necho scp-fixture\n\" > /fixture/bin/scp; chmod 755 /fixture/bin/scp; /fixture/bin/scp --help; scp-fixture",
+        "description": "Container launches a remote copy client inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=remote-copy-tool-launched]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-76697b9c3914d190"
+}

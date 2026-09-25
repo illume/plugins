@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-kubevious-validate-gcp-config-connector-sql-user-to-pass-9",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "sqluser/missing-reference-9",
+        "field_path": "spec.password.valueFrom.secretKeyRef.name",
+        "observed_value": "reference names an absent object",
+        "description": "The object reference cannot resolve within its required scope."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "sqluser/missing-reference-9",
+      "field_path": "spec.password.valueFrom.secretKeyRef.name",
+      "observed_value": "reference resolves to one object of the required kind",
+      "description": "The healthy control differs only at spec.password.valueFrom.secretKeyRef.name."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-11f66a044607a913"
+}

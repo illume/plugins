@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-oom-killed",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why the `oom-worker` Job failed. Inspect its Pod resource limit and last terminated container state; cite the exact termination reason and exit code, and do not mutate resources.",
+  "visible_resource_refs": ["job/oom-worker", "pod[label=job-name=oom-worker]"],
+  "allowed_observation_kinds": ["job.status", "pod.spec", "pod.container-status"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

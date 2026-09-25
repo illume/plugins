@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-cper-recoverable-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /dev/kmsg
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: 'mce: [Hardware Error]: event severity: recoverable'
+  normalized-message.txt: 'mce: [Hardware Error]: event severity: recoverable'
+  oracle.json: >-
+    {"source":"kernel-monitor","regex":".*\\[Hardware Error\\]: event severity:
+    recoverable$","requiredMatches":1}
+  healthy-control.log: 'mce: hardware event polling enabled'

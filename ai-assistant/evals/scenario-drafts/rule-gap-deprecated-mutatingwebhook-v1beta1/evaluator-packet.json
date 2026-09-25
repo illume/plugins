@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-mutatingwebhook-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/mutatingwebhookconfiguration/mutatingwebhook-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "admissionregistration.k8s.io/v1beta1",
+        "description": "The concrete MutatingWebhookConfiguration manifest uses removed API version admissionregistration.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/mutatingwebhookconfiguration/mutatingwebhook-v1beta1",
+      "field_path": "apiVersion",
+      "observed_value": "admissionregistration.k8s.io/v1",
+      "description": "The current MutatingWebhookConfiguration API version is admissionregistration.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4d0b0af84c40f8bb"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-etcd-pod-specification-file-permissions-are-set--4047174d",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-master-1-1-7-ensure-that-the-etcd-pod-specification-file-permiss:3e81e9ad1d38"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-etcd-pod-specification-file-permissions-are-set-to-644-or-more-r:4a8bed19b908"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-etcd-pod-specification-file-permissions-are-set-:4047174dc452"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/master.yaml"
+  ]
+}

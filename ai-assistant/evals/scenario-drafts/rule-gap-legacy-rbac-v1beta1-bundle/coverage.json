@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-legacy-rbac-v1beta1-bundle",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-clusterrole-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:1b7f11176fcc",
+    "pluto:source:k8s-clusterrolebinding-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:13590a19933d",
+    "pluto:source:k8s-clusterrolebindinglist-rbac-authorization-k8s-io-v1beta1-removed-v1-:521c76115f65",
+    "pluto:source:k8s-clusterrolelist-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:f6d534c7f52b",
+    "pluto:source:k8s-role-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:ce63663a377a",
+    "pluto:source:k8s-rolebinding-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:09c0aee201dc",
+    "pluto:source:k8s-rolebindinglist-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:5b576e61dbd3",
+    "pluto:source:k8s-rolelist-rbac-authorization-k8s-io-v1beta1-removed-v1-22-0:682bed0b376c"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-clusterrole-removed-in-v1-22-0:4d881ff60722",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-clusterrolebinding-removed-in-v1-22-0:42962b302e45",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-clusterrolebindinglist-removed-in-v1-22-0:854fc188d44b",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-clusterrolelist-removed-in-v1-22-0:6546c69c7ed6",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-role-removed-in-v1-22-0:2aa2889e25a1",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-rolebinding-removed-in-v1-22-0:69f2a993754d",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-rolebindinglist-removed-in-v1-22-0:dda5eb171fb3",
+    "pluto:semantic:k8s-rbac-authorization-k8s-io-v1beta1-rolelist-removed-in-v1-22-0:eb4511ed8867"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 8,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

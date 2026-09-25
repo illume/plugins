@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-client-certificate-rotation-disabled",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/kubelet-client-rotation-config",
+        "field_path": "data.component-config.yaml + data.predicate.json",
+        "observed_value": "apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nrotateCertificates: false; {\"path\":\"rotateCertificates\",\"operator\":\"equals\",\"value\":false}",
+        "description": "Kubelet client certificate rotation is disabled is present in the inert component configuration fixture."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/kubelet-client-rotation-config",
+      "field_path": "data.component-config.yaml + data.predicate.json",
+      "observed_value": "apiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\nrotateCertificates: true",
+      "description": "The healthy component configuration satisfies the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9448e67d23bca20e"
+}

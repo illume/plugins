@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-do-you-mean-it-serviceaccount-is-automounting-apiserver-credenti-ec7f95ff",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pod-automount-enabled",
+        "resource_ref": "deployment/runner",
+        "field_path": "spec.template.spec.automountServiceAccountToken",
+        "observed_value": "true",
+        "description": "Emitted by checkMounts when the pinned source predicate for issue 303 is satisfied."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/runner",
+      "field_path": "spec.template.spec.automountServiceAccountToken",
+      "observed_value": "false",
+      "description": "The healthy control disables token automounting."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f7a0c6d2006c2379"
+}

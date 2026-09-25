@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-container-start-3306dd99",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-container-start-3306dd99-fixture",
+        "field_path": "data.observation.json#pod.status.containerStatuses[0].state.waiting.reason",
+        "observed_value": "CreateContainerError",
+        "description": "Explains that a container could not start and directs investigation to its command, entrypoint, and image."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-container-start-3306dd99-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-container-start-3306dd99-fixture",
+      "field_path": "data.healthy-control.json#pod.status.containerStatuses[0].state.waiting.reason",
+      "observed_value": "Running",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c79b8cb9ac4ffade"
+}

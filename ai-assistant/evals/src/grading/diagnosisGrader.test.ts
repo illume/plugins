@@ -16,7 +16,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gradeRecommendedFix, gradeRootCause, parseSubmission } from './diagnosisGrader.js';
+import {
+  gradeMultiIssueRootCause,
+  gradeRecommendedFix,
+  gradeRootCause,
+  parseSubmission,
+} from './diagnosisGrader.js';
 import type { DiagnosisSubmission, EvaluatorPacket } from '../contracts/evaluationContracts.js';
 
 const determinatePacket: EvaluatorPacket = {
@@ -136,6 +141,83 @@ test('gradeRootCause: passes when cause_facts cover an accepted fact set with gr
   });
   assert.equal(dimension.outcome, 'pass');
   assert.deepEqual(dimension.accepted_fact_ids, ['f1']);
+});
+
+test('gradeMultiIssueRootCause scopes evidence and preserves per-issue outcomes', () => {
+  const packet: EvaluatorPacket = {
+    ...determinatePacket,
+    issues: [
+      {
+        issue_id: 'selector',
+        accepted_fact_sets: determinatePacket.accepted_fact_sets,
+        contradiction_facts: [],
+        expects_uncertainty: false,
+      },
+      {
+        issue_id: 'rbac',
+        accepted_fact_sets: [
+          [
+            {
+              fact_id: 'rbac-denied',
+              resource_ref: 'deployment/api',
+              field_path: 'status.authorization',
+              observed_value: 'forbidden',
+            },
+          ],
+        ],
+        contradiction_facts: [],
+        expects_uncertainty: false,
+      },
+    ],
+  };
+  const result = gradeMultiIssueRootCause({
+    evaluatorPacket: packet,
+    graderResultId: 'combined',
+    submissions: [
+      {
+        issue_id: 'selector',
+        submission: submission({
+          cause_facts: [
+            { resource_ref: 'service/web', field_path: 'spec.selector', observed_value: 'X' },
+          ],
+          evidence_refs: ['selector-evidence'],
+        }),
+      },
+      {
+        issue_id: 'rbac',
+        submission: submission({
+          cause_facts: [
+            {
+              resource_ref: 'deployment/api',
+              field_path: 'status.authorization',
+              observed_value: 'forbidden',
+            },
+          ],
+          evidence_refs: ['selector-evidence'],
+        }),
+      },
+    ],
+    retrievedObservations: [
+      {
+        ...evidence('selector-evidence', 'service/web', 'spec.selector', 'X'),
+        issue_ids: ['selector'],
+      },
+      {
+        ...evidence('rbac-evidence', 'deployment/api', 'status.authorization', 'forbidden'),
+        issue_ids: ['rbac'],
+      },
+    ],
+  });
+
+  assert.equal(result.aggregate.outcome, 'fail');
+  assert.deepEqual(
+    result.issues.map(issue => [issue.issue_id, issue.root_cause.outcome]),
+    [
+      ['selector', 'pass'],
+      ['rbac', 'fail'],
+    ]
+  );
+  assert.match(result.issues[1]!.root_cause.invalidity_reason ?? '', /never actually retrieved/);
 });
 
 test('gradeRootCause: allows additional grounded facts outside the minimal accepted set', () => {

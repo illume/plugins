@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-flowschema-v1beta3",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/flowschema/flowschema-v1beta3",
+        "field_path": "apiVersion",
+        "observed_value": "flowcontrol.apiserver.k8s.io/v1beta3",
+        "description": "The concrete FlowSchema manifest uses removed API version flowcontrol.apiserver.k8s.io/v1beta3."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/flowschema/flowschema-v1beta3",
+      "field_path": "apiVersion",
+      "observed_value": "flowcontrol.apiserver.k8s.io/v1",
+      "description": "The current FlowSchema API version is flowcontrol.apiserver.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b6cab79854e1cd22"
+}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-docker-task-stall-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/kern.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: task docker:123 blocked for more than 120 seconds.
+  normalized-message.txt: task docker:123 blocked for more than 120 seconds.
+  oracle.json: >-
+    {"source":"kernel-monitor","regex":"task docker:\\w+ blocked for more than \\w+
+    seconds\\.","requiredMatches":1}
+  healthy-control.log: task docker:123 resumed after 2 seconds.

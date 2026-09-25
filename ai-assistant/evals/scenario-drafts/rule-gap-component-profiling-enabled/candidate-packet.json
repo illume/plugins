@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-component-profiling-enabled",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/component-profiling-enabled-fixture component fixture. The API server, controller manager, and scheduler all explicitly enable profiling. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/component-profiling-enabled-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.control-plane"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

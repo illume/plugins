@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-node-dns-unreachable",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:network-problem-monitor-dnsunreachable:666a335e9af8"
+  ],
+  "target_semantic_group_ids": ["node-problem-detector:semantic:dnsunreachable:d3de4c93a116"],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/network-problem-monitor.json"
+  ]
+}

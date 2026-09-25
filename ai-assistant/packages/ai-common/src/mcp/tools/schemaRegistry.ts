@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { MCPToolSchema, ProcessorToolsConfig } from './types';
+import type { MCPToolSchema, ProcessorToolsConfig } from './types.ts';
 
 /** Loads persisted MCP tool metadata from the host environment. */
 export type MCPToolsConfigLoader = () => Promise<{

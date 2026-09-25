@@ -14,20 +14,61 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { parseArgs } from './args.js';
+import { describe, expect, it, rs } from '@rstest/core';
+import { parseArgs, printUsage } from './args.ts';
 
 const base = ['node', 'headlamp-ai'];
 
 describe('parseArgs', () => {
   it('defaults to no query and no flags', () => {
     const result = parseArgs([...base]);
+    expect(result.command).toBe('chat');
     expect(result.query).toBe('');
     expect(result.interactive).toBe(false);
     expect(result.autoDetect).toBe(false);
     expect(result.allowMutations).toBe(false);
+    expect(result.legacySession).toBe(false);
+    expect(result.suppliedEvidenceOnly).toBe(false);
+    expect(result.structuredDiagnosis).toBe(false);
+    expect(result.structuredRepair).toBe(false);
+    expect(result.compactStructuredOutput).toBeUndefined();
+    expect(result.structuredRepairContract).toBeUndefined();
+    expect(result.structuredDiagnosisEvidenceIds).toEqual([]);
+    expect(result.structuredDiagnosisObservations).toEqual([]);
     expect(result.help).toBe(false);
     expect(result.skillSources).toEqual([]);
+  });
+
+  it('parses diagnose-events controls', () => {
+    const result = parseArgs([
+      ...base,
+      'diagnose-events',
+      '--since',
+      '2h',
+      '--max-events',
+      '6',
+      '--concurrency',
+      '3',
+      '--output',
+      'json',
+    ]);
+
+    expect(result.command).toBe('diagnose-events');
+    expect(result.eventSinceMs).toBe(2 * 60 * 60 * 1000);
+    expect(result.maxEvents).toBe(6);
+    expect(result.batchConcurrency).toBe(3);
+    expect(result.output).toBe('json');
+    expect(result.query).toBe('');
+  });
+
+  it('rejects invalid diagnose-events controls', () => {
+    expect(() => parseArgs([...base, 'diagnose-events', '--since', 'forever'])).toThrow('--since');
+    expect(() => parseArgs([...base, 'diagnose-events', '--concurrency', '9'])).toThrow(
+      '--concurrency'
+    );
+    expect(() => parseArgs([...base, 'diagnose-events', '--max-events', '33'])).toThrow(
+      '--max-events'
+    );
   });
 
   it('captures positional words as the query', () => {
@@ -62,6 +103,70 @@ describe('parseArgs', () => {
 
   it('parses --allow-mutations', () => {
     expect(parseArgs([...base, '--allow-mutations']).allowMutations).toBe(true);
+  });
+
+  it('parses --legacy-session', () => {
+    expect(parseArgs([...base, '--legacy-session']).legacySession).toBe(true);
+  });
+
+  it('parses --supplied-evidence-only', () => {
+    expect(parseArgs([...base, '--supplied-evidence-only']).suppliedEvidenceOnly).toBe(true);
+  });
+
+  it('parses --structured-diagnosis', () => {
+    expect(parseArgs([...base, '--structured-diagnosis']).structuredDiagnosis).toBe(true);
+  });
+
+  it('parses --compact-structured-output', () => {
+    expect(parseArgs([...base, '--compact-structured-output']).compactStructuredOutput).toBe(true);
+  });
+
+  it('parses --full-structured-output', () => {
+    expect(parseArgs([...base, '--full-structured-output']).compactStructuredOutput).toBe(false);
+  });
+
+  it('parses exact structured diagnosis evidence IDs', () => {
+    expect(
+      parseArgs([...base, '--structured-diagnosis-evidence-ids', '["evidence-1","evidence-2"]'])
+        .structuredDiagnosisEvidenceIds
+    ).toEqual(['evidence-1', 'evidence-2']);
+  });
+
+  it('parses candidate-visible structured diagnosis observations', () => {
+    const observations = [
+      {
+        evidence_id: 'evidence-1',
+        resource_ref: 'deployment/web',
+        field_path: 'status.availableReplicas',
+        observed_value: '1',
+      },
+    ];
+    expect(
+      parseArgs([...base, '--structured-diagnosis-observations', JSON.stringify(observations)])
+        .structuredDiagnosisObservations
+    ).toEqual(observations);
+  });
+
+  it('parses a structured repair contract', () => {
+    const contract = { evidence_digest: 'a'.repeat(64), options: [] };
+    const parsed = parseArgs([
+      ...base,
+      '--structured-repair',
+      '--structured-repair-contract',
+      JSON.stringify(contract),
+    ]);
+
+    expect(parsed.structuredRepair).toBe(true);
+    expect(parsed.structuredRepairContract).toEqual(contract);
+  });
+
+  it('documents the legacy-session environment variable', () => {
+    const output = rs.spyOn(console, 'log').mockImplementation(() => undefined);
+    printUsage();
+    const text = output.mock.calls.flat().join('\n');
+    expect(text).toContain('HEADLAMP_AI_LEGACY_SESSION');
+    expect(text).not.toContain('HEADLAMP_AI_EXPERIMENTAL_AGENT_HARNESS');
+    output.mockRestore();
   });
 
   it('parses --help and -h', () => {

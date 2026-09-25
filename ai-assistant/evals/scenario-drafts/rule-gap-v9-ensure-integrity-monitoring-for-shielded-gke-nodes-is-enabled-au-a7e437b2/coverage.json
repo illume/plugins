@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-integrity-monitoring-for-shielded-gke-nodes-is-enabled-au-a7e437b2",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-2-0-managedservices-5-5-6-ensure-integrity-monitoring-for-shielded:88e927840e47",
+    "kube-bench:source:gke-1-6-0-managedservices-5-5-6-ensure-integrity-monitoring-for-shielded:f17abf144f69",
+    "kube-bench:source:gke-1-8-0-managedservices-5-5-6-ensure-integrity-monitoring-for-shielded:92111ce37662",
+    "kube-bench:source:gke-1-9-0-managedservices-5-5-6-ensure-integrity-monitoring-for-shielded:55b1bc94756e"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-integrity-monitoring-for-shielded-gke-nodes-is-enabled:0516b1a07f70"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-integrity-monitoring-for-shielded-gke-nodes-is-enabled-au:a7e437b2460d"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

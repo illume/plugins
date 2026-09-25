@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-workload-omits-owner-email",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/owner-email-missing",
+        "field_path": "metadata.annotations[owner-email]",
+        "observed_value": "field absent",
+        "description": "The workload has no valid owner email annotation."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/owner-email-missing",
+      "field_path": "metadata.annotations[owner-email]",
+      "observed_value": "platform@example.test",
+      "description": "The healthy workload has a syntactically valid owner email."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-caa77229b245c1d2"
+}

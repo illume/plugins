@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-mixin-kubeapiterminatedrequests-1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/telemetry-state-1",
+        "field_path": "data.evidence.json#reason + note",
+        "observed_value": "RequestTerminated; apiserver_request_terminations_total increased by 6 in five minutes",
+        "description": "KubeAPITerminatedRequests is sustained by the controlled native status or event evidence."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/telemetry-state-1",
+      "field_path": "data.evidence.json#reason + note",
+      "observed_value": "no termination events; increase=0/5m",
+      "description": "The healthy control differs only at data.evidence.json#reason + note."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1309cd40c9f73579"
+}

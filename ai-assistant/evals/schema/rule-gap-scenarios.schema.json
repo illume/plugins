@@ -1,0 +1,218 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/rule-gap-scenarios.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "review_status",
+    "inventory_path",
+    "mapping_path",
+    "scenarios_goal",
+    "methodology",
+    "total_scenarios",
+    "total_target_rules",
+    "total_target_semantic_groups",
+    "category_counts",
+    "coverage_by_tool",
+    "coverage_by_feasibility",
+    "scenario_counts_by_feasibility",
+    "scenarios"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "batch_id": { "type": "string", "minLength": 3 },
+    "generated_at": { "type": "string", "format": "date" },
+    "review_status": { "const": "provisional" },
+    "inventory_path": { "const": "registrations/tool-rule-inventory-v1.json" },
+    "mapping_path": { "const": "registrations/tool-scenario-rule-mapping-v1.json" },
+    "prior_batch_path": { "const": "registrations/rule-gap-scenarios-v1.json" },
+    "scenarios_goal": {
+      "type": "object",
+      "required": [
+        "name",
+        "statement",
+        "generation_policy",
+        "rule_use_policy",
+        "product_scope",
+        "canonical_capability",
+        "core_completion",
+        "tail_completion",
+        "accounting"
+      ],
+      "properties": {
+        "name": { "const": "Scenarios Goal" },
+        "statement": {
+          "const": "Full coverage of product-scoped canonical diagnosis capabilities, plus risk-weighted coverage of policy, runtime, host, and platform-specific tails."
+        },
+        "generation_policy": { "type": "string", "minLength": 20 },
+        "rule_use_policy": { "type": "string", "minLength": 20 },
+        "product_scope": { "type": "string", "minLength": 20 },
+        "canonical_capability": { "type": "string", "minLength": 20 },
+        "core_completion": { "type": "string", "minLength": 20 },
+        "tail_completion": { "type": "string", "minLength": 20 },
+        "accounting": { "type": "string", "minLength": 20 }
+      },
+      "additionalProperties": false
+    },
+    "optimization_objective": { "type": "string", "minLength": 20 },
+    "methodology": {
+      "type": "object",
+      "required": ["selection", "deduplication", "qualification"],
+      "properties": {
+        "external_tool_execution": { "const": false }
+      },
+      "additionalProperties": { "type": "string", "minLength": 3 }
+    },
+    "total_scenarios": { "type": "integer", "minimum": 1 },
+    "total_target_rules": { "type": "integer", "minimum": 1 },
+    "total_target_semantic_groups": { "type": "integer", "minimum": 1 },
+    "total_target_canonical_capabilities": { "type": "integer", "minimum": 1 },
+    "category_counts": {
+      "type": "object",
+      "required": [
+        "workload_configuration",
+        "control_plane_host_hardening",
+        "runtime_node_failure",
+        "operations_deprecation"
+      ],
+      "properties": {
+        "workload_configuration": { "type": "integer", "minimum": 0 },
+        "control_plane_host_hardening": { "type": "integer", "minimum": 0 },
+        "runtime_node_failure": { "type": "integer", "minimum": 0 },
+        "operations_deprecation": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "coverage_by_tool": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "coverage_by_feasibility": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "scenario_counts_by_feasibility": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "coverage_by_selection_track": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "scenario_counts_by_selection_track": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "category": {
+      "enum": [
+        "workload_configuration",
+        "control_plane_host_hardening",
+        "runtime_node_failure",
+        "operations_deprecation"
+      ]
+    },
+    "feasibility": {
+      "enum": [
+        "manifest_only",
+        "live_cluster",
+        "telemetry",
+        "host",
+        "cloud",
+        "runtime",
+        "custom_crd"
+      ]
+    },
+    "nonemptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "scenario_id",
+        "title",
+        "category",
+        "setup_summary",
+        "trigger_predicate",
+        "expected_finding",
+        "healthy_condition",
+        "required_resources",
+        "required_mechanisms",
+        "supported_cluster_profiles",
+        "feasibility",
+        "target_rule_ids",
+        "target_semantic_group_ids",
+        "target_tool_ids",
+        "target_rule_count",
+        "provenance_refs",
+        "lifecycle_state",
+        "qualification_status",
+        "qualification_blockers"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "pattern": "^rule-gap-[a-z0-9-]+$" },
+        "title": { "type": "string", "minLength": 8 },
+        "selection_track": {
+          "enum": ["falco_chain", "node_problem_detector", "policy", "operations"]
+        },
+        "category": { "$ref": "#/$defs/category" },
+        "setup_summary": { "type": "string", "minLength": 30 },
+        "trigger_predicate": { "type": "string", "minLength": 12 },
+        "expected_finding": { "type": "string", "minLength": 20 },
+        "healthy_condition": { "type": "string", "minLength": 12 },
+        "required_resources": { "$ref": "#/$defs/nonemptyStrings" },
+        "required_mechanisms": { "$ref": "#/$defs/nonemptyStrings" },
+        "supported_cluster_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["local-kwok", "local-minikube", "aks"] }
+        },
+        "feasibility": { "$ref": "#/$defs/feasibility" },
+        "target_rule_ids": { "$ref": "#/$defs/nonemptyStrings" },
+        "target_semantic_group_ids": { "$ref": "#/$defs/nonemptyStrings" },
+        "target_canonical_capability_ids": { "$ref": "#/$defs/nonemptyStrings" },
+        "target_tool_ids": { "$ref": "#/$defs/nonemptyStrings" },
+        "target_rule_count": { "type": "integer", "minimum": 1 },
+        "provenance_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "format": "uri" }
+        },
+        "lifecycle_state": { "const": "draft" },
+        "qualification_status": { "const": "pending" },
+        "qualification_blockers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["kind", "detail"],
+            "properties": {
+              "kind": { "enum": ["setup", "observation", "oracle", "leakage"] },
+              "detail": { "type": "string", "minLength": 12 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

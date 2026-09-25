@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-access-container-service-account-v1-daa36c48",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "elevated-service-account",
+        "resource_ref": "rolebinding/workload-edit",
+        "field_path": "subjects[0].name + roleRef.name",
+        "observed_value": "workload-sa + edit",
+        "description": "determines which service accounts can be used to access other resources in the cluster"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "rolebinding/workload-edit",
+      "field_path": "roleRef.name",
+      "observed_value": "view",
+      "description": "The healthy control would bind only a read-only role."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-900a50938f0737b9"
+}

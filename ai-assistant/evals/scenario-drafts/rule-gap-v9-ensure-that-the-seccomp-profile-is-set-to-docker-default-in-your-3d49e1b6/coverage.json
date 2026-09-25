@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-seccomp-profile-is-set-to-docker-default-in-your-3d49e1b6",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-5-policies-5-7-2-ensure-that-the-seccomp-profile-is-set-to-docker-:e61de1042c22",
+    "kube-bench:source:gke-1-0-policies-5-6-2-ensure-that-the-seccomp-profile-is-set-to-docker-:e56f6ba5ca17"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-seccomp-profile-is-set-to-docker-default-in-your-pod-definitions:936872241cb1"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-seccomp-profile-is-set-to-docker-default-in-your:3d49e1b69522"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/policies.yaml"
+  ]
+}

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: missing-account-workload
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: missing-account-workload
+  template:
+    metadata:
+      labels:
+        app: missing-account-workload
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+      serviceAccountName: missing-workload-account

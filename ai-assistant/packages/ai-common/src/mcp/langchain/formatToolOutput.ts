@@ -16,8 +16,8 @@
 
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { redactSecrets } from '../../security/redactSecrets';
-import type { FormattedMCPData, FormattedMCPOutput } from '../tools/formattedOutput';
+import { redactSecrets } from '../../security/redactSecrets.ts';
+import type { FormattedMCPData, FormattedMCPOutput } from '../tools/formattedOutput.ts';
 
 /** Options that control how MCP output is formatted. */
 export interface MCPFormatterOptions {

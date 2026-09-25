@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-container-pull-policy-not-always",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["polaris:check:pullPolicyNotAlways"],
+  "target_semantic_group_ids": ["polaris:semantic:polaris-check-pullpolicynotalways:2ce08acb2761"],
+  "target_tool_ids": ["polaris"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/pullPolicyNotAlways.yaml"
+  ]
+}

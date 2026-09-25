@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-pods-match-pdb-selector-s-89bef59b",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the PodDisruptionBudget selector and workload labels. Explain why no Pods are protected, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["deployment/web", "poddisruptionbudget/web-pdb"],
+  "allowed_observation_kinds": ["pdb.selector", "deployment.pod-template-labels"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

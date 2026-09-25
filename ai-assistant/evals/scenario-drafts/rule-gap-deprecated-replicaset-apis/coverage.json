@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-replicaset-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-replicaset-apps-v1beta1-removed-v1-16-0:4e874be21cad",
+    "pluto:source:k8s-replicaset-apps-v1beta2-removed-v1-16-0:da0db342c94b",
+    "pluto:source:k8s-replicaset-extensions-v1beta1-removed-v1-16-0:89b17351d250"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-apps-v1beta1-replicaset-removed-in-v1-16-0:fd1816a9774d",
+    "pluto:semantic:k8s-apps-v1beta2-replicaset-removed-in-v1-16-0:f8d42b270e61",
+    "pluto:semantic:k8s-extensions-v1beta1-replicaset-removed-in-v1-16-0:8251b182d606"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

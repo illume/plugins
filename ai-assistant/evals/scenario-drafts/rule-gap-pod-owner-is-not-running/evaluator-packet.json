@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-owner-is-not-running",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=failed-owner]",
+        "field_path": "metadata.ownerReferences[0].name + job/failed-owner.status.conditions[type=Failed].status",
+        "observed_value": "failed-owner; True",
+        "description": "The Pod controller owner is a failed Job."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=failed-owner]",
+      "field_path": "metadata.ownerReferences[0].name + job/failed-owner.status.conditions[type=Failed].status",
+      "observed_value": "Job/running-owner; Failed condition absent",
+      "description": "The healthy Pod owner remains active or complete."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0427ec1e5b00ca27"
+}

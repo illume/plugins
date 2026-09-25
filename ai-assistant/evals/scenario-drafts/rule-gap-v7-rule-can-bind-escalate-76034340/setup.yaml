@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-rule-can-bind-escalate-76034340-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrole-escalation.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "brokenValue": "[\"bind\",\"escalate\"]",
+      "targetPath": "/manifests/clusterrole-escalation.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "determines which users can or bind escalate roles/clusterroles"
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "healthyValue": "[\"get\",\"list\"]",
+      "targetPath": "/manifests/clusterrole-escalation.yaml",
+      "applicability": "inert-review-only"
+    }

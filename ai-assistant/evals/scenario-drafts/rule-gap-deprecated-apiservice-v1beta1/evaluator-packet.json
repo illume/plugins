@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-apiservice-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/apiservice/v1alpha1.legacy.fixture.example",
+        "field_path": "apiVersion",
+        "observed_value": "apiregistration.k8s.io/v1beta1",
+        "description": "The concrete manifest uses removed API version apiregistration.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "manifest/apiservice/v1alpha1.legacy.fixture.example",
+      "field_path": "apiVersion",
+      "observed_value": "apiregistration.k8s.io/v1",
+      "description": "A current manifest uses apiregistration.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7c52cbd054982f94"
+}

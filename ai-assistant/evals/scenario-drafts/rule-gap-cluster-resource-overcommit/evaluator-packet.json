@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cluster-resource-overcommit",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "cluster-cpu-requests-over-allocatable",
+        "resource_ref": "metric/kube_pod_container_resource_requests",
+        "field_path": "sum(cpu for nonterminal pods) / sum(kube_node_status_allocatable{resource=\"cpu\"})",
+        "observed_value": "> 1",
+        "description": "Aggregate requested CPU exceeds cluster allocatable CPU."
+      },
+      {
+        "fact_id": "cluster-memory-requests-over-allocatable",
+        "resource_ref": "metric/kube_pod_container_resource_requests",
+        "field_path": "sum(memory for nonterminal pods) / sum(kube_node_status_allocatable{resource=\"memory\"})",
+        "observed_value": "> 1",
+        "description": "Aggregate requested memory exceeds cluster allocatable memory."
+      },
+      {
+        "fact_id": "overcommit-pods-unschedulable",
+        "resource_ref": "pod/*?app=resource-overcommit",
+        "field_path": "status.conditions[?(@.type==\"PodScheduled\")].reason",
+        "observed_value": "Unschedulable",
+        "description": "The scheduler cannot place either oversized request."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-cpu-headroom",
+      "resource_ref": "metric/kube_pod_container_resource_requests",
+      "field_path": "sum(cpu for nonterminal pods) / sum(kube_node_status_allocatable{resource=\"cpu\"})",
+      "observed_value": "<= 1",
+      "description": "The fixture requests far more CPU than the cluster advertises."
+    },
+    {
+      "fact_id": "invented-memory-headroom",
+      "resource_ref": "metric/kube_pod_container_resource_requests",
+      "field_path": "sum(memory for nonterminal pods) / sum(kube_node_status_allocatable{resource=\"memory\"})",
+      "observed_value": "<= 1",
+      "description": "The fixture requests far more memory than the cluster advertises."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e235b47407c29517"
+}

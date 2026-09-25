@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-pod-disruption-budget",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review voluntary-disruption protection for the `web` Deployment. Cite its replica count and the matching budget inventory; do not mutate resources.",
+  "visible_resource_refs": ["deployment/web", "poddisruptionbudget/*"],
+  "allowed_observation_kinds": [
+    "deployment.scale",
+    "deployment.pod-template-labels",
+    "poddisruptionbudget.list"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

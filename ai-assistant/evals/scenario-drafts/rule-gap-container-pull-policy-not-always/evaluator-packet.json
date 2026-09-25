@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-pull-policy-not-always",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/stale-image-policy",
+        "field_path": "spec.containers[0].image + spec.containers[0].imagePullPolicy",
+        "observed_value": "registry.example.test/app:latest; IfNotPresent",
+        "description": "The mutable latest tag can reuse a stale local image."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/stale-image-policy",
+      "field_path": "spec.containers[0].image + spec.containers[0].imagePullPolicy",
+      "observed_value": "registry.example.test/app:latest; Always",
+      "description": "The healthy mutable tag is always pulled."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b54d7bdac7b73429"
+}

@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bounded-bulk-file-removal
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: bounded-bulk-file-removal
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              mkdir -p /fixture/data; n=0; while [ "$n" -lt 40 ]; do printf x >
+              /fixture/data/file-$n; n=$((n+1)); done; rm -f /fixture/data/file-*; find
+              /fixture/data -type f | wc -l
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+            - name: device-fixture
+              mountPath: /dev/fixture
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: device-fixture
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-shares-host-ipc",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/host-ipc-workload",
+        "field_path": "spec.hostIPC",
+        "observed_value": "true",
+        "description": "The Pod explicitly joins the node IPC namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/host-ipc-workload",
+      "field_path": "spec.hostIPC",
+      "observed_value": "false or absent",
+      "description": "A healthy Pod does not join the node IPC namespace."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2e49cd840bdd2801"
+}

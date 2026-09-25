@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-agent-sandbox-claim-overrides-c9d2aaa4",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:agent-sandbox-claim-overrides"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-agent-sandbox-claim-overrides:b7d7013b7933"
+  ],
+  "target_canonical_capability_ids": ["canonical:agent-sandbox-claim-overrides:c9d2aaa42c7a"],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0316-agent-sandbox-claim-overrides.json"
+  ]
+}

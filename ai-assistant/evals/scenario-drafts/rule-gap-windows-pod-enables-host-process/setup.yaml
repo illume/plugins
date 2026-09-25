@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: windows-host-process
+  labels:
+    app: windows-host-process
+spec:
+  os:
+    name: windows
+  securityContext:
+    windowsOptions:
+      hostProcess: true
+      runAsUserName: NT AUTHORITY\SYSTEM
+  containers:
+    - name: app
+      image: mcr.microsoft.com/windows/nanoserver:ltsc2022
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532
+  nodeSelector:
+    kubernetes.io/os: windows

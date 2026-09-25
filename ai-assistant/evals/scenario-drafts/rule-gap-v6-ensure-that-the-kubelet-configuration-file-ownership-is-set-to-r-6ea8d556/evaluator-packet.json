@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r-6ea8d556",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r-6ea8d556-fixture",
+        "field_path": "data.observation.json#file.owner",
+        "observed_value": "nobody:nogroup",
+        "description": "Ensure that if the kubelet refers to a configuration file with the `--config` argument, that file is owned by root:root."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r-6ea8d556-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r-6ea8d556-fixture",
+      "field_path": "data.healthy-control.json#file.owner",
+      "observed_value": "root:root",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-27c09f131f63f1da"
+}

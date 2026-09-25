@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-npd-ntp-is-down",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:custom-plugin-monitor-ntpisdown:43b6fa446259",
+    "node-problem-detector:source:custom-plugin-monitor-ntpisdown:dc62c6e4c02d"
+  ],
+  "target_semantic_group_ids": ["node-problem-detector:semantic:ntpisdown:157a220001c0"],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/custom-plugin-monitor.json"
+  ]
+}

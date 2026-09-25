@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pod-unschedulable",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["headlamp:source:unschedulable:9400f4e59d12"],
+  "target_semantic_group_ids": [
+    "headlamp:semantic:headlamp-source-unschedulable-9400f4e59d12:4a12ac4772e2"
+  ],
+  "target_tool_ids": ["headlamp"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/illume/headlamp/blob/10bfb15261a7cfe0660e66fe2375c1bb98f89432/frontend/src/components/diagnostics/Diagnostics.tsx"
+  ]
+}

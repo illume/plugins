@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cpu-throttle-probe
+  labels:
+    app: cpu-throttle-probe
+spec:
+  activeDeadlineSeconds: 420
+  restartPolicy: Never
+  containers:
+    - name: worker
+      image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+      command:
+        - /bin/sh
+        - '-c'
+        - exec yes > /dev/null
+      resources:
+        requests:
+          cpu: 10m
+        limits:
+          cpu: 10m
+          memory: 16Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000

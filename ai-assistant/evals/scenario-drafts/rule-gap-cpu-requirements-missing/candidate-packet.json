@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cpu-requirements-missing",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review resource configuration for the `app` Deployment and identify the missing scheduling or isolation values. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["deployment/app"],
+  "allowed_observation_kinds": ["deployment.pod-template", "container.resources"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

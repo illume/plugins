@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-interactive-container-network-recon",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:basic-interactive-reconnaissance:aba786e15715",
+    "falco:rule:interpreted-procs-inbound-network-activity:bcbc8e61c3d9",
+    "falco:rule:interpreted-procs-outbound-network-activity:619acdc41ceb",
+    "falco:rule:network-connection-outside-local-subnet:0477732bfb31",
+    "falco:rule:packet-socket-created-in-container:f751e8039a8c",
+    "falco:rule:terminal-shell-in-container:e0e5b21bd369",
+    "falco:rule:unexpected-inbound-connection-source:760b20b46f45",
+    "falco:rule:unexpected-k8s-nodeport-connection:735720a4fef8",
+    "falco:rule:unexpected-udp-traffic:d77c31abed62"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-basic-interactive-reconnaissance-aba786e15715:310e6278bd1a",
+    "falco:semantic:falco-rule-interpreted-procs-inbound-network-activity-bcbc8e61c3d9:622e8279366a",
+    "falco:semantic:falco-rule-interpreted-procs-outbound-network-activity-619acdc41ceb:57f05976abeb",
+    "falco:semantic:falco-rule-network-connection-outside-local-subnet-0477732bfb31:7e383cf51d72",
+    "falco:semantic:falco-rule-packet-socket-created-in-container-f751e8039a8c:38f27cb2e60a",
+    "falco:semantic:falco-rule-terminal-shell-in-container-e0e5b21bd369:45511d731484",
+    "falco:semantic:falco-rule-unexpected-inbound-connection-source-760b20b46f45:9665d406b770",
+    "falco:semantic:falco-rule-unexpected-k8s-nodeport-connection-735720a4fef8:4d7aeff9c9ff",
+    "falco:semantic:falco-rule-unexpected-udp-traffic-d77c31abed62:8c6983fae93e"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 9,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

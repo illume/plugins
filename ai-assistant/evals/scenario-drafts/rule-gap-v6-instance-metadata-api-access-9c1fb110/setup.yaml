@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-instance-metadata-api-access-9c1fb110-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/cloud-network-policy.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cloud-network-configuration",
+      "field": "networkAccess.instanceMetadataEndpoint",
+      "observedValue": "allowed",
+      "triggerPredicate": "Checks if there is access from the nodes to cloud prividers instance metadata services"
+    }
+  predicate-summary.txt: Checks if there is access from the nodes to cloud prividers instance metadata services
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "cloud-network-configuration",
+      "field": "networkAccess.instanceMetadataEndpoint",
+      "observedValue": "blocked"
+    }

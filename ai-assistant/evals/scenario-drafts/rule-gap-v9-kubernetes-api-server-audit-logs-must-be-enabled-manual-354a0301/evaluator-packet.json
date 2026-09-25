@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-kubernetes-api-server-audit-logs-must-be-enabled-manual-354a0301",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-kubernetes-api-server-audit-logs-must-be-enabled-manual-354a0301",
+        "field_path": "data.evidence.json#arguments.--audit-log-path",
+        "observed_value": "absent",
+        "description": "Kubernetes API Server audit logs must be enabled. (Manual)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-kubernetes-api-server-audit-logs-must-be-enabled-manual-354a0301",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-kubernetes-api-server-audit-logs-must-be-enabled-manual-354a0301",
+      "field_path": "data.healthy-control.json#arguments.--audit-log-path",
+      "observed_value": "/var/log/kubernetes/audit.log",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ba5ad73ef4dd563d"
+}

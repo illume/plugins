@@ -1,0 +1,11 @@
+apiVersion: rbac.istio.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: legacy-authz
+  namespace: mesh-app
+spec:
+  rules:
+    - to:
+        - operation:
+            methods:
+              - GET

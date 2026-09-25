@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-workload-selector-mismatch",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review whether the `web` Deployment selector can match its Pod template. Cite both exact label maps; treat the object as a manifest file and do not submit it.",
+  "visible_resource_refs": ["manifest/deployment/web"],
+  "allowed_observation_kinds": ["manifest.workload-selector", "manifest.pod-template-labels"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

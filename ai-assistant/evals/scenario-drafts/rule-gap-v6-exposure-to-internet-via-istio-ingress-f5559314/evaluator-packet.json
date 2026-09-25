@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-exposure-to-internet-via-istio-ingress-f5559314",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exposure-evidence",
+        "resource_ref": "gateway/public-gateway",
+        "field_path": "spec.http[0].route[0].destination.host",
+        "observed_value": "public-app",
+        "description": "fails if the running workload is bound to a Service that is exposed to the Internet through Istio Gateway."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/public-app",
+      "field_path": "spec.type",
+      "observed_value": "ClusterIP",
+      "description": "The healthy control keeps the workload internal only."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7703a2c4a30ef272"
+}

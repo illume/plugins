@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-shell-profile-persistence",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `shell-profile-action` and its logs. Identify the non-shell process and exact profile read/write operations, including the storage boundary.",
+  "visible_resource_refs": ["job/shell-profile-action", "pod/shell-profile-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

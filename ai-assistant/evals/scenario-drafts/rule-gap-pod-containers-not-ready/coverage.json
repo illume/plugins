@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pod-containers-not-ready",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "headlamp:source:containers-not-ready:e6a9696d06f7",
+    "kubernetes-mixin:alert:KubePodNotReady",
+    "popeye:code:204"
+  ],
+  "target_semantic_group_ids": [
+    "headlamp:semantic:headlamp-source-containers-not-ready-e6a9696d06f7:85c64fcc439a",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubepodnotready:3b4821311541",
+    "popeye:semantic:popeye-code-204:6e68e9ff6a43"
+  ],
+  "target_tool_ids": ["headlamp", "kubernetes-mixin", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/illume/headlamp/blob/10bfb15261a7cfe0660e66fe2375c1bb98f89432/frontend/src/components/diagnostics/Diagnostics.tsx",
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/apps_alerts.libsonnet"
+  ]
+}

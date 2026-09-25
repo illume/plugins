@@ -31,6 +31,7 @@ import HeadlampAIPrompt from './components/appbar/HeadlampAIPrompt';
 import HeadlampEventHandler from './components/appbar/HeadlampEventHandler';
 import AIPanelComponent from './components/panel/AIPanelComponent';
 import Settings from './components/settings/Settings';
+import { installBrowserEvaluationBridge } from './evaluationBridge';
 import type { RawK8sEvent } from './kubernetes/EventFetcher';
 import { seedBuiltinMCPServers } from './mcp/seedBuiltinServers';
 import { PLUGIN_NAME, useGlobalState, usePluginConfig } from './pluginState';
@@ -38,6 +39,7 @@ import { seedBuiltinSkillSources } from './skills/seedBuiltinSources';
 
 void seedBuiltinMCPServers();
 seedBuiltinSkillSources();
+installBrowserEvaluationBridge();
 
 // Register UI Panel component that uses the shared state to show/hide
 registerUIPanel({

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-unbounded-streaming-idle-timeout",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/unbounded-streaming-idle-timeout-fixture component fixture. The zero duration leaves exec, attach, and port-forward streams without an idle bound. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/unbounded-streaming-idle-timeout-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kubelet"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

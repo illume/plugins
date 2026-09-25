@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-restrict-access-to-the-control-plane-endpoint-63725283-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/network-access-profile.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cloud-network-configuration",
+      "exactField": "network.authorizedNetworks.enabled",
+      "brokenValue": "false",
+      "targetPath": "/var/lib/evals/network-access-profile.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Enable Endpoint Private Access to restrict access to the cluster's control plane to only an allowlist of authorized IPs."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "cloud-network-configuration",
+      "exactField": "network.authorizedNetworks.enabled",
+      "healthyValue": "true",
+      "targetPath": "/var/lib/evals/network-access-profile.json",
+      "applicability": "inert-review-only"
+    }

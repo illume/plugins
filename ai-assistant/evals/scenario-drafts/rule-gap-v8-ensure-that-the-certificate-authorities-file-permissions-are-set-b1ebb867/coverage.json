@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-certificate-authorities-file-permissions-are-set-b1ebb867",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-node-4-1-7-ensure-that-the-certificate-authorities-file-permissi:3aad7f59ba25",
+    "kube-bench:source:cis-1-11-node-4-1-7-ensure-that-the-certificate-authorities-file-permiss:202a7cce58c8",
+    "kube-bench:source:cis-1-12-node-4-1-7-ensure-that-the-certificate-authorities-file-permiss:e0aad4a2b657",
+    "kube-bench:source:cis-1-20-node-4-1-7-ensure-that-the-certificate-authorities-file-permiss:aa3b9980cff5",
+    "kube-bench:source:cis-1-23-node-4-1-7-ensure-that-the-certificate-authorities-file-permiss:a3e9f13d1210",
+    "kube-bench:source:cis-1-5-node-4-1-7-ensure-that-the-certificate-authorities-file-permissi:91f4e1568dd8",
+    "kube-bench:source:cis-1-6-k3s-node-4-1-7-ensure-that-the-certificate-authorities-file-perm:82e37bfa0740",
+    "kube-bench:source:cis-1-6-node-4-1-7-ensure-that-the-certificate-authorities-file-permissi:6665e2d0e6fa",
+    "kube-bench:source:cis-2-0-node-4-1-7-ensure-that-the-certificate-authorities-file-permissi:c490d1a2f346",
+    "kube-bench:source:k3s-cis-1-23-node-4-1-7-ensure-that-the-certificate-authorities-file-per:a08f2623a40a",
+    "kube-bench:source:rh-1-0-node-4-1-7-ensure-that-the-certificate-authorities-file-permissio:7207ae73f95c",
+    "kube-bench:source:rh-1-4-node-4-1-7-ensure-that-the-certificate-authorities-file-permissio:04c1028485af",
+    "kube-bench:source:rh-1-8-node-4-1-7-ensure-that-the-certificate-authorities-file-permissio:a1f606dab2b7",
+    "kube-bench:source:rh-1-9-node-4-1-7-ensure-that-the-certificate-authorities-file-permissio:c49e42982019",
+    "kube-bench:source:rke-cis-1-23-node-4-1-7-ensure-that-the-certificate-authorities-file-per:7266614fe8b4",
+    "kube-bench:source:rke2-cis-1-23-node-4-1-7-ensure-that-the-certificate-authorities-file-pe:612dcea5a353",
+    "kube-bench:source:tkgi-1-2-53-node-4-1-7-ensure-that-the-certificate-authorities-file-perm:f6cb9a64136d"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-certificate-authorities-file-permissions-are-set-to-644-or-more-:8873d3b0ae0c"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-certificate-authorities-file-permissions-are-set:b1ebb867c30e"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 17,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+  ]
+}

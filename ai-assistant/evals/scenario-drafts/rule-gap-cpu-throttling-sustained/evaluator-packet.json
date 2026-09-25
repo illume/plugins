@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-cpu-throttling-sustained",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "metric/container_cpu_cfs_throttled_periods_total{pod=\"cpu-throttle-probe\"}",
+        "field_path": "rate(throttled_periods[5m]) / rate(periods[5m])",
+        "observed_value": "> 0.8 for 5m",
+        "description": "The CPU-limited busy loop is throttled in more than 80 percent of scheduling periods for five minutes."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "metric/container_cpu_cfs_throttled_periods_total{pod=\"cpu-throttle-probe\"}",
+      "field_path": "rate(throttled_periods[5m]) / rate(periods[5m])",
+      "observed_value": "<= 0.8 for 5m",
+      "description": "A short spike or ratio below the pinned threshold is not sustained throttling."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2b32c146cba80f6e"
+}

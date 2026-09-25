@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-frequent-kubelet-restarts",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the repeated failures in `kubelet-restart-probe`. Inspect the selected Pod restart count, waiting reason, and prior logs during the bounded window; distinguish the probe from the host kubelet and do not mutate resources.",
+  "visible_resource_refs": ["pod/kubelet-restart-probe", "pod[label=app=kubelet-restart-probe]"],
+  "allowed_observation_kinds": ["pod.status", "pod.container-status", "pod.logs.previous"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

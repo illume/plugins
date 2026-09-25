@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-configure-kubernetes-api-server-maximum-audit-log-size-manual-b4d2fcdf",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-8-master-1-2-21-configure-kubernetes-api-server-maximum-audit-log-s:753e2c865508",
+    "kube-bench:source:rh-1-9-master-1-2-21-configure-kubernetes-api-server-maximum-audit-log-s:e6c3e0b66204"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:configure-kubernetes-api-server-maximum-audit-log-size:b38d689fd193"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:configure-kubernetes-api-server-maximum-audit-log-size-manual:b4d2fcdfbfe0"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

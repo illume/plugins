@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-directory-traversal-read",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=directory-traversal-read]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "mkdir -p /fixture/root/a /fixture/root/secret; printf controlled > /fixture/root/secret/value; cat /fixture/root/a/../secret/value; controlled",
+        "description": "Process reads a monitored file through directory traversal inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=directory-traversal-read]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-56ffc8bc84af597b"
+}

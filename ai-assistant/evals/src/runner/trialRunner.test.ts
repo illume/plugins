@@ -16,6 +16,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { SimulatedKwokAdapter } from '../cluster/adapters/simulatedAdapter.js';
 import { AksAdapter } from '../cluster/adapters/aksAdapter.js';
 import { createScriptedCandidate } from '../candidates/scripted.js';
@@ -64,6 +65,86 @@ test('runTrial: a reference candidate on the fault scenario passes root_cause an
     assert.equal(result.submission_status, 'valid');
     assert.equal(result.lifecycle_validity, 'clean');
     assert.equal(result.tool_summary.attempted, 0);
+  } finally {
+    removeScratchDir(dir);
+  }
+});
+
+test('runTrial: a combined scenario preserves independently scoped issue outcomes', async () => {
+  const dir = makeScratchDir('trial-combined');
+  try {
+    const scenario = loadScenario(
+      'combined-selector-rbac-v1',
+      path.resolve('test-fixtures/combined-scenarios')
+    );
+    const adapter = new SimulatedKwokAdapter('local-kwok');
+    const result = await runTrial({
+      runId: 'run_combined',
+      trialId: 'trial_combined',
+      scenario,
+      clusterAdapter: adapter,
+      clusterPreflight: await adapter.preflight(),
+      candidateAdapter: {
+        id: 'combined-reference',
+        kind: 'reference-system',
+        async invoke(input) {
+          const makeSubmission = (resourceRefs: string[]) => {
+            const observations = input.observations.filter(observation =>
+              resourceRefs.includes(observation.resource_ref)
+            );
+            return JSON.stringify({
+              schema_version: '1.0.0',
+              cause_facts: observations.map(observation => ({
+                resource_ref: observation.resource_ref,
+                field_path: observation.field_path,
+                observed_value: observation.value,
+              })),
+              resource_refs: [
+                ...new Set(observations.map(observation => observation.resource_ref)),
+              ],
+              evidence_refs: [...new Set(observations.map(observation => observation.evidence_id))],
+              alternative_dispositions: [],
+              uncertainty: { is_uncertain: false },
+              proposed_actions: [{ operation: 'no_action', description: 'Read-only diagnosis.' }],
+            });
+          };
+          return {
+            raw_text: 'Two independent diagnoses completed.',
+            submission_text: null,
+            issue_submissions: [
+              {
+                issue_id: 'selector',
+                submission_text: makeSubmission(['service/web', 'pod/web-1']),
+              },
+              {
+                issue_id: 'rbac',
+                submission_text: makeSubmission([
+                  'serviceaccount/reporter',
+                  'role/reporter-reader',
+                ]),
+              },
+            ],
+            status: 'ok',
+            duration_ns: '1',
+            tool_events: [],
+          };
+        },
+      },
+      bundleWriter: new RunBundleWriter(dir, 'run_combined'),
+      executionMode: 'dry-run',
+    });
+
+    assert.equal(result.run_eligibility, 'valid');
+    assert.equal(result.dimensions.root_cause.outcome, 'pass');
+    assert.equal(result.dimensions.recommended_fix.outcome, 'pass');
+    assert.deepEqual(
+      result.per_issue_results?.map(issue => [issue.issue_id, issue.root_cause.outcome]),
+      [
+        ['selector', 'pass'],
+        ['rbac', 'pass'],
+      ]
+    );
+    assert.equal(result.safety_outcome, 'pass');
   } finally {
     removeScratchDir(dir);
   }
@@ -496,6 +577,10 @@ test('runTrial: an unsupported cluster preflight (e.g. AKS without credentials) 
     assert.equal(result.stage_status.setup, 'unsupported');
     assert.equal(result.stage_status.candidate, 'skipped');
     assert.equal(result.first_failure_owner, 'setup');
+    assert.match(
+      result.dimensions.root_cause.invalidity_reason ?? '',
+      /cluster preflight unsupported/
+    );
   } finally {
     removeScratchDir(dir);
   }

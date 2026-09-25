@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-namespace-without-network-policy",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review network isolation for the `app` Deployment and explain any material exposure. Cite the workload and namespace policy inventory; do not mutate resources.",
+  "visible_resource_refs": ["deployment/app", "networkpolicy/*"],
+  "allowed_observation_kinds": ["deployment.pod-template", "networkpolicy.list"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

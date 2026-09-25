@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-priority-class-apis",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the API compatibility of the workload priority manifests. Report each deprecated object with its exact API version; do not submit the files.",
+  "visible_resource_refs": [
+    "manifest/priorityclass/legacy-batch-alpha",
+    "manifest/priorityclass/legacy-batch-beta"
+  ],
+  "allowed_observation_kinds": ["manifest.api-version", "manifest.object-identity"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

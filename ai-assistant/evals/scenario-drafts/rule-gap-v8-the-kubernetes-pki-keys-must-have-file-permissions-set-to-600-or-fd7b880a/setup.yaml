@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-the-kubernetes-pki-keys-must-have-file-permissions-set-to-600-or-fd7b880a
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/pki/apiserver.key
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/apiserver.key].mode",
+      "brokenValue": "0644",
+      "targetPath": "/etc/kubernetes/pki/apiserver.key",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/apiserver.key].mode",
+      "healthyValue": "0600",
+      "targetPath": "/etc/kubernetes/pki/apiserver.key",
+      "applicability": "inert-review-only"
+    }

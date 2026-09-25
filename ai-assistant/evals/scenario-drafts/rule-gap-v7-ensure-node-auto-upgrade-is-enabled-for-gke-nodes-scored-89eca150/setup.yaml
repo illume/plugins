@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-node-auto-upgrade-is-enabled-for-gke-nodes-scored-89eca150-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/nodepool-management.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "node",
+      "evidenceKind": "cloud-nodepool-configuration",
+      "exactField": "nodePool.management.autoUpgrade",
+      "brokenValue": "false",
+      "targetPath": "/var/lib/evals/nodepool-management.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure Node Auto-Upgrade is enabled for GKE nodes (Scored)"
+    }
+  healthy-control.json: |-
+    {
+      "component": "node",
+      "evidenceKind": "cloud-nodepool-configuration",
+      "exactField": "nodePool.management.autoUpgrade",
+      "healthyValue": "true",
+      "targetPath": "/var/lib/evals/nodepool-management.json",
+      "applicability": "inert-review-only"
+    }

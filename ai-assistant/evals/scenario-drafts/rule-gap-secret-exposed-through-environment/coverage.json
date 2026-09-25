@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-secret-exposed-through-environment",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:env-var-secret",
+    "kube-linter:check:read-secret-from-env-var",
+    "kubescape:rule:rule-credentials-in-env-var",
+    "kubescape:rule:rule-secrets-in-env-var",
+    "polaris:check:sensitiveContainerEnvVar"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-env-var-secret:82a86659b29e",
+    "kube-linter:semantic:kube-linter-check-read-secret-from-env-var:dad698706c7e",
+    "kubescape:semantic:kubescape-rule-rule-credentials-in-env-var:d980dc706fab",
+    "kubescape:semantic:kubescape-rule-rule-secrets-in-env-var:80b8235b816f",
+    "polaris:semantic:polaris-check-sensitivecontainerenvvar:0c86cb27c4a3"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape", "polaris"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/sensitiveContainerEnvVar.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0012-applicationscredentialsinconfigurationfiles.json",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0207-preferusingsecretsasfilesoversecretsasenvironmentvariables.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/env-var-secret.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/read-secret-from-env-var.yaml"
+  ]
+}

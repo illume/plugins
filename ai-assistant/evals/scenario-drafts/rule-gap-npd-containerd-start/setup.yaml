@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-containerd-start-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /var/log/journal
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: Starting containerd container runtime...
+  normalized-message.txt: Starting containerd container runtime...
+  oracle.json: >-
+    {"source":"systemd-monitor","regex":"Starting (containerd container
+    runtime|containerd.service|containerd.service - containerd container
+    runtime)...","requiredMatches":1}
+  healthy-control.log: containerd.service is active and continuously running

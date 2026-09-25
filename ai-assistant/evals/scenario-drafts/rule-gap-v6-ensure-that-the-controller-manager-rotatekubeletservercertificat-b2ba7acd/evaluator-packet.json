@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-that-the-controller-manager-rotatekubeletservercertificat-b2ba7acd",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "represented-broken-state",
+        "resource_ref": "configmap/v6-ensure-that-the-controller-manager-rotatekubeletservercertificat-b2ba7acd-fixture",
+        "field_path": "data.observation.json#featureGates.RotateKubeletServerCertificate",
+        "observed_value": "false",
+        "description": "Enable kubelet server certificate rotation on controller-manager."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/v6-ensure-that-the-controller-manager-rotatekubeletservercertificat-b2ba7acd-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence remains inert ConfigMap data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-does-not-trigger",
+      "resource_ref": "configmap/v6-ensure-that-the-controller-manager-rotatekubeletservercertificat-b2ba7acd-fixture",
+      "field_path": "data.healthy-control.json#featureGates.RotateKubeletServerCertificate",
+      "observed_value": "true",
+      "description": "The healthy control differs only in the predicate-satisfying state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-68940d412721400c"
+}

@@ -14,6 +14,23 @@ describe('MockToolManager', () => {
     expect(source).not.toContain('../langchain/ToolManagerAdapter');
   });
   describe('executeTool — success', () => {
+    it('preserves arbitrary arguments through model-facing tool definitions', async () => {
+      const received: Record<string, unknown>[] = [];
+      const mgr = createMockToolManager({
+        enabledToolNames: ['metrics__query'],
+        toolResults: {
+          metrics__query: (args: Record<string, unknown>) => {
+            received.push(args);
+            return { value: 3 };
+          },
+        },
+      });
+
+      await mgr.getLangChainTools()[0].invoke({ query: 'up' });
+
+      expect(received).toEqual([{ query: 'up' }]);
+    });
+
     it('returns a successful ToolResponse with JSON content', async () => {
       const mgr = createMockToolManager({
         toolResults: { my_tool: { pods: ['nginx'] } },
@@ -119,7 +136,7 @@ describe('MockToolManager', () => {
         enabledToolNames: ['my_tool'],
       });
       const response = await mgr.executeTool('my_tool', { key: 'value' });
-      expect(fn).toHaveBeenCalledWith({ key: 'value' }, undefined);
+      expect(fn).toHaveBeenCalledWith({ key: 'value' }, undefined, undefined);
       expect(JSON.parse(response.content)).toEqual({ computed: true });
     });
 
@@ -139,7 +156,7 @@ describe('MockToolManager', () => {
         enabledToolNames: ['t'],
       });
       await mgr.executeTool('t', {}, 'call-123');
-      expect(fn).toHaveBeenCalledWith({}, 'call-123');
+      expect(fn).toHaveBeenCalledWith({}, 'call-123', undefined);
     });
   });
 });

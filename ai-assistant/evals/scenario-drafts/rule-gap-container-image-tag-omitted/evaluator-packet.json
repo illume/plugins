@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-image-tag-omitted",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/implicit-latest-workload",
+        "field_path": "spec.containers[0].image",
+        "observed_value": "registry.k8s.io/pause",
+        "description": "The image reference omits a tag and therefore resolves through the mutable latest tag."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/implicit-latest-workload",
+      "field_path": "spec.containers[0].image",
+      "observed_value": "registry.k8s.io/pause:3.10",
+      "description": "A healthy image reference pins an explicit non-latest tag."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b691e1fc47c7e5fe"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-volume-mount-has-no-volume",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/pod/orphan-volume-mount",
+        "field_path": "spec.containers[0].volumeMounts[0].name + spec.volumes",
+        "observed_value": "missing-volume; []",
+        "description": "The container mount name has no matching Pod volume."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/pod/orphan-volume-mount",
+      "field_path": "spec.containers[0].volumeMounts[0].name + spec.volumes",
+      "observed_value": "data; [{name:data,emptyDir:{}}]",
+      "description": "The healthy mount resolves to an explicit Pod volume."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-87f7d5b488143d67"
+}

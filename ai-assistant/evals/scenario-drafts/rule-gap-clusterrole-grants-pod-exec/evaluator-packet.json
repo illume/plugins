@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-clusterrole-grants-pod-exec",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "clusterrole/clusterrole-grants-pod-exec-role",
+        "field_path": "rules[0]",
+        "observed_value": "{\"apiGroups\":[\"\"],\"resources\":[\"pods/exec\",\"pods/attach\"],\"verbs\":[\"create\"]}",
+        "description": "ClusterRole grants Pod exec and attach."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "clusterrole/clusterrole-grants-pod-exec-role",
+      "field_path": "rules[0]",
+      "observed_value": "resources=[\"pods\"]; verbs=[\"get\",\"list\"]",
+      "description": "The healthy role cannot create exec or attach subresources."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-5cf15f77b65b5820"
+}

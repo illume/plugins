@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-start-rollout-stalled",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "container-waits-for-image",
+        "resource_ref": "pod/stalled-rollout-*",
+        "field_path": "status.containerStatuses[0].state.waiting.reason",
+        "observed_value": "<one of: ErrImagePull, ImagePullBackOff>",
+        "description": "The new revision container remains waiting because its image cannot be pulled."
+      },
+      {
+        "fact_id": "rollout-exceeds-progress-deadline",
+        "resource_ref": "deployment/stalled-rollout",
+        "field_path": "status.conditions[?type=Progressing].reason",
+        "observed_value": "ProgressDeadlineExceeded",
+        "description": "The Deployment controller reports that rollout progress exceeded its deadline."
+      },
+      {
+        "fact_id": "desired-available-diverge",
+        "resource_ref": "deployment/stalled-rollout",
+        "field_path": "status.replicas,status.availableReplicas",
+        "observed_value": "desired=2; available=<absent or 0>",
+        "description": "Desired replicas remain above available replicas throughout the bounded window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-scheduling-failure",
+      "resource_ref": "pod/stalled-rollout-*",
+      "field_path": "status.conditions[?type=PodScheduled].status",
+      "observed_value": "False",
+      "description": "The root cause is container start failure, not an unscheduled Pod."
+    },
+    {
+      "fact_id": "invented-complete-rollout",
+      "resource_ref": "deployment/stalled-rollout",
+      "field_path": "status.availableReplicas",
+      "observed_value": "2",
+      "description": "The broken revision never reaches two available replicas."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-82b1e924b1a3d4c1"
+}

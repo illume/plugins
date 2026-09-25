@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-rolebinding-references-missing-role",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "rolebinding/missing-role-binding",
+        "field_path": "roleRef + matching Role inventory",
+        "observed_value": "{\"apiGroup\":\"rbac.authorization.k8s.io\",\"kind\":\"Role\",\"name\":\"missing-role\"}; 0",
+        "description": "The RoleBinding names a Role absent from its namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "rolebinding/missing-role-binding",
+      "field_path": "roleRef + matching Role inventory",
+      "observed_value": "missing-role inventory count 1",
+      "description": "A healthy binding resolves to an existing Role."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bf4f9a0843ed92fd"
+}

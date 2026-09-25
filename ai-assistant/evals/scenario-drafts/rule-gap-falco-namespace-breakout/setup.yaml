@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: namespace-action
+  labels:
+    evals.kubernetes.io/controlled-action: namespace-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: namespace-action
+    spec:
+      restartPolicy: Never
+      shareProcessNamespace: true
+      containers:
+        - name: action
+          image: debian:12-slim
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              apt-get update >/dev/null && apt-get install -y util-linux >/dev/null
+              unshare --user --map-root-user /bin/sh -c "id -u; mount | head -1" || true
+              nsenter --target 1 --mount -- /bin/true || true
+              printf "controlled-setns-target=pod-pid-1\n"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

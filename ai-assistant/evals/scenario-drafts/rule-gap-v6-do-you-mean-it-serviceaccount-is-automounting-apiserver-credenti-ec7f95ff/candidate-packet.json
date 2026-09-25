@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-do-you-mean-it-serviceaccount-is-automounting-apiserver-credenti-ec7f95ff",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the service account and Pod template identity settings and identify the token exposure risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["serviceaccount/runner", "deployment/runner"],
+  "allowed_observation_kinds": ["serviceaccount.spec", "deployment.pod-template"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

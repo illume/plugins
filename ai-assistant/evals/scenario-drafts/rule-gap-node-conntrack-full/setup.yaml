@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: conntrack-capacity-probe
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: conntrack-capacity-probe
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: probe
+          image: python:3.12-alpine
+          command:
+            - python
+            - '-c'
+            - >-
+              import socket,sys; listener=socket.socket(); listener.bind(('127.0.0.1',18080));
+              listener.listen(1); opened=[]; dropped=0
+
+              for _ in range(32):
+               s=socket.socket(); s.settimeout(0.02)
+               try: s.connect(('127.0.0.1',18080)); opened.append(s)
+               except OSError: dropped += 1; s.close()
+              print(f'controlled connections opened={len(opened)} dropped={dropped}')
+
+              if dropped == 0: sys.exit(2)
+
+              print('connection tracking capacity reached: controlled connection dropped');
+              sys.exit(51)
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000

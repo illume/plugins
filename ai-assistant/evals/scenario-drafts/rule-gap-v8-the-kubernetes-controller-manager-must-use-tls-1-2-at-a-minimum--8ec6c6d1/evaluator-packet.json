@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1",
+        "field_path": "data.evidence.json#arguments.--tls-min-version",
+        "observed_value": "VersionTLS10",
+        "description": "The Kubernetes Controller Manager must use TLS 1.2, at a minimum | Component of EKS Control Plane"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v8-the-kubernetes-controller-manager-must-use-tls-1-2-at-a-minimum--8ec6c6d1",
+      "field_path": "data.healthy-control.json#arguments.--tls-min-version",
+      "observed_value": "VersionTLS12",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e9a38e95056de80e"
+}

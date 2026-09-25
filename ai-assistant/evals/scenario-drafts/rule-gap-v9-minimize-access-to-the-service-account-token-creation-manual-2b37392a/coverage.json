@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-minimize-access-to-the-service-account-token-creation-manual-2b37392a",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-8-policies-4-1-12-minimize-access-to-the-service-account-token-cre:9066d378b61e",
+    "kube-bench:source:cis-1-10-policies-5-1-13-minimize-access-to-the-service-account-token-cr:34cb4d5db086",
+    "kube-bench:source:cis-1-11-policies-5-1-13-minimize-access-to-the-service-account-token-cr:14db6c6c2483",
+    "kube-bench:source:cis-1-12-policies-5-1-13-minimize-access-to-the-service-account-token-cr:8d5ddcad8a99",
+    "kube-bench:source:cis-1-7-policies-5-1-13-minimize-access-to-the-service-account-token-cre:064e7b042126",
+    "kube-bench:source:cis-1-8-policies-5-1-13-minimize-access-to-the-service-account-token-cre:57651ef583e9",
+    "kube-bench:source:cis-1-9-policies-5-1-13-minimize-access-to-the-service-account-token-cre:672a60a01f0e",
+    "kube-bench:source:cis-2-0-policies-5-1-13-minimize-access-to-the-service-account-token-cre:f33016fdd01e",
+    "kube-bench:source:eks-1-8-0-policies-4-1-12-minimize-access-to-the-service-account-token-c:8b85e63fa55c",
+    "kube-bench:source:k3s-cis-1-7-policies-5-1-13-minimize-access-to-the-service-account-token:20c08976a440",
+    "kube-bench:source:k3s-cis-1-8-policies-5-1-13-minimize-access-to-the-service-account-token:d22fef7ace64",
+    "kube-bench:source:k3s-cis-1-9-policies-5-1-13-minimize-access-to-the-service-account-token:dd5e1de86ce9",
+    "kube-bench:source:rke-cis-1-7-policies-5-1-13-minimize-access-to-the-service-account-token:23228095f71e",
+    "kube-bench:source:rke2-cis-1-7-policies-5-1-13-minimize-access-to-the-service-account-toke:7679584c5f8d",
+    "kube-bench:source:rke2-cis-1-8-policies-5-1-13-minimize-access-to-the-service-account-toke:9a2b39a5c55c",
+    "kube-bench:source:rke2-cis-1-9-policies-5-1-13-minimize-access-to-the-service-account-toke:fee51fe57ba4"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:minimize-access-to-the-service-account-token-creation:00b8894b5426"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:minimize-access-to-the-service-account-token-creation-manual:2b37392a14c6"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 16,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.10/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.7/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.8/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.9/policies.yaml"
+  ]
+}

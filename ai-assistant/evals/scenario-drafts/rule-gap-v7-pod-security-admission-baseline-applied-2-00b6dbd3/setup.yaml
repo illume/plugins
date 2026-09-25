@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-pod-security-admission-baseline-applied-2-00b6dbd3-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/namespace-security.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "namespace-pod-security-labels",
+      "exactField": "metadata.labels.pod-security.kubernetes.io/enforce",
+      "brokenValue": "privileged",
+      "targetPath": "/manifests/namespace-security.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Checks that every namespace has baseline pod security admission enabled via the pod-security.kubernetes.io/enforce label set to baseline or restricted"
+    }
+  healthy-control.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "namespace-pod-security-labels",
+      "exactField": "metadata.labels.pod-security.kubernetes.io/enforce",
+      "healthyValue": "baseline",
+      "targetPath": "/manifests/namespace-security.yaml",
+      "applicability": "inert-review-only"
+    }

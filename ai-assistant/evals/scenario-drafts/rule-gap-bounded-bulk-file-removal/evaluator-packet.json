@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-bounded-bulk-file-removal",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=bounded-bulk-file-removal]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "mkdir -p /fixture/data; n=0; while [ \"$n\" -lt 40 ]; do printf x > /fixture/data/file-$n; n=$((n+1)); done; rm -f /fixture/data/file-*; find /fixture/data -type f | wc -l; 0",
+        "description": "Process removes a bounded bulk data set inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=bounded-bulk-file-removal]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2a6939d1ec862631"
+}

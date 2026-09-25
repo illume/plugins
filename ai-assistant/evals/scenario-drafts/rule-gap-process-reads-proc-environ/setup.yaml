@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: proc-environment-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: proc-environment-action
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              CONTROLLED_VALUE=fixture-value sleep 60 & sibling=$!; tr '\000' '\n' <
+              /proc/$sibling/environ | grep '^CONTROLLED_VALUE=fixture-value$'; kill $sibling
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000

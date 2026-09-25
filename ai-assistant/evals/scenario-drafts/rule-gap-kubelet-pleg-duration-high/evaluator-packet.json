@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-pleg-duration-high",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "metric/kubelet_pleg_relist_duration_seconds_bucket",
+        "field_path": "histogram_quantile(0.99, rate[5m])",
+        "observed_value": "> 10s for 5m",
+        "description": "Bounded container churn accompanies a 99th-percentile PLEG relist duration above ten seconds for five minutes."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "metric/kubelet_pleg_relist_duration_seconds_bucket",
+      "field_path": "histogram_quantile(0.99, rate[5m])",
+      "observed_value": "<= 10s or duration under 5m",
+      "description": "A healthy or transient relist duration does not satisfy both threshold and duration."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-d0ac712e938fb464"
+}

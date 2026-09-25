@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { KubernetesAssistantContext } from '../kubernetes/types';
+import type { KubernetesAssistantContext } from '../kubernetes/types.ts';
 
 /** User, conversation, cluster, and tool context attached to an assistant request. */
 export interface AssistantRequestContext {

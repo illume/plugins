@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { makeNodeCommandRunner } from './model.js';
+import { describe, expect, it } from '@rstest/core';
+import { makeNodeCommandRunner } from './model.ts';
 
 describe('makeNodeCommandRunner', () => {
   it('returns a function', () => {

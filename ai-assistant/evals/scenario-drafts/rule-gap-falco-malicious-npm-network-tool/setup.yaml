@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: npm-network-sink
+spec:
+  selector:
+    app: npm-network-sink
+  ports:
+    - name: action
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: npm-network-sink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: npm-network-sink
+  template:
+    metadata:
+      labels:
+        app: npm-network-sink
+    spec:
+      containers:
+        - name: sink
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - while true; do printf 'controlled-npm-ack\n' | nc -l -p 8080; done
+          ports:
+            - name: action
+              containerPort: 8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: controlled-npm-package
+data:
+  package.json: >-
+    {"name":"controlled-network-action","version":"1.0.0","scripts":{"postinstall":"printf
+    controlled-npm | nc npm-network-sink 8080"}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: npm-install-action
+  labels:
+    evals.kubernetes.io/controlled-action: npm-install-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: npm-install-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: package-source
+          configMap:
+            name: controlled-npm-package
+      containers:
+        - name: action
+          image: node:22-alpine
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              apk add --no-cache netcat-openbsd >/dev/null
+              mkdir -p /tmp/package
+              cp /package-source/package.json /tmp/package/package.json
+              npm install /tmp/package --foreground-scripts
+          volumeMounts:
+            - name: package-source
+              mountPath: /package-source

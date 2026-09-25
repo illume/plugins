@@ -25,6 +25,7 @@ const kwokWorkerManifest = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
   '..',
+  '..',
   'profiles',
   'kwokWorker.yaml'
 );

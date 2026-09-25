@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, it } from 'vitest';
-import { buildKubectlArgs, createKubectlTool } from './kubectl.js';
+import { describe, expect, it } from '@rstest/core';
+import { buildKubectlArgs, createKubectlTool } from './kubectl.ts';
 
 describe('createKubectlTool', () => {
   it('returns a tool with the correct name and schema', () => {
@@ -122,6 +122,43 @@ describe('buildKubectlArgs', () => {
 
   it('rejects paths with shell metacharacters', () => {
     expect(() => buildKubectlArgs('/api/v1/pods;echo hacked', 'GET')).toThrow(
+      'contains disallowed characters'
+    );
+  });
+
+  it('allows query-string URLs such as container-scoped log requests', () => {
+    const result = buildKubectlArgs(
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+      'GET'
+    );
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/namespaces/default/pods/my-pod/log?container=nginx',
+    ]);
+  });
+
+  it('allows query-string URLs with label selectors and multiple parameters', () => {
+    const result = buildKubectlArgs('/api/v1/pods?labelSelector=app%3Dnginx&limit=10', 'GET');
+    expect(result.args).toEqual([
+      'get',
+      '--raw',
+      '/api/v1/pods?labelSelector=app%3Dnginx&limit=10',
+    ]);
+  });
+
+  it('allows field selectors with inequality operators', () => {
+    const url = '/api/v1/events?fieldSelector=type!=Normal&limit=50';
+    expect(buildKubectlArgs(url, 'GET').args).toEqual(['get', '--raw', url]);
+  });
+
+  it('allows set-based label selectors', () => {
+    const url = '/api/v1/pods?labelSelector=environment%20in%20(production,qa),tier!=frontend';
+    expect(buildKubectlArgs(url, 'GET').args).toEqual(['get', '--raw', url]);
+  });
+
+  it('rejects URLs with more than one query-string delimiter', () => {
+    expect(() => buildKubectlArgs('/api/v1/pods?foo=1?bar=2', 'GET')).toThrow(
       'contains disallowed characters'
     );
   });

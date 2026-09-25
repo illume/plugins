@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-ingress-loadbalancer-port-reported-an-error-s-39",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingress/object-finding-39",
+        "field_path": "status.loadBalancer.ingress[0].ports[0].error",
+        "observed_value": "fixture port unavailable",
+        "description": "The controlled object satisfies the exact 1400 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "ingress/object-finding-39",
+      "field_path": "status.loadBalancer.ingress[0].ports[0].error",
+      "observed_value": "error field absent",
+      "description": "The healthy control differs only at status.loadBalancer.ingress[0].ports[0].error."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e2333b4a04e71239"
+}

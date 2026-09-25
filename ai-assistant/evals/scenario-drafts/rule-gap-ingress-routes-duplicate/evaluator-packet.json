@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-ingress-routes-duplicate",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingress/route-a + ingress/route-b",
+        "field_path": "spec.rules[0].host + spec.rules[0].http.paths[0].path",
+        "observed_value": "duplicate.example.test; /; duplicate.example.test; /",
+        "description": "Two Ingress objects claim the same host and path."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "ingress/route-a + ingress/route-b",
+      "field_path": "spec.rules[0].host + spec.rules[0].http.paths[0].path",
+      "observed_value": "distinct.example.test; / on route-b",
+      "description": "The healthy routes use distinct host and path tuples."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9e3056d71dea2037"
+}

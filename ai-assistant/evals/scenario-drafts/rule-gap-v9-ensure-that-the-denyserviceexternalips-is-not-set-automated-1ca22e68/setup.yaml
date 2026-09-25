@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-that-the-denyserviceexternalips-is-not-set-automated-1ca22e68
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "admissionControl.configuration.DenyServiceExternalIPs",
+      "brokenValue": "true",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "admissionControl.configuration.DenyServiceExternalIPs",
+      "healthyValue": "false",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }

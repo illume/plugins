@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-hpa-minimum-replicas-too-low",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "horizontalpodautoscaler/resilient-api",
+        "field_path": "spec.minReplicas",
+        "observed_value": "1",
+        "description": "The autoscaler permits the workload to run with only one replica."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "horizontalpodautoscaler/resilient-api",
+      "field_path": "spec.minReplicas",
+      "observed_value": ">= 3",
+      "description": "The reviewed resilience floor is three replicas."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-194bc72786aad4c7"
+}

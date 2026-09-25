@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-event-rate-limit-admission-missing",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/event-rate-limit-admission-missing-fixture component fixture. A reviewed EventRateLimit configuration exists, but the API server never enables its plugin. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/event-rate-limit-admission-missing-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,5 @@
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: deprecated-api-49
+spec: {}

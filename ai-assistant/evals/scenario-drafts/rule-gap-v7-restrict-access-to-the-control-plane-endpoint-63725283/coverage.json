@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-restrict-access-to-the-control-plane-endpoint-63725283",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-managedservices-6-3-1-restrict-access-to-the-control-plane-endpo:d16b9d851e53",
+    "kube-bench:source:aks-1-0-managedservices-5-4-1-restrict-access-to-the-control-plane-endpo:bf9db4ac01f3",
+    "kube-bench:source:aks-1-7-managedservices-5-4-1-restrict-access-to-the-control-plane-endpo:cb90ba60aa9e",
+    "kube-bench:source:aks-1-8-managedservices-5-4-1-restrict-access-to-the-control-plane-endpo:3e79cb09b005",
+    "kube-bench:source:eks-1-0-1-managedservices-5-4-1-restrict-access-to-the-control-plane-end:731f21880bc2",
+    "kube-bench:source:eks-1-1-0-managedservices-5-4-1-restrict-access-to-the-control-plane-end:9c5a0aa8eb1b",
+    "kube-bench:source:eks-1-2-0-managedservices-5-4-1-restrict-access-to-the-control-plane-end:602e833358ef",
+    "kube-bench:source:eks-1-5-0-managedservices-5-4-1-restrict-access-to-the-control-plane-end:6501381ab463",
+    "kube-bench:source:eks-1-7-0-managedservices-5-4-1-restrict-access-to-the-control-plane-end:475922a12574",
+    "kube-bench:source:eks-1-8-0-managedservices-5-4-1-restrict-access-to-the-control-plane-end:c47ba0ebf74b",
+    "kubescape:rule:restrict-access-to-the-control-plane-endpoint"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:restrict-access-to-the-control-plane-endpoint:242c26e6ad99",
+    "kubescape:semantic:kubescape-rule-restrict-access-to-the-control-plane-endpoint:80ba2d603b0e"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:restrict-access-to-the-control-plane-endpoint:63725283e7ae"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 11,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/managedservices.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0247-restrictaccesstothecontrolplaneendpoint.json"
+  ]
+}

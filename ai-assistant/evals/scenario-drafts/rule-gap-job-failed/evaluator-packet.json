@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-job-failed",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "job-failed-condition",
+        "resource_ref": "job/failing-job",
+        "field_path": "status.conditions[?(@.type==\"Failed\")].status",
+        "observed_value": "True",
+        "description": "The Job controller records a terminal Failed condition."
+      },
+      {
+        "fact_id": "job-pod-exit-code",
+        "resource_ref": "pod/*?job-name=failing-job",
+        "field_path": "status.containerStatuses[?(@.name==\"job\")].state.terminated.exitCode",
+        "observed_value": "17",
+        "description": "The only Job attempt exits with the fixture failure code."
+      },
+      {
+        "fact_id": "job-failure-metric",
+        "resource_ref": "metric/kube_job_status_failed{job_name=\"failing-job\"}",
+        "field_path": "latest",
+        "observed_value": "1",
+        "description": "Native job telemetry records one failed attempt."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-job-complete",
+      "resource_ref": "job/failing-job",
+      "field_path": "status.conditions[?(@.type==\"Complete\")].status",
+      "observed_value": "True",
+      "description": "The Job never completes successfully."
+    },
+    {
+      "fact_id": "invented-job-zero-exit",
+      "resource_ref": "pod/*?job-name=failing-job",
+      "field_path": "status.containerStatuses[?(@.name==\"job\")].state.terminated.exitCode",
+      "observed_value": "0",
+      "description": "The Job process exits with code 17."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ebd7ba400d1778fb"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-containerd-unhealthy",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the failed `containerd-health-probe` Job from its probe command, termination status, and logs. State what the endpoint result establishes and do not infer host access or mutate resources.",
+  "visible_resource_refs": [
+    "job/containerd-health-probe",
+    "pod[label=job-name=containerd-health-probe]"
+  ],
+  "allowed_observation_kinds": ["job.status", "pod.spec", "pod.container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

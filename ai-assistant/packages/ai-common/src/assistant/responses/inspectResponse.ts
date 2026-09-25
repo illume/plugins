@@ -3,7 +3,7 @@
  * execution.
  */
 
-import type { ConversationMessage as Prompt } from '../../conversation/types';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
 
 // ---------------------------------------------------------------------------
 // isEmptyLLMContent

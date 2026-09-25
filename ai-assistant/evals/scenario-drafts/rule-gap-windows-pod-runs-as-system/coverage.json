@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-windows-pod-runs-as-system",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:set-runasusername-value"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-set-runasusername-value:5d6536d3d8ea"
+  ],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json"
+  ]
+}

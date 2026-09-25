@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: application-monitor
+spec:
+  selector:
+    matchLabels:
+      metrics: expected
+  endpoints:
+    - port: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: application-metrics
+  labels:
+    metrics: different
+spec:
+  selector:
+    app: application
+  ports:
+    - name: metrics
+      port: 9090

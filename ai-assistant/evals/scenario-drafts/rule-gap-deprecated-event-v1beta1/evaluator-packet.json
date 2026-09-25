@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-event-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/event/event-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "events.k8s.io/v1beta1",
+        "description": "The concrete Event manifest uses removed API version events.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/event/event-v1beta1",
+      "field_path": "apiVersion",
+      "observed_value": "events.k8s.io/v1",
+      "description": "The current Event API version is events.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-810272fc788325db"
+}

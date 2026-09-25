@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-control-plane-authorized-networks-is-enabled-automated-9f4f6ee2",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-6-0-managedservices-5-6-3-ensure-control-plane-authorized-networks:f671d79f3a1b",
+    "kube-bench:source:gke-1-8-0-managedservices-5-6-3-ensure-control-plane-authorized-networks:4e1b98b2653c",
+    "kube-bench:source:gke-1-9-0-managedservices-5-6-3-ensure-control-plane-authorized-networks:b1269ee297e0"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-control-plane-authorized-networks-is-enabled:fe95f42d0c61"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-control-plane-authorized-networks-is-enabled-automated:9f4f6ee2bcc5"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

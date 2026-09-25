@@ -1,0 +1,47 @@
+schema_version: '1.0.0'
+scenario_id: combined-selector-rbac-v1
+scenario_version: '1.0.0'
+family: combined-diagnosis
+mode: diagnose_only
+title: Service selector mismatch and independent RBAC denial
+description: Two unrelated faults must be diagnosed independently without crossing evidence scopes.
+provenance:
+  owner: ai-assistant-evals-team
+  source: synthetic
+  license: Apache-2.0
+  admission_date: '2026-09-19'
+  last_review: '2026-09-19'
+  review_due: '2026-12-18'
+  lifecycle_state: active
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: combined-diagnosis
+  lineage_id: combined-selector-rbac
+  variant_kind: anchor
+  splits:
+    - development
+  qualification_status: qualified
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: passed
+    candidate_view: passed
+    setup: passed
+    observation_capture: passed
+    cleanup: passed
+    leakage: passed
+  reviewed_by:
+    - batch-diagnosis-contract-test
+  qualified_at: '2026-09-19T00:00:00Z'
+supported_cluster_profiles:
+  - local-kwok
+required_mechanisms:
+  - api-server
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-combined
+artifact_policy:
+  retain_raw_tool_output: true

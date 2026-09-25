@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-warning-found-s-396d6547-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/events.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "kubernetes-event",
+      "exactField": "event.type",
+      "brokenValue": "Warning",
+      "targetPath": "/var/lib/evals/events.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkEvents when the pinned source predicate for issue 1503 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "kubernetes-event",
+      "exactField": "event.type",
+      "healthyValue": "Normal",
+      "targetPath": "/var/lib/evals/events.json",
+      "applicability": "inert-review-only"
+    }

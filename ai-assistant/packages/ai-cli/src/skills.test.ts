@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { describe, expect, it } from '@rstest/core';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
-import { createNodeFileSystem, parseSkillSourceUrl } from './skills.js';
+import { createNodeFileSystem, parseSkillSourceUrl } from './skills.ts';
 
 describe('parseSkillSourceUrl', () => {
   it('should parse a simple GitHub URL', () => {

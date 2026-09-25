@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-ensure-that-the-etcd-service-file-ownership-is-set-to-root-root--2604e0a0
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/systemd/system/etcd.service
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/systemd/system/etcd.service].owner",
+      "brokenValue": "nobody:nogroup",
+      "targetPath": "/etc/systemd/system/etcd.service",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/systemd/system/etcd.service].owner",
+      "healthyValue": "root:root",
+      "targetPath": "/etc/systemd/system/etcd.service",
+      "applicability": "inert-review-only"
+    }

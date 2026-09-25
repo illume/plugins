@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-unhealthy-d-desired-but-have-d-available-4c90c5a8",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-unhealthy-d-desired-but-have-d-available-4c90c5a8-fixture",
+        "field_path": "data.evidence.json#deployment.status.availableReplicas",
+        "observed_value": "1",
+        "description": "Emitted by checkDeployment, checkStatefulSet when the pinned source predicate for issue 501 is satisfied."
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-unhealthy-d-desired-but-have-d-available-4c90c5a8-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-unhealthy-d-desired-but-have-d-available-4c90c5a8-fixture",
+      "field_path": "data.healthy-control.json#deployment.status.availableReplicas",
+      "observed_value": "3",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-aed400e12040820d"
+}

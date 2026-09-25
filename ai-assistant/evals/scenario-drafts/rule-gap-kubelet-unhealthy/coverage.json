@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-kubelet-unhealthy",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeletDown",
+    "node-problem-detector:source:health-checker-kubelet-kubeletunhealthy:5d4a4dda92b2",
+    "node-problem-detector:source:windows-health-checker-kubelet-kubeletunhealthy:7f811b9e10a8"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubeletdown:3909a9e26eff",
+    "node-problem-detector:semantic:kubeletunhealthy:0094b2d8e44b"
+  ],
+  "target_tool_ids": ["kubernetes-mixin", "node-problem-detector"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/health-checker-kubelet.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/windows-health-checker-kubelet.json"
+  ]
+}

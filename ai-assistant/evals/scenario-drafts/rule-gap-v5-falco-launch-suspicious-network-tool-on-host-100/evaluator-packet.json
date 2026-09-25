@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-launch-suspicious-network-tool-on-host-100",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-100",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "/bin/busybox nc -z -w 1 127.0.0.1 1 || printf closed-loopback-port; closed-loopback-port",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Launch Suspicious Network Tool on Host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-100",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-677f5d212005c600"
+}

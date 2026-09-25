@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-windows-hcs-empty-layerchain-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: C:\etc\kubernetes\logs\containerd.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: "Failed to unmarshall layerchain json - invalid character '\0' looking for beginning of value"
+  normalized-message.txt: "Failed to unmarshall layerchain json - invalid character '\0' looking for beginning of value"
+  oracle.json: >-
+    {"source":"containerd","regex":".*Failed to unmarshall layerchain json - invalid character
+    '\\x00' looking for beginning of value*","requiredMatches":1}
+  healthy-control.log: HCS unmarshalled layerchain with 3 layers

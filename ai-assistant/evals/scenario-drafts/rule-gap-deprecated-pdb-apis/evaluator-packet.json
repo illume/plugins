@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-pdb-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-pdb-version",
+        "resource_ref": "manifest/poddisruptionbudget/legacy-api-budget",
+        "field_path": "apiVersion",
+        "observed_value": "policy/v1beta1",
+        "description": "The standalone disruption budget uses policy/v1beta1."
+      },
+      {
+        "fact_id": "deprecated-pdb-list-version",
+        "resource_ref": "manifest/poddisruptionbudgetlist/legacy-budgets",
+        "field_path": "apiVersion",
+        "observed_value": "policy/v1beta1",
+        "description": "The budget list and its item use policy/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-pdb-version",
+      "resource_ref": "manifest/poddisruptionbudget/legacy-api-budget",
+      "field_path": "apiVersion",
+      "observed_value": "policy/v1",
+      "description": "The fixture budgets do not use policy/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-fadae6eff0d3f541"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-anonymous-access-enabled-af2fac84",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the RBAC binding and identify any anonymous access grant. Cite exact subjects and role references and do not mutate resources.",
+  "visible_resource_refs": ["clusterrolebinding/anonymous-pod-reader"],
+  "allowed_observation_kinds": ["clusterrolebinding.subjects", "clusterrolebinding.role-ref"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

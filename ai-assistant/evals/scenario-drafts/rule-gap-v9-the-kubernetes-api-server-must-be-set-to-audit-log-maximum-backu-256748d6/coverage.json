@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-the-kubernetes-api-server-must-be-set-to-audit-log-maximum-backu-256748d6",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-controlplane-v-242463-the-kubernetes-api-server:07c040992a02"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:the-kubernetes-api-server-must-be-set-to-audit-log-maximum-backup:904c7b7d83ba"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:the-kubernetes-api-server-must-be-set-to-audit-log-maximum-backu:256748d6ac94"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/controlplane.yaml"
+  ]
+}

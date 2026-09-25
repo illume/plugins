@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-frequent-containerd-restarts",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the repeated failures in `containerd-restart-probe`. Inspect the selected Pod restart count, waiting reason, and prior logs during the bounded window; do not treat the probe as the host daemon or mutate resources.",
+  "visible_resource_refs": [
+    "pod/containerd-restart-probe",
+    "pod[label=app=containerd-restart-probe]"
+  ],
+  "allowed_observation_kinds": ["pod.status", "pod.container-status", "pod.logs.previous"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

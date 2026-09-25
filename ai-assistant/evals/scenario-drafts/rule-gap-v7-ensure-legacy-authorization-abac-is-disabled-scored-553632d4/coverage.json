@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-legacy-authorization-abac-is-disabled-scored-553632d4",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-managedservices-6-8-4-ensure-legacy-authorization-abac-is-disabl:b494b8fbdc5d",
+    "kube-bench:source:gke-1-2-0-managedservices-5-8-4-ensure-legacy-authorization-abac-is-disa:bd45a4ca556a",
+    "kube-bench:source:gke-1-6-0-managedservices-5-8-3-ensure-legacy-authorization-abac-is-disa:fc71d49f68be",
+    "kube-bench:source:gke-1-8-0-managedservices-5-8-3-ensure-legacy-authorization-abac-is-disa:60517a0c4847",
+    "kube-bench:source:gke-1-9-0-managedservices-5-8-3-ensure-legacy-authorization-abac-is-disa:e548a980e2a7"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-legacy-authorization-abac-is-disabled:819c5b2a0618"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-legacy-authorization-abac-is-disabled-scored:553632d476d6"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

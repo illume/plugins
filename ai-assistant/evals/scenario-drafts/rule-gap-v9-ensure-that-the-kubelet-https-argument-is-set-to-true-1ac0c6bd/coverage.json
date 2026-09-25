@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-kubelet-https-argument-is-set-to-true-1ac0c6bd",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-master-1-2-3-ensure-that-the-kubelet-https-argument-is-set-to-tr:19cecfd6f2fb",
+    "kube-bench:source:cis-1-20-master-1-2-3-ensure-that-the-kubelet-https-argument-is-set-to-t:a80f3d05e502",
+    "kube-bench:source:cis-1-23-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-to-t:13d907caf7a9",
+    "kube-bench:source:cis-1-5-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-to-tr:93853328646e",
+    "kube-bench:source:cis-1-6-k3s-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-t:57ef0ec4cba0",
+    "kube-bench:source:cis-1-6-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-to-tr:91970ee295b2",
+    "kube-bench:source:k3s-cis-1-23-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-:a18f4d7aafab",
+    "kube-bench:source:k3s-cis-1-24-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-:401bf5876b22",
+    "kube-bench:source:rke-cis-1-23-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-:c3ba4a07f188",
+    "kube-bench:source:rke-cis-1-24-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-:ff2249765b4f",
+    "kube-bench:source:rke2-cis-1-23-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set:a43f0bf8fb6f",
+    "kube-bench:source:rke2-cis-1-24-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set:b930ebfe478d",
+    "kube-bench:source:tkgi-1-2-53-master-1-2-4-ensure-that-the-kubelet-https-argument-is-set-t:f11a1a72c079"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-https-argument-is-set-to-true:ef0677ae8d2b"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-https-argument-is-set-to-true:1ac0c6bd9a26"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 13,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.24/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/master.yaml"
+  ]
+}

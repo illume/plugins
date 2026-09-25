@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-unschedulable",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why `capacity-probe` remains Pending. Compare its CPU request with scheduler condition and event evidence; cite the exact request and scheduling reason, and do not mutate resources.",
+  "visible_resource_refs": ["pod/capacity-probe", "event/*", "node/*"],
+  "allowed_observation_kinds": ["pod.spec", "pod.status", "event.list", "node.capacity"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

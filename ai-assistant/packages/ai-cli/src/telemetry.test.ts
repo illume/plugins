@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { describe, expect, it } from '@rstest/core';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { createJsonlTelemetryObserver } from './telemetry.js';
+import { createJsonlTelemetryObserver } from './telemetry.ts';
 
 describe('createJsonlTelemetryObserver', () => {
   it('writes sanitized events to a private JSONL file', () => {
@@ -48,9 +48,10 @@ describe('createJsonlTelemetryObserver', () => {
         .trim()
         .split('\n')
         .map(line => JSON.parse(line));
-      expect(events).toHaveLength(2);
-      expect(events[0].total_tokens).toBe(15);
-      expect(events[1].tool_name).toBe('kubernetes_api_request');
+      expect(events).toHaveLength(3);
+      expect(events[0]).toEqual({ type: 'telemetry_start', schema_version: '1.0.0' });
+      expect(events[1].total_tokens).toBe(15);
+      expect(events[2].tool_name).toBe('kubernetes_api_request');
       expect(statSync(filePath).mode & 0o077).toBe(0);
     } finally {
       rmSync(directory, { recursive: true, force: true });

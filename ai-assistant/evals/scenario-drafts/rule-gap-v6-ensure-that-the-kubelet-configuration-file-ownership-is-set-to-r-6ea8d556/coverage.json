@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r-6ea8d556",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownership-:25507ad4cb42",
+    "kube-bench:source:cis-1-5-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership:7ce9a01480a8",
+    "kube-bench:source:eks-1-0-1-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:7fe419caec6e",
+    "kube-bench:source:eks-1-1-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:b10bf3259f70",
+    "kube-bench:source:eks-1-2-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:ba2a7c983d5c",
+    "kube-bench:source:eks-1-5-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:af97737aa6a8",
+    "kube-bench:source:eks-1-7-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:0d7c1e2bdf9b",
+    "kube-bench:source:eks-1-8-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:991474ed90b5",
+    "kube-bench:source:gke-1-0-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership:7246cd3e4399",
+    "kube-bench:source:gke-1-2-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:9f39552d22bb",
+    "kube-bench:source:gke-1-6-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:1b1dee4d204a",
+    "kube-bench:source:gke-1-8-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:6eabe1c8a07a",
+    "kube-bench:source:gke-1-9-0-node-3-1-4-ensure-that-the-kubelet-configuration-file-ownershi:4b3f2da186fb",
+    "kube-bench:source:rh-1-0-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership-:39bef77f59e1",
+    "kube-bench:source:rh-1-4-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership-:75e1a16af877",
+    "kube-bench:source:rh-1-8-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership-:661106abe583",
+    "kube-bench:source:rh-1-9-node-4-1-10-ensure-that-the-kubelet-configuration-file-ownership-:3c0732a6fddd",
+    "kubescape:rule:ensure-that-the-kubelet-configuration-file-ownership-is-set-to-root-root"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-configuration-file-ownership-is-set-to-root-root:202d2e9aedad",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-kubelet-configuration-file-ownership-is-set-to-ro:7f10fcdecc2f"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-configuration-file-ownership-is-set-to-r:6ea8d5565954"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 18,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/node.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0171-ifthekubeletconfigyamlconfigurationfileisbeingusedvalidatefileownershipissettorootroot.json"
+  ]
+}

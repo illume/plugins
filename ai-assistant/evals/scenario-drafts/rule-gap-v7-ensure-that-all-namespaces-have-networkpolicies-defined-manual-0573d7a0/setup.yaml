@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-that-all-namespaces-have-networkpolicies-defined-manual-0573d7a0-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/namespace-networkpolicy.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "network-policy-coverage",
+      "exactField": "namespace.networkPolicy.defaultDenyPresent",
+      "brokenValue": "false",
+      "targetPath": "/manifests/namespace-networkpolicy.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure that all Namespaces have NetworkPolicies defined (Manual)"
+    }
+  healthy-control.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "network-policy-coverage",
+      "exactField": "namespace.networkPolicy.defaultDenyPresent",
+      "healthyValue": "true",
+      "targetPath": "/manifests/namespace-networkpolicy.yaml",
+      "applicability": "inert-review-only"
+    }

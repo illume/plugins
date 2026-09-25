@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-kubernetes-etcd-must-have-a-key-file-for-secure-communication-co-901f2fa5",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242427-kubernetes-etcd-must-h:48c7600110c7",
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242431-kubernetes-etcd-must-h:3f320fe73306"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:kubernetes-etcd-must-have-a-key-file-for-secure-communication-component-of-eks-c:ee96b39dfd9f"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:kubernetes-etcd-must-have-a-key-file-for-secure-communication-co:901f2fa51bc1"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/managedservices.yaml"
+  ]
+}

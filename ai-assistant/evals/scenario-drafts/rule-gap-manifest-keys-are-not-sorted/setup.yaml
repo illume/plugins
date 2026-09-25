@@ -1,0 +1,7 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: unsorted-keys
+data:
+  zebra: '1'
+  alpha: '2'

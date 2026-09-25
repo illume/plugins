@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-agent-sandbox-strict-egress-bfb55920-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/sandbox-networking.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "sandbox",
+      "evidenceKind": "sandbox-networking",
+      "exactField": "sandbox.network.egressPolicy",
+      "brokenValue": "AllowAll",
+      "targetPath": "/manifests/sandbox-networking.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "requires explicit default-deny egress when strict mode is selected"
+    }
+  healthy-control.json: |-
+    {
+      "component": "sandbox",
+      "evidenceKind": "sandbox-networking",
+      "exactField": "sandbox.network.egressPolicy",
+      "healthyValue": "DenyAll",
+      "targetPath": "/manifests/sandbox-networking.yaml",
+      "applicability": "inert-review-only"
+    }

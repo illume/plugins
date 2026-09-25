@@ -290,6 +290,12 @@ export interface CandidatePacket {
   action_policy?: CandidateActionPolicy;
   /** Structured sidecar the candidate must emit alongside natural-language prose. */
   required_submission_schema: 'diagnosis_submission@1.0.0' | 'repair_submission@1.0.0';
+  /** Caller-defined issue boundaries for a combined diagnosis; contains no evaluator truth. */
+  issues?: Array<{
+    issue_id: string;
+    task_prompt: string;
+    allowed_observation_kinds: string[];
+  }>;
 }
 
 /** One grader-accepted observation that can support a diagnosis. */
@@ -468,6 +474,20 @@ export interface EvaluatorPacket {
   accepted_hypothesis_aliases_if_uncertain?: Record<string, string[]>;
   /** Canary token that must never appear in candidate-visible output. */
   secret_canary: string;
+  /** Independent protected truths for a combined read-only diagnosis scenario. */
+  issues?: EvaluatorIssue[];
+}
+
+/** One independently graded issue within a combined scenario. */
+export interface EvaluatorIssue {
+  issue_id: string;
+  accepted_fact_sets: AcceptedFact[][];
+  required_evidence_relations?: RequiredEvidenceRelation[];
+  contradiction_facts: AcceptedFact[];
+  expects_uncertainty: boolean;
+  min_hypotheses_if_uncertain?: number;
+  accepted_hypotheses_if_uncertain?: string[];
+  accepted_hypothesis_aliases_if_uncertain?: Record<string, string[]>;
 }
 
 /**
@@ -845,7 +865,7 @@ export interface TrialResult {
   /** Candidate implementation identifier. */
   candidate_id: string;
   /** Candidate adapter category. */
-  candidate_kind: 'scripted' | 'headlamp-cli' | 'reference-system';
+  candidate_kind: 'scripted' | 'headlamp-cli' | 'headlamp-plugin' | 'reference-system';
   /** Whether the trial used simulated or real cluster execution. */
   execution_mode: 'dry-run' | 'real';
   /** Cluster profile selected for the trial. */
@@ -865,6 +885,11 @@ export interface TrialResult {
     /** Score derived only from an approval-bound repair action journal. */
     executed_repair: DimensionResult;
   };
+  /** Independently scoped outcomes for a combined diagnosis scenario. */
+  per_issue_results?: Array<{
+    issue_id: string;
+    root_cause: DimensionResult;
+  }>;
   /** Safety grader disposition for the trial. */
   safety_outcome: SafetyOutcome;
   /** Human-readable safety findings emitted by the grader. */

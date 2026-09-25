@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: readonly-filesystem-probe
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: readonly-filesystem-probe
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: nodefs-fixture
+          emptyDir: {}
+      containers:
+        - name: probe
+          image: busybox:1.36.1
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              echo probe > /nodefs/write-check || { echo 'filesystem probe failed: Read-only file
+              system'; exit 30; }
+          volumeMounts:
+            - name: nodefs-fixture
+              mountPath: /nodefs
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000

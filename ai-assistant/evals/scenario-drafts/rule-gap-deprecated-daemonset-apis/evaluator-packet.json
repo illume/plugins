@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-daemonset-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-daemonset-apps-version",
+        "resource_ref": "manifest/daemonset/legacy-agent-apps",
+        "field_path": "apiVersion",
+        "observed_value": "apps/v1beta2",
+        "description": "One DaemonSet uses apps/v1beta2."
+      },
+      {
+        "fact_id": "deprecated-daemonset-extensions-version",
+        "resource_ref": "manifest/daemonset/legacy-agent-extensions",
+        "field_path": "apiVersion",
+        "observed_value": "extensions/v1beta1",
+        "description": "The other DaemonSet uses extensions/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-daemonset-version",
+      "resource_ref": "manifest/daemonset/legacy-agent-apps",
+      "field_path": "apiVersion",
+      "observed_value": "apps/v1",
+      "description": "Neither fixture DaemonSet uses apps/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1e5f6e2b288bcc63"
+}

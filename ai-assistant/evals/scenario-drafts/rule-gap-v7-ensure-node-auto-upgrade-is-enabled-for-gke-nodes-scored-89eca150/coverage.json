@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-node-auto-upgrade-is-enabled-for-gke-nodes-scored-89eca150",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-managedservices-6-5-3-ensure-node-auto-upgrade-is-enabled-for-gk:d253d2678ae1",
+    "kube-bench:source:gke-1-2-0-managedservices-5-5-3-ensure-node-auto-upgrade-is-enabled-for-:c8dd55404bd3",
+    "kube-bench:source:gke-1-6-0-managedservices-5-5-3-ensure-node-auto-upgrade-is-enabled-for-:626ea2a16397",
+    "kube-bench:source:gke-1-8-0-managedservices-5-5-3-ensure-node-auto-upgrade-is-enabled-for-:7480cebf10e2",
+    "kube-bench:source:gke-1-9-0-managedservices-5-5-3-ensure-node-auto-upgrade-is-enabled-for-:a3d6efbdb021"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-node-auto-upgrade-is-enabled-for-gke-nodes:35403cd0f673"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-node-auto-upgrade-is-enabled-for-gke-nodes-scored:89eca1505ceb"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

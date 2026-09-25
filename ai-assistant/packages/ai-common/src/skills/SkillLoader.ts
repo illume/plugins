@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import type { ParsedSkill } from './parseSkill.ts';
 import {
   DEFAULT_MAX_SKILL_SIZE_BYTES,
   parseCopilotInstructionsFile,
-  ParsedSkill,
   parseSkillFile,
-} from './parseSkill';
+} from './parseSkill.ts';
 
 /**
  * Configuration for a skill source that tells the loader where to find skills.

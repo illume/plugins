@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-cron-persistence",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `cron-persistence-action` and its logs. Identify the exact cron file creation and executable command, and establish where the file is stored.",
+  "visible_resource_refs": ["job/cron-persistence-action", "pod/cron-persistence-action-*"],
+  "allowed_observation_kinds": ["job.pod-template", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

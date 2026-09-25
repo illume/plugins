@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-s-s-policy-in-effect-34",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "networkpolicy/object-finding-34",
+        "field_path": "spec.podSelector + spec.policyTypes + ingress + egress",
+        "observed_value": "{}; [\"Ingress\",\"Egress\"]; <absent>; <absent>",
+        "description": "The controlled object satisfies the exact 1203 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/object-finding-34",
+      "field_path": "spec.podSelector + spec.policyTypes + ingress + egress",
+      "observed_value": "non-empty selector scoped to one workload",
+      "description": "The healthy control differs only at spec.podSelector + spec.policyTypes + ingress + egress."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4bc7278d36a1cecf"
+}

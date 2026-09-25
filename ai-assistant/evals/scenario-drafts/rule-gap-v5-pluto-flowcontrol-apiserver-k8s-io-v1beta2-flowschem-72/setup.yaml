@@ -1,0 +1,5 @@
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta2
+kind: FlowSchema
+metadata:
+  name: deprecated-api-72
+spec: {}

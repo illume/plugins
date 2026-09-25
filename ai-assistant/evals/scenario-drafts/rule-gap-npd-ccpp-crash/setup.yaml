@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ccppcrash-node-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: /var/run/abrt/abrt.socket
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.json: '{"type":"CCPPCrash","count":1,"executable":"/usr/bin/fixture-worker","signal":11}'
+  predicate.json: '{"recordType":"CCPPCrash","minimumCount":1}'
+  healthy-control.json: '{"type":"Health","count":1,"message":"no CCPPCrash records"}'

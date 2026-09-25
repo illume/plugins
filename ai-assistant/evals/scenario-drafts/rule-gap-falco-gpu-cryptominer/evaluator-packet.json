@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-gpu-cryptominer",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "gpu-query-and-miner-process",
+        "resource_ref": "job/gpu-miner-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "/tools/nvidia-smi; /tools/xmrig --url stratum+tcp://miner-pool:3333",
+        "description": "The action invokes GPU-query and miner-named executables in order."
+      },
+      {
+        "fact_id": "fake-gpu-device-read",
+        "resource_ref": "configmap/gpu-tools",
+        "field_path": "data.nvidia-smi",
+        "observed_value": "cat /controlled-dev/nvidia0",
+        "description": "The GPU query reads only an emptyDir-backed synthetic device file."
+      },
+      {
+        "fact_id": "controlled-stratum-destination",
+        "resource_ref": "service/miner-pool",
+        "field_path": "spec.ports[0].port",
+        "observed_value": "3333",
+        "description": "Stratum traffic terminates at the namespace-local miner-pool Service."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-physical-gpu",
+      "resource_ref": "job/gpu-miner-action",
+      "field_path": "spec.template.spec.containers[0].resources.limits.nvidia.com/gpu",
+      "observed_value": "1",
+      "description": "The Job requests no physical GPU and mounts no host device."
+    },
+    {
+      "fact_id": "invented-external-pool",
+      "resource_ref": "service/miner-pool",
+      "field_path": "spec.type",
+      "observed_value": "LoadBalancer",
+      "description": "The controlled pool is not externally reachable."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f226c93ebdeb0a7b"
+}

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v8-ensure-that-the-openshift-pki-certificate-file-permissions-are-s-341273f7
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/pki/apiserver.crt
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/apiserver.crt].mode",
+      "brokenValue": "0644",
+      "targetPath": "/etc/kubernetes/pki/apiserver.crt",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/etc/kubernetes/pki/apiserver.crt].mode",
+      "healthyValue": "0600",
+      "targetPath": "/etc/kubernetes/pki/apiserver.crt",
+      "applicability": "inert-review-only"
+    }

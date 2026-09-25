@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-controller-manager-use-service-account-credentia-596fc847-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--use-service-account-credentials",
+      "observedValue": "false",
+      "triggerPredicate": "Use individual service account credentials for each controller."
+    }
+  predicate-summary.txt: Use individual service account credentials for each controller.
+  healthy-control.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--use-service-account-credentials",
+      "observedValue": "true"
+    }

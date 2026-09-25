@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-manage-the-alwayspullimages-admission-controller-92a45fc3
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "admissionControl.enabledPlugins",
+      "brokenValue": "[\"NamespaceLifecycle\",\"ServiceAccount\"]",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "component-arguments",
+      "exactField": "admissionControl.enabledPlugins",
+      "healthyValue": "[\"NamespaceLifecycle\",\"ServiceAccount\",\"AlwaysPullImages\"]",
+      "targetPath": "/etc/kubernetes/manifests/kube-apiserver.yaml",
+      "applicability": "inert-review-only"
+    }

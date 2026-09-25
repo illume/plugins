@@ -31,6 +31,10 @@
 import type { TokenPricingSnapshot } from '../candidates/candidateAdapter.js';
 import type { CandidateAdapter } from '../candidates/candidateAdapter.js';
 import { createHeadlampCliCandidate } from '../candidates/headlampCli.js';
+import {
+  createHeadlampPluginCandidate,
+  type HeadlampPluginCandidateOptions,
+} from '../candidates/headlampPlugin.js';
 import { createHolmesGptCandidate, HOLMES_GPT_IMAGE } from '../candidates/holmesGptAdapter.js';
 import {
   createK8sGptCandidate,
@@ -62,6 +66,8 @@ import { runCandidatePass } from './candidatePass.js';
 export type CandidateSpec =
   | ScriptedCandidateMode
   | 'headlamp-cli'
+  | 'headlamp-cli-legacy'
+  | 'headlamp-plugin'
   | 'holmesgpt'
   | 'k8sgpt'
   | 'kubectl-ai';
@@ -85,6 +91,8 @@ export function isCandidateSpec(value: string): value is CandidateSpec {
     'malformed',
     'unavailable',
     'headlamp-cli',
+    'headlamp-cli-legacy',
+    'headlamp-plugin',
     'holmesgpt',
     'k8sgpt',
     'kubectl-ai',
@@ -117,6 +125,10 @@ export interface RunOptions {
   supersedesTrialId?: string;
   /** Additional arguments passed to Headlamp CLI candidate invocations. */
   candidateCliArgs?: string[];
+  /** Secret provider values passed only through the Headlamp CLI child environment. */
+  candidateExtraEnv?: Record<string, string>;
+  /** Browser-plugin runtime and ephemeral provider configuration. */
+  headlampPluginOptions?: HeadlampPluginCandidateOptions;
   /** Explicit token-price snapshot used for reproducible cost estimates. */
   pricing?: TokenPricingSnapshot;
   /** Holmes model identifier, such as azure/gpt-4o. */
@@ -193,20 +205,29 @@ function buildCandidate(
   mode: ExecutionMode,
   profile: ClusterProfileName,
   candidateCliArgs?: string[],
+  candidateExtraEnv?: Record<string, string>,
   pricing?: TokenPricingSnapshot,
   holmesModel?: string,
   k8sGptModel?: string,
   k8sGptDeployment?: string,
-  kubectlAiOptions?: KubectlAiCandidateOptions
+  kubectlAiOptions?: KubectlAiCandidateOptions,
+  headlampPluginOptions?: HeadlampPluginCandidateOptions
 ): CandidateAdapter {
-  if (spec === 'headlamp-cli') {
+  if (spec === 'headlamp-plugin') {
+    if (mode !== 'real') throw new Error('headlamp-plugin requires --execute real');
+    if (!headlampPluginOptions) throw new Error('headlamp-plugin configuration was not resolved');
+    return createHeadlampPluginCandidate(headlampPluginOptions);
+  }
+  if (spec === 'headlamp-cli' || spec === 'headlamp-cli-legacy') {
     return createHeadlampCliCandidate({
       useMockProvider: mode !== 'real',
+      sessionMode: spec === 'headlamp-cli-legacy' ? 'legacy' : 'agent-harness',
       allowedEnvVars:
         mode === 'real'
           ? loadClusterProfile(profile === 'aks' ? 'aks-azure' : profile).model.credential_env_vars
           : [],
       cliArgs: candidateCliArgs,
+      extraEnv: candidateExtraEnv,
       pricing,
     });
   }
@@ -295,7 +316,13 @@ function assertCandidateSupportsScenarios(
   scenarios: LoadedScenario[],
   role: 'candidate' | 'baseline'
 ): void {
-  if (candidate !== 'holmesgpt' && candidate !== 'k8sgpt' && candidate !== 'kubectl-ai') return;
+  if (
+    candidate !== 'holmesgpt' &&
+    candidate !== 'k8sgpt' &&
+    candidate !== 'kubectl-ai' &&
+    candidate !== 'headlamp-plugin'
+  )
+    return;
   const unsupported = scenarios
     .filter(
       scenario =>
@@ -321,6 +348,12 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
   if (options.baseline === options.candidate) {
     throw new Error('baseline and candidate must identify distinct configurations');
   }
+  if (
+    (options.candidate === 'headlamp-plugin' || options.baseline === 'headlamp-plugin') &&
+    options.mode !== 'real'
+  ) {
+    throw new Error('headlamp-plugin requires --execute real');
+  }
   const scenarios = selectScenarios(
     options.profile,
     options.cases,
@@ -332,6 +365,12 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
   }
   assertCandidateSupportsScenarios(options.candidate, scenarios, 'candidate');
   if (options.baseline) assertCandidateSupportsScenarios(options.baseline, scenarios, 'baseline');
+  if (
+    (options.candidate === 'headlamp-plugin' || options.baseline === 'headlamp-plugin') &&
+    !options.headlampPluginOptions
+  ) {
+    throw new Error('headlamp-plugin configuration was not resolved');
+  }
 
   if (options.candidate === 'k8sgpt' || options.baseline === 'k8sgpt') {
     resolveK8sGptOptions(
@@ -384,11 +423,13 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
         options.mode,
         options.profile,
         options.candidateCliArgs,
+        options.candidateExtraEnv,
         options.pricing,
         options.holmesModel,
         options.k8sGptModel,
         options.k8sGptDeployment,
-        kubectlAiOptions
+        kubectlAiOptions,
+        options.headlampPluginOptions
       ),
   });
 
@@ -408,11 +449,13 @@ export async function runEvaluation(options: RunOptions): Promise<RunOutcome> {
           options.mode,
           options.profile,
           options.candidateCliArgs,
+          options.candidateExtraEnv,
           options.pricing,
           options.holmesModel,
           options.k8sGptModel,
           options.k8sGptDeployment,
-          kubectlAiOptions
+          kubectlAiOptions,
+          options.headlampPluginOptions
         ),
     });
     const deltas = computeRegressionDeltas(baselineResults, candidateResults);

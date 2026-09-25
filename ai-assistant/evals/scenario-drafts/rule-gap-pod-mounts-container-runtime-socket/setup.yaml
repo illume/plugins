@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: runtime-socket-client
+  labels:
+    app: runtime-socket-client
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause:3.10
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532
+      volumeMounts:
+        - name: runtime-socket
+          mountPath: /run/containerd/containerd.sock
+          readOnly: true
+  volumes:
+    - name: runtime-socket
+      hostPath:
+        path: /run/containerd/containerd.sock
+        type: Socket

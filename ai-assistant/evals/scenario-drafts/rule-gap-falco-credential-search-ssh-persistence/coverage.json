@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-credential-search-ssh-persistence",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:adding-ssh-keys-to-authorized-keys:ce923c874a0c",
+    "falco:rule:find-aws-credentials:dcd0cbd4fbe7",
+    "falco:rule:read-sensitive-file-untrusted:11b25034a58c",
+    "falco:rule:read-ssh-information:05b2fb21270d",
+    "falco:rule:search-private-keys-or-passwords:426bdd939052"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-adding-ssh-keys-to-authorized-keys-ce923c874a0c:4b52b0f776db",
+    "falco:semantic:falco-rule-find-aws-credentials-dcd0cbd4fbe7:f7d531c6f89a",
+    "falco:semantic:falco-rule-read-sensitive-file-untrusted-11b25034a58c:1d45375bc898",
+    "falco:semantic:falco-rule-read-ssh-information-05b2fb21270d:37d2882e81d9",
+    "falco:semantic:falco-rule-search-private-keys-or-passwords-426bdd939052:f248fdbbca82"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco_rules.yaml"
+  ]
+}

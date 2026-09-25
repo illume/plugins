@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-docker-unhealthy",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "docker-health-failure-log",
+        "resource_ref": "pod[label=job-name=docker-health-probe]",
+        "field_path": "logs",
+        "observed_value": "docker health check failed: endpoint unavailable",
+        "description": "The bounded Docker health endpoint request is unavailable."
+      },
+      {
+        "fact_id": "docker-health-exit-code",
+        "resource_ref": "pod[label=job-name=docker-health-probe]",
+        "field_path": "status.containerStatuses[0].state.terminated.exitCode",
+        "observed_value": "33",
+        "description": "The probe records its Docker health failure code."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-docker-health-success",
+      "resource_ref": "job/docker-health-probe",
+      "field_path": "status.succeeded",
+      "observed_value": "1",
+      "description": "The health request does not succeed."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9bda2de6680634c5"
+}

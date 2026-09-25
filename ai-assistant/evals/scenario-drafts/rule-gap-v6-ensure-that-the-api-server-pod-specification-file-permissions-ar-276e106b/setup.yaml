@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-api-server-pod-specification-file-permissions-ar-276e106b-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0644",
+      "triggerPredicate": "Ensure that the API server pod specification file has permissions of `600` or more restrictive."
+    }
+  predicate-summary.txt: Ensure that the API server pod specification file has permissions of `600` or more restrictive.
+  healthy-control.json: |-
+    {
+      "subject": "kube-apiserver",
+      "evidenceType": "file-metadata",
+      "field": "file.mode",
+      "observedValue": "0600"
+    }

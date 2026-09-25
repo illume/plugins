@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-found-taint-s-but-no-pod-can-tolerate-8bfaa499",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect node taints and Pod tolerations. Explain why the workload cannot tolerate the node, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["node/worker-a", "deployment/workload"],
+  "allowed_observation_kinds": ["node.spec", "deployment.pod-template"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

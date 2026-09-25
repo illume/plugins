@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-container-start-3306dd99-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/pod-status.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "pod-status",
+      "field": "pod.status.containerStatuses[0].state.waiting.reason",
+      "observedValue": "CreateContainerError",
+      "triggerPredicate": "Explains that a container could not start and directs investigation to its command, entrypoint, and image."
+    }
+  predicate-summary.txt: >-
+    Explains that a container could not start and directs investigation to its command, entrypoint,
+    and image.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "pod-status",
+      "field": "pod.status.containerStatuses[0].state.waiting.reason",
+      "observedValue": "Running"
+    }

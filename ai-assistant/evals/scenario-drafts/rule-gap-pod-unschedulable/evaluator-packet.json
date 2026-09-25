@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-unschedulable",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "impossible-cpu-request",
+        "resource_ref": "pod/capacity-probe",
+        "field_path": "spec.containers[0].resources.requests.cpu",
+        "observed_value": "100000",
+        "description": "The Pod requests one hundred thousand CPU cores."
+      },
+      {
+        "fact_id": "scheduler-unschedulable",
+        "resource_ref": "pod/capacity-probe",
+        "field_path": "status.conditions[type=PodScheduled].reason",
+        "observed_value": "Unschedulable",
+        "description": "The scheduler cannot find a node with sufficient CPU."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-scheduled-condition",
+      "resource_ref": "pod/capacity-probe",
+      "field_path": "status.conditions[type=PodScheduled].status",
+      "observed_value": "True",
+      "description": "No cluster node can satisfy the deliberately impossible request."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-544ff08ddffe6d65"
+}

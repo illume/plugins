@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-storage-class-api",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-storage-class-version",
+        "resource_ref": "manifest/storageclass/legacy-standard",
+        "field_path": "apiVersion",
+        "observed_value": "storage.k8s.io/v1beta1",
+        "description": "The StorageClass uses storage.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-storage-class-version",
+      "resource_ref": "manifest/storageclass/legacy-standard",
+      "field_path": "apiVersion",
+      "observed_value": "storage.k8s.io/v1",
+      "description": "The fixture StorageClass does not use storage.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9d6ed7c907fae62a"
+}

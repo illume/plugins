@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-rollout-references-missing-analysis-template",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/rollout/analysis-rollout",
+        "field_path": "spec.strategy.canary.analysis.templates[0].templateName + AnalysisTemplate inventory",
+        "observed_value": "missing-analysis; 0 matches",
+        "description": "The rollout analysis step names an AnalysisTemplate that is absent."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/rollout/analysis-rollout",
+      "field_path": "spec.strategy.canary.analysis.templates[0].templateName + AnalysisTemplate inventory",
+      "observed_value": "release-analysis; 1 match",
+      "description": "The healthy rollout resolves its analysis template."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ec854f66e38e4c61"
+}

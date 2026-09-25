@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-daemonset-rollout-failure",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeDaemonSetMisScheduled",
+    "kubernetes-mixin:alert:KubeDaemonSetNotScheduled",
+    "kubernetes-mixin:alert:KubeDaemonSetRolloutStuck"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubedaemonsetmisscheduled:72274dcecf1f",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubedaemonsetnotscheduled:1f64198a00d1",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubedaemonsetrolloutstuck:f6dfb751b72f"
+  ],
+  "target_tool_ids": ["kubernetes-mixin"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/apps_alerts.libsonnet"
+  ]
+}

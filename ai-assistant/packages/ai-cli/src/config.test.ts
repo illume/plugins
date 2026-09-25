@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   configFromEnv,
   getHeadlampDataDir,
@@ -26,7 +26,7 @@ import {
   loadConfigFile,
   replaceFileSync,
   saveHeadlampAIConfig,
-} from './config.js';
+} from './config.ts';
 
 describe('getHeadlampDataDir', () => {
   it('returns a non-empty string', () => {
@@ -83,7 +83,7 @@ describe('loadAppConfig', () => {
   it('uses the rollback-safe fallback when rename-over-existing is unavailable', () => {
     const temporaryPath = path.join(tmpDir, 'headlamp-ai.json.tmp');
     const configPath = path.join(tmpDir, 'headlamp-ai.json');
-    const renameSync = vi
+    const renameSync = rs
       .fn()
       .mockImplementationOnce(() => {
         const error = new Error('destination exists') as NodeJS.ErrnoException;
@@ -91,8 +91,8 @@ describe('loadAppConfig', () => {
         throw error;
       })
       .mockImplementation(() => {});
-    const existsSync = vi.fn((candidate: fs.PathLike) => candidate === configPath);
-    const rmSync = vi.fn();
+    const existsSync = rs.fn((candidate: fs.PathLike) => candidate === configPath);
+    const rmSync = rs.fn();
 
     replaceFileSync(temporaryPath, configPath, { existsSync, renameSync, rmSync });
 

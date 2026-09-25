@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-http-proxy-environment-exec",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["falco:rule:program-run-with-disallowed-http-proxy-env:480022c74baf"],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-program-run-with-disallowed-http-proxy-env-480022c74baf:b9fc1c8b70f1"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml"
+  ]
+}

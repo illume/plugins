@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bounded-action-97
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 60
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: bounded-action-97
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              printf controlled > /fixture/ssh-payload; /bin/busybox nc -l -p 2222 <
+              /fixture/ssh-payload & listener=$!; /bin/busybox nc 127.0.0.1 2222 >
+              /fixture/ssh-result; wait "$listener"; cat /fixture/ssh-result
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 8Mi

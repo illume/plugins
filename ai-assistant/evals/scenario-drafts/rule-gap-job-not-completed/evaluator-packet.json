@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-job-not-completed",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "job-remains-active",
+        "resource_ref": "job/stalled-job",
+        "field_path": "status.active",
+        "observed_value": "1",
+        "description": "The Job still has an active Pod after the expected completion window."
+      },
+      {
+        "fact_id": "job-has-no-successes",
+        "resource_ref": "job/stalled-job",
+        "field_path": "status.succeeded",
+        "observed_value": "0 or <absent>",
+        "description": "No Job completion has been recorded."
+      },
+      {
+        "fact_id": "job-age-exceeds-window",
+        "resource_ref": "metric/kube_job_status_start_time{job_name=\"stalled-job\"}",
+        "field_path": "time() - latest",
+        "observed_value": "> 600",
+        "description": "The active Job has run for more than the stated ten-minute completion window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-job-failed",
+      "resource_ref": "job/stalled-job",
+      "field_path": "status.conditions[?(@.type==\"Failed\")].status",
+      "observed_value": "True",
+      "description": "The Job remains active during the scored window rather than failing."
+    },
+    {
+      "fact_id": "invented-job-succeeded",
+      "resource_ref": "metric/kube_job_status_succeeded{job_name=\"stalled-job\"}",
+      "field_path": "latest",
+      "observed_value": "1",
+      "description": "Native telemetry records no successful completion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2478e628b2cb8726"
+}

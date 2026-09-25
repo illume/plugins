@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-falco-disallowed-ssh-connection-non-standard-port-97",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "job/bounded-action-97",
+        "field_path": "spec.template.spec.containers[0].command + logs[action]",
+        "observed_value": "printf controlled > /fixture/ssh-payload; /bin/busybox nc -l -p 2222 < /fixture/ssh-payload & listener=$!; /bin/busybox nc 127.0.0.1 2222 > /fixture/ssh-result; wait \"$listener\"; cat /fixture/ssh-result; controlled",
+        "description": "The bounded Job emits the exact controlled process, file, or network action evidence for Disallowed SSH Connection Non Standard Port."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "job/bounded-action-97",
+      "field_path": "spec.template.spec.containers[0].command + logs[action]",
+      "observed_value": "control Job records a benign no-op action",
+      "description": "The healthy control differs only at spec.template.spec.containers[0].command + logs[action]."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-062f280a1a86666b"
+}

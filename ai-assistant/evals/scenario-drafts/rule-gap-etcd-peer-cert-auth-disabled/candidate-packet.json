@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-etcd-peer-cert-auth-disabled",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the configmap/etcd-peer-cert-auth-disabled-fixture component fixture. The TLS peer listener explicitly accepts peers without certificate authentication. Cite the exact field or command argument and do not mutate resources.",
+  "visible_resource_refs": ["configmap/etcd-peer-cert-auth-disabled-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.etcd"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

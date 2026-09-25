@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-time-sync-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: /var/log/node-monitor/time-sync.log
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.txt: '2026-09-20T00:00:00Z health=failed condition=NTPIsDown detail="ntpq query: connection refused"'
+  predicate.json: '{"condition":"NTPIsDown","health":"failed","requiredMatches":1}'
+  healthy-control.txt: 2026-09-20T00:00:00Z health=ok condition=NTPIsDown detail="peer synchronized"

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-authentication-using-client-certificates-is-disabled-scor-75603355",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-managedservices-6-8-2-ensure-authentication-using-client-certifi:4d1f184b46b6",
+    "kube-bench:source:gke-1-2-0-managedservices-5-8-2-ensure-authentication-using-client-certi:0a8fd7cf7ae0",
+    "kube-bench:source:gke-1-6-0-managedservices-5-8-1-ensure-authentication-using-client-certi:82ffd31528d9",
+    "kube-bench:source:gke-1-8-0-managedservices-5-8-1-ensure-authentication-using-client-certi:0bac4250e368",
+    "kube-bench:source:gke-1-9-0-managedservices-5-8-1-ensure-authentication-using-client-certi:09d9b5f7fcb4"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-authentication-using-client-certificates-is-disabled:fefdf595f903"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-authentication-using-client-certificates-is-disabled-scor:756033554435"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml"
+  ]
+}

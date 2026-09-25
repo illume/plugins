@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-ensure-that-the-scheduler-bind-address-argument-is-set-to-127-0--b9f931e6",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v6-ensure-that-the-scheduler-bind-address-argument-is-set-to-127-0--b9f931e6-fixture. Explain the concrete configuration or evidence defect represented by the fixture, cite exact fields, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v6-ensure-that-the-scheduler-bind-address-argument-is-set-to-127-0--b9f931e6-fixture"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "normalized-predicate"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

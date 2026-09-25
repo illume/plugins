@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-etcd-peer-tls-enabled-a32ffc57-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--peer-cert-file + arguments.--peer-key-file",
+      "observedValue": "absent + absent",
+      "triggerPredicate": "etcd should be configured to make use of TLS encryption for peer connections."
+    }
+  predicate-summary.txt: etcd should be configured to make use of TLS encryption for peer connections.
+  healthy-control.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--peer-cert-file + arguments.--peer-key-file",
+      "observedValue": "/etc/kubernetes/pki/etcd/peer.crt + /etc/kubernetes/pki/etcd/peer.key"
+    }

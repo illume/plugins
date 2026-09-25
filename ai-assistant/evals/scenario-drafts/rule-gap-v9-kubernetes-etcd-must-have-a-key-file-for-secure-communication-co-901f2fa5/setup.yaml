@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-kubernetes-etcd-must-have-a-key-file-for-secure-communication-co-901f2fa5
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--key-file",
+      "brokenValue": "absent",
+      "targetPath": "/etc/kubernetes/manifests/etcd.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "etcd",
+      "evidenceKind": "component-arguments",
+      "exactField": "arguments.--key-file",
+      "healthyValue": "/etc/kubernetes/pki/etcd/server.key",
+      "targetPath": "/etc/kubernetes/manifests/etcd.yaml",
+      "applicability": "inert-review-only"
+    }

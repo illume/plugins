@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-ensure-that-the-seccomp-default-parameter-is-set-to-true-manual-2d6c2e30",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:cis-1-11-node-4-2-14-ensure-that-the-seccomp-default-parameter-is-set-to:7ff1b1bb2cd6",
+    "kube-bench:source:cis-1-12-node-4-2-14-ensure-that-the-seccomp-default-parameter-is-set-to:f3fcbb05e59f",
+    "kube-bench:source:cis-2-0-node-4-2-14-ensure-that-the-seccomp-default-parameter-is-set-to-:d34624c51af0"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-seccomp-default-parameter-is-set-to-true:c5a260a63681"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-seccomp-default-parameter-is-set-to-true-manual:2d6c2e30b456"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.11/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.12/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-2.0/node.yaml"
+  ]
+}

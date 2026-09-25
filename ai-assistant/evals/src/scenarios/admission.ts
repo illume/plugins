@@ -92,6 +92,31 @@ export function assertScenarioAdmission(scenario: LoadedScenario): void {
     );
   }
 
+  const candidateIssues = candidatePacket.issues;
+  const evaluatorIssues = evaluatorPacket.issues;
+  if (Boolean(candidateIssues) !== Boolean(evaluatorIssues)) {
+    throw new Error(
+      `scenario ${manifest.scenario_id}: combined issue boundaries must exist in both packets`
+    );
+  }
+  if (candidateIssues && evaluatorIssues) {
+    const candidateIssueIds = candidateIssues.map(issue => issue.issue_id);
+    const evaluatorIssueIds = evaluatorIssues.map(issue => issue.issue_id);
+    if (
+      new Set(candidateIssueIds).size !== candidateIssueIds.length ||
+      new Set(evaluatorIssueIds).size !== evaluatorIssueIds.length ||
+      candidateIssueIds.length !== evaluatorIssueIds.length ||
+      candidateIssueIds.some(issueId => !evaluatorIssueIds.includes(issueId))
+    ) {
+      throw new Error(
+        `scenario ${manifest.scenario_id}: candidate and evaluator issue IDs must be unique and equal`
+      );
+    }
+    if (manifest.mode !== 'diagnose_only' || candidatePacket.allow_mutations) {
+      throw new Error(`scenario ${manifest.scenario_id}: combined scenarios must remain read-only`);
+    }
+  }
+
   const derived =
     portfolio.variant_kind === 'generated' || portfolio.variant_kind === 'transformed';
   if (derived !== Boolean(portfolio.parent_scenario_id)) {

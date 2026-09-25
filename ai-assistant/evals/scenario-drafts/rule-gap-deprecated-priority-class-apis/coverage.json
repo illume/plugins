@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-priority-class-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-priorityclass-scheduling-k8s-io-v1alpha1-removed-v1-17-0:710ad98cf8d7",
+    "pluto:source:k8s-priorityclass-scheduling-k8s-io-v1beta1-removed-v1-22-0:56f9625c1c50"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-scheduling-k8s-io-v1alpha1-priorityclass-removed-in-v1-17-0:75f2905855b1",
+    "pluto:semantic:k8s-scheduling-k8s-io-v1beta1-priorityclass-removed-in-v1-22-0:f9c87d43e9c9"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

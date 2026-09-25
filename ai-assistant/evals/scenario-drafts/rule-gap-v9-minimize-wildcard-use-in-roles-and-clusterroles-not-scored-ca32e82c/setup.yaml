@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-minimize-wildcard-use-in-roles-and-clusterroles-not-scored-ca32e82c
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/clusterrole-wildcard.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "brokenValue": "[\"*\"]",
+      "targetPath": "/manifests/clusterrole-wildcard.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "rbac",
+      "evidenceKind": "rbac-rule",
+      "exactField": "rules[0].verbs",
+      "healthyValue": "[\"get\",\"list\",\"watch\"]",
+      "targetPath": "/manifests/clusterrole-wildcard.yaml",
+      "applicability": "inert-review-only"
+    }

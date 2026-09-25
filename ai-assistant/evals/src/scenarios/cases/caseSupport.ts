@@ -25,6 +25,8 @@ export interface ObservationStep {
   fieldPath: string;
   value: string;
   durationNs: bigint;
+  /** Combined-scenario issue identities allowed to consume this observation. */
+  issueIds?: string[];
   evidenceValues?: Array<{
     resourceRef: string;
     fieldPath: string;

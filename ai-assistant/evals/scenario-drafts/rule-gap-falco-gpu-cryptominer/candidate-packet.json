@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-gpu-cryptominer",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect `gpu-tools`, `miner-pool`, and `gpu-miner-action`. Identify the GPU-query, device-access, miner-process, and Stratum connection evidence and its controlled boundary.",
+  "visible_resource_refs": [
+    "configmap/gpu-tools",
+    "deployment/miner-pool",
+    "service/miner-pool",
+    "job/gpu-miner-action"
+  ],
+  "allowed_observation_kinds": [
+    "configmap.data",
+    "job.pod-template",
+    "service.endpoints",
+    "pod.logs"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

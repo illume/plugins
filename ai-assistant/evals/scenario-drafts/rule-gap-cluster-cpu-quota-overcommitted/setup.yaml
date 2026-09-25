@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: cpu-quota-overcommit
+spec:
+  hard:
+    requests.cpu: '100000'

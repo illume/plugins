@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-resource-quota-exceeded",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "resourcequota/pod-budget",
+        "field_path": "status.used.pods + status.hard.pods",
+        "observed_value": "1; 1",
+        "description": "The existing Pod consumes the entire Pod quota, so another Pod admission would exceed the hard limit."
+      },
+      {
+        "fact_id": "quota-exceed-attempt-rejected",
+        "resource_ref": "event/quota-exceeded-attempt",
+        "field_path": "reason + message",
+        "observed_value": "FailedCreate; exceeded quota: pod-budget, requested: pods=1, used: pods=1, limited: pods=1",
+        "description": "A second Pod creation attempt is rejected because it would exceed the exhausted hard limit."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "resourcequota/pod-budget",
+      "field_path": "status.used.pods + status.hard.pods",
+      "observed_value": "used < hard",
+      "description": "A healthy quota retains capacity; a rejected unrelated resource kind is confounding."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1605d870bbd49869"
+}

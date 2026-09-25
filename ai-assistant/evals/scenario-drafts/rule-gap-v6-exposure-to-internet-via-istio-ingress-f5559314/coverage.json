@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-exposure-to-internet-via-istio-ingress-f5559314",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:exposure-to-internet-via-istio-ingress"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-exposure-to-internet-via-istio-ingress:a9929886c17e"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:exposure-to-internet-via-istio-ingress:f5559314318b"
+  ],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0266-exposuretointernet-gateway.json"
+  ]
+}

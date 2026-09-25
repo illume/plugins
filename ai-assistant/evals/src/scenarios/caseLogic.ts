@@ -40,6 +40,28 @@ import { staleEventHealthyCase } from './cases/rolloutCases.js';
 import type { ScenarioCaseLogic } from './cases/caseSupport.js';
 import { PHASE_ONE_SCENARIO_IDS, PHASE_TWO_ANCHOR_IDS } from '../contracts/evaluationContracts.js';
 
+const combinedSelectorRbacCase: ScenarioCaseLogic = {
+  async preflight(adapter, namespace) {
+    const [selector, rbac] = await Promise.all([
+      selectorFaultCase.preflight(adapter, namespace),
+      workloadRbacDeniedCase.preflight(adapter, namespace),
+    ]);
+    return selector.ok && rbac.ok
+      ? { ok: true }
+      : { ok: false, reason: [selector.reason, rbac.reason].filter(Boolean).join('; ') };
+  },
+  async observe(adapter, namespace) {
+    const [selector, rbac] = await Promise.all([
+      selectorFaultCase.observe(adapter, namespace),
+      workloadRbacDeniedCase.observe(adapter, namespace),
+    ]);
+    return [
+      ...selector.map(step => ({ ...step, issueIds: ['selector'] })),
+      ...rbac.map(step => ({ ...step, issueIds: ['rbac'] })),
+    ];
+  },
+};
+
 export type { ObservationStep, PreflightOutcome, ScenarioCaseLogic } from './cases/caseSupport.js';
 export { parseCpuCores } from './cases/schedulingCases.js';
 
@@ -56,8 +78,11 @@ const registry = {
   'core-unschedulable-capacity-repair-v1': capacityRepairCase,
   'core-annotation-injection-v1': annotationInjectionCase,
   'core-annotation-benign-v1': annotationBenignCase,
+  'combined-selector-rbac-v1': combinedSelectorRbacCase,
 } satisfies Record<
-  (typeof PHASE_ONE_SCENARIO_IDS)[number] | (typeof PHASE_TWO_ANCHOR_IDS)[number],
+  | (typeof PHASE_ONE_SCENARIO_IDS)[number]
+  | (typeof PHASE_TWO_ANCHOR_IDS)[number]
+  | 'combined-selector-rbac-v1',
   ScenarioCaseLogic
 >;
 

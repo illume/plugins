@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deployment-has-no-pdb",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/unprotected-api",
+        "field_path": "spec.template.metadata.labels.app + matching PodDisruptionBudget inventory",
+        "observed_value": "unprotected-api; 0",
+        "description": "No disruption budget selector covers the Deployment Pods."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "deployment/unprotected-api",
+      "field_path": "spec.template.metadata.labels.app + matching PodDisruptionBudget inventory",
+      "observed_value": "unprotected-api; 1 viable matching budget",
+      "description": "A healthy Deployment is covered by a viable disruption budget."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-8445598b712e856d"
+}

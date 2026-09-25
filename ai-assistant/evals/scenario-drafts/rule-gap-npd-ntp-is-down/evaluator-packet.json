@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-ntp-is-down",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/node-time-sync-evidence",
+        "field_path": "data.source-evidence.txt + data.predicate.json",
+        "observed_value": "2026-09-20T00:00:00Z health=failed condition=NTPIsDown detail=\"ntpq query: connection refused\"; {\"condition\":\"NTPIsDown\",\"health\":\"failed\",\"requiredMatches\":1}",
+        "description": "The node monitor records one failed time-synchronization check with condition NTPIsDown."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "configmap/node-time-sync-evidence",
+      "field_path": "data.source-evidence.txt + data.predicate.json",
+      "observed_value": "2026-09-20T00:00:00Z health=ok condition=NTPIsDown detail=\"peer synchronized\"",
+      "description": "The healthy control does not satisfy the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1c7669555a55077f"
+}

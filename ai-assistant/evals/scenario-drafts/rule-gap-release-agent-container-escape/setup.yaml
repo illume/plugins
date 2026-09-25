@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: release-agent-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: release-agent-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 8Mi
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              mkdir -p /fixture/cgroup && printf '/fixture/controlled-handler\n' >
+              /fixture/cgroup/release_agent && cat /fixture/cgroup/release_agent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_ADMIN
+            runAsUser: 0
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: copy-client
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: copy-client
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - get
+  - apiGroups:
+      - ''
+    resources:
+      - pods/exec
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: copy-client
+subjects:
+  - kind: ServiceAccount
+    name: copy-client
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: copy-client
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: copy-victim
+  labels:
+    app: copy-victim
+spec:
+  containers:
+    - name: victim
+      image: alpine:3.20
+      command:
+        - /bin/sh
+        - '-ceu'
+        - mkdir -p /data; printf controlled-artifact > /data/artifact; sleep 3600
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kubectl-copy-action
+  labels:
+    evals.kubernetes.io/controlled-action: kubectl-copy-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: kubectl-copy-action
+    spec:
+      restartPolicy: Never
+      serviceAccountName: copy-client
+      automountServiceAccountToken: true
+      containers:
+        - name: action
+          image: alpine/k8s:1.31.1
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              until kubectl get pod copy-victim -o jsonpath="{.status.phase}" | grep -q Running; do
+              sleep 1; done
+
+              kubectl cp copy-victim:/data/artifact /tmp/artifact
+
+              cat /tmp/artifact

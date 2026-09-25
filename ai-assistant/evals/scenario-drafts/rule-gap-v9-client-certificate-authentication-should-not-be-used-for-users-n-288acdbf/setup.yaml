@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /identity/access-policy.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: identity-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "identity",
+      "evidenceKind": "identity-policy",
+      "exactField": "users[0].authMethod",
+      "brokenValue": "x509-client-certificate",
+      "targetPath": "/identity/access-policy.json",
+      "applicability": "identity-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "identity",
+      "evidenceKind": "identity-policy",
+      "exactField": "users[0].authMethod",
+      "healthyValue": "oidc",
+      "targetPath": "/identity/access-policy.json",
+      "applicability": "identity-review-only"
+    }

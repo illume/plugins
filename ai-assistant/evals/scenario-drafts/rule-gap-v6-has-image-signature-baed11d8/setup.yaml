@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signed-app
+  labels:
+    app: signed-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: signed-app
+  template:
+    metadata:
+      labels:
+        app: signed-app
+    spec:
+      containers:
+        - name: app
+          image: registry.example.corp/apps/signed-app:1.2.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-verification-report
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/image-report.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  report.json: |-
+    {
+      "image": "registry.example.corp/apps/signed-app:1.2.0",
+      "hasSignature": false
+    }
+  healthy-control.json: |-
+    {
+      "image": "registry.example.corp/apps/signed-app:1.2.0",
+      "hasSignature": true
+    }

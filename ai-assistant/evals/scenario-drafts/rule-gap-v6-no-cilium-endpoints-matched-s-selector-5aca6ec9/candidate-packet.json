@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-no-cilium-endpoints-matched-s-selector-5aca6ec9",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the policy selector and workload labels. Explain why no endpoints match, citing exact fields, and do not mutate resources.",
+  "visible_resource_refs": ["deployment/web", "ciliumnetworkpolicy/web-policy"],
+  "allowed_observation_kinds": ["custom-resource.spec", "deployment.pod-template-labels"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

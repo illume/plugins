@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-shares-host-pid",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/host-pid-workload",
+        "field_path": "spec.hostPID",
+        "observed_value": "true",
+        "description": "The Pod explicitly joins the node process namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/host-pid-workload",
+      "field_path": "spec.hostPID",
+      "observed_value": "false or absent",
+      "description": "A healthy Pod does not join the node process namespace."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b7e2143622af52f3"
+}

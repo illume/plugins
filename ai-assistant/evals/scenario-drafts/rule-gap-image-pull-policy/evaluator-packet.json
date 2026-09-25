@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-image-pull-policy",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "tag-based-image",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].image",
+        "observed_value": "registry.k8s.io/pause:3.10",
+        "description": "The application image uses a mutable tag reference rather than a digest."
+      },
+      {
+        "fact_id": "if-not-present-policy",
+        "resource_ref": "deployment/app",
+        "field_path": "spec.template.spec.containers[0].imagePullPolicy",
+        "observed_value": "IfNotPresent",
+        "description": "The kubelet may reuse a cached image for this tag."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-always-policy",
+      "resource_ref": "deployment/app",
+      "field_path": "spec.template.spec.containers[0].imagePullPolicy",
+      "observed_value": "Always",
+      "description": "The fixture does not request an image pull on every container start."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b085919862acc059"
+}

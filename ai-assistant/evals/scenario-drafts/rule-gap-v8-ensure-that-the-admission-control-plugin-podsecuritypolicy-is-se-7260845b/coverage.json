@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-admission-control-plugin-podsecuritypolicy-is-se-7260845b",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-master-1-2-14-ensure-that-the-admission-control-plugin-podsecuri:715629730a67",
+    "kube-bench:source:cis-1-20-master-1-2-15-ensure-that-the-admission-control-plugin-podsecur:b2682773c600",
+    "kube-bench:source:cis-1-5-master-1-2-16-ensure-that-the-admission-control-plugin-podsecuri:08a5f57bd7f9",
+    "kube-bench:source:cis-1-6-k3s-master-1-2-16-ensure-that-the-admission-control-plugin-podse:2d6ae084a92f",
+    "kube-bench:source:cis-1-6-master-1-2-16-ensure-that-the-admission-control-plugin-podsecuri:60b015c0edb2",
+    "kube-bench:source:tkgi-1-2-53-master-1-2-16-ensure-that-the-admission-control-plugin-podse:0851e42a662a"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-admission-control-plugin-podsecuritypolicy-is-set:219a48dc7507"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-admission-control-plugin-podsecuritypolicy-is-se:7260845b9ea8"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 6,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/master.yaml"
+  ]
+}

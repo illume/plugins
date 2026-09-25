@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-iptables-version-mismatch",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/node-iptables-mode-evidence",
+        "field_path": "data.source-evidence.txt + data.predicate.json",
+        "observed_value": "2026-09-20T00:01:00Z health=failed condition=IPTablesVersionsMismatch kube-proxy=legacy kubelet=nft; {\"condition\":\"IPTablesVersionsMismatch\",\"kubeProxyMode\":\"legacy\",\"kubeletMode\":\"nft\",\"requiredMatches\":1}",
+        "description": "The node evidence records incompatible legacy and nft iptables modes."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "configmap/node-iptables-mode-evidence",
+      "field_path": "data.source-evidence.txt + data.predicate.json",
+      "observed_value": "2026-09-20T00:01:00Z health=ok condition=IPTablesVersionsMismatch kube-proxy=nft kubelet=nft",
+      "description": "The healthy control does not satisfy the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-de78bdbf08157b26"
+}

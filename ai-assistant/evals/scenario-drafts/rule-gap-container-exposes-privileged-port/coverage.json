@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-container-exposes-privileged-port",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-linter:check:privileged-ports"],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-privileged-ports:a3a61e477af5"
+  ],
+  "target_tool_ids": ["kube-linter"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/privilegedports.yaml"
+  ]
+}

@@ -18,7 +18,7 @@ import { sha256OfJson, type JsonValue } from '../canonicalJson.js';
 import type { ActionRequest, CandidatePacket } from '../contracts/evaluationContracts.js';
 
 /** Candidate implementation families supported by the shared trial pipeline. */
-export type CandidateKind = 'scripted' | 'headlamp-cli' | 'reference-system';
+export type CandidateKind = 'scripted' | 'headlamp-cli' | 'headlamp-plugin' | 'reference-system';
 
 export type UsageRateCategory =
   | 'uncached_input_tokens'
@@ -106,6 +106,8 @@ export interface RetrievedObservation {
   field_path: string;
   /** String representation exposed to the candidate. */
   value: string;
+  /** Caller-defined combined-scenario issues permitted to consume this observation. */
+  issue_ids?: string[];
 }
 
 /**
@@ -166,6 +168,8 @@ export interface CandidateInvocationResult {
   raw_text: string;
   /** Raw text the candidate emitted for its structured sidecar, or null if none was produced. */
   submission_text: string | null;
+  /** Independently scoped sidecars emitted by a batch-capable candidate. */
+  issue_submissions?: Array<{ issue_id: string; submission_text: string | null }>;
   /** Harness-level completion status for the candidate process. */
   status: 'ok' | 'unavailable' | 'timeout';
   /** End-to-end candidate latency in nanoseconds. */
@@ -202,6 +206,22 @@ export interface CandidateInvocationResult {
     cache_write_5m_input_tokens?: number;
     cache_write_1h_input_tokens?: number;
     reasoning_output_tokens?: number;
+  }>;
+  /** Sanitized monotonic stage durations emitted by the candidate runtime. */
+  stage_timings?: Array<{
+    stage:
+      | 'turn_preparation'
+      | 'tool_adaptation'
+      | 'agent_construction'
+      | 'history_preparation'
+      | 'model_request'
+      | 'agent_stream_processing'
+      | 'structured_validation'
+      | 'structured_repair'
+      | 'turn_total';
+    outcome: 'success' | 'error';
+    duration_ns: string;
+    time_to_first_token_ns?: string;
   }>;
   /** Configured usage estimate; absent when no explicit pricing snapshot was configured. */
   configured_usage_estimate?: ConfiguredUsageEstimate;

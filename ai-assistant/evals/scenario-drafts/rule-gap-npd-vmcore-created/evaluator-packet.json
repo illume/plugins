@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-vmcore-created",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/node-vmcore-evidence",
+        "field_path": "data.source-evidence.txt + data.predicate.json",
+        "observed_value": "{\"type\":\"VMcore\",\"count\":1,\"path\":\"/var/crash/127.0.0.1-2026-09-20-00:02:00/vmcore\"}; {\"recordType\":\"VMcore\",\"minimumCount\":1}",
+        "description": "The inert adaptor stream contains one exact VMcore record."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "configmap/node-vmcore-evidence",
+      "field_path": "data.source-evidence.txt + data.predicate.json",
+      "observed_value": "{\"type\":\"Health\",\"count\":1,\"message\":\"no VMcore records\"}",
+      "description": "The healthy control does not satisfy the normalized predicate."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c5e867c2bb287296"
+}

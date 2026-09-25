@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-kubelet-read-only-port",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-m:7fe7a4abec60",
+    "kube-bench:source:aks-1-0-node-3-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-m:3fe6c28964bc",
+    "kube-bench:source:cis-1-20-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-:dcb2e96ec137",
+    "kube-bench:source:cis-1-23-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-:49ecd56a8b24",
+    "kube-bench:source:cis-1-5-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-s:4279e5076dcf",
+    "kube-bench:source:cis-1-6-k3s-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to:9ef6c0661825",
+    "kube-bench:source:cis-1-6-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-m:696e6930cffb",
+    "kube-bench:source:eks-1-0-1-node-3-2-4-ensure-that-the-read-only-port-argument-is-set-to-0:fb20e08cb063",
+    "kube-bench:source:eks-1-1-0-node-3-2-4-ensure-that-the-read-only-port-argument-is-set-to-0:a981574ea9fc",
+    "kube-bench:source:gke-1-0-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to-0-s:c2ad28f45f12",
+    "kube-bench:source:gke-1-2-0-node-3-2-4-ensure-that-the-read-only-port-argument-is-set-to-0:3dbc1a1ff2bc",
+    "kube-bench:source:k3s-cis-1-23-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-t:67cdcdd962b8",
+    "kube-bench:source:rke-cis-1-23-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-t:3899a5fcebe9",
+    "kube-bench:source:rke2-cis-1-23-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-:c17866952dc5",
+    "kube-bench:source:tkgi-1-2-53-node-4-2-4-ensure-that-the-read-only-port-argument-is-set-to:e5570d8d33c7"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-read-only-port-argument-is-set-to-0:33425e4719e2"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 15,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.5/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+  ]
+}

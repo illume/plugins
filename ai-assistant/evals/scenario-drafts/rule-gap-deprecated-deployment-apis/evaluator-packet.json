@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-deployment-apis",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-deployment-apps-v1beta1",
+        "resource_ref": "manifest/deployment/legacy-apps-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "apps/v1beta1",
+        "description": "One Deployment uses apps/v1beta1."
+      },
+      {
+        "fact_id": "deprecated-deployment-apps-v1beta2",
+        "resource_ref": "manifest/deployment/legacy-apps-v1beta2",
+        "field_path": "apiVersion",
+        "observed_value": "apps/v1beta2",
+        "description": "One Deployment uses apps/v1beta2."
+      },
+      {
+        "fact_id": "deprecated-deployment-extensions-v1beta1",
+        "resource_ref": "manifest/deployment/legacy-extensions-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "extensions/v1beta1",
+        "description": "One Deployment uses extensions/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-current-deployment-version",
+      "resource_ref": "manifest/deployment/legacy-apps-v1beta1",
+      "field_path": "apiVersion",
+      "observed_value": "apps/v1",
+      "description": "None of the fixture Deployments uses apps/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-03301d73d7bf8da2"
+}

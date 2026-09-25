@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stale-generation
+  generation: 4
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stale-generation
+  template:
+    metadata:
+      labels:
+        app: stale-generation
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+status:
+  observedGeneration: 3
+  replicas: 3
+  readyReplicas: 3
+  availableReplicas: 3

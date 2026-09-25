@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-hpa-capacity-mismatch",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubernetes-mixin:alert:KubeHpaMaxedOut",
+    "kubernetes-mixin:alert:KubeHpaReplicasMismatch",
+    "polaris:check:hpaMaxAvailability",
+    "polaris:check:hpaMinAvailability",
+    "popeye:code:604",
+    "popeye:code:605"
+  ],
+  "target_semantic_group_ids": [
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubehpamaxedout:c030e3fe1dac",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubehpareplicasmismatch:42a87232e63a",
+    "polaris:semantic:polaris-check-hpamaxavailability:ba37ba32d078",
+    "polaris:semantic:polaris-check-hpaminavailability:6d0067c00f5e",
+    "popeye:semantic:popeye-code-604:97a9da1038fd",
+    "popeye:semantic:popeye-code-605:c8ec66e54c13"
+  ],
+  "target_tool_ids": ["kubernetes-mixin", "polaris", "popeye"],
+  "target_rule_count": 6,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/hpaMaxAvailability.yaml",
+    "https://github.com/FairwindsOps/polaris/blob/1038b3c1e51fd92a8b12f25d193e842a92dc3d25/pkg/config/checks/hpaMinAvailability.yaml",
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/apps_alerts.libsonnet"
+  ]
+}

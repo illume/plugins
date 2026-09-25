@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-the-kubernetes-kubelet-must-enable-explicit-authorization-automa-85154446
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/kubelet/config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "kubelet-configuration",
+      "exactField": "authorization.mode",
+      "brokenValue": "AlwaysAllow",
+      "targetPath": "/var/lib/kubelet/config.yaml",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kubelet",
+      "evidenceKind": "kubelet-configuration",
+      "exactField": "authorization.mode",
+      "healthyValue": "Webhook",
+      "targetPath": "/var/lib/kubelet/config.yaml",
+      "applicability": "inert-review-only"
+    }

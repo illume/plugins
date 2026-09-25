@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-dangling-hpa-target",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Resolve the `api` autoscaler target against the namespace workload inventory. Cite the target reference and retrieval result; do not mutate resources.",
+  "visible_resource_refs": ["horizontalpodautoscaler/api", "deployment/api"],
+  "allowed_observation_kinds": ["horizontalpodautoscaler.scale-target-ref", "deployment.get"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

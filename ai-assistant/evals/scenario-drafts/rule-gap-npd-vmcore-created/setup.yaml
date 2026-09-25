@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-vmcore-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: /var/run/abrt/abrt.socket
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.txt: '{"type":"VMcore","count":1,"path":"/var/crash/127.0.0.1-2026-09-20-00:02:00/vmcore"}'
+  predicate.json: '{"recordType":"VMcore","minimumCount":1}'
+  healthy-control.txt: '{"type":"Health","count":1,"message":"no VMcore records"}'

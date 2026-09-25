@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-invalid-config-reference",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "required-configmap-reference",
+        "resource_ref": "pod/config-reference-probe",
+        "field_path": "spec.containers[0].env[0].valueFrom.configMapKeyRef",
+        "observed_value": "{\"name\":\"missing-runtime-config\",\"key\":\"setting\"}",
+        "description": "The environment variable requires a key from missing-runtime-config."
+      },
+      {
+        "fact_id": "create-container-config-error",
+        "resource_ref": "pod/config-reference-probe",
+        "field_path": "status.containerStatuses[0].state.waiting.reason",
+        "observed_value": "CreateContainerConfigError",
+        "description": "Kubelet cannot construct the container configuration."
+      },
+      {
+        "fact_id": "configmap-absent",
+        "resource_ref": "configmap/*",
+        "field_path": "items[metadata.name=missing-runtime-config].length",
+        "observed_value": "0",
+        "description": "The referenced ConfigMap does not exist in the scenario namespace."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-optional-reference",
+      "resource_ref": "pod/config-reference-probe",
+      "field_path": "spec.containers[0].env[0].valueFrom.configMapKeyRef.optional",
+      "observed_value": "true",
+      "description": "The missing ConfigMap reference is required, not optional."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-1e911049c32e404d"
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-crash-loop",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "crash-loop-waiting-reason",
+        "resource_ref": "pod/crash-loop",
+        "field_path": "status.containerStatuses[?(@.name==\"app\")].state.waiting.reason",
+        "observed_value": "CrashLoopBackOff",
+        "description": "Kubelet is backing off repeated restarts of the application container."
+      },
+      {
+        "fact_id": "crash-loop-last-exit",
+        "resource_ref": "pod/crash-loop",
+        "field_path": "status.containerStatuses[?(@.name==\"app\")].lastState.terminated.exitCode",
+        "observed_value": "42",
+        "description": "The previous application process exited with the fixture failure code."
+      },
+      {
+        "fact_id": "crash-loop-restarts-increase",
+        "resource_ref": "metric/kube_pod_container_status_restarts_total{pod=\"crash-loop\",container=\"app\"}",
+        "field_path": "increase[10m]",
+        "observed_value": "> 0",
+        "description": "The native restart counter increases during the bounded observation window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-stable-running-container",
+      "resource_ref": "pod/crash-loop",
+      "field_path": "status.containerStatuses[?(@.name==\"app\")].state.running",
+      "observed_value": "<present continuously for 10m>",
+      "description": "The container does not remain Running through the observation window."
+    },
+    {
+      "fact_id": "invented-zero-restarts",
+      "resource_ref": "metric/kube_pod_container_status_restarts_total{pod=\"crash-loop\",container=\"app\"}",
+      "field_path": "increase[10m]",
+      "observed_value": "0",
+      "description": "The restart counter is not stable."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-59d4ff1cfa67ae50"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-template-omits-restart-policy",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/restart-policy-missing",
+        "field_path": "spec.template.spec.restartPolicy",
+        "observed_value": "field absent",
+        "description": "The Pod template relies on an implicit restart policy."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/restart-policy-missing",
+      "field_path": "spec.template.spec.restartPolicy",
+      "observed_value": "Always",
+      "description": "The healthy controller template declares Always explicitly."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-cb0c3dd91558f5a5"
+}

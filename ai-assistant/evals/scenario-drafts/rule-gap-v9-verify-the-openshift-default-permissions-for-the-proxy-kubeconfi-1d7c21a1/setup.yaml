@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-verify-the-openshift-default-permissions-for-the-proxy-kubeconfi-1d7c21a1
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/kube-proxy/kubeconfig
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-proxy",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/var/lib/kube-proxy/kubeconfig].mode",
+      "brokenValue": "0666",
+      "targetPath": "/var/lib/kube-proxy/kubeconfig",
+      "applicability": "inert-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-proxy",
+      "evidenceKind": "file-metadata",
+      "exactField": "files[/var/lib/kube-proxy/kubeconfig].mode",
+      "healthyValue": "0644",
+      "targetPath": "/var/lib/kube-proxy/kubeconfig",
+      "applicability": "inert-review-only"
+    }

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-daemonset-rollout-failure",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why DaemonSet `unschedulable-agent` cannot converge. Correlate desired, current, ready, and unavailable counts with its Pod scheduling conditions, Events, and native DaemonSet telemetry. Do not mutate resources.",
+  "visible_resource_refs": [
+    "daemonset/unschedulable-agent",
+    "pod/*?app=unschedulable-agent",
+    "event/*?involvedObject.kind=Pod",
+    "metric/kube_daemonset_status_number_unavailable{daemonset=\"unschedulable-agent\"}"
+  ],
+  "allowed_observation_kinds": [
+    "daemonset.spec",
+    "daemonset.status",
+    "pod.status",
+    "pod.events",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

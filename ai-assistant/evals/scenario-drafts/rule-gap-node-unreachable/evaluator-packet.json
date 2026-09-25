@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-unreachable",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "node-ready-unknown",
+        "resource_ref": "node/telemetry-unreachable",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+        "observed_value": "Unknown",
+        "description": "The control plane cannot establish a current Ready state for the synthetic Node."
+      },
+      {
+        "fact_id": "node-status-unknown-reason",
+        "resource_ref": "node/telemetry-unreachable",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].reason",
+        "observed_value": "NodeStatusUnknown",
+        "description": "The Ready reason identifies lost node status updates."
+      },
+      {
+        "fact_id": "node-lease-not-renewed",
+        "resource_ref": "lease/telemetry-unreachable",
+        "field_path": "spec.renewTime",
+        "observed_value": "<absent or older than node-monitor-grace-period>",
+        "description": "No current kubelet Lease supports reachability."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-node-ready-false",
+      "resource_ref": "node/telemetry-unreachable",
+      "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+      "observed_value": "False",
+      "description": "The fault is an Unknown status caused by lost contact, not an explicit NotReady report."
+    },
+    {
+      "fact_id": "invented-current-lease",
+      "resource_ref": "lease/telemetry-unreachable",
+      "field_path": "spec.renewTime",
+      "observed_value": "<within node-monitor-grace-period>",
+      "description": "The synthetic Node has no current Lease renewal."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0eef2b50c6c14d68"
+}

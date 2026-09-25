@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-missing-service-account",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:non-existent-service-account",
+    "kubescape:rule:non-existent-service-account",
+    "popeye:code:307"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-non-existent-service-account:416116fb568b",
+    "kubescape:semantic:kubescape-rule-non-existent-service-account:f1a3138c7dc3",
+    "popeye:semantic:popeye-code-307:9c64c0930832"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0307-nonexistentserviceaccount.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/non-existent-service-account.yaml"
+  ]
+}

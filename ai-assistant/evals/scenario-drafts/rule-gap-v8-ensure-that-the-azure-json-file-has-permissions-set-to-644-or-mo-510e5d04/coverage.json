@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-azure-json-file-has-permissions-set-to-644-or-mo-510e5d04",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-7-node-3-1-3-ensure-that-the-azure-json-file-has-permissions-set-t:809bfdfd310d",
+    "kube-bench:source:aks-1-8-node-3-1-3-ensure-that-the-azure-json-file-has-permissions-set-t:8e26b1ddd28a"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-azure-json-file-has-permissions-set-to-644-or-more-restrictive:21cefacb91a9"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-azure-json-file-has-permissions-set-to-644-or-mo:510e5d046daf"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/node.yaml"
+  ]
+}

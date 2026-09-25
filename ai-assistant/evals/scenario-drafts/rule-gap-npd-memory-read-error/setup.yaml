@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: npd-memory-read-error-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /dev/kmsg
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source.log: CE memory read error on CPU 0 DIMM A1
+  normalized-message.txt: CE memory read error on CPU 0 DIMM A1
+  oracle.json: '{"source":"kernel-monitor","regex":"CE memory read error .*","requiredMatches":1}'
+  healthy-control.log: 'EDAC MC0: memory scrub completed'

@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ptrace-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: ptrace-action
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: python:3.12-alpine
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              python3 - <<'PY'
+              import ctypes, os, signal, time
+              libc = ctypes.CDLL(None, use_errno=True)
+              child = os.fork()
+              if child == 0:
+                  time.sleep(30)
+                  raise SystemExit(0)
+              assert libc.ptrace(16, child, None, None) == 0
+              os.waitpid(child, 0)
+              assert libc.ptrace(17, child, None, None) == 0
+              os.kill(child, signal.SIGTERM)
+              traced = os.fork()
+              if traced == 0:
+                  raise SystemExit(0 if libc.ptrace(0, 0, None, None) == 0 else 1)
+              os.waitpid(traced, 0)
+              print('ptrace-attach-detach-and-traceme-complete')
+              PY
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_PTRACE
+            runAsNonRoot: true
+            runAsUser: 1000

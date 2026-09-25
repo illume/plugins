@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-sensitive-file-symlink-created",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=sensitive-symlink-action]",
+        "field_path": "logs",
+        "observed_value": "/fixture/etc/shadow",
+        "description": "The helper creates a symlink to the controlled sensitive-file analogue inside Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod[label=job-name=sensitive-symlink-action]",
+      "field_path": "logs",
+      "observed_value": "<symlink absent>",
+      "description": "A regular file or symlink to a nonsensitive fixture does not satisfy the trigger."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ca584ba77262acb8"
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-malicious-npm-network-tool",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:launch-package-management-process-in-container:a650f0c82231",
+    "falco:rule:launch-suspicious-network-tool-in-container:c0395069418f",
+    "falco:rule:network-tool-executed-during-npm-package-install:82dee9e1175d"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-launch-package-management-process-in-container-a650f0c82231:f7d96a547460",
+    "falco:semantic:falco-rule-launch-suspicious-network-tool-in-container-c0395069418f:c6757b58aa0e",
+    "falco:semantic:falco-rule-network-tool-executed-during-npm-package-install-82dee9e1175d:2581ca7ec48f"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml"
+  ]
+}

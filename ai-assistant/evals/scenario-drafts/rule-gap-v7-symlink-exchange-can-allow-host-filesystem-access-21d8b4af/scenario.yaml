@@ -1,0 +1,50 @@
+schema_version: 1.0.0
+scenario_id: rule-gap-v7-symlink-exchange-can-allow-host-filesystem-access-21d8b4af
+scenario_version: 0.1.0
+family: rule-gap-policy
+mode: diagnose_only
+title: Symlink Exchange Can Allow Host Filesystem Access
+description: >-
+  A user may be able to create a container with subPath volume mounts to access files & directories
+  outside of the volume, including on the host filesystem. This was affected at the following
+  versions: v1.22.0 - v1.22.1, v1.21.0 - v1.21.4, v1.20.0 - v1.20.10, version v1.19.14 and lower.
+  The fixture preserves inert, typed evidence for review without mutating a host, cloud, or runtime
+  control-plane surface.
+provenance:
+  owner: scenarios-goal-agents
+  source: reference-implementation
+  license: Apache-2.0
+  admission_date: '2026-09-20'
+  last_review: '2026-09-20'
+  review_due: '2026-12-19'
+  lifecycle_state: draft
+portfolio:
+  phase: 2
+  visibility: public
+  behavioral_stratum: fault_diagnosis
+  family_id: rule-gap-policy
+  lineage_id: rule-gap-v7-symlink-exchange-can-allow-host-filesystem-access-21d8b4af
+  variant_kind: anchor
+  splits:
+    - capability
+  qualification_status: pending
+  qualification_controls:
+    provenance: passed
+    rights: passed
+    family_lineage: passed
+    mechanism_oracle: pending
+    candidate_view: pending
+    setup: pending
+    observation_capture: pending
+    cleanup: pending
+    leakage: pending
+  reviewed_by: []
+supported_cluster_profiles:
+  - local-kwok
+required_mechanisms:
+  - api-server
+declared_kwok_compatible: true
+setup_manifest_path: setup.yaml
+namespace_prefix: eval-f5773e04b2d8
+artifact_policy:
+  retain_raw_tool_output: true

@@ -119,6 +119,54 @@ test('parseCliTelemetry aggregates numeric usage and accepts only sanitized tool
   assert.equal(JSON.stringify(telemetry).includes('/must-not-survive'), false);
 });
 
+test('parseCliTelemetry retains versioned stage timings across unknown future events', () => {
+  const telemetry = parseCliTelemetry(
+    [
+      JSON.stringify({ type: 'telemetry_start', schema_version: '1.0.0' }),
+      JSON.stringify({
+        type: 'stage_timing',
+        stage: 'model_request',
+        outcome: 'success',
+        duration_ns: '1000',
+        time_to_first_token_ns: '400',
+      }),
+      JSON.stringify({ type: 'future_sanitized_counter', value: 1 }),
+      JSON.stringify({ type: 'turn_complete' }),
+    ].join('\n')
+  );
+
+  assert.equal(telemetry.stageTimingsObserved, true);
+  assert.deepEqual(telemetry.stageTimings, [
+    {
+      stage: 'model_request',
+      outcome: 'success',
+      duration_ns: '1000',
+      time_to_first_token_ns: '400',
+    },
+  ]);
+  assert.equal(telemetry.toolEventsObserved, true);
+});
+
+test('parseCliTelemetry rejects malformed known stage timings', () => {
+  const telemetry = parseCliTelemetry(
+    [
+      JSON.stringify({ type: 'telemetry_start', schema_version: '1.0.0' }),
+      JSON.stringify({
+        type: 'stage_timing',
+        stage: 'model_request',
+        outcome: 'success',
+        duration_ns: '1000',
+        time_to_first_token_ns: '1001',
+      }),
+      JSON.stringify({ type: 'turn_complete' }),
+    ].join('\n')
+  );
+
+  assert.equal(telemetry.stageTimingsObserved, false);
+  assert.deepEqual(telemetry.stageTimings, []);
+  assert.equal(telemetry.toolEventsObserved, false);
+});
+
 test('parseCliTelemetry keeps a truncated tool stream unobserved', () => {
   const telemetry = parseCliTelemetry(
     JSON.stringify({
@@ -358,6 +406,8 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
     timedOut: false,
   };
   const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    compactStructuredOutput: false,
     processRunner: async (command, args, env, timeoutMs) => {
       capturedArgs = args;
       capturedTimeoutMs = timeoutMs;
@@ -374,6 +424,20 @@ test('createHeadlampCliCandidate: invokes the injected process runner with the c
   assert.equal(result.status, 'ok');
   assert.equal(result.submission_text, null);
   assert.ok(capturedArgs.some(arg => arg.includes(scenario.candidatePacket.task_prompt)));
+  assert.ok(capturedArgs.includes('--supplied-evidence-only'));
+  assert.ok(capturedArgs.includes('--structured-diagnosis'));
+  assert.ok(capturedArgs.includes('--full-structured-output'));
+  const evidenceIdsIndex = capturedArgs.indexOf('--structured-diagnosis-evidence-ids');
+  assert.deepEqual(JSON.parse(capturedArgs[evidenceIdsIndex + 1]!), ['ev1']);
+  const observationsIndex = capturedArgs.indexOf('--structured-diagnosis-observations');
+  assert.deepEqual(JSON.parse(capturedArgs[observationsIndex + 1]!), [
+    {
+      evidence_id: 'ev1',
+      resource_ref: 'service/web',
+      field_path: 'spec.selector',
+      observed_value: '{}',
+    },
+  ]);
   assert.ok(
     capturedArgs.some(arg =>
       arg.includes('return exactly one proposed action with operation "no_action"')
@@ -396,10 +460,88 @@ test('createHeadlampCliCandidate: forwards provider configuration as CLI argumen
     observations: [],
     evidence_digest: evidenceDigest,
   });
-  assert.deepEqual(capturedArgs.slice(1, 5), ['--provider', 'copilot', '--api-key', 'test-token']);
+  const providerIndex = capturedArgs.indexOf('--provider');
+  assert.deepEqual(capturedArgs.slice(providerIndex, providerIndex + 4), [
+    '--provider',
+    'copilot',
+    '--api-key',
+    'test-token',
+  ]);
   assert.equal(candidate.identity?.provider, 'copilot');
   assert.equal(candidate.identity?.credential_configured, true);
   assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
+});
+
+test('createHeadlampCliCandidate: records environment credentials without exposing them', async () => {
+  let capturedEnv: NodeJS.ProcessEnv = {};
+  const candidate = createHeadlampCliCandidate({
+    cliArgs: ['--provider', 'copilot', '--model', 'gpt-5.4'],
+    extraEnv: { HEADLAMP_AI_API_KEY: 'test-token' },
+    processRunner: async (_command, _args, env) => {
+      capturedEnv = env;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.equal(capturedEnv.HEADLAMP_AI_API_KEY, 'test-token');
+  assert.equal(candidate.identity?.credential_configured, true);
+  assert.equal(candidate.identity?.model, 'gpt-5.4');
+  assert.equal(JSON.stringify(candidate.identity).includes('test-token'), false);
+});
+
+test('createHeadlampCliCandidate: defaults structured diagnosis to compact mode', async () => {
+  let capturedArgs: string[] = [];
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [
+      { evidence_id: 'ev1', resource_ref: 'service/web', field_path: 'spec.selector', value: '{}' },
+    ],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.ok(!capturedArgs.includes('--compact-structured-output'));
+  assert.ok(!capturedArgs.includes('--full-structured-output'));
+  assert.match(capturedArgs.at(-1) ?? '', /return only the semantic diagnosis fields/);
+  assert.doesNotMatch(capturedArgs.at(-1) ?? '', /return only a fenced ```json code block/);
+  assert.equal(candidate.identity?.structured_output_mode, 'compact');
+});
+
+test('createHeadlampCliCandidate: records and invokes the legacy session ablation', async () => {
+  let capturedArgs: string[] = [];
+  const candidate = createHeadlampCliCandidate({
+    sessionMode: 'legacy',
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: scenario.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+  });
+
+  assert.equal(candidate.id, 'headlamp-cli-legacy');
+  assert.equal(candidate.identity?.candidate_id, 'headlamp-cli-legacy');
+  assert.equal(candidate.identity?.session_mode, 'legacy');
+  assert.ok(capturedArgs.includes('--legacy-session'));
+  assert.ok(capturedArgs.includes('--supplied-evidence-only'));
+  assert.equal(capturedArgs.includes('--structured-diagnosis'), false);
 });
 
 test('createHeadlampCliCandidate: a non-zero exit code is reported as unavailable, not a silent pass', async () => {
@@ -552,9 +694,13 @@ test('createHeadlampCliCandidate: presents exact observation fields as JSON', as
 
 test('createHeadlampCliCandidate: supplies the canonical digest for repair submissions', async () => {
   let prompt = '';
+  let capturedArgs: string[] = [];
   const repair = loadScenario('core-service-selector-repair-v1');
   const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    compactStructuredOutput: false,
     processRunner: async (_command, args) => {
+      capturedArgs = args;
       prompt = args.at(-1) ?? '';
       return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
     },
@@ -583,6 +729,89 @@ test('createHeadlampCliCandidate: supplies the canonical digest for repair submi
   assert.match(prompt, /property named exactly evidence_digest whose value is the supplied digest/);
   assert.match(prompt, /Do not rename or add properties/);
   assert.match(prompt, /omit it rather than using null/);
+  assert.ok(capturedArgs.includes('--structured-repair'));
+  assert.ok(capturedArgs.includes('--full-structured-output'));
+  assert.ok(!capturedArgs.includes('--structured-diagnosis'));
+  const contractIndex = capturedArgs.indexOf('--structured-repair-contract');
+  assert.deepEqual(JSON.parse(capturedArgs[contractIndex + 1]!), {
+    evidence_digest: evidenceDigest,
+    options: [
+      {
+        target: {
+          api_version: 'v1',
+          kind: 'Service',
+          namespace: 'trial',
+          name: 'web',
+          uid: 'service-uid',
+        },
+        patch: repair.candidatePacket.action_policy?.allowed_patches[0]?.patch,
+      },
+    ],
+  });
+});
+
+test('createHeadlampCliCandidate: sends indexed repair options in compact mode', async () => {
+  let prompt = '';
+  let capturedArgs: string[] = [];
+  const repair = loadScenario('core-service-selector-repair-v1');
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    compactStructuredOutput: true,
+    processRunner: async (_command, args) => {
+      capturedArgs = args;
+      prompt = args.at(-1) ?? '';
+      return { stdout: '', stderr: '', exitCode: 0, timedOut: false };
+    },
+  });
+
+  await candidate.invoke({
+    packet: repair.candidatePacket,
+    observations: [],
+    evidence_digest: evidenceDigest,
+    action_targets: [
+      {
+        api_version: 'v1',
+        kind: 'Service',
+        namespace: 'trial',
+        name: 'web',
+        uid: 'service-uid',
+      },
+    ],
+  });
+
+  assert.ok(capturedArgs.includes('--compact-structured-output'));
+  assert.match(prompt, /Allowed repair options in zero-based order/);
+  assert.match(prompt, /proposed_action\.option_index/);
+  assert.doesNotMatch(prompt, /Canonical evidence digest/);
+});
+
+test('createHeadlampCliCandidate: rejects unsupported remove repair operations', async () => {
+  const repair = loadScenario('core-service-selector-repair-v1');
+  repair.candidatePacket.action_policy!.allowed_patches[0]!.patch = [
+    { op: 'remove', path: '/spec/selector/tier' },
+  ];
+  const candidate = createHeadlampCliCandidate({
+    useMockProvider: false,
+    processRunner: async () => ({ stdout: '', stderr: '', exitCode: 0, timedOut: false }),
+  });
+
+  await assert.rejects(
+    candidate.invoke({
+      packet: repair.candidatePacket,
+      observations: [],
+      evidence_digest: evidenceDigest,
+      action_targets: [
+        {
+          api_version: 'v1',
+          kind: 'Service',
+          namespace: 'trial',
+          name: 'web',
+          uid: 'service-uid',
+        },
+      ],
+    }),
+    /does not support remove patch operations/
+  );
 });
 
 test('createHeadlampCliCandidate: does not forward disallowed env vars to the child process', async () => {
@@ -669,6 +898,9 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
       writeFileSync(
         telemetryPath,
         `${JSON.stringify({
+          type: 'telemetry_start',
+          schema_version: '1.0.0',
+        })}\n${JSON.stringify({
           type: 'model_usage',
           provider: 'openai',
           input_token_semantics: 'total_including_cache',
@@ -681,6 +913,12 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
           mutating: false,
           status: 'success',
           duration_ns: '1000',
+        })}\n${JSON.stringify({
+          type: 'stage_timing',
+          stage: 'model_request',
+          outcome: 'success',
+          duration_ns: '2000',
+          time_to_first_token_ns: '500',
         })}\n${JSON.stringify({ type: 'turn_complete' })}\n`,
         { mode: 0o600 }
       );
@@ -742,6 +980,14 @@ test('createHeadlampCliCandidate reads private telemetry before removing its dat
       mutating: false,
       status: 'success',
       duration_ns: '1000',
+    },
+  ]);
+  assert.deepEqual(result.stage_timings, [
+    {
+      stage: 'model_request',
+      outcome: 'success',
+      duration_ns: '2000',
+      time_to_first_token_ns: '500',
     },
   ]);
   assert.equal(existsSync(telemetryPath), false);

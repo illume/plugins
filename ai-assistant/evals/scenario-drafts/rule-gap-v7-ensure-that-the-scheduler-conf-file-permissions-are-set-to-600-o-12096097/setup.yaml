@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-ensure-that-the-scheduler-conf-file-permissions-are-set-to-600-o-12096097-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "kube-scheduler",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "brokenValue": "0644",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Ensure that the `scheduler.conf` file has permissions of `600` or more restrictive."
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-scheduler",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "healthyValue": "0600",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only"
+    }

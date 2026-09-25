@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-kubelet-certificate-renewal-fails",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the listed Kubernetes resources, diagnose the unsafe or unhealthy state, and cite the exact native field, status, event, metric, or log evidence. Do not mutate resources.",
+  "visible_resource_refs": [
+    "certificatesigningrequest/node-client-renewal-denied",
+    "certificatesigningrequest/node-server-renewal-denied",
+    "metric/apiserver_request_total{group=\"certificates.k8s.io\",resource=\"certificatesigningrequests\",subresource=\"approval\",verb=\"PUT\",code=\"200\"}"
+  ],
+  "allowed_observation_kinds": [
+    "certificatesigningrequest.spec",
+    "certificatesigningrequest.status",
+    "metric.range"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

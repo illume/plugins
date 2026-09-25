@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-statefulset-omits-host-anti-affinity",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "statefulset/co-locatable-stateful",
+        "field_path": "spec.template.spec.affinity.podAntiAffinity",
+        "observed_value": "field absent",
+        "description": "The StatefulSet does not prevent replicas from sharing one hostname."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "statefulset/co-locatable-stateful",
+      "field_path": "spec.template.spec.affinity.podAntiAffinity",
+      "observed_value": "required anti-affinity on kubernetes.io/hostname present",
+      "description": "The healthy StatefulSet spreads replicas across hostnames."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c3f081d1ecb38f26"
+}

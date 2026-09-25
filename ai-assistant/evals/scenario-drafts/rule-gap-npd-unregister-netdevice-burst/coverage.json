@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-npd-unregister-netdevice-burst",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:kernel-monitor-counter-unregisternetdevice:c917dd4ddf3c",
+    "node-problem-detector:source:kernel-monitor-filelog-unregisternetdevice:676b757ff593",
+    "node-problem-detector:source:kernel-monitor-unregisternetdevice:0011e9b30246"
+  ],
+  "target_semantic_group_ids": ["node-problem-detector:semantic:unregisternetdevice:6b362de2cc61"],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor-counter.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor-filelog.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor.json"
+  ]
+}

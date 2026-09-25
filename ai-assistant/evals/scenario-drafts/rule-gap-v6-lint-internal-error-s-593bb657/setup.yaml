@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-lint-internal-error-s-593bb657-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /var/lib/evals/diagnostic-status.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "diagnostic-status",
+      "field": "diagnostic.status",
+      "observedValue": "internal-error",
+      "triggerPredicate": "A linter helper reports an internal error through Collector.AddErr."
+    }
+  predicate-summary.txt: A linter helper reports an internal error through Collector.AddErr.
+  healthy-control.json: |-
+    {
+      "subject": "cluster",
+      "evidenceType": "diagnostic-status",
+      "field": "diagnostic.status",
+      "observedValue": "completed"
+    }

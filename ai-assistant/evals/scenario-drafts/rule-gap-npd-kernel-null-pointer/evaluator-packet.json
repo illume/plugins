@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-kernel-null-pointer",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-kernel-null-pointer-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "BUG: unable to handle kernel NULL pointer dereference at 0000000000000010",
+        "description": "The normalized kernel line is an exact null-pointer dereference signature."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-kernel-null-pointer-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"kernel-monitor\",\"regex\":\"BUG: unable to handle kernel NULL pointer dereference at .*\",\"requiredMatches\":1}",
+        "description": "The local oracle requires 1 match(es) for BUG: unable to handle kernel NULL pointer dereference at .*."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-kernel-null-pointer-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-kernel-null-pointer-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "kernel: worker completed without a fault",
+      "description": "The failing source is not the nonmatching healthy control: kernel: worker completed without a fault"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-0188eb8d32bbb585"
+}

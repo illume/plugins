@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-insecure-tokens-b8212239
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /identity/access-policy.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: identity-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "identity",
+      "evidenceKind": "identity-policy",
+      "exactField": "users[0].authMethod",
+      "brokenValue": "bootstrap-token",
+      "targetPath": "/identity/access-policy.json",
+      "applicability": "identity-review-only"
+    }
+  healthy-control.json: |-
+    {
+      "component": "identity",
+      "evidenceKind": "identity-policy",
+      "exactField": "users[0].authMethod",
+      "healthyValue": "oidc",
+      "targetPath": "/identity/access-policy.json",
+      "applicability": "identity-review-only"
+    }

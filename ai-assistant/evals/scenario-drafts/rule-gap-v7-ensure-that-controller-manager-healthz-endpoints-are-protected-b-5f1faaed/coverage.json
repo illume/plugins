@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-that-controller-manager-healthz-endpoints-are-protected-b-5f1faaed",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-1-0-master-1-3-2-ensure-that-controller-manager-healthz-endpoints-are:038505ed1653",
+    "kube-bench:source:rh-1-4-master-1-3-1-ensure-that-controller-manager-healthz-endpoints-are:479e51c9f74d",
+    "kube-bench:source:rh-1-8-master-1-3-1-ensure-that-controller-manager-healthz-endpoints-are:af00ff6d9bcc",
+    "kube-bench:source:rh-1-9-master-1-3-1-ensure-that-controller-manager-healthz-endpoints-are:be3c0cb4e706"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-controller-manager-healthz-endpoints-are-protected-by-rbac:6d77faa2e775"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-controller-manager-healthz-endpoints-are-protected-b:5f1faaed9b35"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.0/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/master.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/master.yaml"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-excessive-amount-of-vulnerabilities-pods-72b297fc",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exposure-evidence",
+        "resource_ref": "service/public-app",
+        "field_path": "spec.type",
+        "observed_value": "LoadBalancer",
+        "description": "determines which users have permissions to exec into pods"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/public-app",
+      "field_path": "spec.type",
+      "observed_value": "ClusterIP",
+      "description": "The healthy control keeps the workload internal only."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a5edfbb881dfb5bc"
+}

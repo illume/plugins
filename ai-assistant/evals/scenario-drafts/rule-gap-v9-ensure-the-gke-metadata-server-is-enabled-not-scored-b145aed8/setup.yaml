@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-the-gke-metadata-server-is-enabled-not-scored-b145aed8
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /gke/node-pool.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: gke
+data:
+  evidence.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "workloadMetadataConfig.mode",
+      "brokenValue": "GCE_METADATA",
+      "targetPath": "/gke/node-pool.json",
+      "applicability": "gke"
+    }
+  healthy-control.json: |-
+    {
+      "component": "gke-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "workloadMetadataConfig.mode",
+      "healthyValue": "GKE_METADATA",
+      "targetPath": "/gke/node-pool.json",
+      "applicability": "gke"
+    }

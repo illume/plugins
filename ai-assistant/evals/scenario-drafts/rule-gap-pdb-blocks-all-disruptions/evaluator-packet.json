@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-blocks-all-disruptions",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "replica-count",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.replicas",
+        "observed_value": "3",
+        "description": "The selected workload has three replicas."
+      },
+      {
+        "fact_id": "zero-unavailable",
+        "resource_ref": "poddisruptionbudget/web-budget",
+        "field_path": "spec.maxUnavailable",
+        "observed_value": "0",
+        "description": "The budget permits zero selected pods to be voluntarily unavailable."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-disruption-allowance",
+      "resource_ref": "poddisruptionbudget/web-budget",
+      "field_path": "spec.maxUnavailable",
+      "observed_value": "1",
+      "description": "The fixture does not permit one unavailable replica."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7cf13041f581f15f"
+}

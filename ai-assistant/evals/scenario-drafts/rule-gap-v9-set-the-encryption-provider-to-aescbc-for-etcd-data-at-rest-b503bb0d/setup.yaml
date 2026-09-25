@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-set-the-encryption-provider-to-aescbc-for-etcd-data-at-rest-b503bb0d
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/encryption-config.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: aks
+data:
+  evidence.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "encryption-provider",
+      "exactField": "encryptionProvider.providers[0].aescbc.keys[0].name",
+      "brokenValue": "absent",
+      "targetPath": "/etc/kubernetes/encryption-config.yaml",
+      "applicability": "aks"
+    }
+  healthy-control.json: |-
+    {
+      "component": "kube-apiserver",
+      "evidenceKind": "encryption-provider",
+      "exactField": "encryptionProvider.providers[0].aescbc.keys[0].name",
+      "healthyValue": "key1",
+      "targetPath": "/etc/kubernetes/encryption-config.yaml",
+      "applicability": "aks"
+    }

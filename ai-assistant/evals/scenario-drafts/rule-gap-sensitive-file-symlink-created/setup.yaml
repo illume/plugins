@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sensitive-symlink-action
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 180
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: sensitive-symlink-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 1Mi
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              mkdir -p /fixture/etc /fixture/work; printf 'fixture-only\n' > /fixture/etc/shadow; ln
+              -s /fixture/etc/shadow /fixture/work/credential-link; readlink
+              /fixture/work/credential-link
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

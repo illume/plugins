@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-unable-to-assert-namespace-label-q-2d3bbd78-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/namespace-security.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "namespace-labels",
+      "exactField": "metadata.labels.pod-security.kubernetes.io/enforce",
+      "brokenValue": "absent",
+      "targetPath": "/manifests/namespace-security.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkNS when the pinned source predicate for issue 1601 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "namespace",
+      "evidenceKind": "namespace-labels",
+      "exactField": "metadata.labels.pod-security.kubernetes.io/enforce",
+      "healthyValue": "baseline",
+      "targetPath": "/manifests/namespace-security.yaml",
+      "applicability": "inert-review-only"
+    }

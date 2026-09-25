@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-deprecated-endpointslice-v1beta1",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-endpointslice-discovery-k8s-io-v1beta1-removed-v1-25-0:1dad2acaa9c0"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-discovery-k8s-io-v1beta1-endpointslice-removed-in-v1-25-0:bf16a109d0d8"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

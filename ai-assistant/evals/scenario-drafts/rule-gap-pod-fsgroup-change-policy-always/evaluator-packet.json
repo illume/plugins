@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-fsgroup-change-policy-always",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/pod-fsgroup-change-policy-always",
+        "field_path": "spec.securityContext.fsGroupChangePolicy",
+        "observed_value": "Always",
+        "description": "Pod always changes volume ownership."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/pod-fsgroup-change-policy-always",
+      "field_path": "spec.securityContext.fsGroupChangePolicy",
+      "observed_value": "OnRootMismatch",
+      "description": "The healthy Pod uses the reviewed non-root security setting."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4e397cd665d4db9c"
+}

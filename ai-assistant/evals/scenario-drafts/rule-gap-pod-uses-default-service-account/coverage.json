@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-pod-uses-default-service-account",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:default-service-account",
+    "kubescape:rule:automount-default-service-account",
+    "popeye:code:300",
+    "popeye:code:308"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-default-service-account:b69440721703",
+    "kubescape:semantic:kubescape-rule-automount-default-service-account:0ec633d9f9d8",
+    "popeye:semantic:popeye-code-300:9467586722de",
+    "popeye:semantic:popeye-code-308:721394501a7d"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape", "popeye"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0189-ensurethatdefaultserviceaccountsarenotactivelyused.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/default-service-account.yaml"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-container-references-missing-configmap",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:env-value-from",
+    "kubevious:rule:container-env-from-config-map-ref"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-env-value-from:0a66ddc69e80",
+    "kubevious:semantic:kubevious-rule-container-env-from-config-map-ref:2d1690828aa4"
+  ],
+  "target_tool_ids": ["kube-linter", "kubevious"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/container/env-from-config-map-ref.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/env-var-value-from.yaml"
+  ]
+}

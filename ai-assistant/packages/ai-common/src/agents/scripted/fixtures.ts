@@ -21,7 +21,7 @@
  * Kubernetes troubleshooting and exploration scenarios.
  */
 
-import type { ScriptedAgentSession } from './types';
+import type { ScriptedAgentSession } from './types.ts';
 
 /** A "pod troubleshooting" agent session with realistic thinking steps. */
 export const POD_TROUBLESHOOTING_SESSION: ScriptedAgentSession = {

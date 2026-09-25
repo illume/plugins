@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: container-entrypoint-modified
+  labels:
+    evals.kubernetes.io/bounded-action: 'true'
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: container-entrypoint-modified
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: action
+          image: registry.k8s.io/e2e-test-images/busybox:1.29-4
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              printf "#!/bin/sh
+              exit 0
+              " > /fixture/entrypoint.sh; chmod 755 /fixture/entrypoint.sh; printf "#!/bin/sh
+              echo changed
+              " > /fixture/entrypoint.sh; sha256sum /fixture/entrypoint.sh
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+            - name: device-fixture
+              mountPath: /dev/fixture
+      volumes:
+        - name: fixture
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: device-fixture
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi

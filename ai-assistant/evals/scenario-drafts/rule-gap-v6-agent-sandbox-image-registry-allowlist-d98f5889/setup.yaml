@@ -1,0 +1,8 @@
+apiVersion: agentruntime.example.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: external-template
+spec:
+  containers:
+    - name: runner
+      image: docker.io/library/alpine:3.20

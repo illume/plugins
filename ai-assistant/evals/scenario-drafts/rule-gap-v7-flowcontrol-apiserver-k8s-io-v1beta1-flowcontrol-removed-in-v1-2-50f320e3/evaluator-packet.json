@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-flowcontrol-apiserver-k8s-io-v1beta1-flowcontrol-removed-in-v1-2-50f320e3",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "deprecated-api-trigger",
+        "resource_ref": "flowschema/legacy-flow",
+        "field_path": "apiVersion",
+        "observed_value": "flowcontrol.apiserver.k8s.io/v1beta1",
+        "description": "Flags flowcontrol.apiserver.k8s.io/v1beta1 FlowControl removed in v1.26.0 for k8s; deprecated in v1.23.0 and replaced by flowcontrol.apiserver.k8s.io/v1beta2."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "flowschema/legacy-flow",
+      "field_path": "apiVersion",
+      "observed_value": "flowcontrol.apiserver.k8s.io/v1",
+      "description": "The healthy control uses the supported API version for the same resource."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-88d8d6b0cb100e73"
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-container-start-3306dd99",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["headlamp:source:container-start:5b2488f36e2a"],
+  "target_semantic_group_ids": [
+    "headlamp:semantic:headlamp-source-container-start-5b2488f36e2a:4545ff46b05e"
+  ],
+  "target_canonical_capability_ids": ["canonical:container-start:3306dd990aad"],
+  "target_tool_ids": ["headlamp"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/illume/headlamp/blob/10bfb15261a7cfe0660e66fe2375c1bb98f89432/frontend/src/components/diagnostics/Diagnostics.tsx"
+  ]
+}

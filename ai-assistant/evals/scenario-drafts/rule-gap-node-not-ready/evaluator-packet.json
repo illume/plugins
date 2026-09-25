@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-not-ready",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "node-ready-false",
+        "resource_ref": "node/telemetry-not-ready",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+        "observed_value": "False",
+        "description": "The synthetic Node explicitly reports Ready=False."
+      },
+      {
+        "fact_id": "node-not-ready-metric",
+        "resource_ref": "metric/kube_node_status_condition{node=\"telemetry-not-ready\",condition=\"Ready\",status=\"false\"}",
+        "field_path": "min_over_time[10m]",
+        "observed_value": "1",
+        "description": "Native node-condition telemetry remains in the NotReady state for the window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-node-ready",
+      "resource_ref": "node/telemetry-not-ready",
+      "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+      "observed_value": "True",
+      "description": "The synthetic Node does not report Ready=True."
+    },
+    {
+      "fact_id": "invented-workload-pressure",
+      "resource_ref": "node/telemetry-not-ready",
+      "field_path": "status.conditions[?(@.type==\"MemoryPressure\")].status",
+      "observed_value": "True",
+      "description": "The fixture reports no memory pressure; readiness itself is the fault."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2fcaa24123a5df28"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-legacy-rbac-v1beta1-bundle",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the complete RBAC manifest bundle and identify the compatibility defect. Cite the API version and every affected kind without applying the bundle.",
+  "visible_resource_refs": ["manifest/legacy-rbac-bundle"],
+  "allowed_observation_kinds": ["manifest.documents", "manifest.api-version", "manifest.kind"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-write-monitored-directory",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod[label=job-name=write-monitored-directory]",
+        "field_path": "spec.containers[0].command + logs",
+        "observed_value": "mkdir -p /fixture/etc; printf controlled > /fixture/etc/monitor.conf; sha256sum /fixture/etc/monitor.conf; <sha256> /fixture/etc/monitor.conf",
+        "description": "Process writes below a monitored fixture directory inside bounded Pod-local storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod[label=job-name=write-monitored-directory]",
+      "field_path": "spec.containers[0].command + logs",
+      "observed_value": "bounded command and output marker absent",
+      "description": "The healthy control performs no matching file or process action."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3b7e27a5cb154aa3"
+}

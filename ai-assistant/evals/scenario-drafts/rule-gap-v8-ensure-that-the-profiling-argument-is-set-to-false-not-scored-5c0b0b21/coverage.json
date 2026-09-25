@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-profiling-argument-is-set-to-false-not-scored-5c0b0b21",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-0-master-1-3-2-ensure-that-the-profiling-argument-is-set-to-false-:76ab2f3ebfa4"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-profiling-argument-is-set-to-false-not-scored:185b99482acb"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-profiling-argument-is-set-to-false-not-scored:5c0b0b21b400"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/master.yaml"
+  ]
+}

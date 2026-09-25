@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf",
+        "field_path": "data.evidence.json#users[0].authMethod",
+        "observed_value": "x509-client-certificate",
+        "description": "Client certificate authentication should not be used for users (Not Scored)"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-client-certificate-authentication-should-not-be-used-for-users-n-288acdbf",
+      "field_path": "data.healthy-control.json#users[0].authMethod",
+      "observed_value": "oidc",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c31288df43f6e9a1"
+}

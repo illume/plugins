@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-multiple-default-ingress-classes",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "ingressclass/default-a + ingressclass/default-b",
+        "field_path": "metadata.annotations[ingressclass.kubernetes.io/is-default-class]",
+        "observed_value": "true; true",
+        "description": "Two IngressClasses simultaneously claim default status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "ingressclass/default-a + ingressclass/default-b",
+      "field_path": "metadata.annotations[ingressclass.kubernetes.io/is-default-class]",
+      "observed_value": "true on exactly one IngressClass",
+      "description": "The healthy cluster has at most one default IngressClass."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-eab17081e859b8a7"
+}

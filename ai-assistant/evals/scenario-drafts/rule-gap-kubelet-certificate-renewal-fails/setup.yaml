@@ -1,0 +1,47 @@
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: node-client-renewal-denied
+spec:
+  request: >-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlIL01JR2xBZ0VBTUVNeElqQWdCZ05WQkFNTUdYUmxiR1Z0WlhSeWVTMWxlSEJwY21sdVp5MWpiR2xsYm5ReApIVEFiQmdOVkJBb01GSE41YzNSbGJUcGhkWFJvWlc1MGFXTmhkR1ZrTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJCnpqMERBUWNEUWdBRTA0aGZtdzlBejBZZVJ1T0ZVMnI2THpUUkRvRExWUnM5VHdQN3c2ZDhPNFp5OEZqQnNzc0UKNEU5SHpxQUJLa205QkUyRG52Mk1aU3NPSURvMGZpV2dRNkFBTUFvR0NDcUdTTTQ5QkFNQ0Ewa0FNRVlDSVFETQpPWFBFdXZrZWZuM3NpZ3BGWmtZN2xTek4yU0lSTEI3RWlndW5KY1AwTUFJaEFMMCsrVkRCTVRvYUtuV05NaWlrCnVIWTRqRHpUMGxVNG5IdkI5U0p6VUx1MQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K
+  signerName: kubernetes.io/kube-apiserver-client-kubelet
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  username: system:node:fixture-node
+  groups:
+    - system:nodes
+    - system:authenticated
+status:
+  conditions:
+    - type: Denied
+      status: 'True'
+      reason: FixtureRenewalDenied
+      message: The controlled node renewal request was denied.
+      lastUpdateTime: '2026-09-20T00:00:00Z'
+---
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: node-server-renewal-denied
+spec:
+  request: >-
+    LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlIL01JR2xBZ0VBTUVNeElqQWdCZ05WQkFNTUdYUmxiR1Z0WlhSeWVTMWxlSEJwY21sdVp5MWpiR2xsYm5ReApIVEFiQmdOVkJBb01GSE41YzNSbGJUcGhkWFJvWlc1MGFXTmhkR1ZrTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJCnpqMERBUWNEUWdBRTA0aGZtdzlBejBZZVJ1T0ZVMnI2THpUUkRvRExWUnM5VHdQN3c2ZDhPNFp5OEZqQnNzc0UKNEU5SHpxQUJLa205QkUyRG52Mk1aU3NPSURvMGZpV2dRNkFBTUFvR0NDcUdTTTQ5QkFNQ0Ewa0FNRVlDSVFETQpPWFBFdXZrZWZuM3NpZ3BGWmtZN2xTek4yU0lSTEI3RWlndW5KY1AwTUFJaEFMMCsrVkRCTVRvYUtuV05NaWlrCnVIWTRqRHpUMGxVNG5IdkI5U0p6VUx1MQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K
+  signerName: kubernetes.io/kubelet-serving
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  username: system:node:fixture-node
+  groups:
+    - system:nodes
+    - system:authenticated
+status:
+  conditions:
+    - type: Denied
+      status: 'True'
+      reason: FixtureRenewalDenied
+      message: The controlled node serving renewal request was denied.
+      lastUpdateTime: '2026-09-20T00:00:00Z'

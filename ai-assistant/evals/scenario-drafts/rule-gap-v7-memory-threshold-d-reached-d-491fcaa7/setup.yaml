@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-memory-threshold-d-reached-d-491fcaa7-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/node-metrics.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "node-metrics",
+      "exactField": "node.metrics.memory.usagePercent",
+      "brokenValue": "97",
+      "targetPath": "/var/lib/evals/node-metrics.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkUtilization when the pinned source predicate for issue 710 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "node-metrics",
+      "exactField": "node.metrics.memory.usagePercent",
+      "healthyValue": "48",
+      "targetPath": "/var/lib/evals/node-metrics.json",
+      "applicability": "inert-review-only"
+    }

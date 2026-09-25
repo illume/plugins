@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-gateway-certificate-secret-missing",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/gateway/tls-gateway",
+        "field_path": "spec.listeners[0].tls.certificateRefs[0] + Secret inventory",
+        "observed_value": "Secret/missing-gateway-tls; 0 matches",
+        "description": "The HTTPS listener cannot resolve its certificate Secret."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/gateway/tls-gateway",
+      "field_path": "spec.listeners[0].tls.certificateRefs[0] + Secret inventory",
+      "observed_value": "Secret/gateway-tls; 1 match",
+      "description": "The healthy listener resolves a TLS Secret."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-65ea7d92d78f9a2e"
+}

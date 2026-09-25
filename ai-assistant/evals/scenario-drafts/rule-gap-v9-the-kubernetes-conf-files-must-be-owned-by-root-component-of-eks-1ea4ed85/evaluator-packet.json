@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-the-kubernetes-conf-files-must-be-owned-by-root-component-of-eks-1ea4ed85",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v9-the-kubernetes-conf-files-must-be-owned-by-root-component-of-eks-1ea4ed85",
+        "field_path": "data.evidence.json#files[/etc/kubernetes/*.conf].owner",
+        "observed_value": "nobody:nogroup",
+        "description": "The Kubernetes conf files must be owned by root | Component of EKS Control Plane"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v9-the-kubernetes-conf-files-must-be-owned-by-root-component-of-eks-1ea4ed85",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v9-the-kubernetes-conf-files-must-be-owned-by-root-component-of-eks-1ea4ed85",
+      "field_path": "data.healthy-control.json#files[/etc/kubernetes/*.conf].owner",
+      "observed_value": "root:root",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-2489ac0e77edf27b"
+}

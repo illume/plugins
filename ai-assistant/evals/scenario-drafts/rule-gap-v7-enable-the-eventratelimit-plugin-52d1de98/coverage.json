@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-enable-the-eventratelimit-plugin-52d1de98",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:rh-0-7-master-1-35-enable-the-eventratelimit-plugin:267e8518f974"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:enable-the-eventratelimit-plugin:97f4b76653e0"
+  ],
+  "target_canonical_capability_ids": ["canonical:enable-the-eventratelimit-plugin:52d1de982d80"],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-0.7/master.yaml"
+  ]
+}

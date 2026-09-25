@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-kube-proxy-metrics-service-is-bound-to-localhost-5a4429ec-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-proxy.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-proxy",
+      "evidenceType": "component-configuration",
+      "field": "metricsBindAddress",
+      "observedValue": "0.0.0.0",
+      "triggerPredicate": "Do not bind the kube-proxy metrics port to non-loopback addresses. The kube-proxy metrics service exposes internal cluster metrics that could provide information useful to an attacker."
+    }
+  predicate-summary.txt: >-
+    Do not bind the kube-proxy metrics port to non-loopback addresses. The kube-proxy metrics
+    service exposes internal cluster metrics that could provide information useful to an attacker.
+  healthy-control.json: |-
+    {
+      "subject": "kube-proxy",
+      "evidenceType": "component-configuration",
+      "field": "metricsBindAddress",
+      "observedValue": "127.0.0.1"
+    }

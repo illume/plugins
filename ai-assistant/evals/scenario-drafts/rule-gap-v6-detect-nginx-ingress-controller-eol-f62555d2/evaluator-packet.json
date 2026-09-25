@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-detect-nginx-ingress-controller-eol-f62555d2",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "eol-image",
+        "resource_ref": "deployment/ingress-nginx-controller",
+        "field_path": "spec.template.spec.containers[0].image",
+        "observed_value": "registry.k8s.io/ingress-nginx/controller:v1.11.3",
+        "description": "Detects nginx ingress controller in Deployments, DaemonSets, and StatefulSets that will reach End of Life in March 2026"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/ingress-nginx-controller",
+      "field_path": "spec.template.spec.containers[0].image",
+      "observed_value": "registry.k8s.io/ingress-nginx/controller:v1.13.0",
+      "description": "The healthy control advances to a supported release line."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ba941070d3922fdd"
+}

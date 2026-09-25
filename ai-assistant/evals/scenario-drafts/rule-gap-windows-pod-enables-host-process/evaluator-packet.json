@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-windows-pod-enables-host-process",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/windows-host-process",
+        "field_path": "spec.securityContext.windowsOptions.hostProcess",
+        "observed_value": "true",
+        "description": "The Windows Pod requests host process isolation."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/windows-host-process",
+      "field_path": "spec.securityContext.windowsOptions.hostProcess",
+      "observed_value": "false",
+      "description": "The healthy Windows Pod does not run as a host process."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-c949a21a910fe55d"
+}

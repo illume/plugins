@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-memory-current-limit-s-s-reached-user-d-thresh-32",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "podmetrics/object-finding-32-pod",
+        "field_path": "containers[0].usage.memory / workload limit",
+        "observed_value": "95%",
+        "description": "The controlled object satisfies the exact 112 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "podmetrics/object-finding-32-pod",
+      "field_path": "containers[0].usage.memory / workload limit",
+      "observed_value": "below 80%",
+      "description": "The healthy control differs only at containers[0].usage.memory / workload limit."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3d5641af5c8daff3"
+}

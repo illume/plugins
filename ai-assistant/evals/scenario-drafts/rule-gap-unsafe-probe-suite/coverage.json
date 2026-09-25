@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-unsafe-probe-suite",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-score:check:pod-probes", "popeye:code:102"],
+  "target_semantic_group_ids": [
+    "kube-score:semantic:kube-score-check-pod-probes:788b5c8ad613",
+    "popeye:semantic:popeye-code-102:d9090c00e4f1"
+  ],
+  "target_tool_ids": ["kube-score", "popeye"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

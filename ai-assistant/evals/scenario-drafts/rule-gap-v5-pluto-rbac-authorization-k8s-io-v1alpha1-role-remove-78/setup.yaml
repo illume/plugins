@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+kind: Role
+metadata:
+  name: deprecated-api-78
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - get

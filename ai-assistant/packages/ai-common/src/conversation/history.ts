@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { getStoredToolCalls } from './toolCalls';
-import type { ConversationMessage } from './types';
+import { getStoredToolCalls } from './toolCalls.ts';
+import type { ConversationMessage } from './types.ts';
 
 /**
  * Checks whether history contains an actionable tool response.

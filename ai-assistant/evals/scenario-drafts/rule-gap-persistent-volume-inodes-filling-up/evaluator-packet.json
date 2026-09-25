@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-persistent-volume-inodes-filling-up",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "inode-claim-bound",
+        "resource_ref": "persistentvolumeclaim/inodes-filling",
+        "field_path": "status.phase",
+        "observed_value": "Bound",
+        "description": "The measured claim is attached and mounted by the writer."
+      },
+      {
+        "fact_id": "volume-free-inodes-low",
+        "resource_ref": "metric/kubelet_volume_stats_inodes_free{persistentvolumeclaim=\"inodes-filling\"}",
+        "field_path": "latest / kubelet_volume_stats_inodes",
+        "observed_value": "< 0.10",
+        "description": "Less than ten percent of measured volume inodes remain free."
+      },
+      {
+        "fact_id": "volume-inode-exhaustion-predicted",
+        "resource_ref": "metric/kubelet_volume_stats_inodes_free{persistentvolumeclaim=\"inodes-filling\"}",
+        "field_path": "predict_linear[6h,4d]",
+        "observed_value": "< 0",
+        "description": "The free-inode trend predicts exhaustion within four days."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-inode-capacity-healthy",
+      "resource_ref": "metric/kubelet_volume_stats_inodes_free{persistentvolumeclaim=\"inodes-filling\"}",
+      "field_path": "latest / kubelet_volume_stats_inodes",
+      "observed_value": "> 0.20",
+      "description": "The measured free-inode ratio is not healthy."
+    },
+    {
+      "fact_id": "invented-byte-exhaustion",
+      "resource_ref": "metric/kubelet_volume_stats_available_bytes{persistentvolumeclaim=\"inodes-filling\"}",
+      "field_path": "latest / kubelet_volume_stats_capacity_bytes",
+      "observed_value": "< 0.10",
+      "description": "The fixture consumes inodes with empty files rather than filling volume bytes."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-443ab52e17978bcd"
+}

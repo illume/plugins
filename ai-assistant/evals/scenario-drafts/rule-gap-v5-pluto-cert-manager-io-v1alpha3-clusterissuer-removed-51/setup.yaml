@@ -1,0 +1,5 @@
+apiVersion: cert-manager.io/v1alpha3
+kind: ClusterIssuer
+metadata:
+  name: deprecated-api-51
+spec: {}

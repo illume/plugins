@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-image-pull-policy",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-score:check:container-image-pull-policy",
+    "kubescape:rule:image-pull-policy-is-not-set-to-always"
+  ],
+  "target_semantic_group_ids": [
+    "kube-score:semantic:kube-score-check-container-image-pull-policy:1e5e29abb7df",
+    "kubescape:semantic:kubescape-rule-image-pull-policy-is-not-set-to-always:a4d96203ae0b"
+  ],
+  "target_tool_ids": ["kube-score", "kubescape"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0075-imagepullpolicyonlatesttag.json",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

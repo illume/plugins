@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-unmasks-proc",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/unmasked-proc-workload",
+        "field_path": "spec.containers[0].securityContext.procMount",
+        "observed_value": "Unmasked",
+        "description": "The application container requests an unmasked proc filesystem."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/unmasked-proc-workload",
+      "field_path": "spec.containers[0].securityContext.procMount",
+      "observed_value": "Default or absent",
+      "description": "A healthy container uses the runtime default proc mask."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-029b92d19ac9d644"
+}

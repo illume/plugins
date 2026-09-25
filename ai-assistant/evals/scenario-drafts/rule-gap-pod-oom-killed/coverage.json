@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pod-oom-killed",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "headlamp:source:oom-killed:992679017bdb",
+    "node-problem-detector:source:kernel-monitor-filelog-oomkilling:14038a81da6f",
+    "node-problem-detector:source:kernel-monitor-oomkilling:59bb98364daf",
+    "popeye:code:704"
+  ],
+  "target_semantic_group_ids": [
+    "headlamp:semantic:headlamp-source-oom-killed-992679017bdb:15de6659ae29",
+    "node-problem-detector:semantic:oomkilling:5a3d709ff5ff",
+    "popeye:semantic:popeye-code-704:dd20866d9aaf"
+  ],
+  "target_tool_ids": ["headlamp", "node-problem-detector", "popeye"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/illume/headlamp/blob/10bfb15261a7cfe0660e66fe2375c1bb98f89432/frontend/src/components/diagnostics/Diagnostics.tsx",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor-filelog.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor.json"
+  ]
+}

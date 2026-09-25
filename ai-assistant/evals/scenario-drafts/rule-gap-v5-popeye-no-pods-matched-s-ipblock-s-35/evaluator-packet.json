@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-no-pods-matched-s-ipblock-s-35",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "networkpolicy/object-finding-35",
+        "field_path": "spec.egress[0].to[0] + namespace and Pod inventory",
+        "observed_value": "{\"ipBlock\":{\"cidr\":\"192.0.2.0/24\"}}; 0",
+        "description": "The controlled object satisfies the exact 1206 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "networkpolicy/object-finding-35",
+      "field_path": "spec.egress[0].to[0] + namespace and Pod inventory",
+      "observed_value": "peer matches one controlled destination",
+      "description": "The healthy control differs only at spec.egress[0].to[0] + namespace and Pod inventory."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-e09e2cda60aeb735"
+}

@@ -27,11 +27,11 @@
  * without any external dependencies.
  */
 
+import { describe, expect, it } from '@rstest/core';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -63,7 +63,7 @@ interface CLIResult {
 
 /**
  * Run the CLI with HEADLAMP_AI_MOCK_ALL=1 plus any extra env vars.
- * Runs asynchronously so Vitest's worker can continue processing RPC messages.
+ * Runs asynchronously so Rstest's worker can continue processing RPC messages.
  */
 function run(args: string[], extraEnv: Record<string, string> = {}): Promise<CLIResult> {
   return new Promise((resolve, reject) => {

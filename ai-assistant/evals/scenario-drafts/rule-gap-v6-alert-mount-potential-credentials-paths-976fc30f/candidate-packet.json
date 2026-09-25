@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-alert-mount-potential-credentials-paths-976fc30f",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the workload storage configuration and identify the host exposure risk. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["deployment/credential-mount"],
+  "allowed_observation_kinds": ["deployment.pod-template", "volume.host-path"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

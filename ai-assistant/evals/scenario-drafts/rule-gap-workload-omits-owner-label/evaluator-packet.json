@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-workload-omits-owner-label",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/owner-label-missing",
+        "field_path": "metadata.labels[owner]",
+        "observed_value": "field absent",
+        "description": "The workload has no ownership label."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/owner-label-missing",
+      "field_path": "metadata.labels[owner]",
+      "observed_value": "platform-team",
+      "description": "The healthy workload identifies its owning team."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-91351bad3234a473"
+}

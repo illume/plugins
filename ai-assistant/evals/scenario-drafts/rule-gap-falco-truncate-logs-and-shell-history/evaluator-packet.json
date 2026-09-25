@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-truncate-logs-and-shell-history",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "log-and-history-truncated",
+        "resource_ref": "job/truncate-history-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": ": > /fixture/var/log/access.log; : > /fixture/root/.bash_history",
+        "description": "The same action truncates a recognized access log and shell-history file."
+      },
+      {
+        "fact_id": "both-files-zero-after-action",
+        "resource_ref": "pod/truncate-history-action-*",
+        "field_path": "logs[action]",
+        "observed_value": "0 /fixture/var/log/access.log; 0 /fixture/root/.bash_history",
+        "description": "Post-action byte counts prove both seeded files were truncated."
+      },
+      {
+        "fact_id": "truncation-storage-is-emptydir",
+        "resource_ref": "job/truncate-history-action",
+        "field_path": "spec.template.spec.volumes[0].emptyDir",
+        "observed_value": "{}",
+        "description": "Both paths are backed by disposable storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-log-cleanup",
+      "resource_ref": "job/truncate-history-action",
+      "field_path": "spec.template.spec.volumes[0].hostPath",
+      "observed_value": "present",
+      "description": "No node log or real shell-history path is mounted."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-7a84d3ee40663cc9"
+}

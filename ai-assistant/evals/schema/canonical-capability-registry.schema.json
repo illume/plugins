@@ -1,0 +1,215 @@
+{
+  "$id": "https://headlamp-k8s.local/evals/schema/canonical-capability-registry.schema.json",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "review_status",
+    "canonicalization_complete",
+    "inventory_path",
+    "active_mapping_path",
+    "methodology",
+    "total_direct_predicate_occurrences",
+    "total_tool_local_semantic_groups",
+    "total_canonical_capabilities",
+    "evidence_backed_cross_tool_capabilities",
+    "reviewed_single_tool_capabilities",
+    "split_tool_local_group_count",
+    "reviewed_scenario_candidate_count",
+    "reviewed_similarity_candidate_count",
+    "reviewed_similarity_merge_count",
+    "reviewed_similarity_keep_separate_count",
+    "similarity_review",
+    "unresolved_similarity_candidate_count",
+    "unresolved_candidate_count",
+    "coverage",
+    "capabilities",
+    "unresolved_candidates"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "generated_at": { "type": "string", "format": "date" },
+    "review_status": { "enum": ["provisional", "reviewed"] },
+    "canonicalization_complete": { "type": "boolean" },
+    "inventory_path": { "const": "registrations/tool-rule-inventory-v1.json" },
+    "active_mapping_path": {
+      "const": "registrations/tool-scenario-rule-mapping-v1.json"
+    },
+    "methodology": {
+      "type": "object",
+      "required": [
+        "assignment_unit",
+        "confirmed_merge",
+        "split_handling",
+        "candidate_policy",
+        "generation_gate"
+      ],
+      "additionalProperties": { "type": "string", "minLength": 20 }
+    },
+    "total_direct_predicate_occurrences": { "type": "integer", "minimum": 1 },
+    "total_tool_local_semantic_groups": { "type": "integer", "minimum": 1 },
+    "total_canonical_capabilities": { "type": "integer", "minimum": 1 },
+    "evidence_backed_cross_tool_capabilities": { "type": "integer", "minimum": 0 },
+    "reviewed_single_tool_capabilities": { "type": "integer", "minimum": 0 },
+    "split_tool_local_group_count": { "type": "integer", "minimum": 0 },
+    "reviewed_scenario_candidate_count": { "type": "integer", "minimum": 0 },
+    "reviewed_similarity_candidate_count": { "type": "integer", "minimum": 0 },
+    "reviewed_similarity_merge_count": { "type": "integer", "minimum": 0 },
+    "reviewed_similarity_keep_separate_count": { "type": "integer", "minimum": 0 },
+    "similarity_review": {
+      "type": "object",
+      "required": [
+        "candidate_set_hash",
+        "merge_candidate_ids",
+        "keep_separate_candidate_ids",
+        "decisions"
+      ],
+      "properties": {
+        "candidate_set_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "merge_candidate_ids": { "$ref": "#/$defs/strings" },
+        "keep_separate_candidate_ids": { "$ref": "#/$defs/strings" },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/similarityDecision" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "unresolved_similarity_candidate_count": { "type": "integer", "minimum": 0 },
+    "unresolved_candidate_count": { "type": "integer", "minimum": 0 },
+    "coverage": {
+      "type": "object",
+      "required": ["targeted", "implemented", "qualified"],
+      "properties": {
+        "targeted": { "type": "integer", "minimum": 0 },
+        "implemented": { "type": "integer", "minimum": 0 },
+        "qualified": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "unresolved_candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/candidate" }
+    }
+  },
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "reference"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "shared_scenario",
+            "active_contract",
+            "reviewed_predicate",
+            "reviewed_scenario_partition",
+            "reviewed_semantic_similarity"
+          ]
+        },
+        "reference": { "type": "string", "minLength": 3 }
+      },
+      "additionalProperties": false
+    },
+    "capabilityCoverage": {
+      "type": "object",
+      "required": ["targeted", "implemented", "qualified"],
+      "properties": {
+        "targeted": { "type": "boolean" },
+        "implemented": { "type": "boolean" },
+        "qualified": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "capability": {
+      "type": "object",
+      "required": [
+        "canonical_capability_id",
+        "title",
+        "predicate_summary",
+        "review_status",
+        "source_rule_ids",
+        "source_semantic_group_ids",
+        "source_tool_ids",
+        "scenario_ids",
+        "active_contract_ids",
+        "merge_evidence",
+        "coverage"
+      ],
+      "properties": {
+        "canonical_capability_id": {
+          "type": "string",
+          "pattern": "^canonical:[a-z0-9-]+:[0-9a-f]{12}$"
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "predicate_summary": { "type": "string", "minLength": 3 },
+        "review_status": { "enum": ["evidence_backed", "reviewed_single_tool"] },
+        "source_rule_ids": { "$ref": "#/$defs/strings", "minItems": 1 },
+        "source_semantic_group_ids": { "$ref": "#/$defs/strings", "minItems": 1 },
+        "source_tool_ids": { "$ref": "#/$defs/strings", "minItems": 1 },
+        "scenario_ids": { "$ref": "#/$defs/strings" },
+        "active_contract_ids": { "$ref": "#/$defs/strings" },
+        "merge_evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" }
+        },
+        "coverage": { "$ref": "#/$defs/capabilityCoverage" }
+      },
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "candidate_id",
+        "candidate_kind",
+        "normalized_title",
+        "capability_ids",
+        "source_rule_ids",
+        "source_semantic_group_ids",
+        "source_tool_ids",
+        "titles",
+        "review_reason"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^candidate:(?:scenario:)?[a-z0-9-]+(?::[0-9a-f]{12})?$"
+        },
+        "candidate_kind": { "enum": ["scenario_co_target", "semantic_similarity"] },
+        "normalized_title": { "type": "string", "minLength": 3 },
+        "similarity_score": { "type": "number", "minimum": 0.42, "maximum": 1 },
+        "capability_ids": { "$ref": "#/$defs/strings", "minItems": 2 },
+        "source_rule_ids": { "$ref": "#/$defs/strings", "minItems": 2 },
+        "source_semantic_group_ids": { "$ref": "#/$defs/strings", "minItems": 2 },
+        "source_tool_ids": { "$ref": "#/$defs/strings", "minItems": 2 },
+        "titles": { "$ref": "#/$defs/strings", "minItems": 1 },
+        "review_reason": { "type": "string", "minLength": 20 }
+      },
+      "additionalProperties": false
+    },
+    "similarityDecision": {
+      "type": "object",
+      "required": ["candidate_id", "decision", "source_rule_ids"],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^candidate:similarity:[0-9a-f]{12}$"
+        },
+        "decision": { "enum": ["merge", "keep_separate"] },
+        "source_rule_ids": { "$ref": "#/$defs/strings", "minItems": 2 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

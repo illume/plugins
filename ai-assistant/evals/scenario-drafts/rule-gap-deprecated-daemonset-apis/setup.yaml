@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: legacy-agent-apps
+spec:
+  selector:
+    matchLabels:
+      app: legacy-agent-apps
+  template:
+    metadata:
+      labels:
+        app: legacy-agent-apps
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: legacy-agent-extensions
+spec:
+  selector:
+    matchLabels:
+      app: legacy-agent-extensions
+  template:
+    metadata:
+      labels:
+        app: legacy-agent-extensions
+    spec:
+      containers:
+        - name: app
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532

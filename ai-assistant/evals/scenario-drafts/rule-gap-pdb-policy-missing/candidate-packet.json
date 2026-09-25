@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pdb-policy-missing",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Review the `app-budget` availability policy and determine whether it places a disruption bound. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["poddisruptionbudget/app-budget"],
+  "allowed_observation_kinds": [
+    "poddisruptionbudget.selector",
+    "poddisruptionbudget.availability-policy"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

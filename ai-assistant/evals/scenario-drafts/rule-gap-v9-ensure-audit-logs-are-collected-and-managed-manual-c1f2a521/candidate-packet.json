@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v9-ensure-audit-logs-are-collected-and-managed-manual-c1f2a521",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect configmap/v9-ensure-audit-logs-are-collected-and-managed-manual-c1f2a521. Explain the concrete configuration defect represented by the fixture, cite the exact field, and do not mutate resources.",
+  "visible_resource_refs": [
+    "configmap/v9-ensure-audit-logs-are-collected-and-managed-manual-c1f2a521"
+  ],
+  "allowed_observation_kinds": ["configmap.data", "configuration-evidence"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

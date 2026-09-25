@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-sandbox-image-tag-provenance-dee5a230",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "sandboxtemplate/floating-template",
+        "field_path": "spec.containers[0].image",
+        "observed_value": "registry.example.corp/agent/runner:latest",
+        "description": "Checks that container images in Agent Sandbox SandboxTemplate resources use an explicit non-latest tag or digest reference, rejecting mutable :latest, untagged images, and any tags listed in floatingImageTags."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "sandboxtemplate/floating-template",
+      "field_path": "spec.containers[0].image",
+      "observed_value": "registry.example.corp/agent/runner:1.4.2",
+      "description": "The healthy control removes the represented defect."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-3ebc37b01a87638e"
+}

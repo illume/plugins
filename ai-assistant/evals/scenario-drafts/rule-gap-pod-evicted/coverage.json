@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-pod-evicted",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "headlamp:source:evicted:df605ecccd1b",
+    "kubernetes-mixin:alert:KubeNodeEviction"
+  ],
+  "target_semantic_group_ids": [
+    "headlamp:semantic:headlamp-source-evicted-df605ecccd1b:49c43b6383b7",
+    "kubernetes-mixin:semantic:kubernetes-mixin-alert-kubenodeeviction:8f8e51e2fcf5"
+  ],
+  "target_tool_ids": ["headlamp", "kubernetes-mixin"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/illume/headlamp/blob/10bfb15261a7cfe0660e66fe2375c1bb98f89432/frontend/src/components/diagnostics/Diagnostics.tsx",
+    "https://github.com/kubernetes-sigs/kubernetes-mixin/blob/7f47ec17cfb9be7ff4bd4e830648f50124459ebb/alerts/kubelet.libsonnet"
+  ]
+}

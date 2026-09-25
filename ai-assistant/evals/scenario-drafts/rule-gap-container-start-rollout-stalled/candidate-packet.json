@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-start-rollout-stalled",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why the `stalled-rollout` Deployment does not converge. Cite container waiting state, rollout condition, and desired versus available replica evidence over the observation window.",
+  "visible_resource_refs": [
+    "deployment/stalled-rollout",
+    "replicaset/stalled-rollout-*",
+    "pod/stalled-rollout-*",
+    "event/*"
+  ],
+  "allowed_observation_kinds": [
+    "deployment.status",
+    "replicaset.status",
+    "pod.container-status",
+    "event.list",
+    "metric.time-series"
+  ],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

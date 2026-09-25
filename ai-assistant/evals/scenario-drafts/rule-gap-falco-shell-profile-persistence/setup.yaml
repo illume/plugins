@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: shell-profile-action
+  labels:
+    evals.kubernetes.io/controlled-action: shell-profile-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: shell-profile-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: root-home
+          emptyDir: {}
+      containers:
+        - name: action
+          image: python:3.12-alpine
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              python3 -c 'profile="/root/.bashrc"; open(profile,"w").write("export BASELINE=1\n");
+              print(open(profile).read(),end=""); open(profile,"a").write("printf
+              controlled-profile\n"); print(open(profile).read(),end="")'
+          volumeMounts:
+            - name: root-home
+              mountPath: /root

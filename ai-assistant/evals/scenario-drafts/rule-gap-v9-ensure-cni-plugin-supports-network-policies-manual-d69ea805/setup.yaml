@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-ensure-cni-plugin-supports-network-policies-manual-d69ea805
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /managed-cluster/networking.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: managed-cluster-review
+data:
+  evidence.json: |-
+    {
+      "component": "managed-networking",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "networkPolicy.enabled",
+      "brokenValue": "false",
+      "targetPath": "/managed-cluster/networking.json",
+      "applicability": "managed-cluster-review"
+    }
+  healthy-control.json: |-
+    {
+      "component": "managed-networking",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "networkPolicy.enabled",
+      "healthyValue": "true",
+      "targetPath": "/managed-cluster/networking.json",
+      "applicability": "managed-cluster-review"
+    }

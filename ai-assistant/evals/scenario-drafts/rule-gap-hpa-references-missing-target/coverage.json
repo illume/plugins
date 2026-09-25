@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-hpa-references-missing-target",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-score:check:horizontalpodautoscaler-has-target",
+    "kubescape:rule:hpa-has-target",
+    "popeye:code:600"
+  ],
+  "target_semantic_group_ids": [
+    "kube-score:semantic:kube-score-check-horizontalpodautoscaler-has-target:dc88adc18094",
+    "kubescape:semantic:kubescape-rule-hpa-has-target:cf17b88e3ccd",
+    "popeye:semantic:popeye-code-600:0aa0bafe8ca9"
+  ],
+  "target_tool_ids": ["kube-score", "kubescape", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0300-danglinghpatarget.json",
+    "https://github.com/zegl/kube-score/blob/06dedc9ccce58bff50a4f42a3ce0633dc72b0dfa/README_CHECKS.md"
+  ]
+}

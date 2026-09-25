@@ -1,0 +1,5 @@
+apiVersion: authentication.k8s.io/v1beta1
+kind: TokenReview
+metadata:
+  name: deprecated-api-69
+spec: {}

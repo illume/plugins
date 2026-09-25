@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deployment-omits-node-affinity",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/no-node-affinity",
+        "field_path": "spec.template.spec.affinity.nodeAffinity",
+        "observed_value": "field absent",
+        "description": "The Pod template has no node affinity constraints."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/no-node-affinity",
+      "field_path": "spec.template.spec.affinity.nodeAffinity",
+      "observed_value": "requiredDuringSchedulingIgnoredDuringExecution present",
+      "description": "The healthy template declares its reviewed node placement constraint."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-748605539d139052"
+}

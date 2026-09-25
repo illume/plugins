@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Storage } from '../persistence/Storage';
-import type { MCPToolsConfig } from '../types';
-import { parseMCPToolName } from './toolName';
+import type { Storage } from '../persistence/Storage.ts';
+import type { MCPToolsConfig } from '../types.ts';
+import { parseMCPToolName } from './toolName.ts';
 
 /**
  * Manages persisted MCP tool state, including enablement, schemas, descriptions,

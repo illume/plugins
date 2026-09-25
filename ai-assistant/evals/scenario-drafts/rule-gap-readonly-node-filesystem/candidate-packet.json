@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-readonly-node-filesystem",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose the failed `readonly-filesystem-probe` Job from its mount configuration, termination status, and logs. Distinguish the read-only filesystem failure from permissions or capacity; do not mutate resources.",
+  "visible_resource_refs": [
+    "job/readonly-filesystem-probe",
+    "pod[label=job-name=readonly-filesystem-probe]"
+  ],
+  "allowed_observation_kinds": ["job.status", "pod.spec", "pod.container-status", "pod.logs"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

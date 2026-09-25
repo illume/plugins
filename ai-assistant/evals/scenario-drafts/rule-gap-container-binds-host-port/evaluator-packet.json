@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-binds-host-port",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/host-port-workload",
+        "field_path": "spec.containers[0].ports[0].hostPort",
+        "observed_value": "30081",
+        "description": "The container binds port 30081 directly on its node."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/host-port-workload",
+      "field_path": "spec.containers[0].ports[0].hostPort",
+      "observed_value": "0 or absent",
+      "description": "A healthy workload uses a Service without hostPort."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9fff8fff92346870"
+}

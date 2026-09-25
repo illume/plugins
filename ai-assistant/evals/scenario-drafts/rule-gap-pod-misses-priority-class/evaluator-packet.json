@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-misses-priority-class",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/orphan-priority-workload",
+        "field_path": "spec.priorityClassName + matching PriorityClass inventory",
+        "observed_value": "missing-workload-priority; 0 matches",
+        "description": "The Pod names a PriorityClass that does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/orphan-priority-workload",
+      "field_path": "spec.priorityClassName + matching PriorityClass inventory",
+      "observed_value": "missing-workload-priority; 1 match",
+      "description": "A healthy Pod references an existing reviewed PriorityClass."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a6ca03e4d6fc939c"
+}

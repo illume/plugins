@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: windows-network-proxy-health-evidence
+  labels:
+    evals.kubernetes.io/fixture-kind: node-log-or-config
+  annotations:
+    evals.kubernetes.io/adapter: normalized-node-predicate
+    evals.kubernetes.io/source-path: http://127.0.0.1:10256/healthz
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  source-evidence.txt: 2026-09-20T00:04:00Z GET /healthz status=503 body="proxy loop unhealthy"
+  predicate.json: '{"condition":"KubeProxyUnhealthy","statusCode":{"minimum":500},"requiredMatches":1}'
+  healthy-control.txt: 2026-09-20T00:04:00Z GET /healthz status=200 body="ok"

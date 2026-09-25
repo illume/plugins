@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-ensure-that-the-controller-manager-service-account-private-key-f-d3b71b75-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--service-account-private-key-file",
+      "observedValue": "absent",
+      "triggerPredicate": "Explicitly set a service account private key file for service accounts on the controller manager."
+    }
+  predicate-summary.txt: >-
+    Explicitly set a service account private key file for service accounts on the controller
+    manager.
+  healthy-control.json: |-
+    {
+      "subject": "kube-controller-manager",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--service-account-private-key-file",
+      "observedValue": "/etc/kubernetes/pki/sa.key"
+    }

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-admissionregistration-k8s-io-v1alpha1-validati-60",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "validatingadmissionpolicybinding/deprecated-api-60",
+        "field_path": "apiVersion",
+        "observed_value": "admissionregistration.k8s.io/v1alpha1",
+        "description": "ValidatingAdmissionPolicyBinding uses admissionregistration.k8s.io/v1alpha1, which was removed in v1.33.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "validatingadmissionpolicybinding/deprecated-api-60",
+      "field_path": "apiVersion",
+      "observed_value": "admissionregistration.k8s.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-392d476f4cd81133"
+}

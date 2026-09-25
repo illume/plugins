@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v4.json",
+  "scenario_id": "rule-gap-deprecated-mutatingwebhook-v1beta1",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-mutatingwebhookconfiguration-admissionregistration-k8s-io-v1beta1-re:b0b0a925c128"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-admissionregistration-k8s-io-v1beta1-mutatingwebhookconfiguration-removed-in:7bd52d8717cd"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

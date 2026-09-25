@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: implicit-latest-workload
+  labels:
+    app: implicit-latest-workload
+spec:
+  containers:
+    - name: app
+      image: registry.k8s.io/pause
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65532

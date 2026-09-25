@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v9-manage-kubernetes-rbac-users-with-aws-iam-authenticator-for-kube-918a4054
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /eks/cluster.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: eks
+data:
+  evidence.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "accessConfig.authenticationMode",
+      "brokenValue": "CONFIG_MAP",
+      "targetPath": "/eks/cluster.json",
+      "applicability": "eks"
+    }
+  healthy-control.json: |-
+    {
+      "component": "eks-cluster",
+      "evidenceKind": "managed-cluster-config",
+      "exactField": "accessConfig.authenticationMode",
+      "healthyValue": "API",
+      "targetPath": "/eks/cluster.json",
+      "applicability": "eks"
+    }

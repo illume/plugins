@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-containers-not-ready",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why Pod `not-ready` remains unavailable even though its container is running. Correlate Pod conditions, container readiness, probe Events, and readiness telemetry for at least five minutes. Do not mutate resources.",
+  "visible_resource_refs": [
+    "pod/not-ready",
+    "event/*?involvedObject.kind=Pod&involvedObject.name=not-ready",
+    "metric/kube_pod_status_ready{pod=\"not-ready\",condition=\"true\"}"
+  ],
+  "allowed_observation_kinds": ["pod.spec", "pod.status", "pod.events", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -29,6 +29,7 @@ import type {
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import yaml from 'js-yaml';
 import type { CommandRunner } from '../commandRunner.js';
 import type {
   ClusterAdapter,
@@ -175,6 +176,15 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
     if (result.status !== 0 && !/already exists/.test(result.stderr)) {
       throw new Error(`failed to create namespace ${namespace}: ${result.stderr}`);
     }
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const serviceAccount = this.runner(
+        'kubectl',
+        this.kubectl(['get', 'serviceaccount', 'default', '-n', namespace])
+      );
+      if (serviceAccount.status === 0) return;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    throw new Error(`default ServiceAccount was not ready in namespace ${namespace}`);
   }
 
   /**
@@ -185,6 +195,122 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
    * @returns A Promise that resolves after kubectl applies the manifest.
    */
   async applyManifest(namespace: string, manifestYamlPath: string): Promise<void> {
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
+    const renderedSource = source.replaceAll('__EVAL_NAMESPACE__', namespace);
+    const temporaryDirectory = hasNamespacePlaceholder
+      ? mkdtempSync(path.join(tmpdir(), 'headlamp-eval-fixture-'))
+      : undefined;
+    const appliedPath = temporaryDirectory
+      ? path.join(temporaryDirectory, path.basename(manifestYamlPath))
+      : manifestYamlPath;
+    try {
+      if (temporaryDirectory) {
+        writeFileSync(appliedPath, renderedSource, 'utf8');
+      }
+      const result = this.runner(
+        'kubectl',
+        this.kubectl(['apply', '-n', namespace, '-f', appliedPath])
+      );
+      if (result.status !== 0) {
+        throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+      }
+      await this.refreshManifestStatuses(namespace, appliedPath);
+    } finally {
+      if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
+    }
+  }
+
+  /** Reapplies explicit fixture status through each resource's status subresource. */
+  async refreshManifestStatuses(namespace: string, manifestYamlPath: string): Promise<void> {
+    const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
+    const documents = yaml
+      .loadAll(source.replaceAll('__EVAL_NAMESPACE__', namespace))
+      .flatMap(document => {
+        const record = document as Record<string, unknown> | null;
+        if (
+          record !== null &&
+          typeof record === 'object' &&
+          !Array.isArray(document) &&
+          record.kind === 'List' &&
+          Array.isArray(record.items)
+        ) {
+          return record.items;
+        }
+        return [document];
+      })
+      .filter(
+        (document): document is Record<string, unknown> =>
+          document !== null && typeof document === 'object' && !Array.isArray(document)
+      );
+    for (const document of documents) {
+      const metadata = document.metadata as Record<string, unknown> | null;
+      if (
+        document.status === undefined ||
+        typeof document.kind !== 'string' ||
+        metadata === null ||
+        typeof metadata !== 'object' ||
+        Array.isArray(metadata) ||
+        typeof metadata.name !== 'string'
+      ) {
+        continue;
+      }
+      if (document.kind === 'CertificateSigningRequest') {
+        const status = document.status as Record<string, unknown>;
+        const conditions = Array.isArray(status.conditions) ? status.conditions : [];
+        const certificateAction = conditions.find(condition => {
+          const record = condition as Record<string, unknown> | null;
+          return (
+            (record?.type === 'Approved' || record?.type === 'Denied') && record.status === 'True'
+          );
+        }) as Record<string, unknown> | undefined;
+        if (certificateAction) {
+          const action = certificateAction.type === 'Approved' ? 'approve' : 'deny';
+          const actionResult = this.runner(
+            'kubectl',
+            this.kubectl(['certificate', action, metadata.name])
+          );
+          if (
+            actionResult.status !== 0 &&
+            !/already (?:approved|denied)|has already been denied/i.test(
+              actionResult.stderr || actionResult.stdout
+            )
+          ) {
+            throw new Error(
+              `kubectl certificate ${action} failed for ${metadata.name}: ${
+                actionResult.stderr || actionResult.stdout
+              }`
+            );
+          }
+          continue;
+        }
+      }
+      const statusNamespace =
+        typeof metadata.namespace === 'string' ? metadata.namespace : namespace;
+      const statusResult = this.runner(
+        'kubectl',
+        this.kubectl([
+          'patch',
+          `${document.kind.toLowerCase()}/${metadata.name}`,
+          '-n',
+          statusNamespace,
+          '--subresource=status',
+          '--type=merge',
+          '--patch',
+          JSON.stringify({ status: document.status }),
+        ])
+      );
+      if (statusResult.status !== 0) {
+        throw new Error(
+          `kubectl status patch failed for ${document.kind}/${metadata.name}: ${
+            statusResult.stderr || statusResult.stdout
+          }`
+        );
+      }
+    }
+  }
+
+  async deleteManifest(namespace: string, manifestYamlPath: string): Promise<void> {
     const source = existsSync(manifestYamlPath) ? readFileSync(manifestYamlPath, 'utf8') : '';
     const hasNamespacePlaceholder = source.includes('__EVAL_NAMESPACE__');
     const temporaryDirectory = hasNamespacePlaceholder
@@ -199,10 +325,22 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       }
       const result = this.runner(
         'kubectl',
-        this.kubectl(['apply', '-n', namespace, '-f', appliedPath])
+        this.kubectl([
+          'delete',
+          '-n',
+          namespace,
+          '-f',
+          appliedPath,
+          '--ignore-not-found',
+          '--wait=true',
+          '--timeout=60s',
+        ])
       );
-      if (result.status !== 0) {
-        throw new Error(`kubectl apply failed for ${manifestYamlPath}: ${result.stderr}`);
+      if (
+        result.status !== 0 &&
+        !/no matches for kind|ensure CRDs are installed first/i.test(result.stderr)
+      ) {
+        throw new Error(`kubectl delete failed for ${manifestYamlPath}: ${result.stderr}`);
       }
     } finally {
       if (temporaryDirectory) rmSync(temporaryDirectory, { recursive: true, force: true });
@@ -510,6 +648,119 @@ export abstract class KubectlClusterAdapter implements ClusterAdapter {
       throw new Error(`failed to snapshot ${target.kind}/${target.name}: ${result.stderr}`);
     }
     return JSON.parse(result.stdout) as JsonValue;
+  }
+
+  async listResourceSnapshots(namespace: string, resource: string): Promise<JsonValue[]> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', resource, '-n', namespace, '-o', 'json'])
+    );
+    if (result.status !== 0) {
+      throw new Error(`failed to list ${resource}: ${result.stderr || result.stdout}`);
+    }
+    const list = JSON.parse(result.stdout) as { items?: JsonValue[] };
+    return list.items ?? [];
+  }
+
+  async getPodLogs(namespace: string, podName: string): Promise<string> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['logs', podName, '-n', namespace, '--all-containers=true'])
+    );
+    if (result.status !== 0) {
+      throw new Error(`failed to read logs for pod/${podName}: ${result.stderr || result.stdout}`);
+    }
+    return result.stdout.trim();
+  }
+
+  async getNodeProxyHealth(nodeName: string): Promise<{ reachable: boolean; detail: string }> {
+    const result = this.runner(
+      'kubectl',
+      this.kubectl(['get', '--raw', `/api/v1/nodes/${encodeURIComponent(nodeName)}/proxy/healthz`])
+    );
+    return {
+      reachable: result.status === 0,
+      detail: (result.stderr || result.stdout).trim(),
+    };
+  }
+
+  async probeApiPath(apiPath: string, body?: JsonValue): Promise<void> {
+    if (body === undefined) {
+      this.runner('kubectl', this.kubectl(['get', '--raw', apiPath]));
+      return;
+    }
+    const directory = mkdtempSync(path.join(tmpdir(), 'headlamp-eval-api-probe-'));
+    try {
+      const bodyPath = path.join(directory, 'body.json');
+      writeFileSync(bodyPath, JSON.stringify(body), { mode: 0o600 });
+      this.runner('kubectl', this.kubectl(['create', '--raw', apiPath, '-f', bodyPath]));
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }
+
+  async exerciseClientCertificate(csrName: string, privateKeyPem: string): Promise<boolean> {
+    const csr = this.runner(
+      'kubectl',
+      this.kubectl(['get', 'certificatesigningrequest', csrName, '-o', 'json'])
+    );
+    if (csr.status !== 0) return false;
+    const certificate = (JSON.parse(csr.stdout) as { status?: { certificate?: string } }).status
+      ?.certificate;
+    if (!certificate) return false;
+    const sourceConfig = JSON.parse(readFileSync(this.kubeconfigPath, 'utf8')) as {
+      clusters?: Array<{ name: string; cluster: Record<string, unknown> }>;
+      contexts?: Array<{ name: string; context: { cluster: string } }>;
+      'current-context'?: string;
+    };
+    const context = sourceConfig.contexts?.find(
+      entry => entry.name === sourceConfig['current-context']
+    );
+    const cluster = sourceConfig.clusters?.find(entry => entry.name === context?.context.cluster);
+    if (!cluster) throw new Error('isolated kubeconfig has no active cluster for client exercise');
+    const directory = mkdtempSync(path.join(tmpdir(), 'headlamp-eval-client-cert-'));
+    try {
+      const certificatePath = path.join(directory, 'client.crt');
+      const privateKeyPath = path.join(directory, 'client.key');
+      const kubeconfigPath = path.join(directory, 'kubeconfig.json');
+      writeFileSync(certificatePath, Buffer.from(certificate, 'base64'), { mode: 0o600 });
+      writeFileSync(privateKeyPath, privateKeyPem, { mode: 0o600 });
+      writeFileSync(
+        kubeconfigPath,
+        JSON.stringify({
+          apiVersion: 'v1',
+          kind: 'Config',
+          'current-context': 'fixture-client',
+          clusters: [cluster],
+          contexts: [
+            {
+              name: 'fixture-client',
+              context: { cluster: cluster.name, user: 'fixture-client' },
+            },
+          ],
+          users: [
+            {
+              name: 'fixture-client',
+              user: {
+                'client-certificate': certificatePath,
+                'client-key': privateKeyPath,
+              },
+            },
+          ],
+        }),
+        { mode: 0o600 }
+      );
+      const exercise = this.runner('kubectl', [
+        '--kubeconfig',
+        kubeconfigPath,
+        'get',
+        '--raw',
+        '/version',
+      ]);
+      return exercise.status === 0;
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   }
 
   async applyJsonPatch(

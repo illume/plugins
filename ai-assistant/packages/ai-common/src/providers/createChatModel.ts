@@ -21,8 +21,8 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatMistralAI } from '@langchain/mistralai';
 import { ChatOllama } from '@langchain/ollama';
 import { AzureChatOpenAI, ChatOpenAI } from '@langchain/openai';
-import { GH_CLI_AUTH_SENTINEL } from './detectProvider';
-import { createFixtureChatModel } from './langchain/testing/FixtureChatModel';
+import { GH_CLI_AUTH_SENTINEL } from './detectProvider.ts';
+import { createFixtureChatModel } from './langchain/testing/FixtureChatModel.ts';
 
 /**
  * The set of provider IDs recognised by `createChatModel`.

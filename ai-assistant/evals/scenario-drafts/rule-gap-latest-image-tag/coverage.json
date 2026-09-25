@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-latest-image-tag",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:latest-tag",
+    "kubevious:rule:container-latest-image",
+    "popeye:code:101"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-latest-tag:d8bb99112e3d",
+    "kubevious:semantic:kubevious-rule-container-latest-image:b1f8ce4989e0",
+    "popeye:semantic:popeye-code-101:0d9b99f38299"
+  ],
+  "target_tool_ids": ["kube-linter", "kubevious", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/container/latest-image.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/latest-tag.yaml"
+  ]
+}

@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cron-persistence-action
+  labels:
+    evals.kubernetes.io/controlled-action: cron-persistence-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: cron-persistence-action
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: cron
+          emptyDir: {}
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - |-
+              printf "* * * * * root printf controlled-cron\n" > /etc/cron.d/controlled-action
+              chmod 0600 /etc/cron.d/controlled-action
+              cat /etc/cron.d/controlled-action
+          volumeMounts:
+            - name: cron
+              mountPath: /etc/cron.d

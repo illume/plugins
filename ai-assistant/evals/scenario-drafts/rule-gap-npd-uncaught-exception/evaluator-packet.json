@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-uncaught-exception",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "configmap/uncaughtexception-node-evidence",
+        "field_path": "data.source-evidence.json + data.predicate.json",
+        "observed_value": "{\"type\":\"UncaughtException\",\"count\":1,\"runtime\":\"python\",\"message\":\"ControlledFixtureError\"}; {\"recordType\":\"UncaughtException\",\"minimumCount\":1}",
+        "description": "Node adaptor records an uncaught exception appears once in the inert adaptor stream."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/uncaughtexception-node-evidence",
+      "field_path": "data.source-evidence.json + data.predicate.json",
+      "observed_value": "type=Health; no UncaughtException records",
+      "description": "The healthy adaptor stream contains no UncaughtException record."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-36e6f3dbc85bbd2c"
+}

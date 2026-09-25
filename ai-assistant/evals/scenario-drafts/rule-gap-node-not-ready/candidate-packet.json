@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-not-ready",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why synthetic Node `telemetry-not-ready` is unavailable. Correlate its Ready condition, heartbeat age, scheduling taint, and native node-status telemetry. Do not diagnose any real worker and do not mutate resources.",
+  "visible_resource_refs": [
+    "node/telemetry-not-ready",
+    "lease/telemetry-not-ready",
+    "metric/kube_node_status_condition{node=\"telemetry-not-ready\",condition=\"Ready\",status=\"false\"}"
+  ],
+  "allowed_observation_kinds": ["node.spec", "node.status", "lease.status", "metric.range"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v3.json",
+  "scenario_id": "rule-gap-pod-sets-unsafe-sysctl",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kube-linter:check:unsafe-sysctls", "kubescape:rule:set-sysctls-params"],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-unsafe-sysctls:a7977f47eefa",
+    "kubescape:semantic:kubescape-rule-set-sysctls-params:d56775ba98c1"
+  ],
+  "target_tool_ids": ["kube-linter", "kubescape"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0211-applysecuritycontexttoyourpodsandcontainers.json",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/sysctls.yaml"
+  ]
+}

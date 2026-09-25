@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-ensure-clusters-are-created-with-private-endpoint-enabled-and-pu-d468fbe3",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-managedservices-6-3-2-ensure-clusters-are-created-with-private-e:4482b1217d50",
+    "kube-bench:source:aks-1-0-managedservices-5-4-2-ensure-clusters-are-created-with-private-e:bdf9d8516cbe",
+    "kube-bench:source:aks-1-7-managedservices-5-4-2-ensure-clusters-are-created-with-private-e:d66d4cf47c32",
+    "kube-bench:source:aks-1-8-managedservices-5-4-2-ensure-clusters-are-created-with-private-e:a3e89516d86c",
+    "kube-bench:source:eks-1-0-1-managedservices-5-4-2-ensure-clusters-are-created-with-private:fb2aeb30b345",
+    "kube-bench:source:eks-1-1-0-managedservices-5-4-2-ensure-clusters-are-created-with-private:895dcc7a49a2",
+    "kube-bench:source:eks-1-2-0-managedservices-5-4-2-ensure-clusters-are-created-with-private:05af9a961925",
+    "kube-bench:source:eks-1-5-0-managedservices-5-4-2-ensure-clusters-are-created-with-private:d08aa5c6e3eb",
+    "kube-bench:source:eks-1-7-0-managedservices-5-4-2-ensure-clusters-are-created-with-private:18e6afe746e7",
+    "kube-bench:source:eks-1-8-0-managedservices-5-4-2-ensure-clusters-are-created-with-private:1a36c848b208",
+    "kube-bench:source:gke-1-0-managedservices-6-6-4-ensure-clusters-are-created-with-private-e:9836ae841c90",
+    "kube-bench:source:gke-1-2-0-managedservices-5-6-4-ensure-clusters-are-created-with-private:1bcb0900b837",
+    "kube-bench:source:gke-1-6-0-managedservices-5-6-4-ensure-clusters-are-created-with-private:fbc2bb78a4a3",
+    "kube-bench:source:gke-1-8-0-managedservices-5-6-4-ensure-clusters-are-created-with-private:882b05f6f607",
+    "kube-bench:source:gke-1-9-0-managedservices-5-6-4-ensure-clusters-are-created-with-private:b2809d1ea859",
+    "kubescape:rule:ensure-clusters-are-created-with-private-endpoint-enabled-and-public-access-disabled"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-clusters-are-created-with-private-endpoint-enabled-and-public-access-disa:7ac8ac724bee",
+    "kubescape:semantic:kubescape-rule-ensure-clusters-are-created-with-private-endpoint-enabled-and-pub:804e3a8522d6"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-clusters-are-created-with-private-endpoint-enabled-and-pu:d468fbe3c960"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 16,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/managedservices.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0252-ensureclustersarecreatedwithprivateendpointenabledandpublicaccessdisabled.json"
+  ]
+}

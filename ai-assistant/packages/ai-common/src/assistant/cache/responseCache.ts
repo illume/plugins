@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ConversationMessage as Prompt } from '../../conversation/types';
+import type { ConversationMessage as Prompt } from '../../conversation/types.ts';
 
 /** A timestamped cache entry. */
 export interface CacheEntry<T> {

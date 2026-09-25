@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v6.json",
+  "scenario_id": "rule-gap-v6-ensure-that-the-api-server-audit-log-path-argument-is-set-4868f9a5",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:eks-stig-kubernetes-v1r6-controlplane-v-242402-the-kubernetes-api-server:43c359caee0e",
+    "kube-bench:source:eks-stig-kubernetes-v1r6-controlplane-v-242465-the-kubernetes-api-server:82e72c67c176",
+    "kube-bench:source:eks-stig-kubernetes-v1r6-managedservices-v-242402-the-kubernetes-api-ser:c50c857ce0b4",
+    "kube-bench:source:rh-0-7-master-1-15-configure-api-server-auditing-audit-log-file-path:2b35d26f2534",
+    "kubescape:rule:ensure-that-the-api-server-audit-log-path-argument-is-set"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:configure-api-server-auditing-audit-log-file-path:1e3a0c23b0eb",
+    "kube-bench:semantic:the-kubernetes-api-server-audit-log-path-must-be-set:3792e42faf9d",
+    "kube-bench:semantic:the-kubernetes-api-server-must-have-an-audit-log-path-set-component-of-eks-contr:c693152bdf1a",
+    "kube-bench:semantic:the-kubernetes-api-server-must-have-an-audit-log-path-set:c9142b1552ea",
+    "kubescape:semantic:kubescape-rule-ensure-that-the-api-server-audit-log-path-argument-is-set:3dd4cafc4700"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-api-server-audit-log-path-argument-is-set:4868f9a55616"
+  ],
+  "target_tool_ids": ["kube-bench", "kubescape"],
+  "target_rule_count": 5,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/controlplane.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-stig-kubernetes-v1r6/managedservices.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-0.7/master.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0130-ensurethattheapiserverauditlogpathargumentisset.json"
+  ]
+}

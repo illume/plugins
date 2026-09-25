@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-blocked-image-registry",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kubescape:rule:rule-identify-blocklisted-image-registries",
+    "kubescape:rule:rule-identify-blocklisted-image-registries-v1",
+    "popeye:code:113"
+  ],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-rule-identify-blocklisted-image-registries-v1:94e3830cfba2",
+    "kubescape:semantic:kubescape-rule-rule-identify-blocklisted-image-registries:3eca4a24f516",
+    "popeye:semantic:popeye-code-113:fa6fa88ef400"
+  ],
+  "target_tool_ids": ["kubescape", "popeye"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/derailed/popeye/blob/5d07838165bb64fa70c594f2b46ef14a9080782f/internal/issues/assets/codes.yaml",
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0001-forbiddencontainerregistries.json"
+  ]
+}

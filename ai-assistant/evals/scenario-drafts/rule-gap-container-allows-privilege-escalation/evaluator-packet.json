@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-allows-privilege-escalation",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/escalation-workload",
+        "field_path": "spec.containers[0].securityContext.allowPrivilegeEscalation",
+        "observed_value": "true",
+        "description": "The application container explicitly permits privilege escalation."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "pod/escalation-workload",
+      "field_path": "spec.containers[0].securityContext.allowPrivilegeEscalation",
+      "observed_value": "false",
+      "description": "A healthy container explicitly disables privilege escalation."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-bdcc84d1a76f0e10"
+}

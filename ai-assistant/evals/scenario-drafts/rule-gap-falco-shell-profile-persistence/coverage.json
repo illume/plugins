@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-falco-shell-profile-persistence",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "falco:rule:modify-shell-configuration-file:f9b107241e00",
+    "falco:rule:read-shell-configuration-file:05ca18b4764d",
+    "falco:rule:write-below-root:81d6c2348fea"
+  ],
+  "target_semantic_group_ids": [
+    "falco:semantic:falco-rule-modify-shell-configuration-file-f9b107241e00:fe084bfb698d",
+    "falco:semantic:falco-rule-read-shell-configuration-file-05ca18b4764d:b2978eabb618",
+    "falco:semantic:falco-rule-write-below-root-81d6c2348fea:7e8149c8d2b5"
+  ],
+  "target_tool_ids": ["falco"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-incubating_rules.yaml",
+    "https://github.com/falcosecurity/rules/blob/e822409d8a2a28c9719f56ace66e8cadebfd2bc3/rules/falco-sandbox_rules.yaml"
+  ]
+}

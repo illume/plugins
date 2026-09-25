@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-hpa-target-deployment-pins-replicas",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "deployment/autoscaled-pinned",
+        "field_path": "spec.replicas + horizontalpodautoscaler/autoscaled-pinned.spec.scaleTargetRef",
+        "observed_value": "3; {\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"autoscaled-pinned\"}",
+        "description": "The Deployment targeted by an HPA also pins spec.replicas."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "deployment/autoscaled-pinned",
+      "field_path": "spec.replicas + horizontalpodautoscaler/autoscaled-pinned.spec.scaleTargetRef",
+      "observed_value": "spec.replicas field absent; Deployment/autoscaled-pinned",
+      "description": "The healthy autoscaled Deployment leaves replicas to the HPA."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-ce5791cebb2ecc7e"
+}

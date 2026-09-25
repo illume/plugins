@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-agent-sandbox-managed-networking-4cc54f55-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /manifests/sandbox-networking.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "sandbox",
+      "evidenceKind": "sandbox-networking",
+      "exactField": "sandbox.network.managed",
+      "brokenValue": "false",
+      "targetPath": "/manifests/sandbox-networking.yaml",
+      "applicability": "inert-review-only",
+      "predicateSummary": "requires controller-managed SandboxTemplate networking"
+    }
+  healthy-control.json: |-
+    {
+      "component": "sandbox",
+      "evidenceKind": "sandbox-networking",
+      "exactField": "sandbox.network.managed",
+      "healthyValue": "true",
+      "targetPath": "/manifests/sandbox-networking.yaml",
+      "applicability": "inert-review-only"
+    }

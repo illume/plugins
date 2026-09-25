@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-alwaysallow-authorization",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the `apiserver-alwaysallow-fixture` static Pod configuration and identify the authorization defect. Cite the exact command argument and adapter boundary.",
+  "visible_resource_refs": ["configmap/apiserver-alwaysallow-fixture"],
+  "allowed_observation_kinds": ["configmap.data", "component-config.kube-apiserver"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

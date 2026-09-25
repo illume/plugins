@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-kubelet-config-configuration-file-has-permission-60c1636f",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:k3s-cis-1-7-node-4-1-9-ensure-that-the-kubelet-config-configuration-file:c29163437758",
+    "kube-bench:source:k3s-cis-1-8-node-4-1-9-ensure-that-the-kubelet-config-configuration-file:22fc7b6a3bb4",
+    "kube-bench:source:k3s-cis-1-9-node-4-1-9-ensure-that-the-kubelet-config-configuration-file:b0d11a85d6af",
+    "kube-bench:source:rh-1-4-node-4-1-9-ensure-that-the-kubelet-config-configuration-file-has-:930708cc9484",
+    "kube-bench:source:rh-1-8-node-4-1-9-ensure-that-the-kubelet-config-configuration-file-has-:aa5b108e2aa0",
+    "kube-bench:source:rh-1-9-node-4-1-9-ensure-that-the-kubelet-config-configuration-file-has-:14862e9ede40"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-config-configuration-file-has-permissions-set-to-600-or-:705681ce7f4d"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-config-configuration-file-has-permission:60c1636f2a82"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 6,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.9/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.4/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rh-1.9/node.yaml"
+  ]
+}

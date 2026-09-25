@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-hpa-references-missing-target",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "horizontalpodautoscaler/orphan-autoscaler",
+        "field_path": "spec.scaleTargetRef + matching Deployment inventory",
+        "observed_value": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"name\":\"missing-target\"}; 0",
+        "description": "The autoscaler target does not exist."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-or-confounding-state",
+      "resource_ref": "horizontalpodautoscaler/orphan-autoscaler",
+      "field_path": "spec.scaleTargetRef + matching Deployment inventory",
+      "observed_value": "apps/v1 Deployment/missing-target; 1 match",
+      "description": "A healthy autoscaler resolves to one scalable workload."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f8bdfa755ec5f542"
+}

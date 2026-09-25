@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-event-qps-throttles-auditability",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:ack-1-0-node-4-2-8-ensure-that-the-event-qps-argument-is-set-to-0-or-a-l:ebae951d76d5",
+    "kube-bench:source:aks-1-0-node-3-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a-l:c0b1ebec99ff",
+    "kube-bench:source:cis-1-20-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a-:72501aff30ac",
+    "kube-bench:source:cis-1-23-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a-:62f43b2bbc70",
+    "kube-bench:source:cis-1-6-k3s-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or:ff544e9a9716",
+    "kube-bench:source:cis-1-6-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a-l:851e83b2a7cf",
+    "kube-bench:source:gke-1-0-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a-l:284bc0f6613e",
+    "kube-bench:source:gke-1-2-0-node-3-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or-a:3bf53215c53d",
+    "kube-bench:source:k3s-cis-1-23-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-o:a4d355359606",
+    "kube-bench:source:rke-cis-1-23-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-o:25760b3acd7d",
+    "kube-bench:source:rke2-cis-1-23-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-:2f36cdd56cbc",
+    "kube-bench:source:tkgi-1-2-53-node-4-2-9-ensure-that-the-event-qps-argument-is-set-to-0-or:d6680973dd3c"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-event-qps-argument-is-set-to-0-or-a-level-which-ensures-appropri:e87c0a1faa44"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 12,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/ack-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.20/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6-k3s/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/cis-1.6/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/k3s-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/rke2-cis-1.23/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/tkgi-1.2.53/node.yaml"
+  ]
+}

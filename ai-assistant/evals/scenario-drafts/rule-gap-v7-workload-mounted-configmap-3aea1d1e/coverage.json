@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v7.json",
+  "scenario_id": "rule-gap-v7-workload-mounted-configmap-3aea1d1e",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": ["kubescape:rule:workload-mounted-configmap"],
+  "target_semantic_group_ids": [
+    "kubescape:semantic:kubescape-rule-workload-mounted-configmap:f16302b00d9f"
+  ],
+  "target_canonical_capability_ids": ["canonical:workload-mounted-configmap:3aea1d1ec3a8"],
+  "target_tool_ids": ["kubescape"],
+  "target_rule_count": 1,
+  "provenance_refs": [
+    "https://github.com/kubescape/regolibrary/blob/28642707ea4eeea42cf031f0933d0d9fd451d610/controls/C-0258-configmapaccess.json"
+  ]
+}

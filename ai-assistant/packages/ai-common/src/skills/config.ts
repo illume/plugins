@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { ParsedSkill } from './parseSkill';
-import { isValidGitUrl, SkillSource } from './SkillLoader';
+import type { ParsedSkill } from './parseSkill.ts';
+import type { SkillSource } from './SkillLoader.ts';
+import { isValidGitUrl } from './SkillLoader.ts';
 
 /**
  * Persisted configuration for the skills system.

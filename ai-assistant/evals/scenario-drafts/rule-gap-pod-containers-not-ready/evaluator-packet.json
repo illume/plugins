@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-containers-not-ready",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "pod-ready-condition-false",
+        "resource_ref": "pod/not-ready",
+        "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+        "observed_value": "False",
+        "description": "The Pod Ready condition is false."
+      },
+      {
+        "fact_id": "container-ready-false",
+        "resource_ref": "pod/not-ready",
+        "field_path": "status.containerStatuses[?(@.name==\"app\")].ready",
+        "observed_value": "false",
+        "description": "The application container remains not ready."
+      },
+      {
+        "fact_id": "readiness-signal-absent",
+        "resource_ref": "metric/kube_pod_status_ready{pod=\"not-ready\",condition=\"true\"}",
+        "field_path": "max_over_time[5m]",
+        "observed_value": "0",
+        "description": "Native readiness telemetry never reports the Pod ready during the window."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-container-crash",
+      "resource_ref": "pod/not-ready",
+      "field_path": "status.containerStatuses[?(@.name==\"app\")].state.waiting.reason",
+      "observed_value": "CrashLoopBackOff",
+      "description": "The container is running; its failing readiness probe is the fault."
+    },
+    {
+      "fact_id": "invented-ready-condition",
+      "resource_ref": "pod/not-ready",
+      "field_path": "status.conditions[?(@.type==\"Ready\")].status",
+      "observed_value": "True",
+      "description": "The Pod does not become Ready."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4b1be6d72a2c92e2"
+}

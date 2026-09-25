@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-npd-unregister-netdevice-burst",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "exact-log-evidence",
+        "resource_ref": "configmap/npd-unregister-netdevice-burst-fixture",
+        "field_path": "data.source.log",
+        "observed_value": "unregister_netdevice: waiting for eth0 to become free. Usage count = 1\nunregister_netdevice: waiting for eth0 to become free. Usage count = 1\nunregister_netdevice: waiting for eth0 to become free. Usage count = 1",
+        "description": "Three identical eth0 unregister stalls occur inside the 20-minute counter window."
+      },
+      {
+        "fact_id": "normalized-regex-oracle",
+        "resource_ref": "configmap/npd-unregister-netdevice-burst-fixture",
+        "field_path": "data.oracle.json",
+        "observed_value": "{\"source\":\"kernel-monitor\",\"regex\":\"unregister_netdevice: waiting for \\\\w+ to become free. Usage count = \\\\d+\",\"requiredMatches\":3,\"lookback\":\"20m\"}",
+        "description": "The local oracle requires 3 match(es) for unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/npd-unregister-netdevice-burst-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The log remains ConfigMap data and is never injected into a node log."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control-is-not-failing-line",
+      "resource_ref": "configmap/npd-unregister-netdevice-burst-fixture",
+      "field_path": "data.source.log",
+      "observed_value": "unregister_netdevice: eth0 became free",
+      "description": "The failing source is not the nonmatching healthy control: unregister_netdevice: eth0 became free"
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-05742889c5e4923d"
+}

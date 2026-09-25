@@ -1,0 +1,5 @@
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta3
+kind: PriorityLevelConfiguration
+metadata:
+  name: deprecated-api-74
+spec: {}

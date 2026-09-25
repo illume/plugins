@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v9.json",
+  "scenario_id": "rule-gap-v9-avoid-bindings-to-system-anonymous-automated-e56e19d1",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:gke-1-6-0-policies-4-1-8-avoid-bindings-to-system-anonymous-automated:1b68264ac261",
+    "kube-bench:source:gke-1-8-0-policies-4-1-8-avoid-bindings-to-system-anonymous-automated:d549eea41714",
+    "kube-bench:source:gke-1-9-0-policies-4-1-8-avoid-bindings-to-system-anonymous-automated:191982846bf0"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:avoid-bindings-to-system-anonymous:0592630a3056"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:avoid-bindings-to-system-anonymous-automated:e56e19d1493e"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 3,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.6.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/policies.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/policies.yaml"
+  ]
+}

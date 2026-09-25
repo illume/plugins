@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: telemetry-failed-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: ''
+  claimRef:
+    namespace: __EVAL_NAMESPACE__
+    name: deleted-claim
+    uid: 00000000-0000-0000-0000-000000000001
+  hostPath:
+    path: /dev/null
+    type: Socket

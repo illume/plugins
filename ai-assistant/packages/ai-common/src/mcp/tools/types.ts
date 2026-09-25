@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { AssistantRequestContext } from '../../conversation/context';
+import type { AssistantRequestContext } from '../../conversation/context.ts';
 
 /** Persisted MCP tool metadata consumed by argument processing. */
 export interface ProcessorToolConfig {

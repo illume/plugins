@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-pluto-audit-k8s-io-v1alpha1-policylist-removed-in-v1-64",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "policylist/deprecated-api-64",
+        "field_path": "apiVersion",
+        "observed_value": "audit.k8s.io/v1alpha1",
+        "description": "PolicyList uses audit.k8s.io/v1alpha1, which was removed in v1.24.0."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "policylist/deprecated-api-64",
+      "field_path": "apiVersion",
+      "observed_value": "audit.k8s.io/v1",
+      "description": "The healthy control differs only at apiVersion."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f452eae856f85098"
+}

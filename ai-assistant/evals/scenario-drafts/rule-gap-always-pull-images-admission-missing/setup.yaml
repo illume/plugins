@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: always-pull-images-admission-missing-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: component-configuration
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/kube-apiserver.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  kube-apiserver.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-apiserver
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+        - name: kube-apiserver
+          image: registry.k8s.io/kube-apiserver:v1.31.1
+          command:
+            - kube-apiserver
+            - --secure-port=6443
+            - --authorization-mode=Node,RBAC
+            - --enable-admission-plugins=NamespaceLifecycle,ServiceAccount,NodeRestriction

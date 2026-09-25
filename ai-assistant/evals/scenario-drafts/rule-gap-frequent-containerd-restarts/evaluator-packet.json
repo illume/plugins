@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-frequent-containerd-restarts",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "containerd-probe-restarts",
+        "resource_ref": "pod[label=app=containerd-restart-probe]",
+        "field_path": "status.containerStatuses[name=containerd-probe].restartCount",
+        "observed_value": ">=3 within 120s",
+        "description": "Kubelet restarts the failing containerd probe at least three times."
+      },
+      {
+        "fact_id": "containerd-probe-crashloop",
+        "resource_ref": "pod[label=app=containerd-restart-probe]",
+        "field_path": "status.containerStatuses[name=containerd-probe].state.waiting.reason",
+        "observed_value": "CrashLoopBackOff",
+        "description": "The repeatedly failing probe enters restart backoff."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-containerd-restart",
+      "resource_ref": "node/*",
+      "field_path": "systemd.containerd.restartCount",
+      "observed_value": ">=3",
+      "description": "The fixture does not restart or access host containerd."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4bcd55168f9490b8"
+}

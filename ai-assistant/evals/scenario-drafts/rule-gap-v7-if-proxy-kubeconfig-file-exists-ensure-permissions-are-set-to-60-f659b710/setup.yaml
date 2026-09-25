@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-if-proxy-kubeconfig-file-exists-ensure-permissions-are-set-to-60-f659b710-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /etc/kubernetes/component-file
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "brokenValue": "0644",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only",
+      "predicateSummary": "If `kube-proxy` is running, and if it is using a file-based kubeconfig file, ensure that the proxy kubeconfig file has permissions of `600` or more restrictive."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "file-metadata",
+      "exactField": "file.mode",
+      "healthyValue": "0600",
+      "targetPath": "/etc/kubernetes/component-file",
+      "applicability": "inert-review-only"
+    }

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-agent-sandbox-container-limits-d1dd6cf7",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "sandbox/unbounded-sandbox",
+        "field_path": "spec.containers[0].resources",
+        "observed_value": "{\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"}}",
+        "description": "requires CPU and memory limits on all embedded containers"
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "sandbox/unbounded-sandbox",
+      "field_path": "spec.containers[0].resources",
+      "observed_value": "{\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"},\"limits\":{\"cpu\":\"500m\",\"memory\":\"512Mi\"}}",
+      "description": "The healthy control removes the represented defect."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f359ddb864e3475e"
+}

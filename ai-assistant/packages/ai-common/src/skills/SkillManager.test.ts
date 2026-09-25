@@ -15,12 +15,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SKILLS_CONFIG, SkillsConfig } from './config';
+import type { SkillsConfig } from './config';
+import { DEFAULT_SKILLS_CONFIG } from './config';
 import { getSkillIdentity } from './config';
 import type { ParsedSkill } from './parseSkill';
 import type { EmbeddingSkillRouter } from './routing/EmbeddingSkillRouter';
 import { DEFAULT_ROUTER_CONFIG } from './routing/KeywordSkillRouter';
-import { SkillFileSystem } from './SkillLoader';
+import type { SkillFileSystem } from './SkillLoader';
 import { type SkillCache, SkillManager } from './SkillManager';
 
 /** Creates a mock filesystem for testing. */

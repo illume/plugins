@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-node-conntrack-full",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "bounded-connection-drop",
+        "resource_ref": "pod[label=job-name=conntrack-capacity-probe]",
+        "field_path": "logs",
+        "observed_value": "connection tracking capacity reached: controlled connection dropped",
+        "description": "The tiny local pending-connection capacity drops at least one controlled connection."
+      },
+      {
+        "fact_id": "capacity-probe-exit-code",
+        "resource_ref": "pod[label=job-name=conntrack-capacity-probe]",
+        "field_path": "status.containerStatuses[0].state.terminated.exitCode",
+        "observed_value": "51",
+        "description": "The probe exits with its bounded connection-capacity failure code."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-conntrack-change",
+      "resource_ref": "node/*",
+      "field_path": "sysctl.net.netfilter.nf_conntrack_max",
+      "observed_value": "<changed>",
+      "description": "The fixture is unprivileged and does not read or change host conntrack settings."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-f8bfb6d149226e02"
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v8.json",
+  "scenario_id": "rule-gap-v8-ensure-that-the-kubelet-kubeconfig-file-ownership-is-set-to-root-22de462c",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-bench:source:aks-1-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-is-:21d9b3a2d234",
+    "kube-bench:source:aks-1-7-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-is-:96c64461e666",
+    "kube-bench:source:aks-1-8-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-is-:add139241fe4",
+    "kube-bench:source:eks-1-0-1-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:7b58126d91aa",
+    "kube-bench:source:eks-1-1-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:caf06977f811",
+    "kube-bench:source:eks-1-2-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:9f634baad750",
+    "kube-bench:source:eks-1-5-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:c9eaac9d63cf",
+    "kube-bench:source:eks-1-7-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:5d13f339d57e",
+    "kube-bench:source:eks-1-8-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:d458de85a182",
+    "kube-bench:source:gke-1-8-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:691b0f777fcf",
+    "kube-bench:source:gke-1-9-0-node-3-1-2-ensure-that-the-kubelet-kubeconfig-file-ownership-i:e92b1ce90675"
+  ],
+  "target_semantic_group_ids": [
+    "kube-bench:semantic:ensure-that-the-kubelet-kubeconfig-file-ownership-is-set-to-root-root:ac8901fbedce"
+  ],
+  "target_canonical_capability_ids": [
+    "canonical:ensure-that-the-kubelet-kubeconfig-file-ownership-is-set-to-root:22de462c07f5"
+  ],
+  "target_tool_ids": ["kube-bench"],
+  "target_rule_count": 11,
+  "provenance_refs": [
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.7/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/aks-1.8/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.0.1/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.1.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.2.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.5.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.7.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/eks-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.8.0/node.yaml",
+    "https://github.com/aquasecurity/kube-bench/blob/9f133cb7509ce1dbedfc860e94474588000e25ac/cfg/gke-1.9.0/node.yaml"
+  ]
+}

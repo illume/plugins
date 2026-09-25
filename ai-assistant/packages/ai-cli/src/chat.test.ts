@@ -14,8 +14,24 @@
  * limitations under the License.
  */
 
-import { describe, expect, it, vi } from 'vitest';
-import { detectKubectlContext, query } from './chat.js';
+import AgentHarnessSession from '@headlamp-k8s/ai-common/assistant/AgentHarnessSession';
+import LangChainAssistantSession from '@headlamp-k8s/ai-common/assistant/LangChainAssistantSession';
+import { describe, expect, it, rs } from '@rstest/core';
+import { execFile } from 'child_process';
+import { FakeToolCallingModel } from 'langchain';
+import { createManager, detectKubectlContext, query } from './chat.ts';
+
+rs.mock('child_process', () => ({
+  // kubectl.ts no longer uses execFileSync (see kubectl.ts), but other
+  // callers such as model.ts's provider detection still do, so this guards
+  // against any of them unexpectedly shelling out during these tests.
+  execFileSync: rs.fn(() => {
+    throw new Error('real kubectl must not be invoked when --mock-tools is set');
+  }),
+  execFile: rs.fn(() => {
+    throw new Error('real kubectl must not be invoked when --mock-tools is set');
+  }),
+}));
 
 describe('chat', () => {
   it('exports a query function', () => {
@@ -23,7 +39,7 @@ describe('chat', () => {
   });
 
   it('reads the active cluster and namespace from structured kubeconfig output', () => {
-    const run = vi.fn().mockReturnValue(
+    const run = rs.fn().mockReturnValue(
       JSON.stringify({
         contexts: [{ context: { cluster: 'trial', namespace: 'eval-selector-fault' } }],
       })
@@ -38,16 +54,87 @@ describe('chat', () => {
   });
 
   it('uses the Kubernetes default namespace only when the context omits one', () => {
-    const run = vi
+    const run = rs
       .fn()
       .mockReturnValue(JSON.stringify({ contexts: [{ context: { cluster: 'local' } }] }));
     expect(detectKubectlContext(run)).toEqual({ cluster: 'local', namespace: 'default' });
   });
 
   it('returns undefined when kubectl context detection fails', () => {
-    const run = vi.fn().mockImplementation(() => {
+    const run = rs.fn().mockImplementation(() => {
       throw new Error('kubectl unavailable');
     });
     expect(detectKubectlContext(run)).toBeUndefined();
+  });
+
+  it('uses the agent harness by default and supports the legacy session explicitly', async () => {
+    const harness = await createManager('mock-testing-model', {}, { mockTools: true });
+    const legacy = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        mockTools: true,
+        legacySession: true,
+      }
+    );
+
+    expect(harness).toBeInstanceOf(AgentHarnessSession);
+    expect(legacy).toBeInstanceOf(LangChainAssistantSession);
+  });
+
+  it('routes kubernetes_api_request to the mock fixture instead of the real kubectl tool when --mock-tools is set', async () => {
+    const model = new FakeToolCallingModel({
+      toolCalls: [
+        [
+          {
+            id: 'list-pods-call',
+            name: 'kubernetes_api_request',
+            args: { url: '/api/v1/pods', method: 'GET' },
+          },
+        ],
+        [],
+      ],
+    });
+    const manager = await createManager('mock-testing-model', {}, { mockTools: true, model });
+
+    const response = await query(manager, 'List the pods');
+
+    // The real kubectl tool is also registered via enableDirectToolCalling,
+    // but the mock manager must win for the shared `kubernetes_api_request`
+    // name so the CLI's --mock-tools flag actually takes effect.
+    expect(execFile).not.toHaveBeenCalled();
+    expect(response).toContain('nginx');
+  });
+
+  it('binds no host tools in supplied-evidence mode', async () => {
+    const manager = await createManager(
+      'mock-testing-model',
+      {},
+      {
+        model: new FakeToolCallingModel(),
+        suppliedEvidenceOnly: true,
+      }
+    );
+
+    expect((manager as unknown as { extraTools: Map<string, unknown> }).extraTools.size).toBe(0);
+    expect(execFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects structured diagnosis for a provider without native schema support', async () => {
+    await expect(
+      createManager('mock-testing-model', {}, { structuredDiagnosis: true })
+    ).rejects.toThrow('requires a provider with native structured output');
+  });
+
+  it('requires an exact contract for structured repair', async () => {
+    await expect(createManager('copilot', {}, { structuredRepair: true })).rejects.toThrow(
+      'requires an exact repair contract'
+    );
+  });
+
+  it('rejects compact output without a structured contract', async () => {
+    await expect(createManager('copilot', {}, { compactStructuredOutput: true })).rejects.toThrow(
+      'requires structured diagnosis or repair'
+    );
   });
 });

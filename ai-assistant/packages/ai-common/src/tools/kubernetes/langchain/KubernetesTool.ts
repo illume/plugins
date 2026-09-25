@@ -15,10 +15,10 @@
  */
 
 import { z } from 'zod';
-import type { ToolConfig, ToolHandler } from '../../langchain/LangChainTool';
-import { LangChainTool } from '../../langchain/LangChainTool';
-import type { ToolExecutionResult } from '../../ToolRuntime';
-import type { KubernetesToolContext } from '../context';
+import type { ToolConfig, ToolHandler } from '../../langchain/LangChainTool.ts';
+import { LangChainTool } from '../../langchain/LangChainTool.ts';
+import type { ToolExecutionResult } from '../../ToolRuntime.ts';
+import type { KubernetesToolContext } from '../context.ts';
 
 /** Tool implementation that routes requests through the Kubernetes API UI workflow. */
 export class KubernetesTool extends LangChainTool {

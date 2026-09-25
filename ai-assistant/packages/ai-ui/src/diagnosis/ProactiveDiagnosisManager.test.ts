@@ -376,6 +376,89 @@ describe('ProactiveDiagnosisManager', () => {
     expect(diagnoseFn).toHaveBeenCalledTimes(2);
   });
 
+  it('diagnoseEvents allows bounded concurrency when the provider supports it', async () => {
+    const first = deferred<string>();
+    const second = deferred<string>();
+    const diagnoseFn = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    manager.setDiagnoseFn(diagnoseFn, { maxConcurrency: 2 });
+
+    const cycle = manager.diagnoseEvents([
+      createEvent({ uid: 'first', objectName: 'first-app' }),
+      createEvent({ uid: 'second', objectName: 'second-app' }),
+    ]);
+    await vi.waitFor(() => expect(diagnoseFn).toHaveBeenCalledTimes(2));
+    first.resolve('first diagnosis');
+    second.resolve('second diagnosis');
+    await cycle;
+
+    expect(manager.getDiagnosis('first')).toMatchObject({ diagnosis: 'first diagnosis' });
+    expect(manager.getDiagnosis('second')).toMatchObject({ diagnosis: 'second diagnosis' });
+  });
+
+  it('diagnoseEvents uses one packed call and maps every event result', async () => {
+    const diagnoseFn = vi.fn(async () => 'isolated fallback');
+    const batchDiagnoseFn = vi.fn(async (events: EventDigest[]) =>
+      events.map(event => ({ eventUid: event.uid, diagnosis: `packed ${event.uid}` }))
+    );
+    manager.setDiagnoseFn(diagnoseFn, { batchDiagnoseFn });
+    const events = Array.from({ length: 10 }, (_, index) =>
+      createEvent({ uid: `packed-${index}`, objectName: `app-${index}` })
+    );
+
+    await manager.diagnoseEvents(events);
+
+    expect(batchDiagnoseFn).toHaveBeenCalledOnce();
+    expect(diagnoseFn).not.toHaveBeenCalled();
+    expect(
+      events.every(event => manager.getDiagnosis(event.uid)?.diagnosis === `packed ${event.uid}`)
+    ).toBe(true);
+  });
+
+  it('diagnoseEvents falls back to isolated calls when packed identities are incomplete', async () => {
+    const diagnoseFn = vi.fn(async () => 'isolated fallback');
+    const batchDiagnoseFn = vi.fn(async (events: EventDigest[]) => [
+      { eventUid: events[0]!.uid, diagnosis: 'incomplete packed result' },
+    ]);
+    manager.setDiagnoseFn(diagnoseFn, { maxConcurrency: 2, batchDiagnoseFn });
+    const events = [
+      createEvent({ uid: 'packed-a', objectName: 'app-a' }),
+      createEvent({ uid: 'packed-b', objectName: 'app-b' }),
+    ];
+
+    await manager.diagnoseEvents(events);
+
+    expect(batchDiagnoseFn).toHaveBeenCalledOnce();
+    expect(diagnoseFn).toHaveBeenCalledTimes(2);
+    expect(
+      events.every(event => manager.getDiagnosis(event.uid)?.diagnosis === 'isolated fallback')
+    ).toBe(true);
+  });
+
+  it('stopping proactive diagnosis aborts active batch issues', async () => {
+    const diagnoseFn = vi.fn(
+      (_prompt: string, _onStep: unknown, signal?: AbortSignal) =>
+        new Promise<string>((_resolve, reject) => {
+          signal?.addEventListener('abort', () => reject(new Error('request aborted')), {
+            once: true,
+          });
+        })
+    );
+    manager.setDiagnoseFn(diagnoseFn);
+
+    const cycle = manager.diagnoseEvents([createEvent()]);
+    await vi.waitFor(() => expect(diagnoseFn).toHaveBeenCalledOnce());
+    manager.stop();
+    await cycle;
+
+    expect(manager.getDiagnosis('uid-1')).toMatchObject({
+      loading: false,
+      error: 'request aborted',
+    });
+  });
+
   it('allows retrying a resource after its previous diagnosis failed', async () => {
     const failed = createEvent({ uid: 'failed', objectName: 'retry-app' });
     const retry = createEvent({ uid: 'retry', objectName: 'retry-app' });

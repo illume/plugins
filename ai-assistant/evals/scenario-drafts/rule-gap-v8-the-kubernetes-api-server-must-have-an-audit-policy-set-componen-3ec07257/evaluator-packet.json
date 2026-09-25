@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v8-the-kubernetes-api-server-must-have-an-audit-policy-set-componen-3ec07257",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v8-the-kubernetes-api-server-must-have-an-audit-policy-set-componen-3ec07257",
+        "field_path": "data.evidence.json#auditPolicy.rules",
+        "observed_value": "[]",
+        "description": "The Kubernetes API Server must have an audit policy set | Component of EKS Control Plane"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v8-the-kubernetes-api-server-must-have-an-audit-policy-set-componen-3ec07257",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v8-the-kubernetes-api-server-must-have-an-audit-policy-set-componen-3ec07257",
+      "field_path": "data.healthy-control.json#auditPolicy.rules",
+      "observed_value": "[{\"level\":\"Metadata\",\"resources\":[{\"group\":\"\",\"resources\":[\"pods\",\"secrets\"]}]}]",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-4d1d453a174eb83b"
+}

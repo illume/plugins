@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v7-replicas-d-d-at-burst-will-match-exceed-cluster-memory-s-capacit-33e1f2f1-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: static-evidence
+  annotations:
+    evals.kubernetes.io/target-path: /var/lib/evals/cluster-capacity.json
+    evals.kubernetes.io/apply-to-current-host: 'false'
+    evals.kubernetes.io/applicability: inert-review-only
+data:
+  evidence.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "autoscaling-capacity",
+      "exactField": "hpa.projectedBurst.memoryCapacity",
+      "brokenValue": "52Gi > 32Gi",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only",
+      "predicateSummary": "Emitted by checkResources when the pinned source predicate for issue 603 is satisfied."
+    }
+  healthy-control.json: |-
+    {
+      "component": "cluster",
+      "evidenceKind": "autoscaling-capacity",
+      "exactField": "hpa.projectedBurst.memoryCapacity",
+      "healthyValue": "24Gi <= 32Gi",
+      "targetPath": "/var/lib/evals/cluster-capacity.json",
+      "applicability": "inert-review-only"
+    }

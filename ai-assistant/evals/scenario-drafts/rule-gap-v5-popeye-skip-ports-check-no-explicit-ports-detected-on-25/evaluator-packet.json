@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v5-popeye-skip-ports-check-no-explicit-ports-detected-on-25",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "service/object-finding-25",
+        "field_path": "spec.selector + selected container ports",
+        "observed_value": "selected Pod has no explicit container ports",
+        "description": "The controlled object satisfies the exact 1101 trigger described by its native fields or status."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "service/object-finding-25",
+      "field_path": "spec.selector + selected container ports",
+      "observed_value": "selected Pod declares named container port http",
+      "description": "The healthy control differs only at spec.selector + selected container ports."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-b3c17254f58e0a9c"
+}

@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: image-layer-integrity-probe
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: image-layer-integrity-probe
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: probe
+          image: busybox:1.36.1
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              printf 'not-a-valid-compressed-layer' > /tmp/layer.tar.gz; gzip -t /tmp/layer.tar.gz
+              >/dev/null 2>&1 || { echo 'image layer verification failed: corrupt compressed data';
+              exit 31; }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000

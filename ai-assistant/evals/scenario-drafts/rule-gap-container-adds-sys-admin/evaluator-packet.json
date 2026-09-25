@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-container-adds-sys-admin",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "pod/sys-admin-capability",
+        "field_path": "spec.containers[0].securityContext.capabilities.add",
+        "observed_value": "[\"SYS_ADMIN\"]",
+        "description": "The container explicitly adds SYS_ADMIN."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "pod/sys-admin-capability",
+      "field_path": "spec.containers[0].securityContext.capabilities.add",
+      "observed_value": "[] with drop=[ALL]",
+      "description": "The healthy container drops all capabilities and adds none."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-5c0309f273cbbd45"
+}

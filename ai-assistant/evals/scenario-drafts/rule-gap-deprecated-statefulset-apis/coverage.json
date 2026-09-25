@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-deprecated-statefulset-apis",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "pluto:source:k8s-statefulset-apps-v1beta1-removed-v1-16-0:03a7b24b475c",
+    "pluto:source:k8s-statefulset-apps-v1beta2-removed-v1-16-0:1c6b01fbee41"
+  ],
+  "target_semantic_group_ids": [
+    "pluto:semantic:k8s-apps-v1beta1-statefulset-removed-in-v1-16-0:7e830f13af43",
+    "pluto:semantic:k8s-apps-v1beta2-statefulset-removed-in-v1-16-0:98ce9b21c289"
+  ],
+  "target_tool_ids": ["pluto"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/FairwindsOps/pluto/blob/9495152d614581a988e31414fa64e8b82474d956/versions.yaml"
+  ]
+}

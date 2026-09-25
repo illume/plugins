@@ -1,0 +1,9 @@
+apiVersion: cert-manager.io/v1beta1
+kind: CertificateRequest
+metadata:
+  name: certificaterequest-v1beta1
+spec:
+  request: Y29udHJvbGxlZC1yZXF1ZXN0
+  issuerRef:
+    name: issuer
+    kind: Issuer

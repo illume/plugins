@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: certificate-v1alpha2
+spec:
+  secretName: legacy-cert-a2
+  dnsNames:
+    - a2.example.test
+  issuerRef:
+    name: issuer
+    kind: Issuer

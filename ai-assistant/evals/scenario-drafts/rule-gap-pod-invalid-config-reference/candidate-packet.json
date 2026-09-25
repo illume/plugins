@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-invalid-config-reference",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Diagnose why `config-reference-probe` does not start. Inspect the required ConfigMap reference, container waiting state, and namespace inventory; cite exact evidence and do not mutate resources.",
+  "visible_resource_refs": ["pod/config-reference-probe", "configmap/*", "event/*"],
+  "allowed_observation_kinds": ["pod.spec", "pod.container-status", "configmap.list", "event.list"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

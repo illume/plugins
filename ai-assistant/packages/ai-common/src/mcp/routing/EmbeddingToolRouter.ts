@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-import { cosineSimilarity } from '../../embeddings/cosineSimilarity';
-import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider';
-import {
-  buildToolSearchText,
-  DEFAULT_TOOL_ROUTER_CONFIG,
-  routeTools,
-  ScoredTool,
-  ToolInfo,
-  ToolRouterConfig,
-} from './ToolRouter';
+import { cosineSimilarity } from '../../embeddings/cosineSimilarity.ts';
+import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider.ts';
+import type { ScoredTool, ToolInfo, ToolRouterConfig } from './ToolRouter.ts';
+import { buildToolSearchText, DEFAULT_TOOL_ROUTER_CONFIG, routeTools } from './ToolRouter.ts';
 
 /**
  * An MCP tool with a pre-computed embedding vector.

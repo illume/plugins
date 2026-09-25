@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: component-profiling-enabled-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: component-configuration
+  annotations:
+    evals.kubernetes.io/adapter: disposable-node
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  kube-apiserver.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-apiserver
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+        - name: kube-apiserver
+          image: registry.k8s.io/kube-apiserver:v1.31.1
+          command:
+            - kube-apiserver
+            - --secure-port=6443
+            - --authorization-mode=Node,RBAC
+            - --profiling=true
+  kube-controller-manager.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-controller-manager
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+        - name: kube-controller-manager
+          image: registry.k8s.io/kube-controller-manager:v1.31.1
+          command:
+            - kube-controller-manager
+            - --profiling=true
+  kube-scheduler.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: kube-scheduler
+      namespace: kube-system
+    spec:
+      hostNetwork: true
+      containers:
+        - name: kube-scheduler
+          image: registry.k8s.io/kube-scheduler:v1.31.1
+          command:
+            - kube-scheduler
+            - --profiling=true

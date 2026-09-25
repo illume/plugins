@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-falco-cron-persistence",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "cron-entry-created",
+        "resource_ref": "job/cron-persistence-action",
+        "field_path": "spec.template.spec.containers[0].command[2]",
+        "observed_value": "* * * * * root printf controlled-cron",
+        "description": "The process creates a valid cron entry under /etc/cron.d."
+      },
+      {
+        "fact_id": "cron-directory-is-emptydir",
+        "resource_ref": "job/cron-persistence-action",
+        "field_path": "spec.template.spec.volumes[0].emptyDir",
+        "observed_value": "{}",
+        "description": "The cron directory is isolated disposable storage."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-host-cron-write",
+      "resource_ref": "job/cron-persistence-action",
+      "field_path": "spec.template.spec.volumes[0].hostPath.path",
+      "observed_value": "/etc/cron.d",
+      "description": "The Job does not mount or modify the host cron directory."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-6e25c3148e16083c"
+}

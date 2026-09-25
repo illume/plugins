@@ -29,12 +29,12 @@ interface Window {
     mcp?: {
       getConfig(): Promise<{
         success: boolean;
-        config?: import('./mcp/types').MCPSettings;
+        config?: import('./mcp/types.ts').MCPSettings;
         error?: string;
       }>;
       getToolsConfig(): Promise<{
         success: boolean;
-        config?: import('./mcp/types').MCPToolsConfig;
+        config?: import('./mcp/types.ts').MCPToolsConfig;
         error?: string;
       }>;
     };

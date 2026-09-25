@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v7-rule-can-delete-k8s-events-v1-1933698f",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "concrete-broken-state",
+        "resource_ref": "configmap/v7-rule-can-delete-k8s-events-v1-1933698f-fixture",
+        "field_path": "data.evidence.json#rules[0].resources[0]",
+        "observed_value": "events",
+        "description": "determines which users can delete events"
+      },
+      {
+        "fact_id": "fixture-remains-inert",
+        "resource_ref": "configmap/v7-rule-can-delete-k8s-events-v1-1933698f-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The evidence is stored as inert review data and is never applied to the current environment."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "configmap/v7-rule-can-delete-k8s-events-v1-1933698f-fixture",
+      "field_path": "data.healthy-control.json#rules[0].resources[0]",
+      "observed_value": "pods",
+      "description": "The healthy control differs only in the concrete trigger state."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-89ecdedb7bde00ee"
+}

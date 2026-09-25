@@ -385,6 +385,19 @@ export class SimulatedKwokAdapter implements ClusterAdapter {
     return structuredClone(object) as unknown as JsonValue;
   }
 
+  async listResourceSnapshots(namespace: string, resource: string): Promise<JsonValue[]> {
+    const kinds: Record<string, string> = {
+      deployment: 'Deployment',
+      horizontalpodautoscaler: 'HorizontalPodAutoscaler',
+      poddisruptionbudget: 'PodDisruptionBudget',
+      service: 'Service',
+    };
+    const kind = kinds[resource] ?? resource;
+    return this.objects
+      .filter(object => object.metadata.namespace === namespace && object.kind === kind)
+      .map(object => structuredClone(object) as unknown as JsonValue);
+  }
+
   async applyJsonPatch(
     target: ActionRequest['target'],
     patch: JsonPatchOperation[]

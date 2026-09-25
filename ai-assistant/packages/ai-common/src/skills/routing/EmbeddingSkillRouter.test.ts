@@ -17,9 +17,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cosineSimilarity } from '../../embeddings/cosineSimilarity';
 import type { EmbeddingProvider } from '../../embeddings/EmbeddingProvider';
-import { ParsedSkill } from '../parseSkill';
+import type { ParsedSkill } from '../parseSkill';
 import { buildSkillEmbeddingText, EmbeddingSkillRouter } from './EmbeddingSkillRouter';
-import { DEFAULT_ROUTER_CONFIG, SkillRouterConfig } from './KeywordSkillRouter';
+import type { SkillRouterConfig } from './KeywordSkillRouter';
+import { DEFAULT_ROUTER_CONFIG } from './KeywordSkillRouter';
 
 const encoder = new TextEncoder();
 

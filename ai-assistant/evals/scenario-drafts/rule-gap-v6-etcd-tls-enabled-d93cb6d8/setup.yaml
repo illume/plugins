@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-etcd-tls-enabled-d93cb6d8-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--cert-file + arguments.--key-file",
+      "observedValue": "absent + absent",
+      "triggerPredicate": "Configure TLS encryption for the etcd service."
+    }
+  predicate-summary.txt: Configure TLS encryption for the etcd service.
+  healthy-control.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--cert-file + arguments.--key-file",
+      "observedValue": "/etc/kubernetes/pki/etcd/server.crt + /etc/kubernetes/pki/etcd/server.key"
+    }

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v1.json",
+  "scenario_id": "rule-gap-dangling-hpa-target",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "kube-linter:check:dangling-horizontalpodautoscaler",
+    "kubevious:rule:hpa-scale-target-ref"
+  ],
+  "target_semantic_group_ids": [
+    "kube-linter:semantic:kube-linter-check-dangling-horizontalpodautoscaler:01fd8babb138",
+    "kubevious:semantic:kubevious-rule-hpa-scale-target-ref:c2a686fad501"
+  ],
+  "target_tool_ids": ["kube-linter", "kubevious"],
+  "target_rule_count": 2,
+  "provenance_refs": [
+    "https://github.com/kubevious/rules-library/blob/b572cbf8ddc0903cb06cee430fa9a38c9b40d8b9/k8s/hpa/hpa-scale-target-ref.yaml",
+    "https://github.com/stackrox/kube-linter/blob/3b485c42f4b3445634bd8fe5f76f4aace15d42b5/pkg/builtinchecks/yamls/dangling-horizontalpodautoscaler.yaml"
+  ]
+}

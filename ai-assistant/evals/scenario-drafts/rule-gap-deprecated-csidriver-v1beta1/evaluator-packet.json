@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-deprecated-csidriver-v1beta1",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/csidriver/csidriver-v1beta1",
+        "field_path": "apiVersion",
+        "observed_value": "storage.k8s.io/v1beta1",
+        "description": "The concrete CSIDriver manifest uses removed API version storage.k8s.io/v1beta1."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/csidriver/csidriver-v1beta1",
+      "field_path": "apiVersion",
+      "observed_value": "storage.k8s.io/v1",
+      "description": "The current CSIDriver API version is storage.k8s.io/v1."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-a9aaf5dd34f81024"
+}

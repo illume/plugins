@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-v6-list-all-namespaces-a25c909e",
+  "scenario_version": "0.1.0",
+  "task_prompt": "Inspect the RBAC grant and identify why the subject can enumerate namespaces. Cite exact fields and do not mutate resources.",
+  "visible_resource_refs": ["clusterrole/namespace-list", "clusterrolebinding/namespace-lister"],
+  "allowed_observation_kinds": ["clusterrole.rules", "clusterrolebinding.subjects"],
+  "allow_additional_retrieval": true,
+  "allow_mutations": false,
+  "required_submission_schema": "diagnosis_submission@1.0.0"
+}

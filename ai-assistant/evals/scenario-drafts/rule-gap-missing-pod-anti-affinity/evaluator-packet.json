@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-missing-pod-anti-affinity",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "replica-count",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.replicas",
+        "observed_value": "3",
+        "description": "The web workload requests three replicas."
+      },
+      {
+        "fact_id": "anti-affinity-absent",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.template.spec.affinity.podAntiAffinity",
+        "observed_value": "absent",
+        "description": "The Pod template has no pod anti-affinity."
+      },
+      {
+        "fact_id": "spread-constraint-absent",
+        "resource_ref": "deployment/web",
+        "field_path": "spec.template.spec.topologySpreadConstraints",
+        "observed_value": "absent",
+        "description": "The Pod template has no equivalent topology spread constraint."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-hostname-spread",
+      "resource_ref": "deployment/web",
+      "field_path": "spec.template.spec.topologySpreadConstraints[0].topologyKey",
+      "observed_value": "kubernetes.io/hostname",
+      "description": "The fixture declares no hostname spread constraint."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-9d5b1bd91dcc7c79"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-manifest-keys-are-not-sorted",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "trigger-evidence",
+        "resource_ref": "manifest/configmap/unsorted-keys",
+        "field_path": "document key order",
+        "observed_value": "kind before apiVersion; data.zebra before data.alpha",
+        "description": "The source manifest places mapping keys outside alphabetical order."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "healthy-control",
+      "resource_ref": "manifest/configmap/unsorted-keys",
+      "field_path": "document key order",
+      "observed_value": "apiVersion before kind; data.alpha before data.zebra",
+      "description": "The healthy source orders comparable mapping keys alphabetically."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-49cbcdf8f5093329"
+}

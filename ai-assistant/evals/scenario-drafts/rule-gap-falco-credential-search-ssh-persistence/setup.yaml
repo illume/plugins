@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: credential-search-action
+  labels:
+    evals.kubernetes.io/controlled-action: credential-search-action
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: credential-search-action
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: seed
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              mkdir -p /fixture/home/.ssh /fixture/home/.aws; printf CONTROLLED_SECRET >
+              /fixture/home/.ssh/id_ed25519; printf "token=CONTROLLED_SECRET\n" >
+              /fixture/home/.aws/credentials
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture
+      volumes:
+        - name: fixture
+          emptyDir: {}
+      containers:
+        - name: action
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - '-ceu'
+            - >-
+              find /fixture -type f -name "id_*" -o -name "credentials"
+
+              grep -R "CONTROLLED_SECRET" /fixture
+
+              cat /fixture/home/.ssh/id_ed25519
+
+              printf "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICONTROLLED scenario@invalid\n" >>
+              /fixture/home/.ssh/authorized_keys
+
+              tail -1 /fixture/home/.ssh/authorized_keys
+          volumeMounts:
+            - name: fixture
+              mountPath: /fixture

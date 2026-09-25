@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-etcd-peer-cert-auth-disabled",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "configured-broken-value",
+        "resource_ref": "configmap/etcd-peer-cert-auth-disabled-fixture",
+        "field_path": "data.etcd.yaml#spec.containers[0].command",
+        "observed_value": "--peer-client-cert-auth=false",
+        "description": "The TLS peer listener explicitly accepts peers without certificate authentication."
+      },
+      {
+        "fact_id": "fixture-is-inert",
+        "resource_ref": "configmap/etcd-peer-cert-auth-disabled-fixture",
+        "field_path": "metadata.annotations.evals.kubernetes.io/apply-to-current-host",
+        "observed_value": "false",
+        "description": "The fixture explicitly forbids application to the current host."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-healthy-value",
+      "resource_ref": "configmap/etcd-peer-cert-auth-disabled-fixture",
+      "field_path": "data.etcd.yaml#spec.containers[0].command",
+      "observed_value": "--peer-client-cert-auth=true",
+      "description": "The fixture explicitly disables peer certificate authentication."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-652a8e5fe9862f7b"
+}

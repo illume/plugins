@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "source_catalog": "registrations/rule-gap-scenarios-v2.json",
+  "scenario_id": "rule-gap-npd-docker-task-stall",
+  "implementation_status": "authored",
+  "qualification_status": "pending",
+  "detection_validation": "normalized_predicate",
+  "external_tool_execution": false,
+  "target_rule_ids": [
+    "node-problem-detector:source:kernel-monitor-dockerhung:b6f69006e18e",
+    "node-problem-detector:source:kernel-monitor-filelog-dockerhung:62e4e402e4c2",
+    "node-problem-detector:source:kernel-monitor-filelog-taskhung:7052d7b95a5b",
+    "node-problem-detector:source:kernel-monitor-taskhung:fb692fc0ed95"
+  ],
+  "target_semantic_group_ids": [
+    "node-problem-detector:semantic:dockerhung:76f7f051eade",
+    "node-problem-detector:semantic:taskhung:0c6f98f837a2"
+  ],
+  "target_tool_ids": ["node-problem-detector"],
+  "target_rule_count": 4,
+  "provenance_refs": [
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor-filelog.json",
+    "https://github.com/kubernetes/node-problem-detector/blob/5f40c13970d90844b439b1532b3f97fd69fee58a/config/kernel-monitor.json"
+  ]
+}

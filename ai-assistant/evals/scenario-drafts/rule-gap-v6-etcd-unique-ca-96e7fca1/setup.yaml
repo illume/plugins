@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: v6-etcd-unique-ca-96e7fca1-fixture
+  labels:
+    evals.kubernetes.io/fixture-kind: normalized-predicate
+  annotations:
+    evals.kubernetes.io/adapter: normalized-predicate
+    evals.kubernetes.io/target-path: /etc/kubernetes/manifests/etcd.yaml
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  observation.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--trusted-ca-file + arguments.--peer-trusted-ca-file",
+      "observedValue": "/etc/kubernetes/pki/ca.crt + /etc/kubernetes/pki/ca.crt",
+      "triggerPredicate": "Use a different certificate authority for etcd from the one used for Kubernetes."
+    }
+  predicate-summary.txt: Use a different certificate authority for etcd from the one used for Kubernetes.
+  healthy-control.json: |-
+    {
+      "subject": "etcd",
+      "evidenceType": "component-arguments",
+      "field": "arguments.--trusted-ca-file + arguments.--peer-trusted-ca-file",
+      "observedValue": "/etc/kubernetes/pki/etcd/ca.crt + /etc/kubernetes/pki/etcd/peer-ca.crt"
+    }

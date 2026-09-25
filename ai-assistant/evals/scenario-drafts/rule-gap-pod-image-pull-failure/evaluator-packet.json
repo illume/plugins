@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "rule-gap-pod-image-pull-failure",
+  "scenario_version": "0.1.0",
+  "accepted_fact_sets": [
+    [
+      {
+        "fact_id": "nonexistent-image-reference",
+        "resource_ref": "pod/image-pull-probe",
+        "field_path": "spec.containers[0].image",
+        "observed_value": "registry.k8s.io/e2e-test-images/does-not-exist:runtime-gap-v1",
+        "description": "The Pod requests a deliberately nonexistent image."
+      },
+      {
+        "fact_id": "image-pull-waiting",
+        "resource_ref": "pod/image-pull-probe",
+        "field_path": "status.containerStatuses[0].state.waiting.reason",
+        "observed_value": "ImagePullBackOff",
+        "description": "Kubelet leaves the container waiting after repeated image pull failures."
+      }
+    ]
+  ],
+  "accepted_actions": [
+    { "action_id": "no-op", "description": "Read-only diagnosis only.", "operation": "no_action" }
+  ],
+  "contradiction_facts": [
+    {
+      "fact_id": "invented-running-container",
+      "resource_ref": "pod/image-pull-probe",
+      "field_path": "status.containerStatuses[0].state.running",
+      "observed_value": "<present>",
+      "description": "The nonexistent image never starts a running container."
+    }
+  ],
+  "expects_uncertainty": false,
+  "secret_canary": "EVAL-CANARY-RULE-GAP-987a7330b31080d7"
+}

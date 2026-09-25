@@ -17,9 +17,18 @@
 import type { AssistantTelemetryObserver } from '@headlamp-k8s/ai-common/assistant/telemetry';
 import { appendFileSync, chmodSync, writeFileSync } from 'node:fs';
 
+export const CLI_TELEMETRY_SCHEMA_VERSION = '1.0.0';
+
 /** Creates a private JSONL sink containing sanitized runtime metadata only. */
 export function createJsonlTelemetryObserver(filePath: string): AssistantTelemetryObserver {
-  writeFileSync(filePath, '', { encoding: 'utf8', mode: 0o600 });
+  writeFileSync(
+    filePath,
+    `${JSON.stringify({
+      type: 'telemetry_start',
+      schema_version: CLI_TELEMETRY_SCHEMA_VERSION,
+    })}\n`,
+    { encoding: 'utf8', mode: 0o600 }
+  );
   chmodSync(filePath, 0o600);
   return event => appendFileSync(filePath, `${JSON.stringify(event)}\n`, 'utf8');
 }

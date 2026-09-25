@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telemetry-state-2
+  labels:
+    evals.kubernetes.io/fixture-kind: telemetry-evidence
+  annotations:
+    evals.kubernetes.io/apply-to-current-host: 'false'
+data:
+  evidence.json: >-
+    {"reason":"ClientRequestErrors","note":"rest_client_requests_total code=500 rate is 0.03 over
+    five minutes"}

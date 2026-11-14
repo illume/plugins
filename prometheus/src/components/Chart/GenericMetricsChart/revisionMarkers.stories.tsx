@@ -19,24 +19,49 @@ interface StoryArgs {
   kind: 'Deployment' | 'StatefulSet' | 'DaemonSet';
 }
 
+const workloads = {
+  Deployment: {
+    name: 'checkout-api',
+    revisions: [
+      { revision: 41, hash: '6d7f8b9b6c' },
+      { revision: 42, hash: '7c8f6bb995' },
+    ],
+  },
+  StatefulSet: {
+    name: 'orders-postgres',
+    revisions: [
+      { revision: 12, hash: '6db789b76f' },
+      { revision: 13, hash: '5d8966bc78' },
+    ],
+  },
+  DaemonSet: {
+    name: 'fluent-bit',
+    revisions: [
+      { revision: 7, hash: '84b7d9bb96' },
+      { revision: 8, hash: '59c6d9fcbb' },
+    ],
+  },
+};
+
 function MarkerStory({ kind }: StoryArgs) {
   const history = useHistory();
   const resource = useMemo(() => {
     const Resource = K8s.ResourceClasses[kind];
+    const workload = workloads[kind];
     return new Resource(
       {
         ...Resource.getBaseObject(),
         apiVersion: 'apps/v1',
         kind,
         metadata: {
-          name: 'web',
+          name: workload.name,
           namespace: 'apps',
           uid: `${kind}-uid`,
           resourceVersion: '1',
           creationTimestamp: '2026-11-13T18:00:00Z',
         },
         spec: {
-          selector: { matchLabels: { app: 'web' } },
+          selector: { matchLabels: { app: workload.name } },
           updateStrategy: {
             type: 'RollingUpdate',
             rollingUpdate: { partition: 0, maxUnavailable: 1 },
@@ -58,8 +83,10 @@ function MarkerStory({ kind }: StoryArgs) {
         defaultResolution: 'high',
       },
     });
-    history.replace('/c/revision-chart-story/deployments/apps/web');
-  }, [history]);
+    history.replace(
+      `/c/revision-chart-story/${K8s.ResourceClasses[kind].apiName}/apps/${workloads[kind].name}`
+    );
+  }, [history, kind]);
   return (
     <GenericMetricsChart
       resource={resource}
@@ -75,17 +102,33 @@ function MarkerStory({ kind }: StoryArgs) {
 
 function revisions(kind: StoryArgs['kind']) {
   const now = Date.now();
-  return [1, 2].map(revision => ({
+  const workload = workloads[kind];
+  return workload.revisions.map(({ revision, hash }, index) => ({
     apiVersion: 'apps/v1',
     kind: kind === 'Deployment' ? 'ReplicaSet' : 'ControllerRevision',
     metadata: {
-      name: `web-${revision}`,
+      name: `${workload.name}-${hash}`,
       namespace: 'apps',
       uid: `${kind}-${revision}`,
-      labels: { app: 'web' },
-      creationTimestamp: new Date(now - (revision === 1 ? 4 : 1) * 3600000).toISOString(),
-      annotations: { 'deployment.kubernetes.io/revision': String(revision) },
-      ownerReferences: [{ apiVersion: 'apps/v1', kind, name: 'web', uid: `${kind}-uid` }],
+      labels: {
+        app: workload.name,
+        [kind === 'Deployment' ? 'pod-template-hash' : 'controller.kubernetes.io/hash']: hash,
+      },
+      creationTimestamp: new Date(now - (index === 0 ? 4 : 1) * 3600000).toISOString(),
+      annotations:
+        kind === 'Deployment'
+          ? { 'deployment.kubernetes.io/revision': String(revision) }
+          : undefined,
+      ownerReferences: [
+        {
+          apiVersion: 'apps/v1',
+          kind,
+          name: workload.name,
+          uid: `${kind}-uid`,
+          controller: true,
+          blockOwnerDeletion: true,
+        },
+      ],
     },
     revision,
     spec: { template: { spec: { containers: [] } } },
@@ -181,7 +224,11 @@ export const Deployment: Story = {
   play: async context => {
     await selectRange(context);
     await expect(
-      await within(context.canvasElement).findByText('r2', {}, { timeout: 15000 })
+      await within(context.canvasElement).findByText(
+        `r${workloads[context.args.kind].revisions[1].revision}`,
+        {},
+        { timeout: 15000 }
+      )
     ).toBeVisible();
   },
 };
@@ -191,8 +238,9 @@ export const MarkerTooltip: Story = {
   play: async context => {
     await selectRange(context);
     const canvas = within(context.canvasElement);
-    const label = await canvas.findByText('r2', {}, { timeout: 15000 });
-    const marker = canvas.getByRole('img', { name: 'r2' });
+    const markerLabel = `r${workloads[context.args.kind].revisions[1].revision}`;
+    const label = await canvas.findByText(markerLabel, {}, { timeout: 15000 });
+    const marker = canvas.getByRole('img', { name: markerLabel });
     const line = marker.querySelector('line');
     if (!line) throw new Error('Missing marker line');
     for (const element of [label, line]) {
